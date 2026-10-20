@@ -2,11 +2,12 @@
 
 ## Current status
 
-Destination: <https://github.com/kedra-engine/kedra>. The local
-[workflow](../.github/workflows/ci.yml) defines PR/main validation on managed
-GitHub-hosted runners. Publication, complete hosted acceptance, cache timing
-measurements and main protection verification are pending. Local commands remain
-independent entry points; this document does not claim hosted green status.
+Repository: <https://github.com/kedra-engine/kedra>. The
+[workflow](../.github/workflows/ci.yml) runs PR/main validation on managed
+GitHub-hosted runners. The initial complete hosted run passed on all three OSes;
+fresh line coverage was 85.02%. Comparable warm-cache acceptance remains pending.
+Main has an active PR/status-check ruleset; its green-PR acceptance still needs
+verification. Local commands remain independent entry points.
 Releases, Kubernetes, private infrastructure and self-hosted runners are outside
 this workflow. The exact Winit fork revision is public on GitHub; see
 [source provenance](third-party.md#source-provenance-and-publication).
@@ -110,6 +111,27 @@ then `kedra_app --lib --no-default-features`. The isolated runtime check catches
 features accidentally supplied by editor/dev dependency unification, including
 production Linux Winit backends. No skipped stage is reported as passed.
 All-features testing alone is not a substitute for these checks.
+
+## Initial hosted measurements
+
+Reference: [CI run 39484899924, attempt 1][initial-ci],
+commit `ecc155809deedf94b6b6c552813ee04aad6ef8cc`. Job durations include setup,
+checks, artifact upload and cache save; they are not compilation-only timings.
+
+| Job | Cold duration |
+| --- | --- |
+| Native Linux x86_64 | 12m 18s |
+| Native macOS arm64 | 17m 43s |
+| Native Windows x86_64 | 54m 36s |
+| Fresh Linux coverage | 10m 03s |
+
+LCOV contains 23,535 covered lines of 27,683 (85.02%). Eight dependency/tool caches
+occupied 5.22 GiB after this run, below the default allowance. Cache existence is
+not proof of a warm hit or speedup; those measurements remain pending. In
+particular Windows cold latency is substantial and must not be described as fast.
+This is headless Rust/QA acceptance, not native UI or packaged-editor acceptance.
+
+[initial-ci]: https://github.com/kedra-engine/kedra/actions/runs/39484899924/attempts/1
 
 ## Windows build diagnostics
 

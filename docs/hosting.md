@@ -1,9 +1,13 @@
 # Repository administration
 
-Destination: <https://github.com/kedra-engine/kedra>.
-GitHub Actions CI is defined locally. Publication, hosted acceptance, main rules
-and confidential security channels remain pending verification. Local source
-files do not apply server settings or prove the actual rules are active.
+Repository: <https://github.com/kedra-engine/kedra>, public, default branch `main`.
+The initial complete GitHub Actions run passed; comparable warm acceptance is
+pending. Active ruleset `Protected main` (25504920) requires PRs, resolved review
+threads, an up-to-date base and `CI required` from GitHub Actions (app 15368).
+It denies force pushes and branch deletion and has no bypass actors. Required
+human approvals are zero for the single-maintainer model. Server rules were read
+back; a real green PR still needs acceptance. Confidential contacts remain
+unverified. Local source files alone do not apply or prove server settings.
 
 ## Before wider public contributions
 
@@ -30,11 +34,10 @@ read-only repository permissions, dependency-only caching and no private
 infrastructure credentials. No release workflow, Kubernetes cluster or self-hosted
 runner is installed by it; see [CI boundaries and acceptance](ci.md).
 
-After full hosted acceptance, require the actual GitHub Actions `CI required`
-result on main, PR-only changes, an up-to-date base and resolved conversations,
-with force pushes and branch deletion denied and no silent bypass actors.
-The single-maintainer model must not demand a second unavailable human reviewer.
-Read back and test native repository rules; a YAML job name alone is not enforcement.
+Preserve the active ruleset and verify legitimate PR acceptance after checks pass;
+never bypass it to make automation convenient. The single-maintainer model must
+not demand a second unavailable human reviewer. A YAML job name alone is not
+server-side enforcement; see [actual CI status and measurements](ci.md).
 
 Before publishing, define protected tags, explicit approval, least-privilege tokens,
 artifact provenance, license notices, clean-machine verification and rollback.
