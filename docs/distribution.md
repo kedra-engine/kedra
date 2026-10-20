@@ -48,6 +48,10 @@ Cargo owns package name/version and binary identity. Applications must have one
 binary target and standard `[package.metadata.packager]` with `productName` and
 `identifier`. A native version must match Cargo or be omitted. The shared tool
 owns outputs, formats, generated icons and verified resource mappings.
+Nonempty `packager.resources` is currently rejected during preflight, rather than
+silently omitted. Put supported delivery inputs in `distribution.assets` and
+license inputs in `distribution.notices`; arbitrary additional native/portable
+resource mappings are not implemented.
 
 `[package.metadata.kedra.distribution]` contains `assets`, `profile`, `namespace`,
 `icon` and `notices`. Paths resolve from the application's package directory
@@ -97,6 +101,10 @@ Installed resources live in macOS `Contents/Resources/assets`, Linux
 `usr/lib/<binary>/assets` for `usr/bin` layouts, or beside portable executables.
 Lookup never searches the launch directory or source checkout. Editor `--assets`
 takes precedence over `KEDRA_ASSETS`, then the executable-relative default.
+`kedra assets verify` without a path verifies that same default delivery without
+opening a window; an explicit verification path remains supported. Native package
+inspection invokes this command without overrides from an unrelated directory.
+Linux inspection runs extracted `AppRun`, not just the inner ELF executable.
 
 ## Outputs and identity
 

@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import tempfile
 import time
 import zipfile
 
@@ -27,15 +28,15 @@ def verify_cli(binary: Path, resources: Path, version: str) -> None:
     environment.pop("KEDRA_ASSETS", None)
     environment["PATH"] = (str(Path(os.environ.get("SYSTEMROOT", "C:/Windows")) / "System32")
                            if os.name == "nt" else "/usr/bin:/bin")
-    for arguments, expected in [(["--version"], version),
-                                (["assets", "verify", str(resources)], "SUCCESS")]:
-        result = run([binary, *arguments], cwd=resources.parent, env=environment,
-                     capture_output=True, text=True, timeout=90)
-        print(result.stdout + result.stderr, flush=True)
-        if expected not in result.stdout + result.stderr:
-            raise ValueError("Installed executable did not produce expected redirected diagnostics")
-    result = subprocess.run([str(binary), "--invalid-distribution-option"], env=environment,
-                            capture_output=True, text=True, timeout=30)
+    with tempfile.TemporaryDirectory(prefix="kedra unrelated launch Юникод ") as launch:
+        for arguments, expected in [(["--version"], version), (["assets", "verify"], "SUCCESS")]:
+            result = run([binary, *arguments], cwd=launch, env=environment,
+                         capture_output=True, text=True, timeout=90)
+            print(result.stdout + result.stderr, flush=True)
+            if expected not in result.stdout + result.stderr:
+                raise ValueError("Installed executable did not produce expected redirected diagnostics")
+        result = subprocess.run([str(binary), "--invalid-distribution-option"], env=environment,
+                                cwd=launch, capture_output=True, text=True, timeout=30)
     if result.returncode == 0 or "error:" not in result.stderr:
         raise ValueError("Installed CLI failures must retain nonzero status and stderr")
     notices = resources.parent / "licenses" / "dependency-notices.html"
@@ -87,11 +88,14 @@ def inspect_linux(packages: dict[str, Path], work: Path, version: str) -> None:
     versions = re.findall(r"GLIBC_([0-9]+\.[0-9]+(?:\.[0-9]+)?)", symbols)
     print("Required GLIBC floor:", max(versions, key=lambda value: tuple(map(int, value.split('.')))))
     verify_cli(binary, binary.parent / "assets", version)
-    appimage = packages["appimage"]
+    inspect_appimage(packages["appimage"], work, version)
+
+
+def inspect_appimage(appimage: Path, work: Path, version: str) -> None:
     appimage.chmod(appimage.stat().st_mode | 0o100)
     run([appimage, "--appimage-extract"], cwd=work, stdout=subprocess.DEVNULL)
     appdir = work / "squashfs-root"
-    verify_cli(appdir / "usr/bin/kedra", appdir / "usr/lib/kedra/assets", version)
+    verify_cli(appdir / "AppRun", appdir / "usr/lib/kedra/assets", version)
 
 
 def inspect_windows(packages: dict[str, Path], work: Path, version: str) -> None:

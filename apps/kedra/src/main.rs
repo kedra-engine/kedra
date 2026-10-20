@@ -79,11 +79,17 @@ mod tests {
     }
 
     #[test]
+    fn bundled_asset_verification_accepts_default_lookup_without_relaxing_flags() {
+        assert!(Cli::try_parse_from(["kedra", "assets", "verify"]).is_ok());
+        assert!(Cli::try_parse_from(["kedra", "assets", "verify", "--profile"]).is_err());
+        assert!(Cli::try_parse_from(["kedra", "assets", "verify", "--unknown"]).is_err());
+    }
+
+    #[test]
     fn asset_cli_requires_explicit_namespace_and_complete_unambiguous_commands() {
         for args in [
             vec!["kedra", "assets"],
             vec!["kedra", "assets", "build", "source", "output"],
-            vec!["kedra", "assets", "verify"],
             vec!["kedra", "assets", "init"],
             vec!["kedra", "assets", "verify", "delivery", "--unknown"],
             vec!["kedra", "--remote-port", "65536"],
@@ -162,7 +168,8 @@ enum AssetCommand {
     },
     /// Check all manifest members, hashes and loader metadata, without writes.
     Verify {
-        root: PathBuf,
+        /// Explicit delivery; omitted uses the same platform-relative lookup as startup.
+        root: Option<PathBuf>,
         #[arg(long, default_value = "editor-desktop")]
         profile: String,
     },
@@ -217,6 +224,11 @@ fn run(cli: Cli) -> Result<(), String> {
                 Ok(())
             }
             AssetCommand::Verify { root, profile } => {
+                let root = asset_root(
+                    root.or(cli.assets),
+                    std::env::var_os("KEDRA_ASSETS"),
+                    std::env::current_exe(),
+                )?;
                 eprintln!("Verifying asset delivery {}", root.display());
                 let (_, manifest) = kedra_assets::delivery::read_directory(&root, &profile)?;
                 eprintln!("SUCCESS: {} assets verified", manifest.assets.len());

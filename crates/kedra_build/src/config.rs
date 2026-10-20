@@ -107,6 +107,13 @@ impl Application {
                 .ok_or("Application requires package.metadata.packager")?,
         )
         .map_err(|error| format!("Invalid native package metadata: {error}"))?;
+        if native
+            .resources
+            .as_ref()
+            .is_some_and(|resources| !resources.is_empty())
+        {
+            return Err("Additional packager.resources are not supported; declare compiled delivery inputs in distribution.assets and license files in distribution.notices".into());
+        }
         if native.product_name.is_empty()
             || native.product_name.contains(['/', '\\'])
             || native.product_name.chars().any(char::is_control)

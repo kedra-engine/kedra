@@ -111,6 +111,34 @@ fn independent_release_build_stages_real_binary_verified_assets_icons_and_notice
 }
 
 #[test]
+fn unsupported_native_resources_are_rejected_before_compilation_or_output_creation()
+-> Result<(), Box<dyn std::error::Error>> {
+    let project = fixture()?;
+    let manifest = project.path().join("Cargo.toml");
+    let before = fs::read_to_string(&manifest)?;
+    fs::write(
+        &manifest,
+        before.replace(
+            "[package.metadata.packager]",
+            "[package.metadata.packager]\nresources = ['settings.cfg']",
+        ),
+    )?;
+    fs::write(
+        project.path().join("settings.cfg"),
+        "required application defaults",
+    )?;
+    let output = project.path().join("distribution");
+    assert_eq!(run(project.path(), &output), ExitCode::FAILURE);
+    assert!(!project.path().join("build-script-ran").exists());
+    assert!(!output.exists());
+    assert_eq!(
+        fs::read_to_string(project.path().join("settings.cfg"))?,
+        "required application defaults"
+    );
+    Ok(())
+}
+
+#[test]
 fn existing_output_and_output_inside_assets_fail_before_build_scripts()
 -> Result<(), Box<dyn std::error::Error>> {
     let project = fixture()?;
