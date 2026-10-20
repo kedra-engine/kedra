@@ -128,6 +128,9 @@ pub(crate) fn hydrate(world: &mut World) {
             Kind::Caption(
                 kedra_desktop::SurfaceKind::Boot | kedra_desktop::SurfaceKind::Loading,
             ) => document(0xc0900000000040008000000000000002),
+            Kind::Caption(kedra_desktop::SurfaceKind::Editor) => {
+                document(0xc0900000000040008000000000000003)
+            }
             Kind::Caption(_) => document(0xc0900000000040008000000000000001),
             Kind::Projects => document(0xc0300000000040008000000000000001),
             Kind::Boot => document(0xc0b00000000040008000000000000003),

@@ -873,6 +873,8 @@ fn measurement(
         ))
         .id();
     let mut projection = Projection::default();
+    let destinations = super::headers::measurement(world, state, snapshot, &roots)?;
+    projection.set_header_destinations(world, destinations)?;
     projection.sync(
         world,
         snapshot,

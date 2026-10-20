@@ -95,7 +95,7 @@ impl Plugin for NativeInputPlugin {
 
 // Explicit camera ancestry wins over renderer-derived components from a prior
 // frame, so transferring a retained root cannot route input to its former host.
-fn owner(world: &World, mut entity: Entity) -> Option<Entity> {
+pub(crate) fn owner(world: &World, mut entity: Entity) -> Option<Entity> {
     let mut computed = None;
     let camera = loop {
         if world.get::<Window>(entity).is_some() {

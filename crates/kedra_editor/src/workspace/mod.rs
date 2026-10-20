@@ -7,6 +7,7 @@ mod document_views;
 mod feedback;
 #[cfg(feature = "docking-fixture")]
 pub(crate) mod fixture;
+mod headers;
 #[cfg(test)]
 mod hierarchy_tests;
 mod hit;
@@ -180,12 +181,14 @@ pub(crate) fn bind(world: &mut World, view: &UiView) -> Result<(), String> {
             .ok_or("Main host binding is absent")?
             .root = root;
         state.status = Some(shell.element("status").map_err(|e| e.to_string())?);
-        world
-            .entity_mut(shell.element("panels").map_err(|e| e.to_string())?)
-            .insert(input::Action::Panels);
-        world
-            .entity_mut(shell.element("reset").map_err(|e| e.to_string())?)
-            .insert(input::Action::Reset);
+        for (key, action) in [
+            ("panels", input::Action::Panels),
+            ("reset", input::Action::Reset),
+        ] {
+            if let Ok(entity) = shell.element(key) {
+                world.entity_mut(entity).insert(action);
+            }
+        }
         state.skin = Some(load_skin(world)?);
         state.preferences = storage::Preferences::load(world);
         if let Some(restored) = state.preferences.restored.take() {
@@ -207,6 +210,34 @@ pub(crate) fn bind(world: &mut World, view: &UiView) -> Result<(), String> {
         panels::mount(world, &mut state)?;
         redraw(world, &mut state)
     })
+}
+pub(crate) fn bind_header(world: &mut World, view: &UiView) {
+    for (key, action) in [
+        ("editor.panels", input::Action::Panels),
+        ("editor.project-menu", input::Action::Panels),
+        ("editor.project-chevron", input::Action::Panels),
+        ("editor.reset", input::Action::Reset),
+    ] {
+        if let Ok(entity) = view.element(key) {
+            world.entity_mut(entity).insert(action);
+        }
+    }
+    // Observation identities belong to the command, not its previous toolbar row.
+    let panels = if cfg!(target_os = "macos") {
+        "editor.project-menu"
+    } else {
+        "editor.panels"
+    };
+    for (key, identity) in [
+        (panels, "workspace/panels"),
+        ("editor.reset", "workspace/reset"),
+    ] {
+        if let Ok(entity) = view.element(key) {
+            world
+                .entity_mut(entity)
+                .insert(kedra_ui::ElementId::new(identity));
+        }
+    }
 }
 fn load_skin(world: &World) -> Result<Arc<Skin>, String> {
     let sources = world
@@ -434,6 +465,10 @@ fn redraw(world: &mut World, state: &mut EditorWorkspace) -> Result<(), String> 
             )
         })
         .collect();
+    let destinations = headers::committed(world, state)?;
+    state
+        .renderer
+        .set_header_destinations(world, destinations)?;
     state.renderer.sync(
         world,
         state.layout.snapshot(),

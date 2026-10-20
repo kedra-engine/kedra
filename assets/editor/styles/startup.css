@@ -3,14 +3,56 @@
     /* Flair needs an explicit value when the temporary .hidden class is removed. */
     display:flex;
 }
-.window-frame { width:100%; height:100%; min-width:0px; min-height:0px; border:1px solid var(--frame-border); border-radius:var(--popup-radius); overflow:clip; flex-direction:column; background-color:var(--canvas); }
+.window-frame { width:100%; height:100%; min-width:0px; min-height:0px; border:1px solid transparent; border-radius:var(--popup-radius); overflow:clip; flex-direction:column; background-color:var(--canvas); }
 .window-frame.maximized { border:0px; border-radius:0px; }
-.frame-highlight { position:absolute; left:1px; right:1px; top:1px; height:1px; background-color:#ffffff1f; }
 .titlebar { width:100%; min-width:0px; height:32px; min-height:32px; flex-shrink:0; align-items:center; overflow:clip; background-color:var(--canvas); }
 .title-balance, .window-controls { width:132px; height:32px; flex-shrink:0; }
 .window-controls { justify-content:end; }
 .title-host { flex-grow:1; flex-basis:0px; min-width:0px; height:32px; padding:0 12px; align-items:center; justify-content:center; overflow:clip; }
 .window-title { min-width:0px; max-width:100%; overflow:clip; }
+.titlebar, .title-balance, .title-host, .window-controls { display:flex; }
+.window-menu-slot, .window-tabs-slot, .window-drag { display:none; width:auto; min-width:0px; height:32px; flex-shrink:1; flex-grow:0; align-items:stretch; overflow:visible; }
+.titlebar.macos .title-balance, .titlebar.macos .window-controls { width:82px; }
+.titlebar.macos .window-controls > .button { display:none; }
+.titlebar.no-minimize .window-controls > .window-minimize,
+.titlebar.no-maximize .window-controls > .window-maximize { display:none; }
+.titlebar.inactive .window-title { color:var(--muted); }
+.floating-titlebar .title-host { display:none; }
+.floating-titlebar .title-balance { width:8px; }
+.floating-titlebar .window-menu-slot { display:flex; width:26px; min-width:26px; height:32px; align-items:center; flex-shrink:0; }
+.floating-titlebar .window-tabs-slot { display:flex; width:250px; min-width:0px; height:32px; flex-shrink:1; overflow:clip; }
+.window-tabs-slot > .dock-tabs { padding:0 4px; }
+.floating-titlebar .window-drag { display:flex; flex-grow:1; min-width:96px; height:32px; }
+.floating-titlebar.macos .window-controls { display:none; }
+.titlebar.fullscreen { display:none; }
+.titlebar.fullscreen.floating-titlebar, .titlebar.fullscreen.editor-titlebar { display:flex; }
+.titlebar.fullscreen .title-balance, .titlebar.fullscreen .window-controls { display:none; }
+.editor-titlebar { background-color:var(--toolbar); }
+.editor-titlebar .title-host, .editor-titlebar > .title-balance { display:none; }
+.editor-project-area, .editor-command-area { display:flex; flex-grow:1; flex-basis:0px; min-width:0px; height:32px; align-items:center; overflow:clip; }
+.editor-project-area { padding-left:8px; }
+.editor-titlebar .editor-native { display:none; }
+.editor-titlebar.macos .editor-native { display:flex; width:82px; }
+.editor-titlebar.macos .editor-project-area { padding-left:0px; }
+.editor-titlebar.macos .editor-system-menu { display:none; }
+.editor-project-area .button { height:26px; padding:0 12px; flex-shrink:0; }
+.editor-project-button { width:130px; min-width:0px; flex-shrink:1; overflow:clip; }
+.editor-project-name { min-width:0px; overflow:clip; }
+.editor-titlebar .editor-transport, .editor-global-commands { display:flex; align-items:center; flex-shrink:0; column-gap:2px; overflow:clip; }
+.editor-global-commands { column-gap:4px; }
+.editor-titlebar .editor-spacer { display:flex; flex-grow:1; min-width:0px; height:32px; }
+.editor-titlebar .editor-icon { width:26px; min-width:26px; height:26px; padding:0px; flex-shrink:0; }
+.editor-mode { font-size:11px; margin-left:6px; margin-right:8px; flex-shrink:0; }
+.editor-caption-gap { width:8px; min-width:8px; flex-shrink:0; }
+.editor-titlebar .window-controls { display:flex; width:132px; }
+.editor-titlebar.macos .window-controls { display:none; }
+.titlebar.fullscreen .editor-native { display:none; }
+.editor-titlebar .button:disabled .icon { -bevy-image-color:#ffffff8c; }
+.editor-titlebar .button:disabled .text { color:var(--muted); }
+.editor-titlebar .editor-system-menu { width:52px; min-width:52px; }
+.editor-titlebar .editor-project-button { width:130px; min-width:0px; }
+.editor-global-commands > .button:not(.editor-icon) { width:auto; min-width:0px; padding:0 12px; }
+.measurement-caption { position:absolute; top:-32px; left:0px; width:100%; visibility:hidden; }
 .projects-body, .loading-body { width:100%; min-width:0px; flex-basis:0px; flex-grow:1; min-height:0px; padding:40px; flex-direction:column; overflow:clip; }
 .projects-body { row-gap:20px; background-color:var(--panel); }
 .loading-body { row-gap:16px; background-color:var(--canvas); }

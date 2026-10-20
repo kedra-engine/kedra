@@ -20,6 +20,8 @@ use kedra_ui::{
 };
 use std::{collections::BTreeMap, sync::Arc};
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+#[path = "support/docking_headers.rs"]
+mod headers;
 
 #[test]
 fn dynamic_properties_reject_nonfinite_geometry_and_retired_targets_without_mutation() {

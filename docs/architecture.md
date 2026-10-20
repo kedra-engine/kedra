@@ -21,6 +21,12 @@ projection; the editor owns gesture sessions, feature bindings and preferences;
 desktop owns acknowledged native surfaces. See
 [ADR 0008](decisions/0008-docking-ownership.md) and its implementation status.
 
+Window headers use shared `kedra_ui::window_chrome` slot/region contracts and the
+`kedra_desktop::chrome` native adapter. Editor and docking supply compositions,
+not competing window-move implementations. See
+[ADR 0019](decisions/0019-composable-window-chrome.md) and
+[header integration](ui/window-chrome.md) for lifecycle and acceptance limits.
+
 ## Package layers
 
 Every workspace package declares `[package.metadata.kedra] layer = "..."`.
