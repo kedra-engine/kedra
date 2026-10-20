@@ -51,6 +51,31 @@ fn geometry(world: &mut World, entity: Entity, top: f32, height: f32, content: f
 }
 
 #[test]
+fn compact_list_virtualization_preserves_grid_pitch() -> TestResult {
+    let (mut app, mut panel, _id, _dir) = fixture()?;
+    panel.model.entries = (0..30)
+        .map(|i| model::Entry {
+            name: format!("item-{i:02}.txt").into(),
+            kind: Kind::File,
+            bytes: None,
+            tracked: false,
+        })
+        .collect();
+    let area = panel.element("entries")?;
+    geometry(app.world_mut(), area, 0., 44., 660.);
+    app.world_mut()
+        .entity_mut(area)
+        .insert(ScrollPosition(Vec2::new(0., 220.)));
+    panel.model.mode = model::Mode::List;
+    let window = panel.window(app.world())?;
+    assert_eq!((window.first, window.end, window.columns), (9, 14, 1));
+    panel.model.mode = model::Mode::Grid;
+    let window = panel.window(app.world())?;
+    assert_eq!((window.first, window.end, window.columns), (1, 5, 1));
+    Ok(())
+}
+
+#[test]
 fn tree_keyboard_reveals_home_end_up_down_and_parent_in_scrolled_viewport() -> TestResult {
     let (mut app, mut panel, id, _dir) = fixture()?;
     let world = app.world_mut();

@@ -6,7 +6,7 @@ use bevy::prelude::*;
 /// Bevy schedule projection of the application's ordinary Rust phase.
 #[derive(States, Default, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum AppPhase {
-    /// Early engine splash while delivery and editor sources are prepared.
+    /// Windowless delivery verification and editor source preparation.
     #[default]
     Boot,
     /// Project selection and entry forms.
@@ -111,8 +111,13 @@ pub(crate) fn project_phase(
     state: Res<State<AppPhase>>,
     mut next: ResMut<NextState<AppPhase>>,
     boot: Res<crate::boot::Boot>,
+    pending: Option<Res<crate::jobs::PendingJob>>,
 ) {
     if !boot.complete {
+        return;
+    }
+    // Resolve initial history/CLI intent before choosing the first real window.
+    if *state.get() == AppPhase::Boot && pending.is_some() {
         return;
     }
     let phase = match manager.phase() {

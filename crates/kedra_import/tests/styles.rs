@@ -10,8 +10,12 @@ use std::{
     time::{Duration, Instant},
 };
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+#[path = "styles/compact.rs"]
+mod compact;
 #[path = "styles/inspector.rs"]
 mod inspector;
+#[path = "styles/startup.rs"]
+mod startup;
 
 fn consumer(root: &Path, manifest: kedra_assets::delivery::Manifest) -> App {
     let mut app = App::new();
@@ -67,7 +71,7 @@ fn scene_toolbar_stays_fixed_and_navigation_restores_after_hidden_state() -> Res
     fs::write(
         source.join("scene.css"),
         format!(
-            "{}\n{}\n{}",
+            "{}\n{}\n{}\n.theme {{ --control-height:22px; --space:4px; }}",
             include_str!("../../../assets/editor/styles/controls.css"),
             include_str!("../../../assets/editor/styles/startup.css"),
             include_str!("../../../assets/editor/styles/scene-view.css")
@@ -83,7 +87,7 @@ fn scene_toolbar_stays_fixed_and_navigation_restores_after_hidden_state() -> Res
         .spawn((
             Node::default(),
             Styled::new(sheet),
-            ClassList::new("scene-view"),
+            ClassList::new("theme scene-view"),
         ))
         .id();
     let toolbar = app
@@ -161,7 +165,7 @@ fn scene_toolbar_stays_fixed_and_navigation_restores_after_hidden_state() -> Res
         .ok_or("Projection missing")?;
     assert_eq!(
         (node.width, node.height, node.flex_shrink),
-        (px(26), px(26), 0.)
+        (px(22), px(22), 0.)
     );
     assert_eq!(
         app.world()
@@ -726,7 +730,7 @@ fn workbench_styles_are_verified_assets_not_an_editor_only_loader() -> Result<()
             .0
             .to_srgba()
             .to_u8_array(),
-        [69, 102, 143, 255]
+        [87, 65, 111, 255]
     );
     kedra_ui::docking::class(app.world_mut(), action, "selected", false);
     frames(&mut app);
@@ -770,13 +774,13 @@ fn workbench_styles_are_verified_assets_not_an_editor_only_loader() -> Result<()
         &bevy::asset::AssetPath::from("editor://fonts/JetBrainsMono-Regular.ttf")
     );
     for (parent_classes, text_classes, expected_weight, expected_source) in [
-        ("recent-header", "text strong", 400, "Inter-Regular.ttf"),
+        ("recent-header", "text strong", 500, "Inter-Medium.ttf"),
         ("destination", "text strong", 400, "Inter-Regular.ttf"),
         (
             "loading-body",
             "text strong startup-phase",
-            400,
-            "Inter-Regular.ttf",
+            500,
+            "Inter-Medium.ttf",
         ),
         ("empty-projects", "text title", 500, "Inter-Medium.ttf"),
         ("button quiet", "text strong", 400, "Inter-Regular.ttf"),

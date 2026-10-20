@@ -193,7 +193,7 @@ impl Panel {
             self.dirty = true;
             self.focus_selection = true;
             let height = if self.model.mode == model::Mode::List {
-                26.
+                22.
             } else {
                 104.
             };

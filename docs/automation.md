@@ -89,8 +89,8 @@ unavailable native rendering is not a passing test. Failures retain the report.
 These checks cover targeted geometry and colors, not complete image equivalence.
 
 Add `--lifecycle-state-directory target/qa/isolated-state` to the Python command
-to test actual creation, open, three-second loading, native window retirement and
-failure receipts. It refuses personal preferences and retains newly created fixture
+to test actual creation, fast open without a required loading window, native window
+retirement and failure receipts. It refuses personal preferences and retains newly created fixture
 sources under that isolated directory. `--geometry-only` can diagnose input/layout
 when frames are unavailable, but reports frames unverified and cannot pass the
 frame/color test.

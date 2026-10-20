@@ -13,9 +13,9 @@
     "motion": "reduced"
   },
   "reference": {
-    "image": "startup-2026-10-18-v2/manager-empty.png",
-    "sha256": "7c4c5a5e3db647117b544b352ef68dded7a5ae949c476b4e1eefc922de80a68c",
-    "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=71-4775",
+    "image": "startup-2026-10-20/manager-empty.png",
+    "sha256": "52be47f75618391d63efa3c99c862a7825ae02cab94f6218ba6b3f1ebbb9f880",
+    "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=109-8563",
     "kind": "design_reference",
     "approval": "pending",
     "export_size": [1120, 720],
@@ -32,7 +32,7 @@
   "exclusions": [],
   "critical_regions": [
     {"name": "custom-frame", "rect": [0, 0, 1120, 33], "budget": {"max_changed_pixels": 739, "max_changed_ppm": 20000}},
-    {"name": "empty-state", "rect": [480, 379, 160, 54], "budget": {"max_changed_pixels": 172, "max_changed_ppm": 20000}},
+    {"name": "empty-state", "rect": [480, 405, 160, 54], "budget": {"max_changed_pixels": 172, "max_changed_ppm": 20000}},
     {"name": "footer", "rect": [41, 651, 1038, 28], "budget": {"max_changed_pixels": 581, "max_changed_ppm": 20000}}
   ]
 }

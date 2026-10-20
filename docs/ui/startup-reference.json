@@ -1,34 +1,36 @@
 {
   "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT",
-  "nodes": {"boot":"71:4556", "manager": "71:4622", "create": "71:4819", "open": "71:5038", "loading": "71:4575"},
-  "coordinate_space": "logical window pixels, independent of renderer DPR",
+  "nodes": {"boot":"109:8369", "manager": "109:8489", "create": "109:8607", "open": "109:8873", "loading": "109:8406"},
+  "coordinate_space": "logical window pixels, independent of renderer DPR; owner-approved borderless frame adaptation",
   "viewport": [1120, 720],
   "tolerance": 1.0,
   "manager": {
-    "window.chrome": [1, 1, 1119, 33],
-    "projects.panel": [1, 33, 1119, 719],
-    "projects.open": [831, 80, 951, 106],
-    "projects.new": [959, 80, 1079, 106],
-    "projects.search_toggle": [1053, 133, 1079, 159]
+    "window.chrome": [0, 0, 1120, 32],
+    "projects.panel": [0, 32, 1120, 720],
+    "projects.logo": [40, 74.745, 70, 101.255],
+    "projects.open": [832, 133, 952, 155],
+    "projects.new": [960, 133, 1080, 155],
+    "projects.search_toggle": [1058, 184, 1080, 206]
   },
   "create": {
     "entry.dialog": [240, 160, 880, 560],
-    "entry.browse": [772, 330, 856, 356],
-    "entry.cancel": [264, 509, 344, 535],
-    "entry.submit": [700, 509, 856, 535]
+    "entry.browse": [772, 326, 856, 348],
+    "entry.cancel": [264, 511, 344, 533],
+    "entry.submit": [700, 511, 856, 533]
   },
   "loading": {
-    "loading.panel": [1, 33, 639, 359],
-    "loading.engine": [41, 73, 599, 101],
-    "loading.brand": [41, 73, 201, 101],
-    "loading.project": [41, 117, 599, 173],
-    "loading.status": [41, 189, 599, 237],
-    "loading.spinner": [41, 205, 57, 221],
-    "loading.actions": [41, 293, 599, 319],
-    "loading.log_toggle": [41, 293, 173, 319]
+    "loading.panel": [0, 32, 640, 360],
+    "loading.engine": [0, 32, 640, 152],
+    "loading.logo": [28, 56.745, 58, 83.255],
+    "loading.version": [28, 100, 51, 116],
+    "loading.project": [28, 170, 612, 226],
+    "loading.status": [28, 236, 612, 284],
+    "loading.spinner": [28, 252, 44, 268],
+    "loading.actions": [28, 316, 612, 342],
+    "loading.log_toggle": [28, 316, 160, 338]
   },
   "pixels": {
-    "manager": [[10, 10, 36, 36, 36], [10, 40, 48, 48, 48], [100, 600, 48, 48, 48], [966, 82, 65, 107, 157], [838, 82, 83, 83, 83]],
+    "manager": [[10, 10, 36, 36, 36], [10, 40, 48, 48, 48], [100, 600, 48, 48, 48], [966, 136, 121, 80, 188], [838, 136, 83, 83, 83]],
     "create": [[250, 170, 40, 40, 40]],
     "open": [[250, 170, 40, 40, 40]]
   }

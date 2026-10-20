@@ -431,10 +431,9 @@ fn all_declared_startup_documents_compile_atomically_through_shared_policies() -
 }
 
 #[test]
-fn bootstrap_catalog_compiles_without_requesting_manager_or_project_scenes() -> Result<()> {
+fn startup_catalog_contains_first_real_surface_without_a_splash_document() -> Result<()> {
     let app = setup();
-    let catalog = source_catalog("scenes/boot.prefabs.ron")?;
-    assert_eq!(catalog.documents.len(), 8);
+    let catalog = startup_catalog()?;
     let registry = app.world().resource::<AppTypeRegistry>();
     let mut loader = app.world().resource::<AssetServer>();
     let compiled = kedra_scene::assets::compile_catalog(
@@ -444,12 +443,12 @@ fn bootstrap_catalog_compiles_without_requesting_manager_or_project_scenes() -> 
         &mut loader,
     )?;
     assert!(
-        compiled.contains_key(&kedra_scene::document::DocumentId(uuid::Uuid::from_u128(
+        !compiled.contains_key(&kedra_scene::document::DocumentId(uuid::Uuid::from_u128(
             0xc0b00000000040008000000000000003
         )))
     );
     assert!(
-        !compiled.contains_key(&kedra_scene::document::DocumentId(uuid::Uuid::from_u128(
+        compiled.contains_key(&kedra_scene::document::DocumentId(uuid::Uuid::from_u128(
             0xc0300000000040008000000000000001
         )))
     );

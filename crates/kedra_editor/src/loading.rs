@@ -3,15 +3,13 @@ use crate::{
     model::*,
     views::{self, Kind},
 };
-use bevy::{diagnostic::FrameCount, prelude::*};
+use bevy::prelude::*;
 use bevy_flair::style::components::ClassList;
 use kedra_ui::{
     ScreenId,
     authored::{components::UiSpin, view::UiView},
 };
 
-#[derive(Component)]
-pub(crate) struct HydratedAt(pub u32);
 #[derive(Component)]
 pub(crate) struct WorkingActions;
 #[derive(Component)]
@@ -20,6 +18,8 @@ struct LogHost;
 pub(crate) struct LogText;
 #[derive(Component)]
 struct LogToggle;
+#[derive(Component)]
+pub(crate) struct LoadingPresentation;
 #[derive(Resource)]
 pub(crate) struct Trace {
     last: String,
@@ -28,11 +28,6 @@ pub(crate) struct Trace {
 
 pub(crate) fn enter(world: &mut World) {
     let manager = world.resource::<ProjectManager>();
-    let name = manager
-        .intent
-        .as_ref()
-        .map(Intent::display_name)
-        .unwrap_or_default();
     let path = manager
         .intent
         .as_ref()
@@ -40,18 +35,47 @@ pub(crate) fn enter(world: &mut World) {
         .unwrap_or_default()
         .display()
         .to_string();
+    let started = world.resource::<Time<Real>>().elapsed();
+    let mut manager = world.resource_mut::<ProjectManager>();
+    manager.native_created_at = None;
+    manager.loading_started = Some(started);
+    world.insert_resource(Trace {
+        last: String::new(),
+        entries: vec![format!("Project preparation requested: {path}")],
+    });
+}
+
+pub(crate) fn show_if_needed(world: &mut World) {
+    let manager = world.resource::<ProjectManager>();
+    if manager.phase() != Phase::Loading || manager.is_ready() {
+        return;
+    }
+    let elapsed = world.resource::<Time<Real>>().elapsed();
+    if manager.loading_error().is_none()
+        && !manager.loading_started.is_some_and(|start| {
+            elapsed.saturating_sub(start) >= std::time::Duration::from_millis(150)
+        })
+    {
+        return;
+    }
+    if world
+        .resource::<kedra_desktop::DesktopSurface>()
+        .window
+        .and_then(|window| world.get::<kedra_desktop::SurfaceKind>(window))
+        == Some(&kedra_desktop::SurfaceKind::Loading)
+    {
+        return;
+    }
+    let name = manager
+        .intent
+        .as_ref()
+        .map(Intent::display_name)
+        .unwrap_or_default();
     let root = kedra_desktop::replace(
         world,
         kedra_desktop::SurfaceKind::Loading,
         format!("{name} — Kedra Engine"),
     );
-    let mut manager = world.resource_mut::<ProjectManager>();
-    manager.native_created_at = None;
-    manager.loading_started = None;
-    world.insert_resource(Trace {
-        last: String::new(),
-        entries: vec![format!("Project preparation requested: {path}")],
-    });
     if let Err(error) = views::request(
         world,
         root,
@@ -75,6 +99,9 @@ pub(crate) fn bind(world: &mut World, view: &UiView) -> Result<(), String> {
         "loading.failure_log_toggle",
         "loading.log",
         "loading.log_text",
+        "loading.spinner",
+        "loading.error_icon",
+        "loading.logo",
     ];
     let elements = keys
         .into_iter()
@@ -117,6 +144,19 @@ pub(crate) fn bind(world: &mut World, view: &UiView) -> Result<(), String> {
         .entity_mut(elements["loading.actions"])
         .insert(WorkingActions);
     world
+        .entity_mut(elements["loading.spinner"])
+        .insert(WorkingActions);
+    world
+        .entity_mut(elements["loading.error_icon"])
+        .insert(FailureActions);
+    world
+        .entity_mut(elements["loading.logo"])
+        .insert(bevy::picking::Pickable::IGNORE);
+    world.entity_mut(view.root).insert(LoadingPresentation);
+    if let Some(frame) = world.resource::<kedra_desktop::DesktopSurface>().frame {
+        world.entity_mut(frame).insert(LoadingPresentation);
+    }
+    world
         .entity_mut(elements["loading.failure_actions"])
         .insert(FailureActions);
     world
@@ -135,10 +175,9 @@ pub(crate) fn bind(world: &mut World, view: &UiView) -> Result<(), String> {
     world
         .entity_mut(elements["loading.log_text"])
         .insert(LogText);
-    let frame = world.resource::<FrameCount>().0;
     world
         .entity_mut(view.root)
-        .insert((ScreenId("loading".into()), HydratedAt(frame)));
+        .insert(ScreenId("loading".into()));
     Ok(())
 }
 
@@ -183,9 +222,16 @@ pub(crate) fn trace(
     trace: Option<ResMut<Trace>>,
     mut logs: Query<&mut Text, With<LogText>>,
     mut spinners: Query<&mut UiSpin>,
+    mut surfaces: Query<&mut ClassList, With<LoadingPresentation>>,
 ) {
     if manager.phase() != Phase::Loading {
         return;
+    }
+    let failed = manager.loading_error().is_some();
+    for mut classes in &mut surfaces {
+        if classes.contains("failed") != failed {
+            classes.toggle("failed");
+        }
     }
     if let Some(mut trace) = trace {
         let phase = phase(&manager);

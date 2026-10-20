@@ -164,7 +164,7 @@ fn failed_preflight_has_a_terminal_receipt_visible_notice_and_same_id_retry() {
 }
 
 #[test]
-fn real_open_waits_for_owned_loading_readiness_then_exposes_workspace_and_returns() {
+fn real_open_exposes_workspace_without_waiting_for_a_loading_window_and_returns() {
     let directory = tempfile::tempdir().unwrap();
     let project = kedra_project::create(directory.path(), "Integration 日本語").unwrap();
     let mut app = app();
@@ -175,33 +175,20 @@ fn real_open_waits_for_owned_loading_readiness_then_exposes_workspace_and_return
     let receipt = request(app.world_mut(), json!({"kind":"open","root":project.root}));
     let id = Uuid::parse_str(receipt["id"].as_str().unwrap()).unwrap();
     until(&mut app, |world| {
-        *world.resource::<State<crate::AppPhase>>().get() == crate::AppPhase::Loading
-    });
-    until(&mut app, |world| {
-        world.resource::<ProjectManager>().is_ready()
-    });
-    assert_eq!(
-        app.world().resource::<Operations>().get(id).unwrap().state,
-        OperationState::Pending
-    );
-    assert_eq!(
-        app.world().resource::<ProjectManager>().phase(),
-        Phase::Loading
-    );
-    let window = app
-        .world()
-        .resource::<kedra_desktop::DesktopSurface>()
-        .window
-        .unwrap();
-    // Explicit ECS creation acknowledgement, not an OS-window/frame claim.
-    app.world_mut()
-        .write_message(bevy::window::WindowCreated { window });
-    until(&mut app, |world| {
         world.resource::<Operations>().get(id).unwrap().state == OperationState::Succeeded
     });
     until(&mut app, |world| {
         world.contains_resource::<crate::workspace::EditorWorkspace>()
     });
+    let window = app
+        .world()
+        .resource::<kedra_desktop::DesktopSurface>()
+        .window
+        .unwrap();
+    assert_eq!(
+        app.world().get::<kedra_desktop::SurfaceKind>(window),
+        Some(&kedra_desktop::SurfaceKind::Editor)
+    );
     let workspace = workspace_state(In(None), app.world_mut()).unwrap();
     assert_eq!(workspace["bound"], true);
     assert_eq!(workspace["native_alive"], true);

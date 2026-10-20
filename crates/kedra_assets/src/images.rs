@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ImageVariantsDelivery {
-    /// Contract version.
+    /// Contract version: 1 used numeric byte arrays; 2 writes compact Base64 PNGs.
     pub format: u32,
     /// Logical width and height, independent of monitor DPI.
     pub logical_size: [u32; 2],
@@ -23,9 +23,12 @@ pub struct ImageVariantsDelivery {
 pub struct ImageVariant {
     /// Physical pixels per logical pixel.
     pub density: u32,
-    /// Encoded PNG, decoded by Bevy's image implementation at runtime.
+    /// Lossless encoded PNG, decoded by Bevy at runtime. New deliveries use
+    /// Base64; legacy numeric arrays remain readable without changing the bytes.
+    #[serde(with = "serde_with::As::<PngBytes>")]
     pub png: Vec<u8>,
 }
+type PngBytes = serde_with::PickFirst<(serde_with::base64::Base64, Vec<serde_with::Same>)>;
 /// Runtime dependency owner for all labeled images in a processed icon.
 #[derive(Asset, TypePath)]
 pub struct ImageVariants {
@@ -50,7 +53,7 @@ impl AssetLoader for ImageVariantsLoader {
         reader.read_to_end(&mut bytes).await?;
         let delivery: ImageVariantsDelivery =
             ron::de::from_bytes(&bytes).map_err(std::io::Error::other)?;
-        if delivery.format != 1
+        if !matches!(delivery.format, 1 | 2)
             || delivery.logical_size.contains(&0)
             || delivery.variants.is_empty()
             || delivery.variants.len() > 8

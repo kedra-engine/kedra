@@ -12,8 +12,14 @@ source tree and are not checked into Git.
   downloaded from the supplied design, not redrawn or replaced with glyphs.
   Window glyphs use the selected dedicated controls: maximize `82:2874`, restore
   `82:2877`, with unchanged source identities for the existing maximize slot.
-  The 128px startup construction motif is the exact exported asset from engine
-  startup `71:4556` / identity `109:8167`; it is a construction motif, not a new logo.
+  The legacy 128px construction motif comes from startup `71:4556` / identity
+  `109:8167`; it is no longer a startup dependency. Current manager/loading uses
+  `startup/project-mark-compact.svg` (`281:17461`, approved T3 master `267:2212`).
+  The owner confirms authorship of the logo and its source reference. The SVG is
+  exported unchanged from Figma. The initial splash and large release illustration
+  are not shipped as startup dependencies.
+  `icons/startup-error.svg` is the exact error export used by Failed `109:8445`
+  (`10:2459`); the spinner retains its identity and follows current focus purple.
   Dock artwork comes from page `92:3713`; the common Flat menu follows
   `Kedra/DockHeader` `97:3495`. Its independent state references are pinned in
   `docs/ui/docking/figma/manifest.json`.

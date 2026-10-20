@@ -132,6 +132,12 @@ def run_editor(client, state_directory):
     assert client.node(field["id"])["entity"] == field["entity"]
     assert client.node(prefix + "search")["entity"] == search_entity
     client.click(prefix + "close-search")
+    # Redock can place Inspector beside documents in the same tab group. Restore
+    # separate default tool/document groups before testing visible unlocked follow.
+    client.click("workspace/reset")
+    other_view = next(d["view"] for d in client.state()["documents"]["documents"] if d["document"] == other)
+    client.click(client.label(other_view))
+    client.wait(lambda: client.state()["documents"]["active"] == other, "reactivated source document")
     client.menu(inspector, "Unlock Inspector")
     client.wait(lambda: any(n["value"] == "Other source" for n in inputs(client, prefix)), "unlocked document following")
     assert before == inventory(assets), "Read-only Inspector changed source bytes or sidecars"

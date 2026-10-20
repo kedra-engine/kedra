@@ -215,7 +215,7 @@ The panel follows C-select `186:4545`, C-narrow `186:4949` and selected button
 separation A `192:4579` on the Scene View studies page. See the detailed
 [controls contract](scene-view-controls-design.md). Existing dock chrome retains
 the title and single group menu. A fixed 38px toolbar contains View/Select and
-26px Flat eye/grid/sun controls, with the design's spacing and scoped palette.
+22px Flat eye/grid/sun controls, with the design's spacing and scoped palette.
 The old projection/lighting text selects, World/units and settings icon are removed.
 Below 640px content width, View retains the selection command while Select hides.
 The 38px selection rail and 96px orientation control anchor to the canvas corners;

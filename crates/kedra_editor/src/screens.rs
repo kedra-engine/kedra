@@ -51,6 +51,10 @@ pub(crate) fn bind_projects(world: &mut World, view: &UiView) -> Result<(), Stri
         .element("projects.version")
         .map_err(|e| e.to_string())?;
     crate::recent::bind(world, view)?;
+    let logo = view.element("projects.logo").map_err(|e| e.to_string())?;
+    world
+        .entity_mut(logo)
+        .insert(bevy::picking::Pickable::IGNORE);
     for (entity, action) in controls {
         world.entity_mut(entity).insert((action, ManagedControl));
     }
@@ -61,7 +65,7 @@ pub(crate) fn bind_projects(world: &mut World, view: &UiView) -> Result<(), Stri
     world
         .get_mut::<Text>(version)
         .ok_or("release binding is not native text")?
-        .0 = concat!("Kedra ", env!("CARGO_PKG_VERSION")).into();
+        .0 = concat!("Kedra Engine ", env!("CARGO_PKG_VERSION")).into();
     let filter = world.resource::<ProjectManager>().filter.clone();
     set_field(world, Field::Search, &filter);
     world

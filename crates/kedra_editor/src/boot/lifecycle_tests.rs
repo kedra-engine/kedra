@@ -1,260 +1,126 @@
-//! CPU events test bootstrap state/receipts, not GPU or native presentation.
+//! Windowless bootstrap retains integrity, timeout and source-readiness gates.
 #![allow(clippy::unwrap_used, reason = "Bootstrap lifecycle assertions")]
 use super::*;
 use crate::startup_tests::{app, assert_failure};
 use std::time::Instant;
 
-fn bootstrap() -> App {
+fn empty_delivery() -> (tempfile::TempDir, kedra_assets::delivery::Manifest) {
+    let directory = tempfile::tempdir().unwrap();
+    let manifest = kedra_assets::delivery::Manifest {
+        format: 1,
+        profile: "editor-desktop".into(),
+        assets: vec![],
+        files: default(),
+    };
+    std::fs::write(
+        directory.path().join(kedra_assets::delivery::MANIFEST),
+        serde_json::to_vec(&manifest).unwrap(),
+    )
+    .unwrap();
+    (directory, manifest)
+}
+
+#[test]
+fn verification_starts_without_a_window_or_renderer_and_waits_for_catalog() {
+    let (directory, manifest) = empty_delivery();
     let mut app = app();
-    for _ in 0..3 {
-        app.update();
-    }
-    let frame = app.world().resource::<FrameCount>().0;
-    {
-        let mut boot = app.world_mut().resource_mut::<Boot>();
-        boot.native = true;
-        boot.hydrated = Some(frame.wrapping_sub(6));
-    }
-    app
-}
-
-fn frame() -> Image {
-    let mut pixels = image::RgbaImage::from_pixel(2, 2, image::Rgba([36, 36, 36, 255]));
-    pixels.put_pixel(0, 0, image::Rgba([230, 230, 230, 255]));
-    Image::from_dynamic(image::DynamicImage::ImageRgba8(pixels), true, default())
-}
-
-#[test]
-fn first_readback_event_is_validated_and_optional_artifact_is_published() {
-    let directory = tempfile::tempdir().unwrap();
-    let mut app = bootstrap();
-    app.insert_resource(kedra_app::capture::ArtifactRoot(directory.path().into()));
+    app.insert_resource(Boot::default());
+    app.world_mut().resource_mut::<Boot>().delivery = Some((directory.path().into(), manifest));
+    app.world_mut().resource_mut::<PrefabSources>().pending = true;
     poll(app.world_mut());
-    let readback = app
-        .world_mut()
-        .query_filtered::<Entity, With<Screenshot>>()
-        .single(app.world())
-        .unwrap();
-    app.world_mut().trigger(ScreenshotCaptured {
-        entity: readback,
-        image: frame(),
-    });
-    app.world_mut().flush();
-    assert!(app.world().resource::<Boot>().rendered);
-    let artifacts: Vec<_> = std::fs::read_dir(directory.path()).unwrap().collect();
-    assert_eq!(artifacts.len(), 1);
-    assert!(
-        artifacts[0]
-            .as_ref()
-            .unwrap()
-            .path()
-            .extension()
-            .is_some_and(|extension| extension == "png")
-    );
+    assert!(app.world().resource::<Boot>().started.is_some());
+    assert!(app.world().resource::<Boot>().verification.is_some());
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while !app.world().resource::<Boot>().verified {
+        assert!(Instant::now() < deadline);
+        poll(app.world_mut());
+        std::thread::yield_now();
+    }
     assert!(!app.world().resource::<Boot>().complete);
-}
-
-#[test]
-fn retired_readback_is_ignored_and_artifact_write_failure_is_terminal() {
-    let mut app = bootstrap();
-    poll(app.world_mut());
-    let readback = app
-        .world_mut()
-        .query_filtered::<Entity, With<Screenshot>>()
-        .single(app.world())
-        .unwrap();
-    let window = app
-        .world()
-        .resource::<kedra_desktop::DesktopSurface>()
-        .window
-        .unwrap();
-    app.world_mut().despawn(window);
-    app.world_mut().trigger(ScreenshotCaptured {
-        entity: readback,
-        image: frame(),
-    });
-    app.world_mut().flush();
-    assert!(!app.world().resource::<Boot>().rendered);
-
-    let mut app = bootstrap();
-    let directory = tempfile::tempdir().unwrap();
-    let file = directory.path().join("not-a-directory");
-    std::fs::write(&file, b"keep").unwrap();
-    app.insert_resource(kedra_app::capture::ArtifactRoot(file.clone()));
-    poll(app.world_mut());
-    let readback = app
-        .world_mut()
-        .query_filtered::<Entity, With<Screenshot>>()
-        .single(app.world())
-        .unwrap();
-    app.world_mut().trigger(ScreenshotCaptured {
-        entity: readback,
-        image: frame(),
-    });
-    app.world_mut().flush();
+    assert!(!app.world().contains_resource::<crate::jobs::PendingJob>());
     assert!(
         app.world()
-            .resource::<kedra_ui::authored::components::UiFailure>()
-            .0
-            .is_some()
+            .resource::<kedra_desktop::DesktopSurface>()
+            .window
+            .is_none()
     );
-    assert!(!app.world().resource::<Boot>().rendered);
-    assert_eq!(std::fs::read(file).unwrap(), b"keep");
+    app.world_mut().resource_mut::<PrefabSources>().pending = false;
+    poll(app.world_mut());
+    assert!(app.world().resource::<Boot>().complete);
+    assert!(app.world().contains_resource::<crate::jobs::PendingJob>());
+    assert!(
+        app.world()
+            .resource::<kedra_desktop::DesktopSurface>()
+            .window
+            .is_none()
+    );
 }
 
 #[test]
-fn readback_and_bootstrap_timeouts_have_distinct_errors_and_no_ready_fallback() {
-    let mut app = bootstrap();
-    poll(app.world_mut());
-    app.world_mut()
-        .resource_mut::<Time<Real>>()
-        .advance_by(Duration::from_secs(31));
-    poll(app.world_mut());
-    assert_failure(app.world(), "renderer readback did not complete");
-    assert!(!app.world().resource::<Boot>().complete);
-
-    let mut app = bootstrap();
-    let now = app.world().resource::<Time<Real>>().elapsed();
-    {
-        let mut boot = app.world_mut().resource_mut::<Boot>();
-        boot.rendered = true;
-        boot.started = Some(now);
-    }
-    app.world_mut()
-        .resource_mut::<Time<Real>>()
-        .advance_by(Duration::from_secs(31));
-    poll(app.world_mut());
-    assert_failure(app.world(), "Engine startup did not complete");
-    assert!(!app.world().resource::<Boot>().complete);
-}
-
-#[test]
-fn missing_delivery_and_failed_completed_verification_are_explicit_failures() {
-    let mut app = bootstrap();
-    app.world_mut().resource_mut::<Boot>().rendered = true;
+fn missing_delivery_integrity_failure_and_deadline_remain_terminal_without_fallback_ui() {
+    let mut app = app();
+    app.insert_resource(Boot::default());
     poll(app.world_mut());
     assert_failure(app.world(), "delivery is not configured");
 
-    let mut app = bootstrap();
-    let now = app.world().resource::<Time<Real>>().elapsed();
+    let mut app = crate::startup_tests::app();
     let task = IoTaskPool::get().spawn(async { Err("integrity mismatch".into()) });
     let deadline = Instant::now() + Duration::from_secs(5);
     while !task.is_finished() {
         assert!(Instant::now() < deadline);
         std::thread::yield_now();
     }
-    {
-        let mut boot = app.world_mut().resource_mut::<Boot>();
-        boot.rendered = true;
-        boot.started = Some(now);
-        boot.verification = Some(task);
-    }
+    app.world_mut().resource_mut::<Boot>().verification = Some(task);
     poll(app.world_mut());
     assert_failure(app.world(), "integrity mismatch");
-    assert!(app.world().resource::<Boot>().verification.is_none());
-    assert!(!app.world().contains_resource::<crate::jobs::PendingJob>());
-}
-
-#[test]
-fn complete_verification_still_waits_for_sources_before_starting_history() {
-    let mut app = bootstrap();
-    let directory = tempfile::tempdir().unwrap();
-    let manifest = kedra_assets::delivery::Manifest {
-        format: 1,
-        profile: "editor-desktop".into(),
-        assets: vec![],
-        files: default(),
-    };
-    std::fs::write(
-        directory.path().join(kedra_assets::delivery::MANIFEST),
-        serde_json::to_vec(&manifest).unwrap(),
-    )
-    .unwrap();
-    let root = directory.path().to_owned();
-    let task = IoTaskPool::get().spawn(async move { verify_delivery(&root, &manifest) });
-    let deadline = Instant::now() + Duration::from_secs(5);
-    while !task.is_finished() {
-        assert!(Instant::now() < deadline);
-        std::thread::yield_now();
-    }
-    let now = app.world().resource::<Time<Real>>().elapsed();
-    {
-        let mut boot = app.world_mut().resource_mut::<Boot>();
-        boot.rendered = true;
-        boot.started = Some(now);
-        boot.verification = Some(task);
-    }
-    app.world_mut().resource_mut::<PrefabSources>().pending = true;
-    poll(app.world_mut());
-    assert!(app.world().resource::<Boot>().verified);
     assert!(!app.world().resource::<Boot>().complete);
-    assert!(!app.world().contains_resource::<crate::jobs::PendingJob>());
-    app.world_mut().resource_mut::<PrefabSources>().pending = false;
-    poll(app.world_mut());
-    assert!(app.world().resource::<Boot>().complete);
-    assert!(app.world().contains_resource::<crate::jobs::PendingJob>());
-    assert_eq!(
+    assert!(
         app.world()
-            .resource::<crate::model::ProjectManager>()
-            .phase(),
-        crate::model::Phase::Projects
+            .resource::<kedra_desktop::DesktopSurface>()
+            .window
+            .is_none()
     );
+
+    let mut app = crate::startup_tests::app();
+    app.world_mut()
+        .resource_mut::<Time<Real>>()
+        .advance_by(Duration::from_secs(30));
+    poll(app.world_mut());
+    assert!(
+        app.world()
+            .resource::<kedra_ui::authored::components::UiFailure>()
+            .0
+            .is_none()
+    );
+    app.world_mut()
+        .resource_mut::<Time<Real>>()
+        .advance_by(Duration::from_nanos(1));
+    poll(app.world_mut());
+    assert_failure(app.world(), "within 30 seconds");
+    assert!(!app.world().contains_resource::<crate::jobs::PendingJob>());
 }
 
 #[test]
-fn rendered_boot_starts_real_delivery_verification_and_explicit_editor_catalog() {
-    let directory = tempfile::tempdir().unwrap();
-    let manifest = kedra_assets::delivery::Manifest {
-        format: 1,
-        profile: "editor-desktop".into(),
-        assets: vec![],
-        files: default(),
-    };
-    std::fs::write(
-        directory.path().join(kedra_assets::delivery::MANIFEST),
-        serde_json::to_vec(&manifest).unwrap(),
-    )
-    .unwrap();
-    let mut app = bootstrap();
-    {
-        let mut boot = app.world_mut().resource_mut::<Boot>();
-        boot.rendered = true;
-        boot.delivery = Some((directory.path().into(), manifest));
-    }
-    poll(app.world_mut());
-    let boot = app.world().resource::<Boot>();
-    assert!(boot.started.is_some());
-    assert!(boot.verification.is_some());
-    assert!(!boot.complete);
-    let sources = app.world().resource::<PrefabSources>();
-    assert!(sources.pending);
-    assert!(!sources.dependencies_ready);
-    assert_eq!(
-        sources.handle.path().unwrap().to_string(),
-        "editor://scenes/startup.prefabs.ron"
+fn verification_rejects_manifest_changes_and_missing_members() {
+    let (directory, expected) = empty_delivery();
+    verify_delivery(directory.path(), &expected).unwrap();
+    let marker = directory.path().join(kedra_assets::delivery::MANIFEST);
+    let mut changed = expected.clone();
+    let bytes = b"new delivery member";
+    std::fs::write(directory.path().join("extra.txt"), bytes).unwrap();
+    changed.files.insert(
+        "extra.txt".into(),
+        kedra_assets::delivery::FileDigest {
+            bytes: bytes.len() as u64,
+            sha256: kedra_assets::delivery::digest(bytes),
+        },
     );
-    let phase = crate::startup_tests::element(app.world_mut(), "boot.phase");
-    assert_eq!(
-        app.world().get::<Text>(phase).unwrap().0,
-        "Loading editor assets…"
+    std::fs::write(&marker, serde_json::to_vec(&changed).unwrap()).unwrap();
+    assert!(
+        verify_delivery(directory.path(), &expected)
+            .unwrap_err()
+            .contains("manifest changed")
     );
-    let deadline = Instant::now() + Duration::from_secs(5);
-    while !app
-        .world()
-        .resource::<Boot>()
-        .verification
-        .as_ref()
-        .unwrap()
-        .is_finished()
-    {
-        assert!(Instant::now() < deadline);
-        std::thread::yield_now();
-    }
-    poll(app.world_mut());
-    assert!(app.world().resource::<Boot>().verified);
-    assert!(!app.world().resource::<Boot>().complete);
-    app.world_mut().resource_mut::<PrefabSources>().error = Some("editor catalog refused".into());
-    poll(app.world_mut());
-    assert_failure(app.world(), "editor catalog refused");
-    assert!(!app.world().contains_resource::<crate::jobs::PendingJob>());
+    std::fs::remove_file(directory.path().join("extra.txt")).unwrap();
+    assert!(verify_delivery(directory.path(), &changed).is_err());
 }

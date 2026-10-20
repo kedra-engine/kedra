@@ -2,6 +2,35 @@ use super::model::*;
 use kedra_scene::{composition::Catalog, document::*};
 use std::collections::BTreeMap;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
+
+#[test]
+fn compact_viewport_keeps_rows_visible_at_twenty_two_pixel_pitch() -> TestResult {
+    use bevy::prelude::*;
+    let mut app = crate::workspace::browser_test_app()?;
+    let host = app.world_mut().spawn(Node::default()).id();
+    let host = crate::views::mount(
+        app.world_mut(),
+        host,
+        crate::views::document(0xc0600000000040008000000000000001),
+        "hierarchy-test",
+    )?
+    .root;
+    let mut panel =
+        super::Panel::mount(app.world_mut(), host, kedra_docking::model::ViewId::new())?;
+    panel.visible = (0..30).map(|i| (i, false)).collect();
+    let area = panel.element("entries")?;
+    app.world_mut().entity_mut(area).insert((
+        ComputedNode {
+            size: Vec2::new(640., 88.),
+            inverse_scale_factor: 0.5,
+            ..default()
+        },
+        UiGlobalTransform::default(),
+        ScrollPosition(Vec2::new(0., 220.)),
+    ));
+    assert_eq!(panel.viewport(app.world())?, (9, 14, 320));
+    Ok(())
+}
 #[test]
 fn maximum_graph_is_projected_without_a_visible_row_count_truncation() -> TestResult {
     let mut doc = PrefabDocument::new("Large tree");

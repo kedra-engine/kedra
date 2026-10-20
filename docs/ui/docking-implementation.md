@@ -36,7 +36,7 @@ Feature documents, undo history and source writers remain outside docking.
 - Maximize changes the projection, not topology. Restore retains original splits,
   tab order and feature content.
 
-The authored skin has 32px rails, 28px tabs, 4px dividers and 26px Flat menu hit
+The authored skin has 32px rails, 28px tabs, 4px dividers and 22px Flat menu hit
 areas. Fixture tabs are 100px wide; that is not a universal panel-width rule.
 Tabs use native rounded borders, not an overlaid rectangular top-light strip.
 Flat controls have no idle border, bevel or shadow. OS caption controls are separate.

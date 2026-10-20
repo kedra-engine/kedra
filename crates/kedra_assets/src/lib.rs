@@ -13,6 +13,8 @@ mod source;
 pub use source::register_source;
 
 #[cfg(test)]
+mod image_tests;
+#[cfg(test)]
 mod tests;
 
 /// Runtime assets shared by games and the editor. The host installs Bevy's

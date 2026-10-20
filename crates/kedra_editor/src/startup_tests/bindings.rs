@@ -4,6 +4,44 @@ use bevy::text::EditableText;
 use bevy_flair::style::components::ClassList;
 
 #[test]
+fn startup_has_no_native_surface_before_verification_and_catalog_readiness() {
+    let app = app();
+    let surface = app.world().resource::<kedra_desktop::DesktopSurface>();
+    assert!(
+        surface.window.is_none(),
+        "Startup must not create a splash window"
+    );
+    assert!(surface.root.is_none());
+    assert!(!app.world().resource::<crate::boot::Boot>().complete);
+}
+
+#[test]
+fn manager_brand_precedes_actions_and_preserves_feature_ownership() {
+    let mut app = app();
+    projects(&mut app);
+    let brand = element(app.world_mut(), "projects.brand");
+    assert_eq!(app.world().get::<Text>(brand).unwrap().0, "Kedra Engine");
+    let logo = element(app.world_mut(), "projects.logo");
+    assert!(app.world().get::<ImageNode>(logo).is_some());
+    assert_eq!(
+        app.world().get::<bevy::picking::Pickable>(logo),
+        Some(&bevy::picking::Pickable::IGNORE)
+    );
+    let brand = app.world().get::<ChildOf>(logo).unwrap().parent();
+    let row = app.world().get::<ChildOf>(brand).unwrap().parent();
+    let panel = element(app.world_mut(), "projects.panel");
+    assert_eq!(
+        app.world().get::<Children>(panel).unwrap()[0],
+        row,
+        "Product identity must precede Projects, not follow its footer"
+    );
+    for key in ["projects.new", "projects.open", "projects.search_toggle"] {
+        let entity = element(app.world_mut(), key);
+        assert!(app.world().get::<Action>(entity).is_some());
+    }
+}
+
+#[test]
 fn production_manager_forms_search_and_cancel_preserve_feature_ownership() {
     let mut app = app();
     projects(&mut app);

@@ -103,7 +103,7 @@ fn variants(bytes: &[u8], settings: &SvgSettings) -> Result<ImageVariantsDeliver
         variants.push(ImageVariant { density, png });
     }
     Ok(ImageVariantsDelivery {
-        format: 1,
+        format: 2,
         logical_size,
         variants,
     })

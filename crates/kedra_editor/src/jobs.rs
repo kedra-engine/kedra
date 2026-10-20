@@ -1,9 +1,7 @@
 use crate::{actions, model::*, screens};
 use bevy::{
-    diagnostic::FrameCount,
     prelude::*,
     tasks::{IoTaskPool, Task, block_on, poll_once},
-    window::WindowCreated,
 };
 use kedra_project::{Project, recent::RecentProjects};
 use std::path::PathBuf;
@@ -89,7 +87,6 @@ pub(crate) fn prepare(world: &mut World) {
         .history_writable
         .then(|| manager.history_path.clone())
         .flatten();
-    world.resource_mut::<ProjectManager>().loading_started = None;
     world.insert_resource(PendingJob {
         generation,
         task: IoTaskPool::get().spawn(async move {
@@ -185,40 +182,9 @@ fn preflight_failed(world: &mut World, error: String) {
     world.resource_mut::<EntryForm>().error = error;
 }
 
-pub(crate) fn finish_loading(
-    mut created: MessageReader<WindowCreated>,
-    surface: Res<kedra_desktop::DesktopSurface>,
-    timing: (Res<FrameCount>, Res<Time<Real>>),
-    phase: Res<State<AppPhase>>,
-    mut manager: ResMut<ProjectManager>,
-    hydrated: Query<&crate::loading::HydratedAt>,
-) {
-    let (frame, time) = timing;
-    for event in created.read() {
-        if Some(event.window) == surface.window && *phase.get() == AppPhase::Loading {
-            manager.native_created_at = Some(frame.0);
-        }
-    }
-    if *phase.get() == AppPhase::Loading
-        && manager.native_created_at.is_some()
-        && manager.loading_started.is_none()
-        && hydrated
-            .iter()
-            .any(|ready| frame.0.wrapping_sub(ready.0) >= 2)
-    {
-        manager.loading_started = Some(time.elapsed());
-    }
-    // Transition as soon as preparation and native presentation are ready.
-    // There is no minimum display duration; failures remain immediately visible.
-    if *phase.get() == AppPhase::Loading
-        && manager.is_ready()
-        && manager
-            .native_created_at
-            .is_some_and(|created| frame.0.wrapping_sub(created) >= 2)
-        && hydrated
-            .iter()
-            .any(|ready| frame.0.wrapping_sub(ready.0) >= 2)
-    {
+pub(crate) fn finish_loading(mut manager: ResMut<ProjectManager>) {
+    // Source readiness owns completion; a transient loading window never delays it.
+    if manager.phase() == Phase::Loading && manager.is_ready() {
         manager.enter_editor();
     }
 }

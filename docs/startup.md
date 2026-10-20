@@ -1,7 +1,7 @@
 # Native project startup
 
-Kedra starts an engine splash, opens a project manager or prepares an explicitly
-selected project, then enters the native dockable editor. It does not build or
+Kedra verifies editor assets without a splash, opens a project manager or prepares
+an explicitly selected project, then enters the native dockable editor. It does not build or
 execute project code, scaffold a game, or offer an editor session without a
 validated project.
 
@@ -50,6 +50,10 @@ assets are embedded in executables. SVG becomes a native Bevy Image in the impor
 `SvgToImageVariants` supports authored sizes and integer densities 1–8. Editor
 icons use 1x–4x. SVG external-file references are disabled. Fonts and their license
 notices are separate delivered assets; see [asset provenance](../assets/README.md).
+Version-2 multi-density packages use compact Base64-encoded PNG payloads rather
+than numeric RON byte arrays; version-1 packages remain readable. This preserves
+lossless pixels and is not GPU texture compression. See
+[ADR 0022](decisions/0022-compact-image-delivery.md).
 The exact serialized delivery manifest is limited to 64 KiB. Import rejects an
 oversized marker before publishing an output; large source inventories may need a
 future reviewed format/bound change, not a delivery that its reader cannot open.
@@ -81,19 +85,23 @@ see [docking](ui/docking-implementation.md).
 
 ## Boot and preparation
 
-The 640×360 engine splash uses `scenes/boot.prefabs.ron`. Startup initially reads
-only a bounded manifest; each bootstrap resource read still verifies its hash.
-After native creation, hydration and a nonblank renderer readback, complete
-delivery verification starts on the I/O pool and the full catalog is requested.
-Project workflow waits for both. Bootstrap failure reports diagnostics and exits;
-there is no embedded substitute UI.
+Startup reads a bounded manifest, then runs complete delivery verification on the
+I/O pool concurrently with `scenes/startup.prefabs.ron` catalog loading. It creates
+no splash window and requests no startup renderer readback. Project workflow waits
+for both checks and history/CLI-intent resolution before choosing its first real
+native surface. Failure reports diagnostics and exits without substitute UI.
 
-Bevy/GPU initialization precedes the splash. Cold first-visible-frame latency and
-OS presentation timing are not certified by renderer readback.
+Fast project preparation enters the editor immediately without an intermediate
+loading window. Work still unfinished after 150 ms may show the 640×360 lightweight
+loading surface; failures show recovery immediately. The threshold does not delay
+the task or completion. Loading and the manager use the compact owner-supplied T3
+logo; no large release artwork is loaded at startup. Failed preparation uses an
+error icon and retains log/retry/back. The client frame has no painted perimeter
+stroke. See [ADR 0021](decisions/0021-windowless-startup.md).
 
-Project preparation has a separate loading surface. Success waits for completion,
-native creation and hydration frame boundaries, with no artificial minimum duration.
-The task is not delayed; failures appear immediately. The spinner turns linearly
+Bevy/GPU initialization still precedes the first useful window. Source readiness,
+window creation, layout hydration and OS presentation remain distinct milestones.
+The spinner turns linearly
 once per second. `KEDRA_REDUCED_MOTION=1` keeps it static; automatic native preference
 detection is not implemented.
 
@@ -117,7 +125,7 @@ failure. Concurrent recent-history writers currently have last-writer-wins behav
 
 ## Native UI and limitations
 
-External scenes/prefabs define splash, loading, manager, modals, rows, captions
+External scenes/prefabs define loading, manager, modals, rows, captions
 and workspace structure. Flair styles them; native Bevy widgets supply text
 editing, clipboard and modal navigation. The editor has [Assets](ui/asset-browser.md),
 Hierarchy, Document Preview and Inspector panels. Assets provides navigation,

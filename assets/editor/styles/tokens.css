@@ -15,21 +15,17 @@
     --hover: #626262;
     --pressed: #292929;
     --border: #1c1c1c;
-    /* Figma's 14% white inner light over the dark control stroke, in sRGB.
-       Paint the resulting top stroke: a child overlay shifts it into the fill
-       and native linear-light alpha blending otherwise makes it too bright. */
-    --control-top-edge: #3c3c3c;
     --frame-border: #717171;
     --text: #eeeeee;
     --secondary: #c9c9c9;
     --muted: #afafaf;
     --on-accent: #ffffff;
-    --accent: #416b9d;
-    --accent-hover: #436e9f;
-    --accent-pressed: #36557c;
-    --selected: #45668f;
+    --accent: #7950bc;
+    --accent-hover: #865cc3;
+    --accent-pressed: #603993;
+    --selected: #57416f;
     --selection-inactive: #3a3a3a;
-    --focus: #b1d2ff;
+    --focus: #d08bff;
     --error: #f0a3a3;
     --warning: #e8bf80;
     --warning-panel: #403728;
@@ -37,8 +33,11 @@
     --font-strong: "InterfaceMedium";
     --font-heading: "InterfaceSemibold";
     --font-mono: "KedraMono";
-    --control-height: 26px;
-    --control-radius: 3px;
+    --control-height: 22px;
+    --control-radius: 2px;
+    --section-height: 24px;
+    --space: 4px;
+    --property-gap: 2px;
     --popup-radius: 5px;
     /* Native linear-light blending: this yields Figma's 21/255 scrim over #303030. */
     --modal-scrim: #000000bf;

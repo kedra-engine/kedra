@@ -1,11 +1,11 @@
 /* UI-KIT Hierarchy 128:32776; common dock chrome is not duplicated. */
 .dock-group.hierarchy-group { min-width:232px; }
 .hierarchy { display:flex; flex-direction:column; flex-grow:1; min-width:0px; min-height:0px; width:100%; overflow:clip; background-color:var(--panel); }
-.hierarchy-toolbar { display:flex; align-items:center; column-gap:6px; padding:6px 8px; height:38px; min-height:38px; width:100%; flex-shrink:0; overflow:clip; }
-.hierarchy-toolbar > .field { flex-grow:1; flex-basis:0px; min-width:0px; height:26px; padding:0 8px 0 30px; }
+.hierarchy-toolbar { display:flex; align-items:center; column-gap:var(--space); padding:6px 8px; height:38px; min-height:38px; width:100%; flex-shrink:0; overflow:clip; }
+.hierarchy-toolbar > .field { flex-grow:1; flex-basis:0px; min-width:0px; height:var(--control-height); padding:0 8px 0 30px; }
 .hierarchy-toolbar > .field:has(.input:focus) { outline-width:2px; outline-offset:2px; }
 .hierarchy-toolbar .input { width:100%; min-width:0px; }
-.hierarchy-toolbar > .button { min-width:26px; width:26px; height:26px; padding:5px; }
+.hierarchy-toolbar > .button { min-width:var(--control-height); width:var(--control-height); height:var(--control-height); padding:3px; }
 .hierarchy-toolbar > .button:disabled { background-color:transparent; }
 .hierarchy-placeholder { position:absolute; left:38px; top:11px; font-size:12px; }
 .hierarchy-search-icon { position:absolute; left:16px; top:11px; }
@@ -13,12 +13,12 @@
 .hierarchy-body > .scrollbar { position:absolute; right:0px; top:0px; bottom:0px; }
 .hierarchy-entries { display:flex; flex-direction:column; flex-grow:1; flex-basis:0px; min-width:0px; min-height:0px; overflow-x:scroll; overflow-y:scroll; }
 .hierarchy-canvas { display:flex; width:100%; flex-shrink:0; }
-.hierarchy-row { display:flex; position:absolute; height:26px; padding:0 7px; border-radius:var(--control-radius); background-color:var(--panel); outline-width:0px; outline-offset:-2px; outline-color:var(--focus); }
+.hierarchy-row { display:flex; position:absolute; height:var(--control-height); padding:0 7px; border-radius:var(--control-radius); background-color:var(--panel); outline-width:0px; outline-offset:-2px; outline-color:var(--focus); }
 .hierarchy-row:hover, .hierarchy-row.row-hover { background-color:var(--hover); }
 .hierarchy-row.selected { background-color:var(--selected); }
 .hierarchy.inactive .hierarchy-row.selected { background-color:var(--selection-inactive); }
 .hierarchy-row.keyboard-focus { outline-width:2px; }
-.hierarchy-row .button { height:26px; min-width:0px; padding:0px; border-radius:0px; }
+.hierarchy-row .button { height:var(--control-height); min-width:0px; padding:0px; border-radius:0px; }
 .hierarchy-row .button:hover, .hierarchy-row .button:active { background-color:transparent; }
 .hierarchy-row .button:focus-visible { outline-width:0px; }
 .hierarchy-row .button:disabled { background-color:transparent; }

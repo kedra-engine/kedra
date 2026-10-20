@@ -24,7 +24,7 @@ impl Panel {
             ((width - 16.) / 120.).floor().max(1.) as usize
         };
         let height = if self.model.mode == model::Mode::List {
-            26.
+            22.
         } else {
             104.
         };
@@ -71,7 +71,7 @@ impl Panel {
         let canvas = self.element("tile-canvas")?;
         let count = self.model.visible().count();
         let row_height = if self.model.mode == model::Mode::List {
-            26
+            22
         } else {
             104
         };

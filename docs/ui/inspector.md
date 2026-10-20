@@ -141,9 +141,14 @@ claiming OS copy/paste support. Search is not a source-editing field session.
 
 ## Visual authority and acceptance
 
-Use the [canonical UI-kit](figma.md): `108:8790` for composition, `108:8936` for
-search and `108:9034` for the Visibility example. The 320px specimen uses a 52px
-selection identity, 28px section headers and 26px controls. Below a 296px property
+Use the [canonical UI-kit](figma.md): Flat compact A `131:20213` (320px) and
+`131:20388` (480px). Selection identity is 40px, section headers 24px and controls
+22px including borders. Related property rows use 2px spacing; sections/groups
+use 4px. The Window glyph reference stack occupies 394px with unchanged values
+and units; this fixture is not a claim that every reflected schema has that height.
+The scroll host owns 8px vertical / 12px horizontal padding so nested groups do
+not repeatedly inset or compress their fields. Body typography remains 12/16 and
+icons remain 16px. Below a 296px property
 body, stack labels above values rather than squeeze numeric text. Use native
 layout, existing semantic tokens, exact exported icons and shared authored assets.
 Transform/Mesh/Material are examples, not a hard-coded component schema. Rotation

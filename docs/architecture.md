@@ -6,7 +6,8 @@ The workspace contains `xtask`, native startup/editor modules and shared asset
 runtime/import modules, with the editor and isolated native fixtures as consumers.
 Bevy 0.20.0 is pinned for this slice. Lua backend and Play isolation remain unselected.
 The game-style asset consumer is an isolated test host, not a running game SDK.
-See [ADR 0002](decisions/0002-native-startup.md) and [startup](startup.md).
+See [ADR 0002](decisions/0002-native-startup.md), the
+[windowless startup revision](decisions/0021-windowless-startup.md) and [startup](startup.md).
 
 Shared application automation lives in runtime-layer `kedra_app`, not the
 editor. `kedra_ui` owns stable retained-UI identities and renderer-derived geometry.

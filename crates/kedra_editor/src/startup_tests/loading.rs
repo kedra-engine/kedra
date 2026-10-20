@@ -15,6 +15,25 @@ fn until(app: &mut App, condition: impl Fn(&World) -> bool) {
 }
 
 #[test]
+fn long_unicode_project_identity_survives_the_fast_open_path() {
+    let directory = tempfile::tempdir().unwrap();
+    let name = "Кедра_日本語_".repeat(7);
+    let project = kedra_project::create(directory.path(), &name).unwrap();
+    let mut app = app();
+    projects(&mut app);
+    actions::begin(app.world_mut(), Intent::Open(project.root.clone()));
+    until(&mut app, |world| {
+        world.resource::<ProjectManager>().is_ready()
+    });
+    app.update();
+    let manager = app.world().resource::<ProjectManager>();
+    assert_eq!(manager.project().unwrap().manifest.name, name);
+    assert_eq!(manager.project().unwrap().root, project.root);
+    assert_eq!(manager.phase(), Phase::Editor);
+    assert_eq!(kedra_project::open(&project.root).unwrap(), project);
+}
+
+#[test]
 fn post_preflight_failure_is_immediate_logged_and_retry_clears_failure_presentation() {
     let directory = tempfile::tempdir().unwrap();
     let project = kedra_project::create(directory.path(), "Retry me").unwrap();
@@ -63,6 +82,8 @@ fn post_preflight_failure_is_immediate_logged_and_retry_clears_failure_presentat
         ("loading.actions", true),
         ("loading.failure_actions", false),
         ("loading.retry", false),
+        ("loading.spinner", true),
+        ("loading.error_icon", false),
     ] {
         let entity = element(app.world_mut(), key);
         assert_eq!(
@@ -72,6 +93,16 @@ fn post_preflight_failure_is_immediate_logged_and_retry_clears_failure_presentat
                 .contains("hidden"),
             hidden,
             "{key}"
+        );
+    }
+    let frame = element(app.world_mut(), "window.frame");
+    let panel = element(app.world_mut(), "loading.panel");
+    for entity in [frame, panel] {
+        assert!(
+            app.world()
+                .get::<ClassList>(entity)
+                .unwrap()
+                .contains("failed")
         );
     }
     assert!(
@@ -125,25 +156,16 @@ fn post_preflight_failure_is_immediate_logged_and_retry_clears_failure_presentat
         world.resource::<ProjectManager>().is_ready()
     });
     app.update();
-    assert!(
-        !app.world()
-            .get::<ClassList>(phase)
-            .unwrap()
-            .contains("error")
+    assert_eq!(
+        app.world().resource::<ProjectManager>().phase(),
+        Phase::Editor
     );
-    assert!(
-        app.world_mut()
-            .query::<&kedra_ui::authored::components::UiSpin>()
-            .iter(app.world())
-            .all(|spin| !spin.paused)
-    );
-    assert!(
-        app.world()
-            .get::<Text>(log)
-            .unwrap()
-            .0
-            .contains("Preparing editor window")
-    );
+    for entity in [phase, frame, panel, log] {
+        assert!(
+            !app.world().entities().contains(entity),
+            "Successful retry must retire failure presentation without a display delay"
+        );
+    }
     assert_eq!(kedra_project::open(&project.root).unwrap(), project);
 }
 

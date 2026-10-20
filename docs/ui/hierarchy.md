@@ -60,7 +60,7 @@ invalidation and selection remapping before mutating that snapshot.
 The source/composition limits still apply: at most 4096 effective nodes per graph,
 128 admitted documents and existing composition work/depth limits. An iterative
 projection handles the full graph; visible-row virtualization mounts only a native
-viewport window plus overscan. Rows are 26px high with 12px depth indentation.
+viewport window plus overscan. Rows are 22px high with 12px depth indentation.
 Groups containing only Hierarchy use the reference's 232px minimum; mixed groups
 keep the existing shared 240px minimum. This does not alter other tool minima.
 Horizontal scrolling preserves access to deeply nested rows; vertical scrolling
@@ -110,7 +110,7 @@ python3 tools/qa/hierarchy_appearance.py target/hierarchy-credentials.json \
 The scenario opens a scene with two 181-node nested instances, exercises real
 native controls and captures renderer frames, verifies distinct scoped selection,
 virtualized tail navigation, search/reveal, tab switching and retained docking.
-The appearance scenario additionally checks default chrome, 26px row/flat-action
+The appearance scenario additionally checks default chrome, 22px row/flat-action
 geometry, 4px insets, 12px indentation, selection color, optional search/details,
 and 232/320px hosts, retaining renderer frames for state review.
 It uses injected Bevy input, not physical OS input, and does not certify IME,

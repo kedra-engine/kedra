@@ -13,9 +13,9 @@
     "motion": "reduced"
   },
   "reference": {
-    "image": "startup-2026-10-18-v2/open.png",
-    "sha256": "e40e212d060806a5ca9a7a912d07cda4be323c5b642bc7d69825bc61a4cf9079",
-    "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=71-5038",
+    "image": "startup-2026-10-20/open.png",
+    "sha256": "ef72219530b8876aaa0d48439046595baa30f8e079cac8186bf3f78c13321242",
+    "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=109-8873",
     "kind": "design_reference",
     "approval": "pending",
     "export_size": [1120, 720],

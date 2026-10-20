@@ -2,8 +2,8 @@
   "schema":1,"scenario":"startup-create-invalid","fixture":"isolated-three-project-history-invalid-create",
   "profile":{"id":"macos-metal-local-dpr1-reduced","platform":"macos","renderer":"metal-apple-m3-pro","environment":"uncertified-local-review","logical_size":[1120,720],"dpr":1,"color_space":"srgb_assumed","motion":"reduced"},
   "reference":{
-    "image":"startup-2026-10-18-v2/create-invalid.png","sha256":"17fefdb6817da225d41f48c89b7c17e34ddbb319cef944c7b2e652395d60e22b",
-    "source":"https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=71-4930",
+    "image":"startup-2026-10-20/create-invalid.png","sha256":"08b76daf2aa3458a6df53d211cb9c4890605bfb665019d6ceaa1a85c28c02e88",
+    "source":"https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=109-8735",
     "kind":"design_reference","approval":"pending","export_size":[1120,720],"crop":[0,0,1120,720],"crop_reason":"Complete manager and invalid create modal; no cropping or exclusions."
   },
   "animation":{"mode":"static"},

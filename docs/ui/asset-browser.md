@@ -13,7 +13,7 @@ code or write sources. Scene/prefab Open uses the shared
 - Current-folder search, clear action and a scene/prefab-only filter. Search uses
   `unicase` Unicode case folding, not ASCII filename identity or recursive search.
 - Grid/list modes share selection and data. Grid tiles are 112 × 96 logical pixels,
-  list rows are 26px, and the folder sidebar is 196px where space permits.
+  list rows are 22px, and the folder sidebar is 196px where space permits.
 - Single click selects; double-click/Enter activates the focused source. Arrows and
   Home/End select and reveal entries, including those outside the virtual window.
 - The Assets group menu exposes **Open selected source** and **Refresh sources**.

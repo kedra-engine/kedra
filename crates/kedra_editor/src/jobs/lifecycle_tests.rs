@@ -2,6 +2,7 @@
 #![allow(clippy::unwrap_used, reason = "Isolated lifecycle assertions")]
 use super::*;
 use bevy::ecs::system::RunSystemOnce;
+use bevy::{diagnostic::FrameCount, window::WindowCreated};
 use std::time::{Duration, Instant};
 
 fn world() -> World {
@@ -239,17 +240,13 @@ fn picker_cancel_and_non_unicode_result_do_not_replace_existing_draft() {
 }
 
 #[test]
-fn loading_enters_editor_immediately_when_owned_creation_hydration_and_work_are_ready() {
+fn prepared_project_does_not_wait_for_an_intermediate_loading_window() {
     let directory = tempfile::tempdir().unwrap();
-    let project = kedra_project::create(directory.path(), "Ready").unwrap();
+    let project = kedra_project::create(directory.path(), "Fast 日本語").unwrap();
     let mut world = world();
-    let window = world.spawn(Window::default()).id();
-    world.insert_resource(kedra_desktop::DesktopSurface {
-        window: Some(window),
-        ..default()
-    });
+    world.init_resource::<kedra_desktop::DesktopSurface>();
     world.insert_resource(State::new(AppPhase::Loading));
-    world.insert_resource(FrameCount(100));
+    world.insert_resource(FrameCount(0));
     world.init_resource::<Messages<WindowCreated>>();
     let generation = world
         .resource_mut::<ProjectManager>()
@@ -258,47 +255,81 @@ fn loading_enters_editor_immediately_when_owned_creation_hydration_and_work_are_
     world
         .resource_mut::<ProjectManager>()
         .complete(generation, Ok(project));
-    let hydrated = world.spawn(crate::loading::HydratedAt(100)).id();
-    let other = world.spawn_empty().id();
-    world.write_message(WindowCreated { window: other });
     world.run_system_once(finish_loading).unwrap();
+    assert_eq!(world.resource::<ProjectManager>().phase(), Phase::Editor);
     assert!(
         world
-            .resource::<ProjectManager>()
-            .native_created_at
+            .resource::<kedra_desktop::DesktopSurface>()
+            .window
             .is_none()
     );
-    world.write_message(WindowCreated { window });
-    world.run_system_once(finish_loading).unwrap();
-    assert_eq!(
-        world.resource::<ProjectManager>().native_created_at,
-        Some(100)
-    );
-    assert!(world.resource::<ProjectManager>().loading_started.is_none());
-    // New system instances get fresh message cursors. Clear consumed creation before
-    // the next direct call so the synthetic event is not delivered a second time.
-    world.resource_mut::<Messages<WindowCreated>>().clear();
-    world.resource_mut::<FrameCount>().0 = 102;
-    // Even a long-running process must still wait for source hydration.
+    assert_eq!(world.resource::<Time<Real>>().elapsed(), Duration::ZERO);
+}
+
+#[test]
+fn failed_project_never_enters_editor_on_the_fast_path() {
+    let mut world = world();
+    let generation = world
+        .resource_mut::<ProjectManager>()
+        .begin(Intent::Open("missing".into()))
+        .unwrap();
     world
-        .entity_mut(hydrated)
-        .remove::<crate::loading::HydratedAt>();
+        .resource_mut::<ProjectManager>()
+        .complete(generation, Err("source rejected".into()));
     world.run_system_once(finish_loading).unwrap();
     assert_eq!(world.resource::<ProjectManager>().phase(), Phase::Loading);
-    world
-        .entity_mut(hydrated)
-        .insert(crate::loading::HydratedAt(100));
-    world.run_system_once(finish_loading).unwrap();
     assert_eq!(
-        world.resource::<ProjectManager>().loading_started,
-        Some(Duration::ZERO)
+        world.resource::<ProjectManager>().loading_error(),
+        Some("source rejected")
     );
+    assert!(world.resource::<ProjectManager>().project().is_none());
+}
+
+#[test]
+fn slow_preparation_shows_loading_after_threshold_but_never_delays_success() {
+    let directory = tempfile::tempdir().unwrap();
+    let project = kedra_project::create(directory.path(), "Threshold").unwrap();
+    let mut app = crate::startup_tests::app();
+    crate::startup_tests::projects(&mut app);
+    let original = app
+        .world()
+        .resource::<kedra_desktop::DesktopSurface>()
+        .window;
+    app.world_mut()
+        .resource_mut::<ProjectManager>()
+        .begin(Intent::Open(project.root));
+    crate::loading::enter(app.world_mut());
+    app.world_mut()
+        .resource_mut::<Time<Real>>()
+        .advance_by(Duration::from_millis(149));
+    crate::loading::show_if_needed(app.world_mut());
     assert_eq!(
-        world.resource::<Time<Real>>().elapsed(),
-        Duration::ZERO,
-        "No wall-clock advance is required"
+        app.world()
+            .resource::<kedra_desktop::DesktopSurface>()
+            .window,
+        original
     );
-    assert_eq!(world.resource::<ProjectManager>().phase(), Phase::Editor);
+    app.world_mut()
+        .resource_mut::<Time<Real>>()
+        .advance_by(Duration::from_millis(1));
+    crate::loading::show_if_needed(app.world_mut());
+    let shown = app
+        .world()
+        .resource::<kedra_desktop::DesktopSurface>()
+        .window;
+    assert_ne!(shown, original);
+    assert_eq!(
+        app.world()
+            .get::<kedra_desktop::SurfaceKind>(shown.unwrap()),
+        Some(&kedra_desktop::SurfaceKind::Loading)
+    );
+    crate::loading::show_if_needed(app.world_mut());
+    assert_eq!(
+        app.world()
+            .resource::<kedra_desktop::DesktopSurface>()
+            .window,
+        shown
+    );
 }
 
 #[test]

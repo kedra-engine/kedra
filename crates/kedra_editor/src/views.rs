@@ -10,7 +10,6 @@ pub(crate) enum Kind {
     Frame(kedra_desktop::SurfaceKind),
     Caption(kedra_desktop::SurfaceKind),
     Projects,
-    Boot,
     Loading,
     Editor,
     Entry(EntryMode),
@@ -133,7 +132,6 @@ pub(crate) fn hydrate(world: &mut World) {
             }
             Kind::Caption(_) => document(0xc0900000000040008000000000000001),
             Kind::Projects => document(0xc0300000000040008000000000000001),
-            Kind::Boot => document(0xc0b00000000040008000000000000003),
             Kind::Loading => document(0xb20d50db11804528b8a75ffb53ad9b35),
             Kind::Editor => document(0xc0700000000040008000000000000001),
             Kind::Entry(EntryMode::Create) => document(0xc0400000000040008000000000000001),
@@ -144,7 +142,9 @@ pub(crate) fn hydrate(world: &mut World) {
                 Kind::Frame(surface) => {
                     world.resource_mut::<kedra_desktop::DesktopSurface>().frame = Some(view.root);
                     let body = match surface {
-                        kedra_desktop::SurfaceKind::Boot => Kind::Boot,
+                        kedra_desktop::SurfaceKind::Boot => {
+                            return Err("Editor startup has no splash surface".into());
+                        }
                         kedra_desktop::SurfaceKind::Projects => Kind::Projects,
                         kedra_desktop::SurfaceKind::Loading => Kind::Loading,
                         kedra_desktop::SurfaceKind::Editor => Kind::Editor,
@@ -155,7 +155,6 @@ pub(crate) fn hydrate(world: &mut World) {
                 }
                 Kind::Caption(_) => crate::chrome::bind(world, &view),
                 Kind::Projects => crate::screens::bind_projects(world, &view),
-                Kind::Boot => crate::boot::bind(world, &view),
                 Kind::Loading => crate::loading::bind(world, &view),
                 Kind::Editor => {
                     world

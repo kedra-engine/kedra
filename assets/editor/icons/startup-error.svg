@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="SVG/error">
+<mask id="stroke0_0_135" fill="white">
+<path d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z"/>
+</mask>
+<path id="Vector" d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8Z" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke="#F0A3A3" mask="url(#stroke0_0_135)"/>
+<path id="Vector_2" d="M8 4V9M8 11V11.1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#F0A3A3"/>
+</g>
+</svg>

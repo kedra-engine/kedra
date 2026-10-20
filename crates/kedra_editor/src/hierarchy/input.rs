@@ -187,15 +187,15 @@ impl Panel {
                     .as_ref()
                     .is_some_and(|t| t.rows[*i].address == node)
             }) {
-                let top = 4. + position as f32 * 26.;
+                let top = 4. + position as f32 * 22.;
                 let height = kedra_ui::docking::rect(world, area).map_or(260., |r| r.height());
                 if let Some(mut scroll) = world.get_mut::<ScrollPosition>(area) {
                     if position == 0 {
                         scroll.y = 0.;
                     } else if top < scroll.y {
                         scroll.y = top;
-                    } else if top + 26. > scroll.y + height {
-                        scroll.y = (top + 26. - height).max(0.);
+                    } else if top + 22. > scroll.y + height {
+                        scroll.y = (top + 22. - height).max(0.);
                     }
                 }
             }

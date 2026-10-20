@@ -31,7 +31,7 @@ def run(c, state_directory):
 
     def resize(width):
         window = c.node(c.label(view))["window"]
-        c.completed(c.operation("app.resize", window=window, width=width + 2, height=674, dpr=2))
+        c.completed(c.operation("app.resize", window=window, width=width, height=674, dpr=2))
         c.wait(lambda: abs(c.node(c.group_id(c.group(view)))["rect"][2] - c.node(c.group_id(c.group(view)))["rect"][0] - width) < 1, "reference panel width")
         return window
 
@@ -77,16 +77,16 @@ def run(c, state_directory):
     viewport = node("entries")["rect"]
     near(root["rect"][0], viewport[0] + 4)
     near(root["rect"][1], viewport[1] + 4)
-    near(root["rect"][3] - root["rect"][1], 26)
+    near(root["rect"][3] - root["rect"][1], 22)
     near(root["rect"][2], viewport[2] - 4)
     c.click(prefix + "node/0")
     c.event(window=window, kind="key", key="left")
     c.event(window=window, kind="key", key="right")
     c.wait(lambda: node("row/1"), "expanded branch")
     near(node("row/1")["rect"][0] - root["rect"][0], 12)
-    near(node("row/1")["rect"][1] - root["rect"][1], 26)
+    near(node("row/1")["rect"][1] - root["rect"][1], 22)
     c.event(window=window, kind="key", key="down")
-    c.wait(lambda: node("row/1")["background"] == [69, 102, 143, 255], "persistent selection color")
+    c.wait(lambda: node("row/1")["background"] == [87, 65, 111, 255], "persistent selection color")
     selected = c.state()["documents"]
     c.event(window=window, kind="move", position=[310, 620])
     default_frame = c.frame(window)
@@ -101,8 +101,8 @@ def run(c, state_directory):
     assert not node("filter")["enabled"], "Unsupported filters must not appear functional"
     for key in ("filter", "close-search"):
         rect = node(key)["rect"]
-        near(rect[2] - rect[0], 26)
-        near(rect[3] - rect[1], 26)
+        near(rect[2] - rect[0], 22)
+        near(rect[3] - rect[1], 22)
     c.click(prefix + "search")
     c.event(window=window, kind="text", text="STRASSE")
     c.wait(lambda: node("search")["value"] == "STRASSE", "current-folder-style retained search")
@@ -128,7 +128,7 @@ def run(c, state_directory):
     c.event(window=window, kind="key", key="right")
     c.click("workspace/reset")
     return {"frames": [default_frame, search_frame, inactive, collapsed_frame],
-            "verified": ["default has no toolbar/footer", "26px rows", "12px indentation", "4px viewport inset", "selection color", "38px search", "26px flat actions", "232/320px hosts", "optional source details", "collapsed state"],
+             "verified": ["default has no toolbar/footer", "22px rows", "12px indentation", "4px viewport inset", "selection color", "38px search", "22px flat actions", "232/320px hosts", "optional source details", "collapsed state"],
             "limitations": ["injected Bevy input", "dynamic source names/icons differ from the design specimen", "not complete Figma pixel equivalence", "no structural editing"]}
 
 

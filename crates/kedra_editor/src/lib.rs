@@ -57,7 +57,6 @@ impl Plugin for EditorPlugin {
                 actions::native::apply.after(bevy::text::EditableTextSystems),
             )
             .init_resource::<boot::Boot>()
-            .add_systems(OnEnter(AppPhase::Boot), boot::enter)
             .add_systems(OnEnter(AppPhase::Projects), screens::projects)
             .add_systems(
                 OnEnter(AppPhase::Loading),
@@ -69,11 +68,11 @@ impl Plugin for EditorPlugin {
                 (
                     screens::sync_fields,
                     jobs::poll,
-                    boot::created,
                     views::hydrate,
                     boot::poll,
                     recent::poll,
                     jobs::finish_loading,
+                    loading::show_if_needed,
                     recent::sync,
                     entry_preview::sync,
                     screens::sync_status,
@@ -142,7 +141,7 @@ pub fn run(
         kedra_ui::authored::AuthoredUiPlugin,
         kedra_ui::tooltip::TooltipPlugin,
         kedra_scene::assets::PrefabPlugin {
-            catalog_path: "editor://scenes/boot.prefabs.ron".into(),
+            catalog_path: "editor://scenes/startup.prefabs.ron".into(),
         },
         EditorPlugin,
     ));

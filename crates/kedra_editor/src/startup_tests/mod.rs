@@ -91,6 +91,9 @@ pub(crate) fn app() -> App {
         kedra_scene::assets::SceneAssetPlugin,
         crate::EditorPlugin,
     ));
+    // Delivery verification has separate real-I/O fixtures. Hold this CPU view
+    // host in windowless startup until each test explicitly chooses a workflow.
+    app.world_mut().resource_mut::<crate::boot::Boot>().started = Some(Duration::ZERO);
     // Asset scheduling must not consume bootstrap deadlines. Individual tests
     // advance the clock explicitly; wall time is only a deadlock watchdog.
     app.insert_resource(bevy::time::TimeUpdateStrategy::ManualDuration(
@@ -113,7 +116,7 @@ pub(crate) fn app() -> App {
     app.finish();
     app.cleanup();
     let mut catalog = Catalog::default();
-    for index in ["scenes/startup.prefabs.ron", "scenes/boot.prefabs.ron"] {
+    for index in ["scenes/startup.prefabs.ron"] {
         for uri in
             CatalogLoader::parse(&std::fs::read_to_string(source_root().join(index)).unwrap())
                 .unwrap()

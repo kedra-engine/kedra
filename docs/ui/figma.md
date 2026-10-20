@@ -20,6 +20,23 @@ Component entry points:
   `222:51199`, Floating right/macOS `222:51320` / `222:51364`.
 - Panel/startup masters: `176:38405`.
 - Shared screen compositions: `107:3539`.
+- Startup surface family: `109:9133`; Boot `109:8369`, Opening `109:8406`,
+  Failed `109:8445`, Projects `109:8489`, Open `109:8873`.
+
+## Startup identity and shared palette
+
+The manager/loading uses exact compact T3 logo export `281:17461` (master
+`267:2212`); owner-confirmed provenance is recorded in [assets](../../assets/README.md).
+Boot and full-window artwork remain Figma design references, not implemented
+startup surfaces. Owner direction replaces the initial splash with windowless
+startup and omits heavy loading artwork; see
+[ADR 0021](../decisions/0021-windowless-startup.md).
+
+Foundations `51:1088` and primary Button states `27:443`, `27:445`, `27:447` pin
+accent `#7950bc`, hover `#865cc3`, pressed `#603993`, selection `#57416f`, focus
+`#d08bff`. These roles apply to the whole editor, including docking previews and
+the startup spinner. Current source-only preparation retains truthful wording
+instead of the design's future build/trust claims.
 
 ## Asset Browser source exports
 
@@ -58,7 +75,7 @@ These exports do not update the old pinned visual references.
 ## Hierarchy source exports
 
 Read-only [Hierarchy](hierarchy.md) follows `128:32776` under `125:17354`:
-26px rows, 12px depth indentation and existing semantic tokens. Its scene-root
+22px rows, 12px depth indentation and existing semantic tokens. Its scene-root
 icon `hierarchy-scene.svg` comes from UI-KIT `10:2429`, and the generic source-node
 icon `hierarchy-node.svg` from `10:2426`. Both use native 1x–4x density packages.
 The selected-focus specimen `128:32955` supplies `hierarchy-node-selected.svg`
@@ -75,9 +92,17 @@ contract; no rename, reparent or prefab-editing affordance implies support.
 
 ## Inspector and shared property controls
 
-[Inspector](inspector.md) uses composition `108:8790`, search `108:8936` and the
-Visibility example `108:9034`. Shared row and section sources are `11:142` and
-`11:499`; read-only TextField is `49:554` (26px, 9px horizontal padding, 6px gap).
+[Inspector](inspector.md) uses Flat compact A `131:20213` (320px) and `131:20388`
+(480px); the integrated editor reference is `52:438`. Shared row and section
+sources remain `11:142` and `11:499`; read-only TextField is `49:554` (22px,
+6px horizontal padding, 4px control gap). Current bound geometry supersedes stale
+component descriptions mentioning raised bevels or 26/28px controls. Shared
+controls/tools/tree rows are 22px, section/menu rows 24px, control radii 2px;
+32px window/dock headers, 28px tabs and asset-card sizes are unchanged. Fields
+retain 16px icons and 12/16 body text. Remove control highlights/shadows, not
+popup external shadows or interaction-state feedback. No removed drafts,
+comparison variants or unintegrated Scene View experiments are implementation
+sources. Branding, palette and the windowless startup decision remain unchanged.
 `property-lock.svg` is the exact UI-KIT export used by `49:554` and the property row,
 not a fabricated icon. Sections reuse exact `browser-down.svg` / `browser-right.svg`
 exports listed above. No community assets or screenshot backgrounds are used.
@@ -91,7 +116,8 @@ review; native captures do not constitute pinned Figma pixel-equivalence evidenc
 right-aligned settings. Local icons `scene-down.svg`, `scene-grid-selected.svg`
 and `scene-settings.svg` are exact exports of `10:2399`, `10:2488` and `10:2482`.
 Rendered assets are data, not the SVG illustration `108:8635`. The profile records
-the read-only World / 1 unit adaptation and native inset-shadow limitation.
+the read-only World / 1 unit adaptation. Flat compact A applies to existing
+controls; removed Scene View experiments are not imported or used to add features.
 
 [ADR 0009](../decisions/0009-property-editing-and-inspector.md) proposes shared
 property-editing ownership. [ADR 0010](../decisions/0010-text-field-interaction.md)

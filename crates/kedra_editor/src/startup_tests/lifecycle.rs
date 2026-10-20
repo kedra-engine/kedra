@@ -21,16 +21,15 @@ fn source_dependencies_load_only_after_css_plugin_registration_is_complete() {
 }
 
 #[test]
-fn full_plugin_hydrates_boot_then_retires_owned_pending_views_on_project_transition() {
+fn first_native_surface_is_projects_and_replacement_retires_its_pending_views() {
     let mut app = app();
-    app.update();
-    app.update();
-    app.update();
-    let version = element(app.world_mut(), "boot.version");
-    assert_eq!(
-        app.world().get::<Text>(version).unwrap().0,
-        env!("CARGO_PKG_VERSION")
+    assert!(
+        app.world()
+            .resource::<kedra_desktop::DesktopSurface>()
+            .window
+            .is_none()
     );
+    projects(&mut app);
     let old = app
         .world()
         .resource::<kedra_desktop::DesktopSurface>()
@@ -93,7 +92,7 @@ fn pending_sources_timeout_is_exact_and_missing_document_is_terminal() {
         .resource_mut::<PrefabSources>()
         .dependencies_ready = true;
     let root = app.world_mut().spawn_empty().id();
-    views::request(app.world_mut(), root, views::Kind::Boot).unwrap();
+    views::request(app.world_mut(), root, views::Kind::Projects).unwrap();
     views::hydrate(app.world_mut());
     assert_failure(app.world(), "document is absent");
 }

@@ -58,10 +58,10 @@ impl Panel {
         let area = self.element("entries")?;
         let bounds = rect(world, area);
         let scroll = world.get::<ScrollPosition>(area).map_or(0., |p| p.y);
-        let first = ((scroll / 26.).floor().max(0.) as usize)
+        let first = ((scroll / 22.).floor().max(0.) as usize)
             .saturating_sub(1)
             .min(self.visible.len());
-        let end = (first + (bounds.map_or(520., |r| r.height()) / 26.).ceil().max(1.) as usize + 3)
+        let end = (first + (bounds.map_or(520., |r| r.height()) / 22.).ceil().max(1.) as usize + 3)
             .min(self.visible.len());
         Ok((
             first,
@@ -117,7 +117,7 @@ impl Panel {
             world,
             canvas,
             [
-                ("height", format!("{}px", self.visible.len() * 26 + 8)),
+                ("height", format!("{}px", self.visible.len() * 22 + 8)),
                 ("min-width", format!("{width}px")),
             ],
         );
@@ -158,7 +158,7 @@ impl Panel {
                 world,
                 view.root,
                 [
-                    ("top", format!("{}px", 4 + position * 26)),
+                    ("top", format!("{}px", 4 + position * 22)),
                     ("left", format!("{}px", 4 + row.depth * 12)),
                     (
                         "width",

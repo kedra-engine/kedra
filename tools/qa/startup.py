@@ -100,30 +100,19 @@ def lifecycle(client, isolated_state, capture_frames, reference):
         old_window = client.window()
         started = time.monotonic()
         operation = client.operation("editor.project", command=command)
-        loading = client.wait(lambda: (snapshot if "loading" in snapshot["screens"] else None)
-                              if (snapshot := client.rpc("app.observe")) else None, "loading window")
-        step = {"command": command["kind"], "loading_window": loading["windows"][0]["id"]}
-        assert step["loading_window"] != old_window
-        dpr = 1 if command["kind"] == "create" else 2
-        client.completed(client.operation("app.resize", window=client.window(), width=640, height=360, dpr=dpr))
-        step["dpr"] = dpr
-        step["geometry"] = geometry(client, reference, "loading")
-        elements = {element["id"]: element for element in step["geometry"]["elements"]}
-        assert abs(elements["loading.version"]["rect"][1] - 73) <= reference["tolerance"]
-        client.input(kind="click", element="loading.log_toggle")
-        details = client.rpc("app.observe")
-        assert any(node["id"] == "loading.log" and node["visible"] for node in details["elements"])
-        client.input(kind="click", element="loading.log_toggle")
-        assert not any(node["id"] == "loading.log" and node["visible"]
-                       for node in client.rpc("app.observe")["elements"])
-        if capture_frames:
-            step["frame"] = client.capture()
+        step = {"command": command["kind"], "intermediate_loading_required": False}
+        # Fast work intentionally has no loading window. Completion must not wait
+        # for native creation/hydration of an unused intermediate surface.
         client.completed(operation)
-        step["elapsed"] = time.monotonic() - started
+        step["source_ready_seconds"] = time.monotonic() - started
         assert client.rpc("editor.state")["project"]["root"] == str(project)
         assert (project / "kedra.toml").is_file()
         assert (project / "assets").is_dir()
         client.wait(lambda: "editor" in client.rpc("app.observe")["screens"], "empty editor host")
+        assert client.window() != old_window
+        step["editor_ready_seconds"] = time.monotonic() - started
+        if capture_frames:
+            step["frame"] = client.capture()
         try:
             client.rpc("app.input", {"session": client.session, "id": str(uuid.uuid4()),
                                      "window": old_window, "input": {"kind": "move", "position": [10, 10]}})
