@@ -20,6 +20,38 @@ fn empty_delivery() -> (tempfile::TempDir, kedra_assets::delivery::Manifest) {
     (directory, manifest)
 }
 
+fn assert_verification_started(world: &World) {
+    let boot = world.resource::<Boot>();
+    assert!(boot.started.is_some());
+    // poll() may consume a fast result in the same call that starts the task.
+    // Both pending and successfully verified states prove verification started.
+    assert!(boot.verification.is_some() || boot.verified);
+}
+
+#[test]
+fn completed_verification_is_consumed_while_catalog_still_blocks_startup() {
+    let mut app = app();
+    let task = IoTaskPool::get().spawn(async { Ok(()) });
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while !task.is_finished() {
+        assert!(Instant::now() < deadline);
+        std::thread::yield_now();
+    }
+    app.insert_resource(Boot {
+        started: Some(Duration::ZERO),
+        verification: Some(task),
+        ..default()
+    });
+    app.world_mut().resource_mut::<PrefabSources>().pending = true;
+    poll(app.world_mut());
+    assert_verification_started(app.world());
+    let boot = app.world().resource::<Boot>();
+    assert!(boot.verified);
+    assert!(boot.verification.is_none());
+    assert!(!boot.complete);
+    assert!(!app.world().contains_resource::<crate::jobs::PendingJob>());
+}
+
 #[test]
 fn verification_starts_without_a_window_or_renderer_and_waits_for_catalog() {
     let (directory, manifest) = empty_delivery();
@@ -28,8 +60,7 @@ fn verification_starts_without_a_window_or_renderer_and_waits_for_catalog() {
     app.world_mut().resource_mut::<Boot>().delivery = Some((directory.path().into(), manifest));
     app.world_mut().resource_mut::<PrefabSources>().pending = true;
     poll(app.world_mut());
-    assert!(app.world().resource::<Boot>().started.is_some());
-    assert!(app.world().resource::<Boot>().verification.is_some());
+    assert_verification_started(app.world());
     let deadline = Instant::now() + Duration::from_secs(5);
     while !app.world().resource::<Boot>().verified {
         assert!(Instant::now() < deadline);
@@ -73,6 +104,8 @@ fn missing_delivery_integrity_failure_and_deadline_remain_terminal_without_fallb
     app.world_mut().resource_mut::<Boot>().verification = Some(task);
     poll(app.world_mut());
     assert_failure(app.world(), "integrity mismatch");
+    assert!(!app.world().resource::<Boot>().verified);
+    assert!(app.world().resource::<Boot>().verification.is_none());
     assert!(!app.world().resource::<Boot>().complete);
     assert!(
         app.world()
