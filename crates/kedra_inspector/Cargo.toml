@@ -1,0 +1,32 @@
+[package]
+name = "kedra_inspector"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Consumer-neutral retained inspection of native Bevy reflected values"
+
+[package.metadata.kedra]
+layer = "editor"
+
+[dependencies]
+bevy.workspace = true
+kedra_ui.workspace = true
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+bevy = { workspace = true, features = ["bevy_winit", "ui_bevy_render", "ui_picking", "png"] }
+kedra_scene.workspace = true
+kedra_assets.workspace = true
+kedra_app.workspace = true
+bevy_flair.workspace = true
+ron.workspace = true
+
+[features]
+native-fixture = ["kedra_ui/system-fonts"]
+
+[[example]]
+name = "value_fixture"
+required-features = ["native-fixture"]

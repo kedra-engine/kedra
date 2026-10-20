@@ -99,7 +99,15 @@ impl Plugin for AuthoredUiPlugin {
         if let Err(error) = registration {
             app.world_mut().resource_mut::<UiFailure>().0 = Some(error.to_string());
         }
-        app.add_systems(Update, (style::editing, style::images, style::spin));
+        app.add_systems(
+            Update,
+            (
+                style::editing,
+                style::images,
+                style::spin,
+                crate::fields::responsive_rows,
+            ),
+        );
     }
 }
 

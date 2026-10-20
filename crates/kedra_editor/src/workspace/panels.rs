@@ -7,6 +7,7 @@ use kedra_ui::docking::class;
 pub(super) struct State {
     pub(super) browsers: BTreeMap<ViewId, crate::asset_browser::Panel>,
     pub(super) hierarchies: BTreeMap<ViewId, crate::hierarchy::Panel>,
+    pub(super) inspectors: BTreeMap<ViewId, crate::inspector::Panel>,
     pub(super) scenes: BTreeMap<ViewId, crate::scene_view::View>,
     pub(super) scene_layer: usize,
 }
@@ -200,7 +201,14 @@ pub(super) fn mount(world: &mut World, state: &mut EditorWorkspace) -> Result<()
             state.titles.insert(id, "Hierarchy".into());
             continue;
         }
-        if matches!(record.kind.as_str(), "inspector" | "preview") {
+        if record.kind == "inspector" {
+            let panel = crate::inspector::Panel::mount(world, state.stash, id)?;
+            state.renderer.register(id, panel.root())?;
+            state.panels.inspectors.insert(id, panel);
+            state.titles.insert(id, "Inspector".into());
+            continue;
+        }
+        if record.kind == "preview" {
             let view = crate::views::mount(
                 world,
                 state.stash,
@@ -300,6 +308,11 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
         }
     }
     for (id, panel) in &mut state.panels.hierarchies {
+        if let Err(error) = panel.tick(world, *id, &state.documents) {
+            crate::views::fail(world, error);
+        }
+    }
+    for (id, panel) in &mut state.panels.inspectors {
         if let Err(error) = panel.tick(world, *id, &state.documents) {
             crate::views::fail(world, error);
         }

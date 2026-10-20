@@ -279,6 +279,22 @@ impl Workspace {
         policies: &ComponentPolicies,
         loader: &mut dyn LoadFromPath,
     ) -> Self {
+        Self::open_compiled(source, types, policies, loader).0
+    }
+    /// Admit sources and return the exact immutable compilation used to validate them.
+    /// Read-only tools can retain these snapshots without recompiling or instantiating
+    /// a live World. Later working edits do not update these admission snapshots.
+    /// Failure preserves original source bytes and diagnostics, returns no compiled
+    /// entries and publishes no partial working set. Filesystem access remains host-owned.
+    pub fn open_compiled(
+        source: SourceSnapshot,
+        types: &TypeRegistry,
+        policies: &ComponentPolicies,
+        loader: &mut dyn LoadFromPath,
+    ) -> (
+        Self,
+        BTreeMap<DocumentId, std::sync::Arc<kedra_scene::instance::CompiledPrefab>>,
+    ) {
         let mut workspace = Self {
             working: WorkingSet::default(),
             source,
@@ -287,17 +303,21 @@ impl Workspace {
             pending: None,
             last_receipt: None,
         };
-        if let Err(error) = workspace.decode(types, policies, loader) {
-            workspace.diagnostic = Some(error.to_string());
-        }
-        workspace
+        let compiled = match workspace.decode(types, policies, loader) {
+            Ok(compiled) => compiled,
+            Err(error) => {
+                workspace.diagnostic = Some(error.to_string());
+                BTreeMap::new()
+            }
+        };
+        (workspace, compiled)
     }
     fn decode(
         &mut self,
         types: &TypeRegistry,
         policies: &ComponentPolicies,
         loader: &mut dyn LoadFromPath,
-    ) -> Result<()> {
+    ) -> Result<BTreeMap<DocumentId, std::sync::Arc<kedra_scene::instance::CompiledPrefab>>> {
         if self.source.namespace.is_empty()
             || self.source.namespace.len() > 64
             || !self
@@ -377,10 +397,10 @@ impl Workspace {
                 ));
             }
         }
-        compile_catalog(&working.catalog(), types, policies, loader)?;
+        let compiled = compile_catalog(&working.catalog(), types, policies, loader)?;
         self.paths = paths;
         self.working = working;
-        Ok(())
+        Ok(compiled)
     }
     /// Inspect the immutable in-flight save request for same-operation retry.
     pub fn pending(&self) -> Option<&CommitRequest> {

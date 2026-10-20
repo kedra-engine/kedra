@@ -309,6 +309,51 @@ pub(crate) fn hierarchy_action(world: &mut World, binding: crate::hierarchy::Bin
     });
 }
 
+pub(crate) fn inspector_action(world: &mut World, binding: crate::inspector::Binding) {
+    if !world.contains_resource::<EditorWorkspace>() {
+        return;
+    }
+    world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
+        if !inspector_visible(&state, binding.view) {
+            return;
+        }
+        if let Some(panel) = state.panels.inspectors.get_mut(&binding.view)
+            && let Err(error) = panel.action(world, binding.action)
+        {
+            crate::views::fail(world, error);
+        }
+    });
+}
+pub(crate) fn inspector_disclosure(
+    world: &mut World,
+    disclosure: kedra_inspector::view::Disclosure,
+) {
+    if !world.contains_resource::<EditorWorkspace>() {
+        return;
+    }
+    world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
+        let view = state
+            .panels
+            .inspectors
+            .iter()
+            .find_map(|(id, p)| p.owns(&disclosure).then_some(*id));
+        if let Some(view) = view.filter(|view| inspector_visible(&state, *view))
+            && let Some(panel) = state.panels.inspectors.get_mut(&view)
+            && let Err(error) =
+                panel.action(world, crate::inspector::Action::Disclosure(disclosure))
+        {
+            crate::views::fail(world, error);
+        }
+    });
+}
+fn inspector_visible(state: &EditorWorkspace, view: ViewId) -> bool {
+    let snapshot = state.layout.snapshot();
+    snapshot.location(view).is_some_and(|(group, _)| {
+        matches!(snapshot.nodes.get(&group), Some(kedra_docking::model::Node::Group { active, .. }) if *active == view)
+            && snapshot.host_of(group).and_then(|host| snapshot.hosts.get(&host)).is_some_and(|host| host.maximized.is_none_or(|max| max == group))
+    })
+}
+
 fn tick(world: &mut World) {
     if !world.contains_resource::<EditorWorkspace>() {
         return;

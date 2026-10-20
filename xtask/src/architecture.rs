@@ -113,7 +113,8 @@ fn validate(packages: &[Package<'_>]) -> std::result::Result<(), String> {
         let from = layers[package.name];
         for target in &package.production_dependencies {
             if let Some(to) = layers.get(target)
-                && !allowed(from, to)
+                && (!allowed(from, to)
+                    || (package.name == "kedra_inspector" && !matches!(*to, "core" | "runtime")))
             {
                 return Err(format!(
                     "forbidden dependency: {} ({from}) -> {target} ({to})",
@@ -159,6 +160,39 @@ mod tests {
                 package("game", "runtime", vec![])
             ])
             .is_ok()
+        );
+    }
+
+    #[test]
+    fn inspector_value_boundary_rejects_host_and_authoring_dependencies() {
+        for (name, layer) in [
+            ("kedra_editor", "editor"),
+            ("kedra_desktop", "editor"),
+            ("kedra_authoring", "authoring"),
+            ("source_writer", "import"),
+        ] {
+            assert!(
+                validate(&[
+                    package("kedra_inspector", "editor", vec![name]),
+                    package(name, layer, vec![])
+                ])
+                .is_err(),
+                "Inspector admitted {name}"
+            );
+        }
+        assert!(
+            validate(&[
+                package("kedra_inspector", "editor", vec!["kedra_ui", "bevy"]),
+                package("kedra_ui", "runtime", vec![])
+            ])
+            .is_ok()
+        );
+        assert!(
+            validate(&[
+                package("kedra_ui", "runtime", vec!["kedra_inspector"]),
+                package("kedra_inspector", "editor", vec![])
+            ])
+            .is_err()
         );
     }
 

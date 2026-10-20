@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="SVG/lock">
+<mask id="stroke0_0_28" fill="white">
+<path d="M12 7H4C3.44772 7 3 7.44772 3 8V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V8C13 7.44772 12.5523 7 12 7Z"/>
+</mask>
+<path id="Vector" d="M4 7H12C12.5523 7 13 7.44772 13 8V13C13 13.5523 12.5523 14 12 14H4C3.44772 14 3 13.5523 3 13V8C3 7.44772 3.44772 7 4 7Z" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke="#C9C9C9" mask="url(#stroke0_0_28)"/>
+<path id="Vector_2" d="M5 7V5C5 4.20435 5.31607 3.44129 5.87868 2.87868C6.44129 2.31607 7.20435 2 8 2C8.79565 2 9.55871 2.31607 10.1213 2.87868C10.6839 3.44129 11 4.20435 11 5V7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#C9C9C9"/>
+</g>
+</svg>

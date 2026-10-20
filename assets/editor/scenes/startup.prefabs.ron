@@ -32,4 +32,8 @@
     "editor://prefabs/scrollbar.prefab.ron",
     "editor://prefabs/hierarchy.prefab.ron",
     "editor://prefabs/hierarchy-row.prefab.ron",
+    "editor://prefabs/property-row.prefab.ron",
+    "editor://prefabs/property-value.prefab.ron",
+    "editor://prefabs/property-section.prefab.ron",
+    "editor://prefabs/inspector.prefab.ron",
 ]

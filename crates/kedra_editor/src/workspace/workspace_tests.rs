@@ -39,7 +39,8 @@ fn authored_bind_mounts_real_panel_records_and_retire_preserves_main_owner() -> 
             .values()
             .any(|v| v.kind == "preview")
     );
-    for kind in ["inspector", "preview"] {
+    {
+        let kind = "preview";
         let id = state
             .layout
             .snapshot()
@@ -50,6 +51,11 @@ fn authored_bind_mounts_real_panel_records_and_retire_preserves_main_owner() -> 
         let content = state.renderer.content(id).ok_or("empty content")?;
         // The synthetic catalog exposes just the empty binding, not a draft field.
         assert_eq!(world.get::<Children>(content).map_or(0, Children::len), 1);
+    }
+    assert_eq!(state.panels.inspectors.len(), 1);
+    for (id, panel) in &state.panels.inspectors {
+        assert_eq!(state.renderer.content(*id), Some(panel.root()));
+        assert!(panel.state.target.is_none());
     }
     assert_eq!(state.panels.hierarchies.len(), 1);
     assert!(state.status.is_some());

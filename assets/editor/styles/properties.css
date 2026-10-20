@@ -1,0 +1,15 @@
+/* Canonical property controls; reusable outside the Inspector panel. */
+.property-row { display:flex; width:100%; min-width:0px; flex-direction:row; flex-wrap:wrap; align-items:flex-start; column-gap:8px; row-gap:4px; min-height:26px; flex-shrink:0; }
+.property-label { width:88px; min-width:0px; height:26px; padding-top:5px; font-size:11px; color:var(--secondary); overflow:clip; flex-shrink:0; }
+.property-editor { flex-grow:1; flex-basis:0px; min-width:0px; flex-direction:column; row-gap:6px; }
+.property-diagnostic { display:flex; width:100%; min-width:0px; font-size:11px; color:var(--muted); }
+.property-row.compact { flex-direction:column; }
+.property-row.compact > .property-label { width:100%; height:16px; padding-top:0px; }
+.property-row.compact > .property-editor { width:100%; flex-basis:auto; }
+.property-value { width:100%; min-width:0px; padding:0px 9px; column-gap:6px; }
+.property-section { display:flex; width:100%; min-width:0px; flex-direction:column; flex-shrink:0; }
+.property-heading { width:100%; height:28px; min-height:28px; min-width:0px; padding:0px 8px; column-gap:6px; justify-content:flex-start; border-radius:0px; background-color:var(--header); }
+.property-heading .text { min-width:0px; flex-basis:0px; flex-grow:1; overflow:clip; font-family:var(--font-strong); font-size:12px; font-weight:500; }
+.property-body { display:flex; width:100%; min-width:0px; padding:10px 12px; flex-direction:column; row-gap:6px; }
+.property-section .icon, .property-value .icon { display:flex; }
+.property-section.hidden, .property-row.hidden, .property-section .hidden, .property-row .hidden { display:none; }

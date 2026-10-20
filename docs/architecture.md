@@ -51,9 +51,12 @@ Do not interpret an empty engine graph as proven player isolation.
 
 ## Module rules
 
-[ADR 0009](decisions/0009-property-editing-and-inspector.md) proposes the next
-authoring slice's shared field interactions, inspector boundaries and isolated
-own-source preview. It is not implemented behavior or an approved public API.
+[ADR 0009](decisions/0009-property-editing-and-inspector.md) proposes the full
+authoring slice's field interactions and isolated own-source preview. The
+[read-only Inspector profile](ui/inspector.md) implements shared `kedra_ui::fields`
+controls, consumer-neutral `kedra_inspector` reflection/presentation and an editor
+source adapter. The architecture gate additionally restricts Inspector production
+workspace dependencies to core/runtime layers. Editing and Save remain unimplemented.
 
 [ADR 0012](decisions/0012-document-sessions-and-selection.md) proposes shared
 document/selection authority. Asset Browser, Hierarchy, Inspector and Document

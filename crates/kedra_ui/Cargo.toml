@@ -21,6 +21,10 @@ serde_ignored = "=0.1.14"
 [lints]
 workspace = true
 
+[features]
+# Native hosts opt into maintained OS font fallback; data/minimal consumers do not.
+system-fonts = ["bevy/system_font_discovery"]
+
 [dev-dependencies]
 ron.workspace = true
 uuid.workspace = true
