@@ -7,6 +7,7 @@ pub mod delivery;
 #[cfg(not(target_arch = "wasm32"))]
 mod filesystem;
 pub mod images;
+pub mod location;
 #[cfg(feature = "model-support")]
 pub mod model;
 mod source;

@@ -37,6 +37,23 @@ struct Cli {
 mod tests {
     use super::*;
     #[test]
+    fn explicit_assets_override_environment_and_broken_executable_lookup() {
+        let root = asset_root(
+            Some(PathBuf::from("explicit")),
+            Some("environment".into()),
+            Err(std::io::Error::other("executable unavailable")),
+        );
+        assert_eq!(root, Ok(PathBuf::from("explicit")));
+        let root = asset_root(
+            None,
+            Some("environment".into()),
+            Err(std::io::Error::other("executable unavailable")),
+        );
+        assert_eq!(root, Ok(PathBuf::from("environment")));
+        assert!(asset_root(None, None, Err(std::io::Error::other("unavailable"))).is_err());
+    }
+
+    #[test]
     fn automation_requires_explicit_credentials_for_every_port() {
         assert!(Cli::try_parse_from(["kedra", "--project-assets", "delivery"]).is_err());
         assert!(Cli::try_parse_from(["kedra", "project", "--project-assets", "delivery"]).is_ok());
@@ -146,6 +163,22 @@ enum AssetCommand {
         profile: String,
     },
 }
+fn asset_root(
+    explicit: Option<PathBuf>,
+    environment: Option<std::ffi::OsString>,
+    executable: std::io::Result<PathBuf>,
+) -> Result<PathBuf, String> {
+    if let Some(root) = explicit.or_else(|| environment.map(PathBuf::from)) {
+        return Ok(root);
+    }
+    let executable = executable.map_err(|error| format!("Cannot locate executable: {error}"))?;
+    kedra_assets::location::bundled_asset_root(
+        &executable,
+        kedra_assets::location::BundlePlatform::current(),
+    )
+    .map_err(|error| format!("Cannot locate editor assets; pass --assets PATH: {error}"))
+}
+
 fn run(cli: Cli) -> Result<(), String> {
     match cli.command {
         Some(Command::Assets { command }) => match command {
@@ -187,16 +220,11 @@ fn run(cli: Cli) -> Result<(), String> {
             }
         },
         None => {
-            let root = cli
-                .assets
-                .or_else(|| std::env::var_os("KEDRA_ASSETS").map(PathBuf::from))
-                .or_else(|| {
-                    std::env::current_exe()
-                        .ok()?
-                        .parent()
-                        .map(|parent| parent.join("assets"))
-                })
-                .ok_or("Cannot locate editor assets; pass --assets PATH")?;
+            let root = asset_root(
+                cli.assets,
+                std::env::var_os("KEDRA_ASSETS"),
+                std::env::current_exe(),
+            )?;
             let remote = match cli.remote_port {
                 Some(port) => Some(kedra_editor::RemoteOptions {
                     port,
