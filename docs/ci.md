@@ -76,7 +76,8 @@ All jobs have only `contents: read`, checkout does not persist its token, and no
 corporate secrets or publishing/OIDC permissions are supplied. External actions
 use owner-selected floating stable major tags: checkout/setup-python/upload-artifact
 v7, rust-cache/install-action v2 and mise-action v5. These tags can move; they are not
-immutable source identities. The narrow zizmor ref policy covers only these six reviewed
+immutable source identities. Release download-artifact uses reviewed stable v8.
+The narrow zizmor ref policy covers only these reviewed
 actions; all other security audits remain enabled. Tool installs use pinned
 versions and checksum verification without an automatic source-build fallback.
 Mise 2026.10.15 uses explicit Aqua backends for actionlint, zizmor, rumdl, lychee

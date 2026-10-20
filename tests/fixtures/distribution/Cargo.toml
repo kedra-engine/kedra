@@ -29,6 +29,7 @@ profile = "game-desktop"
 namespace = "game"
 icon = "icon.svg"
 notices = ["NOTICE.txt"]
+license-config = "about.toml"
 
 [dependencies]
 kedra_assets = "=0.1.0"

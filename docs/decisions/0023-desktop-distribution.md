@@ -95,3 +95,26 @@ download SDKs, invoke Cargo or perform bundling.
 Native package checks, real process startup, rendered frames/interaction and
 physical OS integration are distinct evidence. Missing hardware is unverified,
 not green. This does not implement a game runtime, scaffold product or Play.
+
+## License collection and source access
+
+Use maintained cargo-about 0.9.2 for license discovery, with an explicit application
+configuration. Handlebars owns HTML escaping/presentation; Cargo's lockfile parser
+and SHA-256 bind downloaded covered-source archives to the selected revision.
+No custom license scanner or SPDX parser is added. Direct cargo-lock, Handlebars
+and ureq dependencies reuse already-resolved versions; ureq handles TLS/downloads.
+
+The released collector's frozen TLS dependencies fail current advisory checks.
+Its library cannot join this workspace without changing krates' exact indexmap
+2.9.0/petgraph 0.8.1 constraints, conflicting with existing maintained dependencies.
+Do not downgrade Kedra or create a patch/fork/wrapper for notice collection. The
+small installer downloads checksum-pinned official source, uses ordinary Cargo
+update/advisory audit/install commands in an isolated directory and retains that
+lockfile. It installs no system tool globally and executes no tool build before
+the advisory audit succeeds. This trades bit-identical collector graphs across
+dates for current compatible security updates, audited independently of the app.
+
+Configured packaging is fail-closed on missing collectors, unresolved license
+texts, wrong source checksums and unsupported covered-source provenance. Package
+full copyright/license notices and MPL source archives, not merely a table of
+package license names. Font and modified-Winit notices retain existing provenance.

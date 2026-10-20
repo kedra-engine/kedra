@@ -39,6 +39,10 @@ pub(crate) fn execute(
         let mut input = fs::File::open(source).map_err(|e| e.to_string())?;
         std::io::copy(&mut input, &mut destination).map_err(|e| e.to_string())?;
     }
+    if package && let Some(config) = &app.distribution.license_config {
+        eprintln!("Collecting dependency notices and covered source archives with cargo-about");
+        crate::licenses::generate(app, config, &notices)?;
+    }
     eprintln!("[2/4] Compiling application with Cargo");
     let executable = compiler::build(app, release, &stage.join("icons/application.ico"))?;
     fs::copy(

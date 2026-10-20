@@ -63,7 +63,7 @@ jobs:
       - name: Validate workflow syntax and expressions
         run: actionlint -color
       - name: Audit workflow security
-        run: zizmor --offline --no-progress .github/workflows/ci.yml
+        run: zizmor --offline --no-progress .github/workflows
 
   native:
     name: Native (${{ matrix.os }})
@@ -251,6 +251,8 @@ jobs:
         run: python3 -m unittest discover -s tools/qa -p 'test*.py'
       - name: Required gate failure paths
         run: python3 -m unittest discover -s tools/ci -p 'test*.py'
+      - name: Distribution tool failure paths
+        run: python3 -m unittest discover -s tools/distribution -p 'test*.py'
 
   required:
     name: CI required

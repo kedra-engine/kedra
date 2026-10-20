@@ -56,6 +56,32 @@ and must stay inside its Cargo workspace. `assets` is an existing source directo
 reuses the editor's importer and runtime verifier. Build/package never implicitly
 initialize or replace source identities.
 
+Applications can also configure `license-config`, a package-relative cargo-about
+configuration. Packaging then requires cargo-about 0.9.2, collects native normal
+dependency licenses with failure on unresolved licenses, renders full copyright/
+license notices, and bundles checksum-verified original `.crate` source archives
+for MPL-covered crates.io dependencies. Unknown non-registry covered-source
+provenance fails rather than silently omitting sources. Local build paths are not
+published in the notice HTML. This is additional compliance evidence, not a
+replacement for cargo-deny's dependency-admission policy or legal review.
+
+The released collector's frozen TLS graph has current advisories; its library's
+krates dependency also pins indexmap/petgraph versions incompatible with this
+workspace. Do not downgrade project dependencies or patch upstream to force it in.
+The narrow installer uses checksum-pinned upstream source, refreshes and audits
+an isolated tool lockfile, then installs that exact graph with `--locked`:
+
+```sh
+python3 tools/distribution/install_about.py --output /OUTSIDE_CARGO_WORKSPACE/about-tool
+```
+
+Put the resulting `bin` directory on PATH before packaging. CI uses `RUNNER_TEMP`
+and retains the resolved tool lock as evidence. Source/lock/build stay outside the
+application graph; they are not another tracked lockfile or wrapper crate. The
+tool's security updates are resolved at installation time, so its graph is not
+claimed identical across installation dates. Each installation is audited before
+compiling, and existing tool directories are never overwritten.
+
 ```sh
 cargo kedra assets init assets
 cargo kedra icons icon.svg --output target/native-icons
@@ -104,6 +130,31 @@ xtask alias, generates icons/sidecars, invokes the same build/package command an
 runs the staged runtime consumer. It rejects editor/import/tool dependencies in
 the application's normal graph. A local-path run does not prove public Git works.
 
-See [ADR 0023](decisions/0023-desktop-distribution.md) for ownership, security and
-license obligations. Native release automation and public download acceptance
-remain incomplete; do not infer them from a local package.
+## GitHub release boundary
+
+[Desktop distribution](../.github/workflows/release.yml) is manually dispatched
+from protected `main` with an exact source SHA and a new Cargo-matching tag.
+Preflight requires protected-main ancestry, genuine successful repository push CI
+at that exact SHA, and the current GitHub Actions `CI required` result. Existing
+tags/releases are refused rather than overwritten.
+
+Four standard native runners use the same command and independent pinned Git
+consumer, with dependency-only caches separated from validation/coverage roles.
+Native inspection mounts/unpacks actual distributions and exercises installed
+CLI/resources/notices. Physical-input, OS-trust and GUI acceptance are separate.
+Build/inspection jobs have read-only repository permissions. Package artifacts
+are retained one day, bounded diagnostic/tool-lock evidence three days.
+
+`publish` defaults to false, permitting actual build-only acceptance first. Only
+the final publisher receives `contents: write`. It does not checkout or build
+application sources: it loads only narrow policy files from the immutable main
+workflow SHA, consumes this run's artifacts, rechecks the actual complete native
+job set and validates all six package sizes/hashes/source identities. It creates
+a new draft, checks the complete uploaded set and GitHub digests, binds the tag
+to the reviewed source, and only then publishes an explicitly unsigned prerelease.
+An upload/policy failure leaves an unpublished draft; reruns never replace it.
+
+The workflow and publisher still need actual hosted/native and public download
+acceptance. Their presence in source is not evidence of a successful release.
+See [ADR 0023](decisions/0023-desktop-distribution.md) for ownership/security and
+license obligations.

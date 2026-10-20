@@ -4493,10 +4493,12 @@ dependencies = [
 name = "kedra_build"
 version = "0.1.0"
 dependencies = [
+ "cargo-lock",
  "cargo-packager",
  "cargo_metadata",
  "clap",
  "flate2",
+ "handlebars",
  "image",
  "kedra_assets",
  "kedra_import",
@@ -4507,6 +4509,7 @@ dependencies = [
  "tauri-icns",
  "tempfile",
  "tracing-subscriber",
+ "ureq",
  "walkdir",
  "zip",
 ]

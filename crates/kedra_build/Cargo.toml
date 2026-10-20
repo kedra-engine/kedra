@@ -28,6 +28,9 @@ flate2 = "1"
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
+cargo-lock = { version = "=11.1.0", default-features = false }
+handlebars = "=6.4.4"
+ureq = { version = "=3.4.2", default-features = false, features = ["rustls", "platform-verifier"] }
 
 [lints]
 workspace = true

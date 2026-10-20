@@ -45,6 +45,8 @@ pub(crate) struct Distribution {
     pub namespace: String,
     pub icon: PathBuf,
     pub notices: Vec<PathBuf>,
+    #[serde(default, rename = "license-config")]
+    pub license_config: Option<PathBuf>,
 }
 
 pub(crate) struct Application {
@@ -169,6 +171,11 @@ impl Application {
         };
         distribution.assets = resolve(&distribution.assets)?;
         distribution.icon = resolve(&distribution.icon)?;
+        distribution.license_config = distribution
+            .license_config
+            .as_deref()
+            .map(resolve)
+            .transpose()?;
         distribution.notices = distribution
             .notices
             .iter()

@@ -8,6 +8,7 @@ rules:
         actions/checkout: ref-pin
         actions/setup-python: ref-pin
         actions/upload-artifact: ref-pin
+        actions/download-artifact: ref-pin
         Swatinem/rust-cache: ref-pin
         taiki-e/install-action: ref-pin
         jdx/mise-action: ref-pin

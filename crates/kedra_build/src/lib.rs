@@ -5,6 +5,7 @@ mod compiler;
 mod config;
 mod icons;
 mod inventory;
+mod licenses;
 mod package;
 mod pipeline;
 mod worker;
