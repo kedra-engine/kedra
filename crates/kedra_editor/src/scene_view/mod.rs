@@ -3,15 +3,22 @@ mod asset_target;
 pub(crate) mod binding;
 mod bounds;
 pub(crate) mod camera;
+pub(crate) mod camera_motion;
+#[cfg(test)]
+mod camera_motion_tests;
 #[cfg(test)]
 mod camera_tests;
 #[cfg(test)]
 mod canvas_tests;
 #[cfg(test)]
-mod control_tests;
+pub(crate) mod control_tests;
+mod controls;
 mod gpu;
 mod lifecycle;
 mod models;
+pub(crate) mod orientation;
+#[cfg(test)]
+mod orientation_tests;
 mod projection;
 mod selection;
 #[cfg(test)]
@@ -53,11 +60,7 @@ pub(crate) struct View {
     render: Entity,
     information: Entity,
     heading: Entity,
-    controls: Vec<Entity>,
-    projection_label: Entity,
-    lighting_label: Entity,
-    lighting_button: Entity,
-    grid_button: Entity,
+    controls: controls::Controls,
     marker: selection::Marker,
     compiled: Option<Arc<CompiledPrefab>>,
     projection: Option<projection::Projection>,
@@ -66,6 +69,19 @@ pub(crate) struct View {
     raw_model: bool,
 }
 impl View {
+    pub(crate) fn align(
+        &self,
+        world: &mut World,
+        camera: Entity,
+        window: Entity,
+        target: camera::Command,
+    ) -> Result<(), String> {
+        camera_motion::request(world, camera, window, target)?;
+        // Input follows the normal view tick. Instant/reduced-motion requests
+        // must refresh endpoints before this frame's UI layout and extraction.
+        self.controls.orientation(world, camera);
+        Ok(())
+    }
     pub fn mount(
         world: &mut World,
         parent: Entity,
@@ -98,20 +114,7 @@ impl View {
             render: view.element("render").map_err(|e| e.to_string())?,
             information: view.element("information").map_err(|e| e.to_string())?,
             heading: view.element("heading").map_err(|e| e.to_string())?,
-            controls: ["projection", "lighting", "grid", "views"]
-                .into_iter()
-                .map(|name| view.element(name).map_err(|error| error.to_string()))
-                .collect::<Result<_, _>>()?,
-            projection_label: view
-                .element("projection-label")
-                .map_err(|error| error.to_string())?,
-            lighting_label: view
-                .element("lighting-label")
-                .map_err(|error| error.to_string())?,
-            grid_button: view.element("grid").map_err(|error| error.to_string())?,
-            lighting_button: view
-                .element("lighting")
-                .map_err(|error| error.to_string())?,
+            controls: controls::Controls::mount(world, &view)?,
             marker: default(),
             compiled: None,
             projection: None,
@@ -185,25 +188,23 @@ impl View {
         if let Err(error) = &result {
             self.message(world, error, true);
         } else {
-            self.controls_enabled(world, visible && self.navigation(world).is_some());
+            let ready = visible && self.lifecycle.phase == lifecycle::Phase::Ready;
+            self.controls_enabled(world, ready);
+            if ready {
+                self.controls
+                    .spatial_enabled(world, self.navigation(world).is_some());
+            }
         }
+        self.controls.layout(
+            world,
+            self.root,
+            self.viewport,
+            visible && self.navigation(world).is_some(),
+        );
         result
     }
     fn controls_enabled(&self, world: &mut World, enabled: bool) {
-        for button in &self.controls {
-            let disabled = world
-                .get::<bevy::ui::InteractionDisabled>(*button)
-                .is_some();
-            if enabled && disabled {
-                world
-                    .entity_mut(*button)
-                    .remove::<bevy::ui::InteractionDisabled>();
-            } else if !enabled && !disabled {
-                world
-                    .entity_mut(*button)
-                    .insert(bevy::ui::InteractionDisabled);
-            }
-        }
+        self.controls.enabled(world, enabled);
     }
     fn tick_projection(
         &mut self,
@@ -271,36 +272,19 @@ impl View {
         let size = rect.map(|r| r.size() * dpr).unwrap_or(Vec2::ZERO);
         projection.update(world, self.render, size, visible)?;
         if let Some(camera) = projection.camera() {
+            self.controls.orientation(world, camera);
             let orthographic = matches!(
                 world.get::<bevy::camera::Projection>(camera),
                 Some(bevy::camera::Projection::Orthographic(_))
             );
-            let caption = if orthographic {
-                "Orthographic"
-            } else {
-                "Perspective"
-            };
-            if let Some(mut label) = world
-                .get_mut::<Text>(self.projection_label)
-                .filter(|label| label.0 != caption)
-            {
-                label.0 = caption.into();
-            }
+            self.controls.selected(world, "projection", orthographic);
             let inspection = projection.inspection.is_some_and(|entity| {
                 world.get::<Visibility>(entity) == Some(&Visibility::Inherited)
             });
-            let caption = if inspection { "Editor" } else { "Lit" };
-            kedra_ui::docking::class(world, self.lighting_button, "editor-lighting", inspection);
-            if let Some(mut label) = world
-                .get_mut::<Text>(self.lighting_label)
-                .filter(|label| label.0 != caption)
-            {
-                label.0 = caption.into();
-            }
-            kedra_ui::docking::class(
+            self.controls.selected(world, "lighting", inspection);
+            self.controls.selected(
                 world,
-                self.grid_button,
-                "selected",
+                "grid",
                 projection.grid.is_some_and(|entity| {
                     world.get::<Visibility>(entity) != Some(&Visibility::Hidden)
                 }),
@@ -362,6 +346,9 @@ impl View {
     pub(crate) fn focus(&self) -> Entity {
         self.viewport
     }
+    pub(crate) fn control(&self, name: &str) -> Option<Entity> {
+        self.controls.entity(name)
+    }
     pub(crate) fn grid(&mut self, world: &mut World) {
         if self.navigation(world).is_none() {
             return;
@@ -377,6 +364,21 @@ impl View {
             } else {
                 Visibility::Hidden
             };
+        }
+    }
+    pub(crate) fn toggle_overlays(&mut self, world: &mut World) {
+        if self.lifecycle.phase == lifecycle::Phase::Ready {
+            self.marker.set_visible(world, !self.marker.is_visible());
+            self.controls
+                .selected(world, "overlays", self.marker.is_visible());
+        }
+    }
+    pub(crate) fn focus_canvas(&self, world: &mut World) {
+        if self.lifecycle.phase != lifecycle::Phase::Ready {
+            return;
+        }
+        if let Some(mut focus) = world.get_resource_mut::<bevy::input_focus::InputFocus>() {
+            focus.set(self.viewport, bevy::input_focus::FocusCause::Pressed);
         }
     }
     pub(crate) fn light(&mut self, world: &mut World, enabled: bool) {
@@ -403,7 +405,23 @@ impl View {
             world.get::<bevy::camera::Projection>(camera),
             Some(bevy::camera::Projection::Orthographic(_))
         );
-        serde_json::json!({"ready":self.lifecycle.phase==lifecycle::Phase::Ready,"spatial":navigation.is_some(),"translation":transform.map(|transform|transform.translation.to_array()),"rotation":transform.map(|transform|transform.rotation.to_array()),"pivot":navigation.map(|navigation|navigation.pivot.to_array()),"speed":navigation.map(|navigation|navigation.speed),"orthographic":orthographic})
+        let editor_lighting = self
+            .projection
+            .as_ref()
+            .and_then(|projection| projection.inspection)
+            .is_some_and(|entity| world.get::<Visibility>(entity) == Some(&Visibility::Inherited));
+        serde_json::json!({
+            "ready": self.lifecycle.phase == lifecycle::Phase::Ready,
+            "spatial": navigation.is_some(),
+            "translation": transform.map(|pose| pose.translation.to_array()),
+            "rotation": transform.map(|pose| pose.rotation.to_array()),
+            "pivot": navigation.map(|navigation| navigation.pivot.to_array()),
+            "speed": navigation.map(|navigation| navigation.speed),
+            "orthographic": orthographic,
+            "overlays": self.marker.is_visible(),
+            "editor_lighting": editor_lighting,
+            "aligning": camera_motion::active(world, camera),
+        })
     }
     pub fn prepare_asset(
         &mut self,

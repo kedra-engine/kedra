@@ -136,7 +136,7 @@ are disabled for UI-only targets.
 - Alt+LMB orbits about the retained pivot; MMB pans. Wheel dollies or zooms an
   orthographic view only when that viewport owns keyboard focus. Hover alone
   never acquires keyboard ownership.
-- `F` frames selection. Views exposes Frame selection, Frame all and six standard
+- `F` frames selection. View exposes Frame selection, Frame all and six standard
   Y-up views without requiring a numeric keypad. Perspective/Orthographic switches
   preserve the apparent scale at the pivot. Empty/nonrenderable selection keeps
   its source identity and reports unavailable bounds rather than inventing geometry.
@@ -145,6 +145,19 @@ are disabled for UI-only targets.
   scene lighting and view-owned Editor lighting. Editor lighting replaces ambient/
   background and suppresses this view's authored light contribution; it is not
   additive. Returning to Scene lighting restores the scene's accepted settings.
+- The signed Y-up orientation control follows the actual camera. Click an axis
+  endpoint to align; repeat the aligned direction to flip to its opposite. Drag
+  the disc or an endpoint to orbit instead of selecting through it. The right
+  strip exposes LMB-drag Zoom/Pan, Frame selection and a projection toggle.
+  Pointer alignment interpolates the camera and gizmo together over 200ms while
+  preserving the pivot radius. A new click retargets from the current pose;
+  direct manipulation, Escape and focus loss interrupt the turn. The existing
+  reduced-motion preference makes alignment immediate. Keyboard views remain
+  immediate; hit targets follow rendered axis positions during the transition.
+- The eye hides/restores selection bounds without changing document selection,
+  source visibility, grid state or framing bounds. It includes native UI borders;
+  UI-only documents retain this display option without acquiring a spatial camera.
+  Select offers Clear selection; View keeps that command available in narrow docks.
 
 The focusable viewport container owns input; its fitted render-image child is
 decorative. Window-scoped cursor samples are shared with docking, so input and
@@ -198,21 +211,24 @@ viewport policy, not a new reusable controller framework.
 
 ## Design and acceptance
 
-The panel follows UI-KIT `108:9202` / toolbar `108:8644`: existing dock chrome,
-38px toolbar, 128px projection select, 68px Lit select, 26px grid target, flexible
-space and right-aligned settings. Editor lighting expands its select to 88px so
-the value remains readable. Projection and lighting open native shared menus;
-settings exposes framing and standard views. Source title stays in the dock tab,
-not duplicated in the toolbar. Readiness diagnostics retain their overlay.
+The panel follows C-select `186:4545`, C-narrow `186:4949` and selected button
+separation A `192:4579` on the Scene View studies page. See the detailed
+[controls contract](scene-view-controls-design.md). Existing dock chrome retains
+the title and single group menu. A fixed 38px toolbar contains View/Select and
+26px Flat eye/grid/sun controls, with the design's spacing and scoped palette.
+The old projection/lighting text selects, World/units and settings icon are removed.
+Below 640px content width, View retains the selection command while Select hides.
+The 38px selection rail and 96px orientation control anchor to the canvas corners;
+short canvases hide unreachable navigation instead of accepting invisible input.
+Readiness diagnostics remain; no permanent help/footer or canvas labels are added.
 
-Static icons are exact local Figma exports: `scene-down.svg` (`10:2399`),
-`scene-grid-selected.svg` (`10:2488`) and `scene-settings.svg` (`10:2482`), with
-1×–4× density packages and fixed 16px slots. The existing raised/flat button
-families and tokens own states. Native Flair does not accept inset box shadows;
-pressed top-edge treatment uses the existing border mechanism, not a new shader.
-Read-only World / 1 unit replaces the reference's Local / 1 m: there is no local
-transform tool or project-unit conversion yet. It is not a fake active selector.
-The Figma illustration is not used as an implementation image or visual baseline.
+Static artwork is downloaded unchanged from the design, with 1×–4× density
+packages and its exact 16px, 21px endpoint and 86px disc slots. See
+[asset provenance](../../assets/README.md) for sources and Lucide notices. Native
+retained UI positions the signed endpoint artwork and projected axis lines from
+camera rotation; the gizmo is not a frozen perspective illustration. Shared
+Flat/Quiet controls, popup placement and keyboard focus remain authoritative.
+The Figma scene illustration is not an implementation image or a mesh-pixel baseline.
 
 Generate isolated fixture sources under `target/`. The fixture generates a static
 GLB from native Bevy cuboids with two opaque unlit materials (cyan/yellow); no
@@ -253,7 +269,8 @@ evidence. Compilation or an RPC receipt
 alone is not evidence of rendered contents. Injected input does not certify
 physical mouse/trackpad, IME, monitor transitions or all material types. The
 navigation scenario exercises injected orbit/dolly, nested mesh selection,
-deselection, standard views, projection, lighting/grid and retained host transfer.
+deselection, signed-axis alignment/flipping, orbit/zoom/pan controls, Escape/release,
+overlay display, standard views, projection, lighting/grid and retained host transfer.
 The current shared injection API only supplies LMB and tapped keys: RMB flight,
 MMB pan and OS cursor-lock quality require additional native input acceptance;
 headless camera/ownership tests alone do not certify those interactions.

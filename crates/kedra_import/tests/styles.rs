@@ -58,14 +58,18 @@ fn frames(app: &mut App) {
 }
 
 #[test]
-fn scene_toolbar_wraps_without_shrinking_approved_controls_or_fixing_overlay_height() -> Result<()>
-{
+fn scene_toolbar_stays_fixed_and_navigation_restores_after_hidden_state() -> Result<()> {
     let temp = tempfile::tempdir()?;
     let source = temp.path().join("source");
     fs::create_dir(&source)?;
     fs::write(
         source.join("scene.css"),
-        include_str!("../../../assets/editor/styles/scene-view.css"),
+        format!(
+            "{}\n{}\n{}",
+            include_str!("../../../assets/editor/styles/controls.css"),
+            include_str!("../../../assets/editor/styles/startup.css"),
+            include_str!("../../../assets/editor/styles/scene-view.css")
+        ),
     )?;
     kedra_import::initialize(&source, |_| {})?;
     let output = temp.path().join("installed");
@@ -74,7 +78,11 @@ fn scene_toolbar_wraps_without_shrinking_approved_controls_or_fixing_overlay_hei
     let sheet = load(&mut app, "game://scene.css")?;
     let root = app
         .world_mut()
-        .spawn((Node::default(), Styled::new(sheet)))
+        .spawn((
+            Node::default(),
+            Styled::new(sheet),
+            ClassList::new("scene-view"),
+        ))
         .id();
     let toolbar = app
         .world_mut()
@@ -88,8 +96,41 @@ fn scene_toolbar_wraps_without_shrinking_approved_controls_or_fixing_overlay_hei
         .world_mut()
         .spawn((
             Node::default(),
-            ClassList::new("scene-select scene-projection"),
+            ClassList::new("button flat"),
             ChildOf(toolbar),
+        ))
+        .id();
+    let menu = app
+        .world_mut()
+        .spawn((
+            Node::default(),
+            ClassList::new("button quiet scene-menu scene-view-menu"),
+            ChildOf(toolbar),
+        ))
+        .id();
+    let label = app
+        .world_mut()
+        .spawn((
+            Node::default(),
+            TextFont::default(),
+            ClassList::new("text"),
+            ChildOf(menu),
+        ))
+        .id();
+    let navigation = app
+        .world_mut()
+        .spawn((
+            Node::default(),
+            ClassList::new("scene-navigation hidden"),
+            ChildOf(root),
+        ))
+        .id();
+    let rail = app
+        .world_mut()
+        .spawn((
+            Node::default(),
+            ClassList::new("scene-tool-rail hidden"),
+            ChildOf(root),
         ))
         .id();
     let diagnostic = app
@@ -104,12 +145,12 @@ fn scene_toolbar_wraps_without_shrinking_approved_controls_or_fixing_overlay_hei
     let node = app.world().get::<Node>(toolbar).ok_or("Toolbar missing")?;
     assert_eq!(
         node.flex_wrap,
-        FlexWrap::Wrap,
-        "240–320px hosts must wrap rather than clip commands"
+        FlexWrap::NoWrap,
+        "The selected design keeps commands on one row, using View in narrow docks"
     );
-    assert_eq!(node.height, Val::Auto);
+    assert_eq!(node.height, px(38));
     assert_eq!(node.min_height, px(38));
-    assert_eq!(node.row_gap, px(6));
+    assert_eq!(node.column_gap, px(2));
     assert_eq!(node.padding.top, px(6));
     assert_eq!(node.padding.bottom, px(6));
     let node = app
@@ -118,7 +159,7 @@ fn scene_toolbar_wraps_without_shrinking_approved_controls_or_fixing_overlay_hei
         .ok_or("Projection missing")?;
     assert_eq!(
         (node.width, node.height, node.flex_shrink),
-        (px(128), px(26), 0.)
+        (px(26), px(26), 0.)
     );
     assert_eq!(
         app.world()
@@ -130,21 +171,42 @@ fn scene_toolbar_wraps_without_shrinking_approved_controls_or_fixing_overlay_hei
     let document = kedra_scene::document::PrefabDocument::parse(include_str!(
         "../../../assets/editor/prefabs/source-document.prefab.ron"
     ))?;
-    let viewport = document
-        .nodes
-        .iter()
-        .find(|n| n.name == "Native scene render target")
-        .ok_or("Viewport missing")?;
-    let diagnostic = document
-        .nodes
-        .iter()
-        .find(|n| n.name == "Scene readiness and diagnostics")
-        .ok_or("Diagnostic missing")?;
+    let mut identities = std::collections::BTreeMap::new();
+    for node in &document.nodes {
+        if let Some(identity) = node.components.get("ui.id") {
+            let (identity,): (String,) = ron::from_str(identity.value.get_ron())?;
+            identities.insert(identity, node);
+        }
+    }
+    let viewport = identities.get("viewport").ok_or("Viewport missing")?;
+    let diagnostic = identities.get("information").ok_or("Diagnostic missing")?;
     assert_eq!(
         diagnostic.parent.as_ref().map(|p| p.node),
         Some(viewport.id),
-        "Overlay must follow the actual wrapped toolbar, not a fixed top offset"
+        "Diagnostics belong to the canvas, not a window-relative top offset"
     );
+    assert_eq!(
+        app.world()
+            .get::<TextFont>(label)
+            .ok_or("Menu font missing")?
+            .weight,
+        bevy::text::FontWeight::MEDIUM
+    );
+    for hidden in [true, false, true, false] {
+        for target in [navigation, rail, menu] {
+            kedra_ui::docking::class(app.world_mut(), target, "hidden", hidden);
+        }
+        frames(&mut app);
+        for target in [navigation, rail, menu] {
+            assert_eq!(
+                app.world()
+                    .get::<Node>(target)
+                    .ok_or("Scene control missing")?
+                    .display,
+                if hidden { Display::None } else { Display::Flex }
+            );
+        }
+    }
     Ok(())
 }
 

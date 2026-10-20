@@ -7,6 +7,18 @@ pub(super) const SELECTION_COLOR: Color = Color::srgb_u8(177, 210, 255);
 
 #[derive(Component)]
 struct UiMarker(Entity);
+#[derive(Component)]
+struct Suppressed;
+
+pub(super) fn set_visible(world: &mut World, entity: Entity, visible: bool) {
+    if let Ok(mut entity) = world.get_entity_mut(entity) {
+        if visible {
+            entity.remove::<Suppressed>();
+        } else {
+            entity.insert((Suppressed, Visibility::Hidden, InheritedVisibility::HIDDEN));
+        }
+    }
+}
 
 pub(super) fn install(app: &mut App) {
     app.add_systems(
@@ -59,6 +71,9 @@ pub(super) fn sync(world: &mut World) {
             continue;
         }
         let geometry = (|| {
+            if world.get::<Suppressed>(entity).is_some() {
+                return None;
+            }
             let stack_index = bevy::ui::ComputedStackIndex(overlay_index?);
             let target = *world.get::<ComputedUiTargetCamera>(source)?;
             let camera = target.get()?;

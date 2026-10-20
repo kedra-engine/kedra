@@ -28,7 +28,11 @@ pub(super) fn install(app: &mut App) {
     // orthographic depth precision. Editor framing owns those policies here.
     app.add_systems(
         PreUpdate,
-        (PanOrbitCamera::update_camera_positions, sync_pivot)
+        (
+            PanOrbitCamera::update_camera_positions,
+            sync_pivot,
+            super::camera_motion::advance,
+        )
             .chain()
             .after(bevy::picking::PickingSystems::Last),
     );
@@ -71,6 +75,7 @@ pub(crate) fn attach(world: &mut World, camera: Entity, bounds: Option<(Vec3, Ve
     ));
 }
 pub(crate) fn cancel(world: &mut World, camera: Entity) {
+    super::camera_motion::cancel(world, camera);
     if let Some(mut controller) = world.get_mut::<PanOrbitCamera>(camera) {
         controller.current_motion=bevy::camera_controller::pan_orbit_camera::controller::motion::CurrentMotion::Stationary;
     }
@@ -106,6 +111,7 @@ pub(crate) fn zoom(world: &mut World, camera: Entity, amount: f32) {
     if !amount.is_finite() {
         return;
     }
+    super::camera_motion::cancel(world, camera);
     if let Some(mut controller) = world.get_mut::<PanOrbitCamera>(camera) {
         controller.start_zoom(None);
         controller.send_zoom_input(amount.clamp(-100., 100.));
@@ -212,20 +218,26 @@ pub(crate) fn command(world: &mut World, camera: Entity, command: Command) -> Re
             Ok(())
         }
         command => {
-            let (direction, up) = match command {
-                Command::Front => (Vec3::Z, Vec3::Y),
-                Command::Back => (Vec3::NEG_Z, Vec3::Y),
-                Command::Left => (Vec3::NEG_X, Vec3::Y),
-                Command::Right => (Vec3::X, Vec3::Y),
-                Command::Top => (Vec3::Y, Vec3::NEG_Z),
-                Command::Bottom => (Vec3::NEG_Y, Vec3::Z),
-                _ => unreachable!(),
-            };
             *world.get_mut::<Transform>(camera).ok_or("Camera retired")? =
-                Transform::from_translation(pivot + direction * distance).looking_at(pivot, up);
+                view_pose(pivot, distance, command)?;
             Ok(())
         }
     }
+}
+pub(super) fn view_pose(pivot: Vec3, distance: f32, command: Command) -> Result<Transform, String> {
+    let (direction, up) = match command {
+        Command::Front => (Vec3::Z, Vec3::Y),
+        Command::Back => (Vec3::NEG_Z, Vec3::Y),
+        Command::Left => (Vec3::NEG_X, Vec3::Y),
+        Command::Right => (Vec3::X, Vec3::Y),
+        Command::Top => (Vec3::Y, Vec3::NEG_Z),
+        Command::Bottom => (Vec3::NEG_Y, Vec3::Z),
+        _ => return Err("Not a standard camera direction".into()),
+    };
+    if !pivot.is_finite() || !distance.is_finite() || distance < 0.1 {
+        return Err("Camera pose is nonfinite or degenerate".into());
+    }
+    Ok(Transform::from_translation(pivot + direction * distance).looking_at(pivot, up))
 }
 pub(crate) fn frame(
     world: &mut World,

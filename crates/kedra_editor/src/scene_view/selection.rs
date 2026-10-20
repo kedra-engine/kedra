@@ -98,8 +98,27 @@ pub(super) struct Marker {
     entity: Option<Entity>,
     asset: Option<Handle<GizmoAsset>>,
     ui: Option<Entity>,
+    hidden: bool,
 }
 impl Marker {
+    pub(super) fn is_visible(&self) -> bool {
+        !self.hidden
+    }
+    pub(super) fn set_visible(&mut self, world: &mut World, visible: bool) {
+        self.hidden = !visible;
+        if let Some(entity) = self.entity
+            && let Some(mut visibility) = world.get_mut::<Visibility>(entity)
+        {
+            *visibility = if visible {
+                Visibility::Inherited
+            } else {
+                Visibility::Hidden
+            };
+        }
+        if let Some(entity) = self.ui {
+            super::ui_marker::set_visible(world, entity, visible);
+        }
+    }
     pub(super) fn update(
         &mut self,
         world: &mut World,
@@ -120,6 +139,7 @@ impl Marker {
                 self.ui = super::ui_marker::spawn(world, source);
                 self.selected = selected.cloned();
             }
+            self.set_visible(world, !self.hidden);
             if let Some(camera) = projection.camera()
                 && let Some(mut navigation) = world.get_mut::<super::camera::Navigation>(camera)
             {
@@ -174,6 +194,7 @@ impl Marker {
             );
             self.asset = Some(handle);
         }
+        self.set_visible(world, !self.hidden);
         // A failed measurement must not poison the cache for an unchanged
         // selection; publish the cache only after marker/bounds publication.
         self.selected = selected.cloned();

@@ -15,6 +15,7 @@ enum Mode {
     Fly,
     Orbit,
     Pan,
+    Zoom,
 }
 struct Capture {
     view: ViewId,
@@ -24,6 +25,18 @@ struct Capture {
     mode: Mode,
     last: Vec2,
     cursor: Option<bevy::window::CursorOptions>,
+    button: MouseButton,
+    origin: Option<Entity>,
+    start: Vec2,
+    dragged: bool,
+    axis: Option<camera::Command>,
+    area: Rect,
+    focus: Entity,
+}
+impl Capture {
+    fn owns_focus(&self, focused: Option<Entity>, viewport: Option<Entity>) -> bool {
+        focused.is_some() && (focused == viewport || focused == self.origin)
+    }
 }
 struct Click {
     view: ViewId,
@@ -31,6 +44,191 @@ struct Click {
     window: Entity,
     revision: u64,
     start: Vec2,
+}
+#[cfg(test)]
+mod ownership_tests {
+    use super::*;
+    #[test]
+    fn escape_and_axis_release_in_one_update_cancel_instead_of_snapping()
+    -> Result<(), Box<dyn std::error::Error>> {
+        use bevy::ecs::system::RunSystemOnce;
+        let (mut app, _, view_id) = super::super::input::regression_tests::setup()?;
+        app.add_message::<MouseButtonInput>()
+            .add_message::<MouseMotion>()
+            .add_message::<KeyboardInput>()
+            .add_message::<MouseWheel>()
+            .init_resource::<Input>();
+        let world = app.world_mut();
+        let view = crate::scene_view::control_tests::ready(world)?;
+        let viewport = view.focus();
+        super::super::input::regression_tests::box_at(
+            world,
+            viewport,
+            Vec2::splat(100.),
+            Vec2::splat(200.),
+        );
+        world
+            .entity_mut(viewport)
+            .insert((Visibility::Inherited, InheritedVisibility::VISIBLE));
+        let camera = view.navigation(world).ok_or("Ready camera missing")?;
+        world
+            .get_mut::<Camera>(camera)
+            .ok_or("Camera missing")?
+            .is_active = true;
+        let before = *world.get::<Transform>(camera).ok_or("Camera missing")?;
+        let window = world.resource::<EditorWorkspace>().window;
+        world
+            .get_mut::<Window>(window)
+            .ok_or("Window missing")?
+            .focused = true;
+        let revision = {
+            let mut state = world.resource_mut::<EditorWorkspace>();
+            state.rendered = Some(state.layout.revision());
+            state.panels.scenes.insert(view_id, view);
+            state.layout.revision()
+        };
+        let point = Vec2::splat(100.);
+        *world.resource_mut::<input::CursorSample>() = input::CursorSample {
+            window: Some(window),
+            position: point,
+        };
+        world
+            .resource_mut::<InputFocus>()
+            .set(viewport, FocusCause::Pressed);
+        world.resource_mut::<Input>().capture = Some(Capture {
+            view: view_id,
+            camera,
+            window,
+            revision,
+            mode: Mode::Orbit,
+            last: point,
+            cursor: None,
+            button: MouseButton::Left,
+            origin: Some(viewport),
+            start: point,
+            dragged: false,
+            axis: Some(camera::Command::Right),
+            area: Rect::from_corners(Vec2::ZERO, Vec2::splat(200.)),
+            focus: viewport,
+        });
+        assert!(
+            eligible(world, world.resource::<EditorWorkspace>(), view_id, window).is_some(),
+            "Fixture must reach the real release path"
+        );
+        assert!(
+            hit::visible_at(world, viewport, point, 0.),
+            "Axis release origin must be a valid rendered hit target"
+        );
+        world
+            .resource_mut::<Messages<MouseButtonInput>>()
+            .write(MouseButtonInput {
+                button: MouseButton::Left,
+                state: ButtonState::Released,
+                window,
+            });
+        world
+            .resource_mut::<Messages<KeyboardInput>>()
+            .write(KeyboardInput {
+                key_code: KeyCode::Escape,
+                logical_key: bevy::input::keyboard::Key::Escape,
+                state: ButtonState::Pressed,
+                text: None,
+                repeat: false,
+                window,
+            });
+        world
+            .run_system_once(events)
+            .map_err(|error| error.to_string())?;
+        assert_eq!(world.get::<Transform>(camera), Some(&before));
+        assert!(world.resource::<Input>().capture.is_none());
+        assert_eq!(
+            world.resource::<EditorWorkspace>().panels.scenes[&view_id].snapshot(world)["aligning"],
+            false,
+            "Escape must not leave a delayed axis snap"
+        );
+        world.resource_mut::<Messages<MouseButtonInput>>().clear();
+        world.resource_mut::<Messages<KeyboardInput>>().clear();
+        world
+            .resource_mut::<Messages<MouseMotion>>()
+            .write(MouseMotion {
+                delta: Vec2::splat(20.),
+            });
+        world
+            .run_system_once(events)
+            .map_err(|error| error.to_string())?;
+        assert_eq!(world.get::<Transform>(camera), Some(&before));
+        Ok(())
+    }
+    #[test]
+    fn foreign_window_escape_does_not_retire_a_captured_navigation_lease() {
+        let mut world = World::new();
+        let window = world.spawn_empty().id();
+        let foreign = world.spawn_empty().id();
+        let mut input = Input {
+            capture: Some(Capture {
+                view: ViewId::new(),
+                camera: world.spawn_empty().id(),
+                window,
+                revision: 0,
+                mode: Mode::Pan,
+                last: Vec2::ZERO,
+                cursor: None,
+                button: MouseButton::Left,
+                origin: None,
+                start: Vec2::ZERO,
+                dragged: false,
+                axis: None,
+                area: Rect::default(),
+                focus: window,
+            }),
+            ..default()
+        };
+        escape(&mut world, &mut input, foreign);
+        assert!(input.capture.is_some());
+        escape(&mut world, &mut input, window);
+        assert!(input.capture.is_none());
+    }
+    #[test]
+    fn native_focus_on_the_originating_tool_does_not_cancel_its_own_drag() {
+        let mut world = World::new();
+        let viewport = world.spawn_empty().id();
+        let origin = world.spawn_empty().id();
+        let field = world.spawn_empty().id();
+        let capture = Capture {
+            view: ViewId::new(),
+            camera: world.spawn_empty().id(),
+            window: world.spawn_empty().id(),
+            revision: 0,
+            mode: Mode::Orbit,
+            last: Vec2::ZERO,
+            cursor: None,
+            button: MouseButton::Left,
+            origin: Some(origin),
+            start: Vec2::ZERO,
+            dragged: false,
+            axis: None,
+            area: Rect::default(),
+            focus: viewport,
+        };
+        assert!(capture.owns_focus(Some(origin), Some(viewport)));
+        assert!(capture.owns_focus(Some(viewport), Some(viewport)));
+        assert!(!capture.owns_focus(Some(field), Some(viewport)));
+        assert!(!capture.owns_focus(None, Some(viewport)));
+    }
+}
+fn escape(world: &mut World, input: &mut Input, window: Entity) {
+    crate::scene_view::camera_motion::cancel_window(world, Some(window));
+    if input
+        .capture
+        .as_ref()
+        .is_some_and(|capture| capture.window == window)
+        || input
+            .click
+            .as_ref()
+            .is_some_and(|click| click.window == window)
+    {
+        release(world, input);
+    }
 }
 #[derive(Resource, Default)]
 pub(super) struct Input {
@@ -104,6 +302,18 @@ fn position(world: &World, window: Entity) -> Option<Vec2> {
 fn release(world: &mut World, input: &mut Input) {
     input.click = None;
     if let Some(capture) = input.capture.take() {
+        if let Some(origin) = capture
+            .origin
+            .filter(|entity| world.entities().contains(*entity))
+        {
+            kedra_ui::docking::class(world, origin, "captured", false);
+            if world.entities().contains(capture.focus)
+                && let Some(mut focus) = world.get_resource_mut::<InputFocus>()
+                && focus.get() == Some(origin)
+            {
+                focus.set(capture.focus, FocusCause::Pressed);
+            }
+        }
         camera::cancel(world, capture.camera);
         if let Some(cursor) = capture.cursor
             && let Some(mut current) = world.get_mut::<bevy::window::CursorOptions>(capture.window)
@@ -114,6 +324,7 @@ fn release(world: &mut World, input: &mut Input) {
     input.keys.clear();
 }
 pub(super) fn cancel(world: &mut World) {
+    crate::scene_view::camera_motion::cancel_window(world, None);
     if world.contains_resource::<Input>() {
         world.resource_scope(|world, mut input: Mut<Input>| release(world, &mut input));
     }
@@ -136,18 +347,31 @@ fn events(
         }
         world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
             world.resource_scope(|world, mut input: Mut<Input>| {
+                // Escape wins over every release/press from its window in this
+                // batch, regardless of the independent message queues' order.
+                let cancelled = keys
+                    .iter()
+                    .filter(|key| key.key_code == KeyCode::Escape && key.state.is_pressed())
+                    .map(|key| key.window)
+                    .collect::<HashSet<_>>();
+                for window in &cancelled {
+                    escape(world, &mut input, *window);
+                }
                 if input.capture.as_ref().is_some_and(|capture| {
                     capture.revision != state.layout.revision()
-                        || eligible(world, &state, capture.view, capture.window)
-                            .is_none_or(|(camera, _)| camera != capture.camera)
-                        || world
-                            .get_resource::<InputFocus>()
-                            .and_then(|focus| focus.get())
-                            != state
+                        || eligible(world, &state, capture.view, capture.window).is_none_or(
+                            |(camera, area)| camera != capture.camera || area != capture.area,
+                        )
+                        || !capture.owns_focus(
+                            world
+                                .get_resource::<InputFocus>()
+                                .and_then(|focus| focus.get()),
+                            state
                                 .panels
                                 .scenes
                                 .get(&capture.view)
-                                .map(|scene| scene.focus())
+                                .map(|scene| scene.focus()),
+                        )
                 }) {
                     debug!(
                         "Viewport capture cancelled: focus={:?}, expected={:?}",
@@ -162,10 +386,16 @@ fn events(
                 }
                 let mut acquired = false;
                 for event in &buttons {
+                    if cancelled.contains(&event.window) {
+                        continue;
+                    }
                     if event.state == ButtonState::Released {
                         if event.button == MouseButton::Left
+                            && input
+                                .click
+                                .as_ref()
+                                .is_some_and(|click| click.window == event.window)
                             && let Some(click) = input.click.take()
-                            && click.window == event.window
                             && click.revision == state.layout.revision()
                             && eligible(world, &state, click.view, click.window)
                                 .is_some_and(|(camera, _)| camera == click.camera)
@@ -189,31 +419,68 @@ fn events(
                             }
                         }
                         if input.capture.as_ref().is_some_and(|capture| {
-                            capture.window == event.window
-                                && match capture.mode {
-                                    Mode::Fly => event.button == MouseButton::Right,
-                                    Mode::Orbit => event.button == MouseButton::Left,
-                                    Mode::Pan => event.button == MouseButton::Middle,
-                                }
+                            capture.window == event.window && capture.button == event.button
                         }) {
+                            let alignment = if let Some(capture) = &input.capture
+                                && !capture.dragged
+                                && let Some(axis) = capture.axis
+                                && let Some(point) = position(world, event.window)
+                                && point.distance(capture.start) < 4.
+                                && let Some(origin) = capture.origin
+                                && hit::visible_at(world, origin, point, 0.)
+                            {
+                                Some((capture.view, capture.camera, axis))
+                            } else {
+                                None
+                            };
                             release(world, &mut input);
+                            if let Some((view, camera, axis)) = alignment
+                                && let Err(error) = state.panels.scenes[&view].align(
+                                    world,
+                                    camera,
+                                    event.window,
+                                    axis,
+                                )
+                            {
+                                notice(world, &state, &error);
+                            }
                         }
                         continue;
                     }
                     if input.capture.is_some() {
                         continue;
                     }
-                    let Some((view, camera, _, point)) = under_pointer(world, &state, event.window)
+                    let Some((view, camera, area, point)) =
+                        under_pointer(world, &state, event.window)
                     else {
                         continue;
                     };
                     let alt = world
                         .resource::<ButtonInput<KeyCode>>()
                         .any_pressed([KeyCode::AltLeft, KeyCode::AltRight]);
-                    let mode = match event.button {
-                        MouseButton::Right => Some(Mode::Fly),
-                        MouseButton::Middle => Some(Mode::Pan),
-                        MouseButton::Left if alt => Some(Mode::Orbit),
+                    let tool = super::scene_tools::at(world, &state.panels.scenes[&view], point);
+                    if tool.is_some_and(|(tool, _)| tool == super::scene_tools::Tool::Block)
+                        || (tool.is_some() && event.button != MouseButton::Left)
+                    {
+                        continue;
+                    }
+                    let mode = match (event.button, tool) {
+                        (MouseButton::Left, Some((super::scene_tools::Tool::Pan, _))) => {
+                            Some(Mode::Pan)
+                        }
+                        (MouseButton::Left, Some((super::scene_tools::Tool::Zoom, _))) => {
+                            Some(Mode::Zoom)
+                        }
+                        (
+                            MouseButton::Left,
+                            Some((
+                                super::scene_tools::Tool::Orbit | super::scene_tools::Tool::Axis(_),
+                                _,
+                            )),
+                        ) => Some(Mode::Orbit),
+                        (MouseButton::Right, _) => Some(Mode::Fly),
+                        (MouseButton::Middle, _) => Some(Mode::Pan),
+                        (MouseButton::Left, _) if alt => Some(Mode::Orbit),
                         _ => None,
                     };
                     debug!(
@@ -229,7 +496,7 @@ fn events(
                         KeyCode::SuperLeft,
                         KeyCode::SuperRight,
                     ]);
-                    if event.button == MouseButton::Left && !alt && !modified {
+                    if event.button == MouseButton::Left && !alt && !modified && tool.is_none() {
                         input.click = Some(Click {
                             view,
                             camera,
@@ -256,8 +523,15 @@ fn events(
                             options.grab_mode = bevy::window::CursorGrabMode::Locked;
                             options.visible = false;
                         }
+                        let axis = tool.and_then(|(tool, _)| {
+                            if let super::scene_tools::Tool::Axis(axis) = tool {
+                                crate::scene_view::camera_motion::target(world, camera, axis).ok()
+                            } else {
+                                None
+                            }
+                        });
                         camera::cancel(world, camera);
-                        if mode != Mode::Fly {
+                        if mode != Mode::Fly && mode != Mode::Zoom {
                             camera::start(world, camera, mode == Mode::Pan);
                         }
                         input.capture = Some(Capture {
@@ -268,7 +542,17 @@ fn events(
                             mode,
                             last: point,
                             cursor,
+                            button: event.button,
+                            origin: tool.map(|(_, entity)| entity),
+                            start: point,
+                            dragged: tool.is_none(),
+                            axis,
+                            area,
+                            focus: state.panels.scenes[&view].focus(),
                         });
+                        if let Some((_, origin)) = tool {
+                            kedra_ui::docking::class(world, origin, "captured", true);
+                        }
                         acquired = true;
                     }
                     state.focused_group = state
@@ -283,7 +567,7 @@ fn events(
                 }
                 for event in &keys {
                     if event.key_code == KeyCode::Escape && event.state.is_pressed() {
-                        release(world, &mut input);
+                        escape(world, &mut input, event.window);
                         continue;
                     }
                     if let Some(capture) = &input.capture {
@@ -337,7 +621,12 @@ fn events(
                         let focused = world
                             .get_resource::<InputFocus>()
                             .and_then(|focus| focus.get());
-                        if focused == Some(state.panels.scenes[&view].focus()) {
+                        if focused == Some(state.panels.scenes[&view].focus())
+                            && position(world, event.window).is_some_and(|point| {
+                                super::scene_tools::at(world, &state.panels.scenes[&view], point)
+                                    .is_none()
+                            })
+                        {
                             camera::zoom(world, camera, -amount);
                         }
                     }
@@ -346,6 +635,12 @@ fn events(
                     let position = position(world, capture.window).unwrap_or(capture.last);
                     let delta = position - capture.last;
                     capture.last = position;
+                    if !capture.dragged {
+                        if position.distance(capture.start) < 4. {
+                            return;
+                        }
+                        capture.dragged = true;
+                    }
                     let (camera, mode, view) = (capture.camera, capture.mode, capture.view);
                     if mode == Mode::Fly {
                         let held = |key| f32::from(input.keys.contains(&key));
@@ -365,6 +660,8 @@ fn events(
                             fast,
                             dt,
                         );
+                    } else if mode == Mode::Zoom {
+                        camera::zoom(world, camera, delta.y * 0.08);
                     } else {
                         let scale = world
                             .get::<Camera>(camera)
@@ -388,6 +685,45 @@ fn events(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn reduced_motion_axis_alignment_updates_camera_and_gizmo_in_the_same_input_frame()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let (mut app, _, _) = super::super::input::regression_tests::setup()?;
+        let world = app.world_mut();
+        super::super::test_support::sources(world)?;
+        let parent = world.resource::<EditorWorkspace>().root;
+        let mut view =
+            crate::scene_view::View::mount(world, parent, ViewId::new(), "Alignment fixture")?;
+        let camera = crate::scene_view::control_tests::spatial(world, &mut view)?;
+        world
+            .get_mut::<Camera>(camera)
+            .ok_or("Camera missing")?
+            .is_active = true;
+        *world.get_mut::<Transform>(camera).ok_or("Pose missing")? =
+            Transform::from_xyz(4., 3., 5.).looking_at(Vec3::ZERO, Vec3::Y);
+        world.insert_resource(kedra_ui::authored::components::UiMotion { reduced: true });
+        let window = world
+            .spawn(Window {
+                focused: true,
+                ..default()
+            })
+            .id();
+        view.align(world, camera, window, camera::Command::Front)?;
+        let axis = view.control("axis-x").ok_or("X endpoint missing")?;
+        assert_eq!(
+            world.get::<UiTransform>(axis),
+            Some(&UiTransform::from_translation(Val2::px(34., 0.)))
+        );
+        assert!(
+            world
+                .get::<Transform>(camera)
+                .ok_or("Camera missing")?
+                .rotation
+                .angle_between(Quat::IDENTITY)
+                < 0.001
+        );
+        Ok(())
+    }
     #[test]
     fn native_focus_belongs_to_the_viewport_not_its_decorative_render_image()
     -> Result<(), Box<dyn std::error::Error>> {
@@ -475,6 +811,13 @@ mod tests {
                 mode: Mode::Fly,
                 last: Vec2::ZERO,
                 cursor: original,
+                button: MouseButton::Right,
+                origin: None,
+                start: Vec2::ZERO,
+                dragged: true,
+                axis: None,
+                area: Rect::default(),
+                focus: camera,
             }),
             keys: HashSet::from([KeyCode::KeyW]),
             click: None,

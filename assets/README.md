@@ -27,6 +27,17 @@ source tree and are not checked into Git.
 Font license texts accompany the sources and are delivered as normal data assets.
 They remain under SIL OFL 1.1, not the Rust workspace's MIT/Apache license.
 
+## Scene View icons
+
+Scene View Blender-direction icons are exact exports from the same owner-supplied
+file, reference `186:4545`: eye `10:2441`, sun `10:2437`, cube `10:2426`,
+selection `186:2833`, zoom `186:2812`, pan `186:2806`, frame `186:2818`.
+The orbit disc and six signed endpoint backgrounds are exported from `186:2996`;
+their positions and connecting lines follow the actual camera at runtime.
+Selection, zoom, pan and frame originate in Lucide (ISC); the unchanged upstream
+notice is retained at `editor/icons/LICENSE-lucide.txt`. These exports do not
+include the illustrative scene fixture or transform-editing tools.
+
 ## Font derivation
 
 FontTools 4.67.0 instantiated Inter at optical size 14 and weights 400/600,

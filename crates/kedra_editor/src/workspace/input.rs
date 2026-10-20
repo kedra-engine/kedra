@@ -32,6 +32,10 @@ pub(super) enum Action {
     SceneProjection(ViewId, bool),
     SceneGrid(ViewId),
     SceneLight(ViewId, bool),
+    SceneClear(ViewId),
+    SceneOverlays(ViewId),
+    SceneFocus(ViewId),
+    SceneAxis(ViewId, crate::scene_view::orientation::Axis),
 }
 #[derive(Resource, Default)]
 pub(super) struct CursorSample {
@@ -84,8 +88,17 @@ pub(super) fn activate(
     event: On<Activate>,
     controls: Query<&Control>,
     actions: Query<&Action>,
+    drags: Query<(), With<super::scene_tools::DragControl>>,
+    keys: Option<Res<ButtonInput<KeyCode>>>,
     mut commands: Commands,
 ) {
+    if drags.contains(event.entity)
+        && !keys
+            .as_ref()
+            .is_some_and(|keys| keys.any_just_pressed([KeyCode::Space, KeyCode::Enter]))
+    {
+        return;
+    }
     let control = controls.get(event.entity).ok().copied();
     let action = actions.get(event.entity).ok().copied();
     if control.is_none() && action.is_none() {
@@ -174,6 +187,30 @@ fn dispatch(world: &mut World, control: Option<Control>, action: Option<Action>,
                     Action::SceneGrid(view) => {
                         if let Some(scene) = state.panels.scenes.get_mut(&view) {
                             scene.grid(world);
+                        }
+                    }
+                    Action::SceneClear(view) => {
+                        state.documents.clear_selection(view);
+                    }
+                    Action::SceneOverlays(view) => {
+                        if let Some(scene) = state.panels.scenes.get_mut(&view) {
+                            scene.toggle_overlays(world);
+                        }
+                    }
+                    Action::SceneFocus(view) => {
+                        if let Some(scene) = state.panels.scenes.get(&view) {
+                            scene.focus_canvas(world);
+                        }
+                    }
+                    Action::SceneAxis(view, axis) => {
+                        super::scene_input::cancel(world);
+                        if let Some(camera) = state
+                            .panels
+                            .scenes
+                            .get(&view)
+                            .and_then(|scene| scene.navigation(world))
+                        {
+                            crate::scene_view::orientation::align(world, camera, axis)?;
                         }
                     }
                     Action::SceneLight(view, enabled) => {

@@ -8,32 +8,41 @@ fn fixture() -> (App, View) {
     app.add_plugins((MinimalPlugins, bevy::asset::AssetPlugin::default()))
         .init_resource::<ComponentPolicies>()
         .init_asset::<kedra_scene::document::PrefabDocument>();
-    let world = app.world_mut();
+    let view = empty(app.world_mut());
+    (app, view)
+}
+
+fn empty(world: &mut World) -> View {
     let element = world.spawn(Text::default()).id();
     let controls = (0..4).map(|_| world.spawn_empty().id()).collect();
-    let view = View {
+    View {
         root: element,
         viewport: element,
         render: element,
         information: element,
         heading: element,
-        controls,
-        projection_label: element,
-        lighting_label: element,
-        lighting_button: element,
-        grid_button: element,
+        controls: {
+            let mut handles = controls::Controls::default();
+            handles.buttons = controls;
+            handles
+        },
         marker: default(),
         compiled: None,
         projection: None,
         lifecycle: default(),
         elapsed: 0.,
         raw_model: false,
-    };
-    (app, view)
+    }
+}
+
+pub(crate) fn ready(world: &mut World) -> Result<View, String> {
+    let mut view = empty(world);
+    spatial(world, &mut view)?;
+    Ok(view)
 }
 
 fn disabled(world: &World, view: &View) {
-    for button in &view.controls {
+    for button in &view.controls.buttons {
         assert!(
             world
                 .get::<bevy::ui::InteractionDisabled>(*button)
@@ -42,7 +51,7 @@ fn disabled(world: &World, view: &View) {
     }
 }
 
-fn spatial(world: &mut World, view: &mut View) -> Result<Entity, String> {
+pub(crate) fn spatial(world: &mut World, view: &mut View) -> Result<Entity, String> {
     let compiled = tests::compiled(world).map_err(|e| e.to_string())?;
     let mut projection = projection::Projection::pending(1);
     projection.mount(world, compiled.clone())?;
@@ -64,7 +73,7 @@ fn controls_disable_on_unbound_failed_and_retired_tick_exits() -> TestResult {
         lifecycle::Phase::Retired,
     ] {
         view.lifecycle.phase = phase;
-        for button in &view.controls {
+        for button in &view.controls.buttons {
             app.world_mut()
                 .entity_mut(*button)
                 .remove::<bevy::ui::InteractionDisabled>();
@@ -112,7 +121,7 @@ fn failed_and_retired_controls_are_disabled_immediately_and_commands_do_nothing(
         view.lifecycle.diagnostic.as_deref(),
         Some("Renderer failed after readiness")
     );
-    for button in &view.controls {
+    for button in &view.controls.buttons {
         app.world_mut()
             .entity_mut(*button)
             .remove::<bevy::ui::InteractionDisabled>();
@@ -143,5 +152,45 @@ fn asset_rig_failure_retires_a_previously_ready_projection() -> TestResult {
     disabled(app.world(), &view);
     assert_eq!(view.lifecycle.phase, lifecycle::Phase::Failed);
     assert!(app.world().get::<Camera>(camera).is_none());
+    Ok(())
+}
+
+#[test]
+fn hiding_overlays_keeps_selection_bounds_and_other_views_unchanged() -> TestResult {
+    let (mut app, mut view) = fixture();
+    let camera = spatial(app.world_mut(), &mut view)?;
+    let bounds = Some((Vec3::ZERO, Vec3::ONE));
+    app.world_mut()
+        .get_mut::<camera::Navigation>(camera)
+        .ok_or("Navigation missing")?
+        .selection = bounds;
+    assert_eq!(view.snapshot(app.world())["overlays"], true);
+    view.toggle_overlays(app.world_mut());
+    assert_eq!(view.snapshot(app.world())["overlays"], false);
+    assert_eq!(
+        app.world()
+            .get::<camera::Navigation>(camera)
+            .ok_or("Navigation missing")?
+            .selection,
+        bounds
+    );
+    camera::command(app.world_mut(), camera, camera::Command::FrameSelection)?;
+    view.toggle_overlays(app.world_mut());
+    assert_eq!(view.snapshot(app.world())["overlays"], true);
+    let (_, other) = fixture();
+    assert!(other.marker.is_visible());
+    Ok(())
+}
+
+#[test]
+fn ready_ui_preview_can_toggle_bounds_without_advertising_a_spatial_camera() -> TestResult {
+    let (mut app, mut view) = fixture();
+    let camera = spatial(app.world_mut(), &mut view)?;
+    app.world_mut()
+        .entity_mut(camera)
+        .remove::<camera::Navigation>();
+    assert!(view.navigation(app.world()).is_none());
+    view.toggle_overlays(app.world_mut());
+    assert_eq!(view.snapshot(app.world())["overlays"], false);
     Ok(())
 }

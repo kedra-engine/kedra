@@ -10,6 +10,20 @@ fn grid_icon_has_the_four_authored_density_subassets() -> Result<(), Box<dyn std
         "scene-grid-selected",
         "scene-down",
         "scene-settings",
+        "scene-eye",
+        "scene-sun",
+        "scene-cube",
+        "scene-select",
+        "scene-zoom",
+        "scene-pan",
+        "scene-frame",
+        "scene-orbit-disc",
+        "scene-axis-neg-x",
+        "scene-axis-neg-y",
+        "scene-axis-neg-z",
+        "scene-axis-x",
+        "scene-axis-y",
+        "scene-axis-z",
     ] {
         let meta: AssetMeta<ImageVariantsLoader, SvgToImageVariants> =
             ron::de::from_bytes(&std::fs::read(root.join(format!("{name}.svg.meta")))?)?;

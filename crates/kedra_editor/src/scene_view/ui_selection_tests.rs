@@ -42,6 +42,61 @@ fn native_app() -> (App, Entity) {
     (app, camera)
 }
 
+#[test]
+fn hidden_ui_bounds_stay_hidden_across_layout_and_restore_without_reselection() -> Result<(), String>
+{
+    let (mut app, camera) = native_app();
+    let source = app
+        .world_mut()
+        .spawn((
+            Node {
+                width: px(160),
+                height: px(80),
+                ..default()
+            },
+            UiTargetCamera(camera),
+        ))
+        .id();
+    let overlay = ui_marker::spawn(app.world_mut(), source).ok_or("UI bounds missing")?;
+    app.world_mut().run_schedule(PostUpdate);
+    assert_eq!(
+        app.world().get::<Visibility>(overlay),
+        Some(&Visibility::Inherited)
+    );
+    ui_marker::set_visible(app.world_mut(), overlay, false);
+    app.world_mut()
+        .get_mut::<Node>(source)
+        .ok_or("Source missing")?
+        .width = px(200);
+    app.world_mut().run_schedule(PostUpdate);
+    app.world_mut().run_schedule(PostUpdate);
+    assert_eq!(
+        app.world().get::<Visibility>(overlay),
+        Some(&Visibility::Hidden)
+    );
+    assert_eq!(
+        app.world()
+            .get::<Node>(source)
+            .ok_or("Source missing")?
+            .width,
+        px(200)
+    );
+    ui_marker::set_visible(app.world_mut(), overlay, true);
+    app.world_mut().run_schedule(PostUpdate);
+    assert_eq!(
+        app.world().get::<Visibility>(overlay),
+        Some(&Visibility::Inherited)
+    );
+    assert_eq!(
+        app.world()
+            .get::<ComputedNode>(overlay)
+            .ok_or("Bounds missing")?
+            .size,
+        Vec2::new(200., 80.)
+    );
+    Ok(())
+}
+
 fn frame(world: &mut World) -> Result<Entity, String> {
     Ok(world
         .query::<(Entity, &BorderColor, &Pickable)>()

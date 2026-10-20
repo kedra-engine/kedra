@@ -5,36 +5,8 @@ import json
 from pathlib import Path
 from docking import Docking
 from scene_view import inventory
-
-
-def toolbar_geometry(c, prefix):
-    """Check complete hit targets, not merely visible/clipped element flags."""
-    viewport = c.node(prefix + "viewport")
-    assert viewport, "Scene viewport missing"
-    bounds = viewport["rect"]
-    for name in ("projection", "lighting", "grid", "views"):
-        control = c.node(prefix + name)
-        assert control and control["window"] == viewport["window"], name
-        rect = control["rect"]
-        assert bounds[0] <= rect[0] < rect[2] <= bounds[2], (name, rect, bounds)
-        assert rect[3] <= bounds[1] + 1, (name, rect, bounds)
-        assert abs(rect[3] - rect[1] - 26) <= 1, (name, rect)
-    return viewport
-
-
-def anchored_menu(c, prefix, control):
-    anchor = c.node(prefix + control)
-    popup = c.node("dock-menu")
-    assert popup and anchor and popup["window"] == anchor["window"]
-    assert popup["parent"] == anchor["entity"], "Menu lost its invoking control"
-    a, p = anchor["rect"], popup["rect"]
-    assert min(abs(p[1] - a[3] - 4), abs(a[1] - p[3] - 4)) <= 1, (a, p)
-    assert p[0] <= a[2] and p[2] >= a[0], (a, p)
-    window = next(w for w in c.observe()["windows"] if w["id"] == anchor["window"])
-    # app.observe uses logical window size, the same domain as element rectangles.
-    assert p[0] >= 3 and p[1] >= 3, p
-    assert p[2] <= window["width"] - 3 and p[3] <= window["height"] - 3, (p, window)
-    return {"anchor": a, "popup": p, "window": window["id"]}
+from scene_navigation_geometry import toolbar_geometry, anchored_menu, resize_drag
+from scene_control_interactions import exercise
 
 
 def narrow_hosts(c, view, prefix, frames):
@@ -42,15 +14,15 @@ def narrow_hosts(c, view, prefix, frames):
     def menus(case):
         viewport = toolbar_geometry(c, prefix)
         evidence = []
-        for control in ("projection", "lighting", "views"):
+        for control in ("lighting", "views"):
             c.click(prefix + control)
             c.wait(lambda: c.node("scene-menu/0"), "reachable " + control)
             evidence.append(anchored_menu(c, prefix, control))
             frames.append({"case": case + "-" + control, "frame": c.frame(viewport["window"]),
                            "menu_geometry": evidence[-1]})
             if control == "lighting":
-                c.click("scene-menu/1")  # Editor lighting expands the select to 88px.
-                c.wait(lambda: c.node(prefix + "lighting-label").get("text") == "Editor", "editor lighting caption")
+                c.click("scene-menu/1")
+                c.wait(lambda: c.state()["scene_views"][view]["editor_lighting"], "editor lighting state")
                 c.wait(lambda: not c.node(prefix + "information"), "editor lighting ready")
                 toolbar_geometry(c, prefix)
                 c.click(prefix + "lighting")
@@ -58,7 +30,7 @@ def narrow_hosts(c, view, prefix, frames):
                 geometry = anchored_menu(c, prefix, "lighting")
                 frames.append({"case": case + "-editor-lighting", "frame": c.frame(viewport["window"]), "menu_geometry": geometry})
                 c.click("scene-menu/0")
-                c.wait(lambda: c.node(prefix + "lighting-label").get("text") == "Lit", "scene lighting caption")
+                c.wait(lambda: not c.state()["scene_views"][view]["editor_lighting"], "scene lighting state")
                 c.wait(lambda: not c.node(prefix + "information"), "scene lighting ready")
                 continue
             c.event(window=viewport["window"], kind="key", key="escape")
@@ -69,14 +41,34 @@ def narrow_hosts(c, view, prefix, frames):
     # The caller floated the active scene. Verify menu placement before and after
     # a live resize, while the same native popup remains open.
     floating = c.node(prefix + "viewport")["window"]
-    c.click(prefix + "projection")
+    c.completed(c.operation("app.resize", window=floating, width=482, height=394, dpr=2))
+    c.wait(lambda: not c.node(prefix + "information"), "480x360 content frame")
+    viewport = toolbar_geometry(c, prefix)
+    frames.append({"case": "floating-480x360", "frame": c.frame(floating)})
+    old_orbit = c.node(prefix + "orbit")["rect"]
+    point = [(old_orbit[0] + old_orbit[2]) / 2, (old_orbit[1] + old_orbit[3]) / 2]
+    c.completed(c.operation("app.resize", window=floating, width=482, height=320, dpr=1))
+    c.wait(lambda: not c.node(prefix + "information"), "short DPR1 scene")
+    toolbar_geometry(c, prefix)
+    before = c.state()["scene_views"][view]
+    c.event(window=floating, kind="move", position=point)
+    c.event(window=floating, kind="button", pressed=True)
+    assert c.state()["navigation_input"]["capture"] is None, "Hidden orbit captured input"
+    c.event(window=floating, kind="move", position=[point[0]+15, point[1]+8])
+    c.event(window=floating, kind="button", pressed=False)
+    assert c.state()["scene_views"][view] == before, "Hidden navigation moved the camera"
+    frames.append({"case": "floating-short-dpr1", "frame": c.frame(floating)})
+    c.completed(c.operation("app.resize", window=floating, width=482, height=394, dpr=2))
+    c.wait(lambda: not c.node(prefix + "information"), "restored 480x360 DPR2 scene")
+    toolbar_geometry(c, prefix)
+    c.click(prefix + "views")
     c.wait(lambda: c.node("scene-menu/0"), "projection before resize")
     c.completed(c.operation("app.resize", window=floating, width=322, height=640, dpr=2))
     c.wait(lambda: c.node(prefix + "viewport") and
            abs(c.node(prefix + "viewport")["rect"][2] - c.node(prefix + "viewport")["rect"][0] - 320) <= 1,
            "320px floating Scene View")
     c.frame(floating)
-    geometry = anchored_menu(c, prefix, "projection")
+    geometry = anchored_menu(c, prefix, "views")
     frames.append({"case": "floating-live-resize-menu", "frame": c.frame(floating), "menu_geometry": geometry})
     c.event(window=floating, kind="key", key="escape")
     c.wait(lambda: not c.node(prefix + "information"), "resized floating scene ready")
@@ -88,13 +80,10 @@ def narrow_hosts(c, view, prefix, frames):
         group = c.node(c.group_id(c.group(view)))["rect"]
         dividers = [n for n in c.observe()["elements"] if n["visible"] and
                     n["id"].endswith("/divider") and n["rect"][2] - n["rect"][0] <= 8]
-        divider = min(dividers, key=lambda n: abs(n["rect"][0] - group[2]))
-        r = divider["rect"]
-        assert abs(r[0] - group[2]) <= 8, "Expected a divider at Scene View's right edge"
-        point = [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2]
+        point, target = resize_drag(group, dividers, width)
         c.event(kind="move", position=point)
         c.event(kind="button", pressed=True)
-        c.event(kind="move", position=[group[0] + width + (r[2] - r[0]) / 2, point[1]])
+        c.event(kind="move", position=target)
         c.event(kind="button", pressed=False)
         c.wait(lambda: abs(c.node(prefix + "viewport")["rect"][2] - c.node(prefix + "viewport")["rect"][0] - width) <= 1,
                f"{width}px docked Scene View")
@@ -186,7 +175,7 @@ def run(c, project, state_directory):
     c.wait(lambda: pose()["translation"] != old["translation"], "native dolly")
     record("dolly")
 
-    command("Orthographic", "projection")
+    command("Orthographic")
     c.wait(lambda: pose()["orthographic"], "orthographic projection")
     command("Frame selection")
     record("orthographic-frame-selection")
@@ -200,7 +189,12 @@ def run(c, project, state_directory):
     c.click(prefix + "grid")
     command("Scene lighting", "lighting")
     c.wait(lambda: not c.node(prefix + "information"), "scene lighting frame")
-    command("Perspective", "projection")
+    command("Perspective")
+    command("Front")
+    command("Frame all")
+
+    toolbar_geometry(c, prefix)
+    exercise(c, prefix, pose, selection, record)
     command("Front")
     command("Frame all")
 
@@ -226,7 +220,7 @@ def run(c, project, state_directory):
     c.event(window=window, kind="key", key="backspace")
     record("menu-and-field-precedence")
     rect = c.node(prefix + "render")["rect"]
-    c.event(window=window, kind="click", position=[rect[2]-8, rect[1]+8])
+    c.event(window=window, kind="click", position=[rect[0]+60, rect[3]-12])
     c.wait(lambda: selection() is None, "empty-space deselection")
     record("empty-selection")
 

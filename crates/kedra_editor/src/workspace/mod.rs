@@ -18,6 +18,7 @@ mod popup;
 mod preset_tests;
 mod scene_input;
 mod scene_menu;
+mod scene_tools;
 mod scrolling;
 
 pub(crate) fn bind_scene_controls(
@@ -29,7 +30,7 @@ pub(crate) fn bind_scene_controls(
     for (name, action) in [
         (
             "projection",
-            Action::SceneMenu(id, scene_menu::Kind::Projection),
+            Action::SceneCommand(id, crate::scene_view::camera::Command::Projection),
         ),
         (
             "lighting",
@@ -37,19 +38,33 @@ pub(crate) fn bind_scene_controls(
         ),
         ("grid", Action::SceneGrid(id)),
         ("views", Action::SceneMenu(id, scene_menu::Kind::Views)),
+        (
+            "select-menu",
+            Action::SceneMenu(id, scene_menu::Kind::Selection),
+        ),
+        ("select-tool", Action::SceneFocus(id)),
+        ("overlays", Action::SceneOverlays(id)),
+        (
+            "frame",
+            Action::SceneCommand(id, crate::scene_view::camera::Command::FrameSelection),
+        ),
     ] {
         let entity = view.element(name).map_err(|error| error.to_string())?;
         world.entity_mut(entity).insert(action);
         if let Some(mut node) = world.get_mut::<bevy::a11y::AccessibilityNode>(entity) {
             node.set_label(match name {
-                "projection" => "Choose perspective or orthographic projection",
+                "projection" => "Toggle perspective or orthographic projection",
                 "lighting" => "Choose scene or editor lighting",
                 "grid" => "Toggle grid and axes",
+                "select-menu" => "Selection commands",
+                "select-tool" => "Select objects",
+                "overlays" => "Toggle selection overlays",
+                "frame" => "Frame selection",
                 _ => "Framing and standard views",
             });
         }
     }
-    Ok(())
+    scene_tools::bind(world, view, id)
 }
 impl EditorWorkspace {
     pub(crate) fn navigation_input(&self, world: &World) -> serde_json::Value {
