@@ -107,3 +107,6 @@ skip = [
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# Owner-approved, exact-revision macOS input fix; see ADR 0020.
+allow-git = ["https://github.com/kedra-engine/winit.git"]
+required-git-spec = "rev"

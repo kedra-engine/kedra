@@ -45,6 +45,17 @@ duplicate-version exceptions and the time-bounded unmaintained-parser exception.
 
 ## Source provenance and publication
 
+Winit 0.30.13 is consumed from the public
+[Kedra fork](https://github.com/kedra-engine/winit), pinned to
+`948d27f0007602d2536a8974fd483c6fd33d19d3`. Its upstream base is
+`e9809ef54b18499bb4f2cac945719ecc2a61061b` (`v0.30.13`) from
+<https://github.com/rust-windowing/winit>. The delta is the macOS content-view drag
+policy and registry `dpi` resolution described in
+[ADR 0020](decisions/0020-macos-client-titlebar-input.md).
+The upstream Apache-2.0 license and notices remain intact; distribute them with
+binaries and preserve access to the exact modified source. No other fork changes
+or dependency upgrades are included.
+
 The local experimental prototype used for the scene/authoring work belongs to
 Kedra's project owner. The owner confirms its provenance and authorizes inclusion
 of that owner-authored work under Kedra's MIT OR Apache-2.0 project license.

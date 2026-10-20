@@ -45,3 +45,7 @@ expect_used = "deny"
 todo = "deny"
 unimplemented = "deny"
 dbg_macro = "deny"
+
+# ADR 0020: AppKit must not steal client drags in the transparent titlebar.
+[patch.crates-io]
+winit = { git = "https://github.com/kedra-engine/winit.git", rev = "948d27f0007602d2536a8974fd483c6fd33d19d3" }

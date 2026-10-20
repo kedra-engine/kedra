@@ -44,6 +44,11 @@ menus remain client regions when disabled. A modal blocks native gestures in its
 own window. Geometry uses current layout, camera viewport, clipping, DPR and
 `UiScale`. Invalid/unmeasured regions never initiate a native drag.
 
+On macOS, [ADR 0020](../decisions/0020-macos-client-titlebar-input.md) pins a narrow
+Winit fix so AppKit cannot move the window automatically when a client tab drag
+starts in the transparent titlebar. Empty-header movement still uses the shared
+native adapter; background-movable windows remain explicitly opt-in.
+
 `kedra_desktop::chrome` installs through `DesktopPlugin`. Its `bind(world, window)`
 enables the native adapter after a shared UI header is bound. `ChromeControl`
 connects ordinary `Activate` to an explicit `ChromeAction` and window. Close emits
@@ -83,6 +88,7 @@ shadows/edges are not replaced by a borderless-window workaround.
 ```sh
 cargo test -p kedra_ui --test window_chrome --test docking --locked
 cargo test -p kedra_desktop --locked
+cargo run -p kedra_desktop --example macos_header_policy --locked # macOS only
 python3 -m unittest discover -s tools/qa -p 'test_window_chrome.py'
 python3 tools/qa/window_chrome.py target/qa/session.json \
   --state-directory target/qa/state --report target/qa/window-chrome.json
