@@ -108,6 +108,9 @@ Old pinned startup/docking references are not blessed or relaxed for the new
 family. New role-specific Figma exports need independent review; old corpus
 differences remain visible rather than becoming application-generated baselines.
 
-`KEDRA_CHROME_FRAME=<full-frame.png> cargo test -p kedra_editor --test window_chrome_frames --locked -- --ignored`
-checks the owner-requested absence of a light client rim on a real capture. It is
-not an assertion about OS-drawn shadows or buttons.
+```sh
+KEDRA_CHROME_FRAME=<full-frame.png> cargo test -p kedra_editor --test window_chrome_frames --locked -- --ignored
+```
+
+This checks the owner-requested absence of a light client rim on a real capture.
+It is not an assertion about OS-drawn shadows or buttons.

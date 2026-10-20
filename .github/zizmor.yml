@@ -1,0 +1,13 @@
+# Owner-selected policy: floating stable major tags for these reviewed actions.
+# This accepts mutable refs, not immutable source identity. Other actions retain
+# zizmor's default hash requirement; no audit is disabled or globally ignored.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        actions/checkout: ref-pin
+        actions/setup-python: ref-pin
+        actions/upload-artifact: ref-pin
+        Swatinem/rust-cache: ref-pin
+        taiki-e/install-action: ref-pin
+        jdx/mise-action: ref-pin

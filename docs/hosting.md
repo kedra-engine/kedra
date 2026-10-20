@@ -1,8 +1,9 @@
 # Repository administration
 
-Repository: <https://github.com/kedra-engine/kedra>.
-GitHub CI, protection rules, security channels and platform capabilities have
-not been configured or verified. Local source files do not apply server settings.
+Destination: <https://github.com/kedra-engine/kedra>.
+GitHub Actions CI is defined locally. Publication, hosted acceptance, main rules
+and confidential security channels remain pending verification. Local source
+files do not apply server settings or prove the actual rules are active.
 
 ## Before wider public contributions
 
@@ -24,10 +25,16 @@ not been configured or verified. Local source files do not apply server settings
 
 ## Automation and releases
 
-No CI provider configuration or release workflow is installed. Possible future
-self-hosted Yandex Cloud workers are not provisioned or authorized by this document.
-Worker isolation, budgets, credentials and untrusted contribution handling need
-separate approval and verification; see [CI requirements](ci.md).
+The [GitHub workflow](../.github/workflows/ci.yml) uses managed runners with
+read-only repository permissions, dependency-only caching and no private
+infrastructure credentials. No release workflow, Kubernetes cluster or self-hosted
+runner is installed by it; see [CI boundaries and acceptance](ci.md).
+
+After full hosted acceptance, require the actual GitHub Actions `CI required`
+result on main, PR-only changes, an up-to-date base and resolved conversations,
+with force pushes and branch deletion denied and no silent bypass actors.
+The single-maintainer model must not demand a second unavailable human reviewer.
+Read back and test native repository rules; a YAML job name alone is not enforcement.
 
 Before publishing, define protected tags, explicit approval, least-privilege tokens,
 artifact provenance, license notices, clean-machine verification and rollback.

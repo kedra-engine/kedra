@@ -1,6 +1,51 @@
 //! Provider-independent bootstrap and native-runtime dependency contracts.
 
 #[test]
+fn winit_fork_retains_exact_revision_and_reviewed_source() -> Result<(), Box<dyn std::error::Error>>
+{
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .ok_or("workspace root missing")?;
+    let manifest: toml::Value = toml::from_str(&std::fs::read_to_string(root.join("Cargo.toml"))?)?;
+    let fork = &manifest["patch"]["crates-io"]["winit"];
+    assert_eq!(
+        fork["git"].as_str(),
+        Some("https://github.com/kedra-engine/winit.git")
+    );
+    assert_eq!(
+        fork["rev"].as_str(),
+        Some("948d27f0007602d2536a8974fd483c6fd33d19d3")
+    );
+    let lock = cargo_lock::Lockfile::load(root.join("Cargo.lock"))?;
+    let winit: Vec<_> = lock
+        .packages
+        .iter()
+        .filter(|package| package.name.as_str() == "winit")
+        .collect();
+    assert_eq!(winit.len(), 1);
+    assert_eq!(winit[0].version.to_string(), "0.30.13");
+    assert_eq!(
+        winit[0]
+            .source
+            .as_ref()
+            .ok_or("Winit source missing")?
+            .to_string(),
+        "git+https://github.com/kedra-engine/winit.git?rev=948d27f0007602d2536a8974fd483c6fd33d19d3#948d27f0007602d2536a8974fd483c6fd33d19d3"
+    );
+    let policy: toml::Value = toml::from_str(&std::fs::read_to_string(root.join("deny.toml"))?)?;
+    assert_eq!(policy["sources"]["required-git-spec"].as_str(), Some("rev"));
+    assert_eq!(
+        policy["sources"]["allow-git"]
+            .as_array()
+            .ok_or("source allowlist missing")?,
+        &[toml::Value::String(
+            "https://github.com/kedra-engine/winit.git".into()
+        )]
+    );
+    Ok(())
+}
+
+#[test]
 fn xtask_bootstrap_cannot_be_overwritten_by_workspace_tests()
 -> Result<(), Box<dyn std::error::Error>> {
     let config: toml::Value = toml::from_str(include_str!("../../.cargo/config.toml"))?;

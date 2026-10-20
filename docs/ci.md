@@ -1,13 +1,89 @@
-# Local validation and future CI requirements
+# Local validation and GitHub CI
 
 ## Current status
 
-The repository is moving to <https://github.com/kedra-engine/kedra>.
-No GitHub CI configuration, runner fleet, scheduled audit or server-side
-required-check enforcement has been installed or verified. Local commands remain
-the validation entry points; there is no hosted green-status claim for this tree.
-Future self-hosted Yandex Cloud workers are a possibility, not created resources
-or an approved deployment. Do not infer provisioning authority from this guide.
+Destination: <https://github.com/kedra-engine/kedra>. The local
+[workflow](../.github/workflows/ci.yml) defines PR/main validation on managed
+GitHub-hosted runners. Publication, complete hosted acceptance, cache timing
+measurements and main protection verification are pending. Local commands remain
+independent entry points; this document does not claim hosted green status.
+Releases, Kubernetes, private infrastructure and self-hosted runners are outside
+this workflow. The exact Winit fork revision is public on GitHub; see
+[source provenance](third-party.md#source-provenance-and-publication).
+
+## Workflow and required result
+
+PRs targeting main, main pushes and merge queue events run without path filters.
+The seven job groups are `policy`, `native`, `coverage`, `supply-chain`,
+`repository`, `secrets` and `python-qa`. Native validation runs on ubuntu-24.04,
+windows-2025 and macos-15 with matrix fail-fast disabled. Clippy, full workspace
+tests, doctests, API docs and default/minimal/isolated-runtime features are not
+replaced by compilation-only checks. The OS labels are managed images, not a
+bit-for-bit reproducible OS pin; Rust is selected by `rust-toolchain.toml`.
+
+Native and coverage jobs wait for the lightweight policy/workflow checks, avoiding
+expensive compilation for a known policy failure. The matrix platforms remain
+independent of each other's failures.
+
+`CI required` always evaluates all seven expected job-group results, including
+the native matrix result. It succeeds only if every result is `success`; missing,
+extra, failed, cancelled, malformed and skipped results fail closed. The actual
+configured gate entry point has positive and negative behaviour tests:
+
+```sh
+python3 -m unittest discover -s tools/ci -p 'test*.py'
+```
+
+No YAML parser, configuration snapshot tests or CI executor is added. The small
+Python gate enforces Kedra's exact expected results; GitHub owns scheduling and
+execution. actionlint and zizmor validate workflow syntax and security directly.
+
+Native and coverage jobs allow 180 minutes; light jobs allow 30 minutes and the
+final gate five minutes. GitHub documents a six-hour hosted-job execution maximum.
+These budgets do not imply measured runtimes. Superseded PR runs are cancelled;
+accepted main runs are not cancelled just because a newer main exists. Compilation
+uses nonincremental, line-table debug profiles and four jobs on Linux/macOS, one
+on Windows to bound simultaneous MSVC linking. Local developer defaults do not change.
+
+## Cache and permission boundaries
+
+The reviewed `Swatinem/rust-cache@v2` action restores Cargo registry/Git
+sources and dependency compilation artifacts. Its upstream cleanup removes
+workspace outputs, test binaries, incremental artifacts and raw profile files;
+Kedra explicitly disables workspace/all-crate and cargo-bin caching. Do not replace
+it with an unfiltered target or CARGO_HOME archive. Cache keys include the action's
+compiler identity, lock/manifests/config and Cargo/Rust environment hashes, plus
+the managed image's ImageOS/ImageVersion,
+an explicit OS/architecture and native versus coverage role. Coverage additionally
+pins the llvm-cov tool role and uses a separate `target/llvm-cov-target` cache.
+
+Only successful main-push jobs save shared caches; PR jobs restore without saving.
+GitHub's branch scope keeps PR-created caches out of main. Tests, coverage profiles,
+advisory refresh and secret scans always run anew. Native caching does not certify
+the correctness of artifacts. Misses must build normally. Cache restores are
+optional acceleration, never permission to skip a check.
+
+The initial cache budget stays within GitHub's default 10 GB per repository;
+eviction can reduce reuse and must be observed before performance claims. No paid
+increase is implicit. Logs/LCOV and bounded Windows diagnostics are retained for
+seven days, including after failure when available. Successful coverage requires
+a nonempty LCOV; absence after an earlier failure does not turn the job green.
+
+All jobs have only `contents: read`, checkout does not persist its token, and no
+corporate secrets or publishing/OIDC permissions are supplied. External actions
+use owner-selected floating stable major tags: checkout/setup-python/upload-artifact
+v7, rust-cache/install-action v2 and mise-action v5. These tags can move; they are not
+immutable source identities. The narrow zizmor ref policy covers only these six reviewed
+actions; all other security audits remain enabled. Tool installs use pinned
+versions and checksum verification without an automatic source-build fallback.
+Mise 2026.10.15 uses explicit Aqua backends for actionlint, zizmor, rumdl, lychee
+and gitleaks; its signed binary checksums and upstream tool checksum definitions
+are checked by maintained installers. Rust Cargo tools use install-action.
+Mise tool caches save only on main pushes and do not persist GitHub credentials.
+Untrusted PR execution uses
+`pull_request`, never a privileged `pull_request_target` checkout. Compilation and
+release/publishing remain separate. Do not put confidential data into public caches
+or logs. Retain and review tool/license/security pins when updating actions.
 
 ## Local validation map
 
@@ -65,7 +141,7 @@ interactive variable/type inspection; use separate full-debug builds for that.
 These are optional local resource settings, not changed workspace defaults or
 measured completion guarantees.
 
-## Requirements for future automation
+## Acceptance requirements
 
 - Validate each reviewed change and the merged state on Linux, Windows and macOS.
   No path skips or ignored failures may weaken required checks. One broken
@@ -74,7 +150,7 @@ measured completion guarantees.
   dependency advisories. Coverage is a floor, not proof of correctness.
 - An aggregate must reject empty/malformed/missing results as well as failures,
   cancellations and unexpected skips. Test the actual configured aggregate's
-  negative paths when a provider adapter exists; no unused placeholder gate exists.
+  negative paths in the configured entry point; an unused helper is not evidence.
 - Separate untrusted execution from secrets, publishing and trusted cache writes.
   Use least privilege, reviewed/pinned external tools and isolated disposable
   workers. Self-hosted execution needs an explicit threat model and cleanup proof.
@@ -83,7 +159,8 @@ measured completion guarantees.
   cannot seed trusted caches. Verify cold builds and cache isolation before relying
   on them. Do not cache credentials or upload whole Cargo target directories.
 - Define timeouts, storage/concurrency budgets and diagnostic retention only after
-  selecting and measuring workers. Preserve logs even on failure where possible;
+  measuring workers. The initial budgets above remain subject to acceptance.
+  Preserve logs even on failure where possible;
   scrub sensitive data before sharing. No former provider quota or timeout is a
   verified destination guarantee.
 - Native UI requires real input and rendered frames from controlled graphical

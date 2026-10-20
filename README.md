@@ -59,7 +59,7 @@ and source-owned Save. In-application Play follows, then project-defined inspect
 and editor windows. See the [roadmap](docs/roadmap.md) for scope and completion criteria.
 
 Native interaction and capture reliability still have unresolved intermittent
-failures. GitHub CI is not configured; the full real-window visual/interaction
+failures. GitHub Actions acceptance is pending; the full real-window visual/interaction
 corpus requires separate local execution. A passing headless check is not
 native UI acceptance. See [testing](docs/testing.md) and
 [native docking checks](docs/ui/docking-tests.md).
@@ -89,7 +89,8 @@ commands.
 ## Contribute
 
 Repository: <https://github.com/kedra-engine/kedra>.
-Hosted CI and repository protection settings are not yet configured or verified.
+The GitHub Actions workflow is defined locally; hosted acceptance and repository
+protection verification remain pending.
 
 To run the repository's Rust checks:
 
@@ -112,7 +113,7 @@ opt-in native fixtures. Discuss substantial changes before implementation; see
 - [Docking controls, architecture and acceptance limits](docs/ui/docking-implementation.md)
 - [Shared application automation and native UI checks](docs/automation.md)
 - [Quality gates](docs/quality.md) and [repository administration](docs/hosting.md)
-- [Local validation and future CI requirements](docs/ci.md)
+- [Local validation and GitHub CI](docs/ci.md)
 - [Roadmap and acceptance prerequisites](docs/roadmap.md)
 - [AI contributor instructions](AGENTS.md)
 - [Security](SECURITY.md), [governance](GOVERNANCE.md), [conduct](CODE_OF_CONDUCT.md)

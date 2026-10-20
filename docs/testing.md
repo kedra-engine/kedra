@@ -27,8 +27,8 @@ editor driver and a separate native A/B/C/D host. See
 [docking acceptance](ui/docking-implementation.md) for commands and evidence limits.
 The [isolated dock fixture](ui/docking-tests.md) compares the production dock
 mechanism against pinned independent Figma exports, without editor startup/tools.
-The implementation is shared across Linux, Windows and macOS; destination CI
-is not configured or certified yet.
+The implementation is shared across Linux, Windows and macOS; GitHub-hosted CI
+acceptance is pending.
 
 Screenshot policy, actual-evidence format, animation boundaries and independent
 baseline review are documented in [visual acceptance](ui/visual-acceptance.md).
@@ -81,8 +81,8 @@ repair plan, not unbounded retries or silent removal.
 ## Coverage and deeper analysis
 
 The required foundation baseline is 80% line coverage for workspace Rust code,
-measured by the local LLVM command below. No GitHub coverage job is installed
-or asserted to pass. This is a coarse floor, not proof of
+measured by the local LLVM command below. The GitHub coverage job is defined but
+hosted acceptance is pending. This is a coarse floor, not proof of
 correctness. Do not lower it to merge code. Critical persistence, identity and
 recovery behavior needs explicit negative/fault tests regardless of percentage.
 
@@ -156,6 +156,6 @@ for `proc-macro-error2 2.0.1`; these do not prevent compilation. Do not remove
 `--locked` to silence them. Review tool pins and their upstream dependency changes
 explicitly; building from pinned source is not a claim that every tool is vulnerability-free.
 
-There are no hosted tool-install/cache actions. The commands above are standalone
-local entry points. See [CI requirements](ci.md) for Windows diagnostics, future
-worker isolation and cache requirements, and the failure runbook.
+The commands above remain standalone local entry points. The GitHub workflow uses
+reviewed major-tagged installation and dependency-cache actions; see [GitHub CI](ci.md)
+for permissions, cache boundaries, Windows diagnostics and the failure runbook.

@@ -2,7 +2,7 @@
 
 ## Required change validation
 
-GitHub CI is not configured. These are required validation policies with local
+Hosted CI acceptance is pending. These are required validation policies with local
 commands, not claims of installed server enforcement or passed coverage thresholds.
 See [testing](testing.md), [CI requirements](ci.md) and [hosting](hosting.md).
 

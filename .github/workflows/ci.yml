@@ -1,0 +1,268 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: '4'
+  CARGO_INCREMENTAL: '0'
+  CARGO_PROFILE_DEV_DEBUG: line-tables-only
+  CARGO_PROFILE_TEST_DEBUG: line-tables-only
+
+jobs:
+  policy:
+    name: Policy and workflow contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Resolve pinned Rust toolchain
+        run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: policy-${{ runner.os }}-${{ runner.arch }}
+          env-vars: ImageOS ImageVersion
+          workspaces: |
+            . -> target
+            . -> target/xtask-bootstrap
+          cache-workspace-crates: false
+          cache-all-crates: false
+          cache-bin: false
+          cache-on-failure: false
+          save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      - name: File growth
+        run: cargo xtask files --non-interactive
+      - name: Dependency architecture
+        run: cargo xtask architecture --non-interactive
+      - name: Rust formatting
+        run: cargo xtask fmt --non-interactive
+      - name: Portable tooling and provenance contracts
+        run: cargo test -p xtask --test portable_contracts --locked
+      - uses: jdx/mise-action@v5
+        with:
+          version: 2026.10.15
+          cache_save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          mise_toml: |
+            [tools]
+            "aqua:rhysd/actionlint" = "1.7.12"
+            "aqua:zizmorcore/zizmor" = "1.31.1"
+      - name: Validate workflow syntax and expressions
+        run: actionlint -color
+      - name: Audit workflow security
+        run: zizmor --offline --no-progress .github/workflows/ci.yml
+
+  native:
+    name: Native (${{ matrix.os }})
+    needs: policy
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            cargo-jobs: '4'
+          - os: windows-2025
+            cargo-jobs: '1'
+          - os: macos-15
+            cargo-jobs: '4'
+    env:
+      CARGO_BUILD_JOBS: ${{ matrix.cargo-jobs }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Resolve pinned Rust toolchain
+        run: rustup show active-toolchain
+      - name: Linux native prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: native-${{ runner.os }}-${{ runner.arch }}
+          env-vars: ImageOS ImageVersion
+          workspaces: |
+            . -> target
+            . -> target/xtask-bootstrap
+          cache-workspace-crates: false
+          cache-all-crates: false
+          cache-bin: false
+          cache-on-failure: false
+          save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      - name: Windows diagnostic wrapper regression tests
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./tools/ci/test-windows-build.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Windows diagnostic test build
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./tools/ci/windows-build.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Complete Rust validation
+        run: cargo xtask check --non-interactive
+      - name: Default, minimal and isolated runtime features
+        run: cargo xtask features --non-interactive
+      - name: Retain failure and timing diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-${{ matrix.os }}
+          path: |
+            target/xtask/logs/*.log
+            target/ci/windows-build/**
+            target/cargo-timings/*.html
+          if-no-files-found: warn
+          retention-days: 7
+
+  coverage:
+    name: Fresh Rust line coverage
+    needs: policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Pinned Rust and LLVM tooling
+        run: rustup component add llvm-tools-preview
+      - name: Linux native prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov@0.7.1
+          checksum: true
+          fallback: none
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: coverage-llvm-cov-0.7.1-${{ runner.os }}-${{ runner.arch }}
+          env-vars: ImageOS ImageVersion
+          workspaces: . -> target/llvm-cov-target
+          cache-workspace-crates: false
+          cache-all-crates: false
+          cache-bin: false
+          cache-on-failure: false
+          save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      - name: Fresh complete coverage with 80 percent floor
+        run: cargo llvm-cov --workspace --all-targets --all-features --locked --fail-under-lines 80 --lcov --output-path target/coverage.lcov
+      - name: Require generated LCOV after successful coverage
+        run: test -s target/coverage.lcov
+      - name: Retain LCOV after success or threshold failure
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-lcov
+          path: target/coverage.lcov
+          if-no-files-found: warn
+          retention-days: 7
+
+  supply-chain:
+    name: Dependency advisories, licenses and sources
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Resolve pinned Rust toolchain
+        run: rustup show active-toolchain
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny@0.19.0
+          checksum: true
+          fallback: none
+      - name: Refresh advisories and audit the locked graph
+        run: cargo deny --locked check
+
+  repository:
+    name: Markdown and local links
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@v5
+        with:
+          version: 2026.10.15
+          cache_save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          mise_toml: |
+            [tools]
+            "aqua:rvben/rumdl" = "0.3.0"
+            "aqua:lycheeverse/lychee" = "0.24.2"
+      - name: Markdown
+        run: rumdl check .
+      - name: Offline links and fragments
+        run: lychee --offline --include-fragments --no-progress './*.md' './docs/**/*.md'
+
+  secrets:
+    name: Source and history secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: jdx/mise-action@v5
+        with:
+          version: 2026.10.15
+          cache_save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          mise_toml: |
+            [tools]
+            "aqua:gitleaks/gitleaks" = "8.24.2"
+      - name: History
+        run: gitleaks git --redact --no-banner .
+      - name: Clean source snapshot
+        run: gitleaks dir --redact --no-banner .
+
+  python-qa:
+    name: Headless QA and workflow failure paths
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Native QA failure paths without a window
+        run: python3 -m unittest discover -s tools/qa -p 'test*.py'
+      - name: Required gate failure paths
+        run: python3 -m unittest discover -s tools/ci -p 'test*.py'
+
+  required:
+    name: CI required
+    if: ${{ always() }}
+    needs: [policy, native, coverage, supply-chain, repository, secrets, python-qa]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Require every expected job group to succeed
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: python3 -I tools/ci/required.py

@@ -65,7 +65,7 @@ implementation choices rather than additional capabilities implied by artwork:
   direction switches to its opposite, matching the Front/Back example.
 - Orientation display follows the actual camera rotation, including flight and
   other camera commands. It is not a static perspective SVG. Use Y-up; Top has
-   screen-up −Z. Depth ordering and signed endpoints remain distinguishable.
+  screen-up −Z. Depth ordering and signed endpoints remain distinguishable.
 - Pointer axis alignment uses a 200ms cubic-Bezier `(0.77, 0, 0.175, 1)` turn.
   Camera rotation and gizmo share the same interpolated pose and retained pivot
   radius. A new click retargets from the current pose; repeating the requested

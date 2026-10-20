@@ -1,6 +1,8 @@
 # Composable Window Chrome Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or
+> superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`)
+> syntax for tracking.
 
 **Goal:** Implement one reusable header mechanism and connect all editor windows
 to the accepted Figma compositions without breaking docking or native input.
@@ -164,9 +166,10 @@ driver or a runtime dependency on Figma/private tooling.
 - [ ] Run QA tool unit tests; require pass before launching the corpus.
 - [ ] Capture fresh reviewed Figma role references without modifying old budgets or
   blessing application frames. Preserve old reference provenance separately.
-- [ ] Run `python3 tools/qa/dock_fixture.py --output target/qa/window-chrome-native --visual-policy accepted`
-  with a fresh source delivery and extended scenarios. Inspect real input/frame
-  evidence; distinguish old-reference incompatibility from mechanics failures.
+- [ ] Run
+      `python3 tools/qa/dock_fixture.py --output target/qa/window-chrome-native --visual-policy accepted`
+      with a fresh source delivery and extended scenarios. Inspect real input/frame evidence;
+      distinguish old-reference incompatibility from mechanics failures.
 - [ ] Run `cargo xtask check --non-interactive`; require the full summary and retain
   diagnostics. Report incomplete or unavailable native/platform checks explicitly.
 - [ ] Update current-contract docs and review the whole diff for DAG, retention,

@@ -175,7 +175,7 @@ and trust boundary for project code is explicit.
 
 Native interaction and capture reliability have unresolved intermittent failures.
 Local checks exercise Rust and headless QA-tool tests, but not the full real-window
-visual/interaction corpus. GitHub CI is not configured. Native regression
+visual/interaction corpus. Hosted CI acceptance is pending. Native regression
 execution must become automated in a controlled graphical environment, with retained
 failure evidence and no retries
 that turn an unexplained failure into a passing result.
