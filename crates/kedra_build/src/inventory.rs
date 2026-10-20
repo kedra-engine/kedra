@@ -136,9 +136,23 @@ mod tests {
     #[test]
     fn dirty_workspaces_cannot_claim_a_publishable_source_revision()
     -> Result<(), Box<dyn std::error::Error>> {
+        assert_dirty_revision_contract("workspace space Юникод")
+    }
+
+    // Trailing spaces are valid POSIX names but not portable Win32 names. Keep
+    // their protocol-newline regression separate from the all-platform dirty gate.
+    #[cfg(unix)]
+    #[test]
+    fn trailing_space_workspace_names_preserve_the_git_root()
+    -> Result<(), Box<dyn std::error::Error>> {
+        assert_dirty_revision_contract("workspace space Юникод ")
+    }
+
+    fn assert_dirty_revision_contract(name: &str) -> Result<(), Box<dyn std::error::Error>> {
         let parent = tempfile::tempdir()?;
-        let project = parent.path().join("workspace space Юникод ");
-        fs::create_dir(&project)?;
+        let project = parent.path().join(name);
+        fs::create_dir(&project)
+            .map_err(|error| format!("Cannot create Git fixture {}: {error}", project.display()))?;
         let hooks = tempfile::tempdir()?;
         let git = |args: &[&str]| -> Result<(), Box<dyn std::error::Error>> {
             let output = Command::new("git")
@@ -156,7 +170,8 @@ mod tests {
             Ok(())
         };
         git(&["init", "-q"])?;
-        fs::write(project.join("source.txt"), "original")?;
+        fs::write(project.join("source.txt"), "original")
+            .map_err(|error| format!("Cannot write Git fixture source: {error}"))?;
         git(&["add", "source.txt"])?;
         git(&[
             "-c",
