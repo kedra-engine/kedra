@@ -5,7 +5,9 @@ pub mod authored;
 pub mod docking;
 pub mod native_input;
 pub mod styles;
+mod text_fit;
 pub mod tooltip;
+pub mod window_chrome;
 
 /// Stable feature-owned identifier, unique within a native window.
 /// Duplicate visible IDs are an observation error, never resolved arbitrarily.

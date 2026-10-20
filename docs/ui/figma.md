@@ -16,6 +16,8 @@ Component entry points:
 - Flat toolbar and common dock menu guidance: `163:37771`.
 - Docking masters: `92:2968`; `Kedra/DockHeader`: `97:3495`.
 - Window chrome masters: `82:2870`.
+- Unified window-header family: `82:3049`; Editor right/macOS `222:51056` /
+  `222:51199`, Floating right/macOS `222:51320` / `222:51364`.
 - Panel/startup masters: `176:38405`.
 - Shared screen compositions: `107:3539`.
 
@@ -43,6 +45,15 @@ The regular/selected folder slots and search slot retain the composition's exact
 exports, without replacing the older startup assets. Dynamic source previews in
 the reference are not bundled as fake project thumbnails; current source tiles use
 truthful type badges. See [browser behavior and limitations](asset-browser.md).
+
+## Window header source exports
+
+The [shared header mechanism](window-chrome.md) consumes the unified role family.
+`toolbar-play.svg`, `toolbar-pause.svg` and `toolbar-stop.svg` are exact Figma
+exports of `10:2387`, `10:2390` and `10:2393`, with 1x–4x density packages.
+Existing `browser-search.svg` and `scene-down.svg` share canonical UI-KIT search/
+down geometry. Native macOS button illustrations are not substitute controls.
+These exports do not update the old pinned visual references.
 
 ## Hierarchy source exports
 

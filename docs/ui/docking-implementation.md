@@ -41,6 +41,11 @@ areas. Fixture tabs are 100px wide; that is not a universal panel-width rule.
 Tabs use native rounded borders, not an overlaid rectangular top-light strip.
 Flat controls have no idle border, bevel or shadow. OS caption controls are separate.
 
+[Composable window headers](window-chrome.md) integrate the retained rail/menu
+into a one-group floating host's 32px native row. Split floating hosts keep a
+standalone caption and ordinary group rails. This is projection policy, not a
+second docking model or a saved-layout migration.
+
 ## Transactions and retention
 
 The published layout is unchanged during a gesture. Candidate projection uses

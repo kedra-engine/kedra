@@ -11,6 +11,7 @@ layer = "editor"
 
 [dependencies]
 bevy = { workspace = true, features = ["bevy_winit", "bevy_core_pipeline", "bevy_ui", "bevy_input_focus", "custom_cursor"] }
+kedra_ui.workspace = true
 
 [lints]
 workspace = true

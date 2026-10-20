@@ -4,10 +4,10 @@
 //! authored chrome, reparents registered content, and lets Bevy UI/Taffy lay out
 //! the hierarchy. It never creates windows, saves documents or approves closure.
 mod project;
-mod title;
+use crate::text_fit as title;
 use bevy::prelude::*;
 use kedra_docking::model::{HostId, NodeId, ViewId};
-pub use project::{Geometry, Projection, Skin, class, geometry};
+pub use project::{Geometry, HeaderDestination, Projection, Skin, class, geometry};
 
 /// Input binding on authored controls; events remain ordinary Bevy UI events.
 #[derive(Component, Clone, Copy, Debug)]

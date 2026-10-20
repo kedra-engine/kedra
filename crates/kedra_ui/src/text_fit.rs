@@ -4,6 +4,7 @@ use bevy::{
     text::{ComputedTextBlock, LineHeight, TextLayoutInfo},
 };
 
+#[derive(Clone, Copy)]
 pub(super) struct Title {
     full: Entity,
     ellipsis: Entity,

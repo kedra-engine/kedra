@@ -4007,6 +4007,7 @@ name = "kedra_desktop"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "kedra_ui",
 ]
 
 [[package]]

@@ -2,6 +2,12 @@
 
 ## Reference and acceptance policy
 
+The [unified-header checks](window-chrome.md) supplement this pinned corpus.
+Its old caption pixels predate the unified role family; they have not been
+silently refreshed. Bevy-injected input cannot press OS-owned macOS buttons, and
+renderer captures do not include their drawing. Native OS-control acceptance is
+separate from renderer/client-input results.
+
 `docking/figma/` contains 20 independent native-resolution Figma exports from
 UI-KIT `2EZlK40cfx2Mub7GmDyI70`, page `92:3713`, frames `i00`–`i18`. The floating
 state has separate main/window images. The manifest pins names, node IDs, sizes,

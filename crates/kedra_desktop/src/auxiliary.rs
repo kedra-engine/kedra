@@ -48,6 +48,12 @@ pub(crate) fn allocate(
             },
             Window {
                 title,
+                resizable: !matches!(kind, SurfaceKind::Boot | SurfaceKind::Loading),
+                enabled_buttons: bevy::window::EnabledButtons {
+                    minimize: !matches!(kind, SurfaceKind::Boot | SurfaceKind::Loading),
+                    maximize: !matches!(kind, SurfaceKind::Boot | SurfaceKind::Loading),
+                    close: true,
+                },
                 visible,
                 resolution: WindowResolution::new(size.x, size.y),
                 resize_constraints: bevy::window::WindowResizeConstraints {
@@ -61,7 +67,7 @@ pub(crate) fn allocate(
                 fullsize_content_view: cfg!(target_os = "macos"),
                 titlebar_transparent: cfg!(target_os = "macos"),
                 titlebar_show_title: !cfg!(target_os = "macos"),
-                titlebar_show_buttons: !cfg!(target_os = "macos"),
+                titlebar_show_buttons: true,
                 ..default()
             },
         ))

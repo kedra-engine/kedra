@@ -1,38 +1,33 @@
-//! Project-owned visual chrome with native window move/resize actions.
-use bevy::{math::CompassOctant, prelude::*, ui_widgets::Activate};
+//! Editor-owned composition over shared UI slots and desktop native operations.
+#[cfg(test)]
+#[path = "chrome/tests.rs"]
+mod tests;
+use bevy::prelude::*;
 use bevy_flair::style::components::ClassList;
-use kedra_ui::authored::view::UiView;
+use kedra_desktop::chrome::{ChromeAction, ChromeControl, NativeChromeState};
+use kedra_ui::{
+    authored::view::UiView,
+    window_chrome::{Header, HeaderRegion, RegionRole},
+};
+use std::collections::BTreeMap;
 
 #[derive(Component)]
-struct MaximizeGlyph;
+pub(crate) struct HeaderOwner(pub Header);
 #[derive(Component)]
-struct RestoreGlyph;
-#[derive(Component)]
-struct WindowBinding(Entity);
-#[derive(Component)]
-struct CaptionFrame;
-
-#[derive(Component, Clone, Copy)]
-enum Action {
-    Minimize,
-    Maximize,
-    Close,
-}
-#[derive(Component, Default)]
-struct ChromeState {
-    maximized: bool,
+struct Caption {
+    window: Entity,
+    frame: Option<Entity>,
+    title: Entity,
+    maximize: Entity,
+    restore: Entity,
 }
 pub(crate) fn install(app: &mut App) {
-    app.add_observer(activate)
-        .add_systems(Update, (native_state, drag_resize));
+    app.add_systems(Update, sync);
 }
 pub(crate) fn bind(world: &mut World, view: &UiView) -> Result<(), String> {
-    let window = world
-        .resource::<kedra_desktop::DesktopSurface>()
-        .window
-        .ok_or("caption has no owned window")?;
-    let frame = world.resource::<kedra_desktop::DesktopSurface>().frame;
-    bind_window(world, view, window, frame)
+    let desktop = world.resource::<kedra_desktop::DesktopSurface>();
+    let window = desktop.window.ok_or("Caption has no owned window")?;
+    bind_window(world, view, window, desktop.frame)
 }
 pub(crate) fn bind_window(
     world: &mut World,
@@ -40,217 +35,199 @@ pub(crate) fn bind_window(
     window: Entity,
     frame: Option<Entity>,
 ) -> Result<(), String> {
-    let title = world
-        .get::<Window>(window)
-        .ok_or("caption window was retired")?
-        .title
-        .clone();
-    let title_entity = view.element("window.title").map_err(|e| e.to_string())?;
+    let element = |name| view.element(name).map_err(|e| e.to_string());
+    let title = element("window.title")?;
+    let maximize = element("window.maximize_glyph")?;
+    let restore = element("window.restore_glyph")?;
     let controls = [
-        ("window.minimize", Action::Minimize),
-        ("window.maximize", Action::Maximize),
-        ("window.close", Action::Close),
-    ]
-    .into_iter()
-    .map(|(key, action)| view.element(key).map(|entity| (entity, action)))
-    .collect::<kedra_scene::Result<Vec<_>>>()
-    .map_err(|e| e.to_string())?;
-    let maximize = view
-        .element("window.maximize_glyph")
-        .map_err(|e| e.to_string())?;
-    let restore = view
-        .element("window.restore_glyph")
-        .map_err(|e| e.to_string())?;
-    world
-        .get_mut::<Text>(title_entity)
-        .ok_or("caption title is not native Text")?
-        .0 = title;
+        (element("window.minimize")?, ChromeAction::Minimize),
+        (element("window.maximize")?, ChromeAction::ToggleMaximize),
+        (element("window.close")?, ChromeAction::Close),
+    ];
+    let mut slots = BTreeMap::new();
+    for key in ["window.tabs", "window.menu", "window.tools"] {
+        if let Ok(entity) = view.element(key) {
+            slots.insert(key.into(), entity);
+        }
+    }
+    let header = Header::bind(world, window, view.root, slots)?;
+    kedra_desktop::chrome::bind(world, window)?;
+    world.entity_mut(view.root).insert((
+        HeaderRegion {
+            header: view.root,
+            role: RegionRole::Drag,
+        },
+        HeaderOwner(header),
+        Caption {
+            window,
+            frame,
+            title,
+            maximize,
+            restore,
+        },
+    ));
     for (entity, action) in controls {
         world
             .entity_mut(entity)
-            .insert((action, WindowBinding(window)));
+            .insert(ChromeControl { window, action });
+        match action {
+            ChromeAction::Minimize => set_class(world, entity, "window-minimize", true),
+            ChromeAction::ToggleMaximize => set_class(world, entity, "window-maximize", true),
+            ChromeAction::Close => {}
+        }
     }
-    world
-        .entity_mut(maximize)
-        .insert((MaximizeGlyph, WindowBinding(window)));
-    world
-        .entity_mut(restore)
-        .insert((RestoreGlyph, WindowBinding(window)));
-    if let Some(frame) = frame {
-        world
-            .entity_mut(frame)
-            .insert((CaptionFrame, WindowBinding(window)));
+    for key in [
+        "window.tabs",
+        "window.menu",
+        "window.tools",
+        "editor.transport",
+    ] {
+        if let Ok(entity) = view.element(key) {
+            world.entity_mut(entity).insert(HeaderRegion {
+                header: view.root,
+                role: RegionRole::Client,
+            });
+        }
     }
-    world.entity_mut(window).insert(ChromeState::default());
+    if let Ok(label) = view.element("editor.project") {
+        let name = world
+            .get_resource::<crate::model::ProjectManager>()
+            .and_then(|manager| manager.project())
+            .map(|project| project.manifest.name.clone())
+            .unwrap_or_else(|| "Project".into());
+        if let Some(mut text) = world.get_mut::<Text>(label) {
+            text.0 = name;
+        }
+    }
+    for (key, label) in [
+        ("editor.play", "Play is not implemented"),
+        ("editor.pause", "Play is not implemented"),
+        ("editor.stop", "Play is not implemented"),
+        ("editor.save", "Source Save is not implemented"),
+        ("editor.build", "Project Build is not implemented"),
+        ("editor.build-menu", "Project Build is not implemented"),
+        ("editor.search", "Global search is not implemented"),
+    ] {
+        if let Ok(entity) = view.element(key) {
+            world.entity_mut(entity).insert((
+                bevy::ui::InteractionDisabled,
+                kedra_ui::tooltip::Tooltip(label.into()),
+            ));
+            if let Some(mut node) = world.get_mut::<bevy::a11y::AccessibilityNode>(entity) {
+                node.set_label(label);
+            }
+        }
+    }
+    crate::workspace::bind_header(world, view);
+    if cfg!(target_os = "macos")
+        && let Ok(native) = view.element("window.native")
+    {
+        world.entity_mut(native).insert(HeaderRegion {
+            header: view.root,
+            role: RegionRole::NativeControls,
+        });
+    }
     Ok(())
 }
-fn activate(
-    event: On<Activate>,
-    actions: Query<(&Action, &WindowBinding)>,
-    mut windows: Query<(&mut Window, &mut ChromeState)>,
-    mut close: MessageWriter<bevy::window::WindowCloseRequested>,
-) {
-    let Ok((action, binding)) = actions.get(event.entity) else {
-        return;
-    };
-    let entity = binding.0;
-    let Ok((mut window, state)) = windows.get_mut(entity) else {
-        return;
-    };
-    match action {
-        Action::Minimize => window.set_minimized(true),
-        Action::Maximize => {
-            window.set_maximized(!state.maximized);
-        }
-        Action::Close => {
-            close.write(bevy::window::WindowCloseRequested { window: entity });
-        }
-    }
-}
-type CaptionClasses<'w, 's> = Query<
-    'w,
-    's,
-    (
-        &'static mut ClassList,
-        Has<MaximizeGlyph>,
-        Has<RestoreGlyph>,
-        &'static WindowBinding,
-        Has<CaptionFrame>,
-    ),
->;
-fn native_state(
-    _main_thread: bevy::ecs::system::NonSendMarker,
-    mut windows: Query<(Entity, &mut ChromeState)>,
-    mut classes: CaptionClasses<'_, '_>,
-) {
-    bevy::winit::WINIT_WINDOWS.with_borrow(|native| {
-        for (entity, mut state) in &mut windows {
-            if let Some(window) = native.get_window(entity) {
-                state.maximized = window.is_maximized();
-                for (mut list, maximize, restore, target, frame) in &mut classes {
-                    if target.0 != entity {
-                        continue;
-                    }
-                    if (maximize || restore)
-                        && list.contains("hidden") != (maximize == state.maximized)
-                    {
-                        list.toggle("hidden");
-                    }
-                    if frame && list.contains("maximized") != state.maximized {
-                        list.toggle("maximized");
-                    }
-                }
-            }
-        }
-    });
-}
-fn drag_resize(
-    buttons: Res<ButtonInput<MouseButton>>,
-    mut windows: Query<(&mut Window, &ChromeState)>,
-    modals: Query<(), With<bevy::ui_widgets::ModalDialog>>,
-) {
-    if !buttons.just_pressed(MouseButton::Left) {
-        return;
-    }
-    for (mut window, state) in &mut windows {
-        if !window.focused {
+fn sync(world: &mut World) {
+    let captions: Vec<_> = world
+        .query::<(Entity, &Caption)>()
+        .iter(world)
+        .map(|(root, c)| (root, c.window, c.frame, c.title, c.maximize, c.restore))
+        .collect();
+    for (root, window, frame, title, maximize, restore) in captions {
+        let Some(native) = world.get::<Window>(window) else {
             continue;
-        }
-        let Some(p) = window.cursor_position() else {
-            return;
         };
-        let (w, h) = (window.width(), window.height());
-        if !modals.is_empty() || (p.y < 33. && p.x >= w - 133.) {
-            return;
+        let text = native.title.clone();
+        let can_minimize = native.enabled_buttons.minimize;
+        let can_maximize = native.enabled_buttons.maximize && native.resizable;
+        let state = world
+            .get::<NativeChromeState>(window)
+            .copied()
+            .unwrap_or_default();
+        if let Some(bounds) = world.get::<ChildOf>(title).map(ChildOf::parent)
+            && let Err(error) =
+                kedra_ui::window_chrome::set_title(world, root, title, bounds, &text)
+        {
+            warn!("Caption fitting unavailable: {error}");
         }
-        let edge = (!state.maximized && window.resizable)
-            .then(|| resize_edge(p, Vec2::new(w, h)))
-            .flatten();
-        if let Some(edge) = edge {
-            // Winit explicitly does not implement drag_resize_window on macOS.
-            // The titled/resizable AppKit window owns its native edge tracking.
-            if !cfg!(target_os = "macos") {
-                window.start_drag_resize(edge);
-            }
-        } else if p.y < 33. {
-            window.start_drag_move();
+        for (entity, class, enabled) in [
+            (root, "macos", cfg!(target_os = "macos")),
+            (root, "inactive", state.ready && !state.focused),
+            (root, "fullscreen", state.fullscreen),
+            (root, "no-minimize", !can_minimize),
+            (root, "no-maximize", !can_maximize),
+            (maximize, "hidden", state.maximized),
+            (restore, "hidden", !state.maximized),
+        ] {
+            set_class(world, entity, class, enabled);
+        }
+        if let Some(frame) = frame {
+            set_class(
+                world,
+                frame,
+                "maximized",
+                state.maximized || state.fullscreen,
+            );
         }
     }
 }
-fn resize_edge(point: Vec2, size: Vec2) -> Option<CompassOctant> {
-    match (
-        point.x < 4.,
-        point.x >= size.x - 4.,
-        point.y < 4.,
-        point.y >= size.y - 4.,
-    ) {
-        (true, _, true, _) => Some(CompassOctant::NorthWest),
-        (_, true, true, _) => Some(CompassOctant::NorthEast),
-        (true, _, _, true) => Some(CompassOctant::SouthWest),
-        (_, true, _, true) => Some(CompassOctant::SouthEast),
-        (true, _, _, _) => Some(CompassOctant::West),
-        (_, true, _, _) => Some(CompassOctant::East),
-        (_, _, true, _) => Some(CompassOctant::North),
-        (_, _, _, true) => Some(CompassOctant::South),
-        _ => None,
+fn set_class(world: &mut World, entity: Entity, name: &'static str, enabled: bool) {
+    if let Some(mut classes) = world.get_mut::<ClassList>(entity)
+        && classes.contains(name) != enabled
+    {
+        classes.toggle(name);
     }
 }
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn caption_close_targets_its_bound_window_not_the_primary_surface() {
-        let mut app = App::new();
-        app.add_message::<bevy::window::WindowCloseRequested>()
-            .add_observer(activate);
-        let main = app
-            .world_mut()
-            .spawn((Window::default(), ChromeState::default()))
-            .id();
-        let floating = app
-            .world_mut()
-            .spawn((Window::default(), ChromeState::default()))
-            .id();
-        let close = app
-            .world_mut()
-            .spawn((Action::Close, WindowBinding(floating)))
-            .id();
-        app.world_mut().trigger(Activate { entity: close });
-        let messages = app
-            .world()
-            .resource::<Messages<bevy::window::WindowCloseRequested>>();
-        let closed: Vec<_> = messages
-            .get_cursor()
-            .read(messages)
-            .map(|e| e.window)
-            .collect();
-        assert_eq!(closed, vec![floating]);
-        assert!(app.world().get::<Window>(main).is_some());
+
+pub(crate) fn floating_destination(
+    world: &mut World,
+    window: Entity,
+    integrated: bool,
+) -> Result<Option<kedra_ui::docking::HeaderDestination>, String> {
+    let (root, row, menu) = world
+        .query::<(Entity, &HeaderOwner)>()
+        .iter(world)
+        .find_map(|(root, owner)| {
+            (owner.0.window == window).then(|| {
+                (
+                    root,
+                    owner.0.slot("window.tabs"),
+                    owner.0.slot("window.menu"),
+                )
+            })
+        })
+        .ok_or("Floating window has no shared header binding")?;
+    let destination = if integrated {
+        Some(kedra_ui::docking::HeaderDestination {
+            row: row.ok_or("Floating header lacks its tab slot")?,
+            menu: menu.ok_or("Floating header lacks its menu slot")?,
+        })
+    } else {
+        None
+    };
+    set_class(world, root, "floating-titlebar", integrated);
+    if integrated {
+        let minimum = if cfg!(target_os = "macos") {
+            312.
+        } else {
+            366.
+        };
+        if let Some(mut native) = world.get_mut::<Window>(window) {
+            native.resize_constraints.min_width = native.resize_constraints.min_width.max(minimum);
+        }
+        if cfg!(target_os = "macos")
+            && let Some(menu) = menu
+        {
+            let mut order = world
+                .get::<Children>(root)
+                .map(|c| c.to_vec())
+                .unwrap_or_default();
+            order.retain(|entity| *entity != menu);
+            order.push(menu);
+            world.entity_mut(root).replace_children(&order);
+        }
     }
-    #[test]
-    fn native_sync_waits_for_window_backend_without_a_non_send_resource() {
-        let mut app = App::new();
-        app.init_resource::<kedra_desktop::DesktopSurface>()
-            .add_systems(Update, native_state);
-        let window = app.world_mut().spawn(ChromeState::default()).id();
-        app.update();
-        assert!(
-            !app.world()
-                .get::<ChromeState>(window)
-                .is_some_and(|state| state.maximized)
-        );
-    }
-    #[test]
-    fn resize_edges_do_not_capture_content() {
-        let size = Vec2::new(1120., 720.);
-        assert_eq!(
-            resize_edge(Vec2::new(0., 0.), size),
-            Some(CompassOctant::NorthWest)
-        );
-        assert_eq!(
-            resize_edge(Vec2::new(1119., 719.), size),
-            Some(CompassOctant::SouthEast)
-        );
-        assert_eq!(resize_edge(Vec2::new(40., 40.), size), None);
-    }
+    Ok(destination)
 }
