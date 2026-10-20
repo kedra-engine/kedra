@@ -9,11 +9,13 @@ use bevy::{
     window::{ExitCondition, PrimaryWindow, WindowCloseRequested},
 };
 pub mod auxiliary;
+pub mod chrome;
 
 /// Desktop integration. Install after Bevy's window and input plugins.
 pub struct DesktopPlugin;
 impl Plugin for DesktopPlugin {
     fn build(&self, app: &mut App) {
+        chrome::install(app);
         app.init_resource::<DesktopSurface>()
             .init_resource::<FrameCount>()
             .add_systems(
@@ -184,7 +186,7 @@ mod tests {
                     && native.titlebar_transparent
                     && native.titlebar_shown
             );
-            assert!(!native.titlebar_show_title && !native.titlebar_show_buttons);
+            assert!(!native.titlebar_show_title && native.titlebar_show_buttons);
         }
         let second = replace(app.world_mut(), SurfaceKind::Loading, "Loading".into());
         assert!(app.world().get_entity(first).is_err());

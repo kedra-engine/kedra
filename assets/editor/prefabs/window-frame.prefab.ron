@@ -2,6 +2,5 @@
  version:1,id:"c0600000-0000-4000-8000-000000000001",kind:Prefab,title:"Client-owned native frame",root:"c0610000-0000-4000-8000-000000000001",base:None,
  nodes:[
   (id:"c0610000-0000-4000-8000-000000000001",name:"Native frame",parent:None,components:{"ui.id":(version:1,value:("window.frame")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["theme","window-frame"])),"ui.stylesheet":(version:1,value:(asset:Path("editor://styles/workbench.css")))}),
-  (id:"c0610000-0000-4000-8000-000000000002",name:"Client top light",parent:Some((instances:[],node:"c0610000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["frame-highlight"]))}),
  ],instances:[],overrides:[],ports:{},
 )

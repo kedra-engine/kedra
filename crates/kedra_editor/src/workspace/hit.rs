@@ -1,4 +1,7 @@
 //! Manual gesture origins must honor the committed projection and renderer clips.
+#[cfg(test)]
+#[path = "header_hit_tests.rs"]
+mod header_tests;
 use super::*;
 use kedra_ui::docking::{Divider, TabLabel, rect};
 
@@ -24,7 +27,12 @@ pub(super) fn group(
                 .surfaces
                 .get(&host)
                 .is_some_and(|s| under(world, entity, s.root))
-                && visible_at(world, entity, point, 0.)
+                && (visible_at(world, entity, point, 0.)
+                    || (state.renderer.header_destination(group).is_some()
+                        && state
+                            .renderer
+                            .rail(group)
+                            .is_some_and(|rail| visible_at(world, rail, point, 0.))))
         })
 }
 

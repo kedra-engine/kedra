@@ -113,6 +113,8 @@ pub(super) fn sources(world: &mut World) -> TestResult {
                 "window.close",
                 "window.maximize_glyph",
                 "window.restore_glyph",
+                "window.tabs",
+                "window.menu",
             ],
         ),
         (0xd0700000000040008000000000000001, &["glyph"]),

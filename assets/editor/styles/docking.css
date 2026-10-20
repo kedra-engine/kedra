@@ -6,7 +6,7 @@
 .editor-canvas { flex-direction:column; min-width:0px; overflow:clip; }
 .dock-group { flex-direction:column; min-width:240px; min-height:160px; overflow:clip; background-color:var(--panel); }
 .dock-rail { height:32px; min-height:32px; flex-shrink:0; padding:0 4px; column-gap:4px; align-items:center; background-color:var(--canvas); }
-.dock-tabs { flex-grow:1; flex-basis:0px; min-width:0px; height:32px; align-items:end; column-gap:4px; overflow-x:scroll; }
+.dock-tabs { flex-grow:1; flex-basis:0px; min-width:0px; height:32px; padding:0px; align-items:end; column-gap:4px; overflow-x:scroll; }
 .dock-tab { height:28px; min-height:28px; min-width:100px; max-width:240px; flex-shrink:0; align-items:center; border:1px solid transparent; border-bottom:0px; border-radius:5px 5px 0px 0px; background-color:var(--canvas); }
 .dock-tab.active { border-color:#1b1b1b; background-color:var(--panel); }
 /* The native rounded border is the complete tab rim. A separate inset strip
@@ -21,6 +21,8 @@
 .dock-tab-close:hover { background-color:var(--hover); }
 .dock-action { width:26px; min-width:26px; height:26px; min-height:26px; padding:0px; flex-shrink:0; }
 .dock-body { flex-grow:1; flex-basis:0px; min-width:0px; min-height:0px; flex-direction:column; overflow:clip; }
+.dock-group.integrated > .dock-rail { display:none; }
+.editor-statusbar { display:flex; height:24px; min-height:24px; padding:0 10px; align-items:center; flex-shrink:0; background-color:var(--canvas); }
 .dock-split { flex-grow:1; flex-basis:0px; min-width:0px; min-height:0px; overflow:clip; flex-direction:row; }
 .dock-split.vertical { flex-direction:column; }
 .dock-divider { width:4px; min-width:4px; height:100%; flex-shrink:0; background-color:var(--canvas); }

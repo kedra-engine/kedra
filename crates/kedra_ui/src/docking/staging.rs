@@ -94,10 +94,24 @@ impl Projection {
                         Node::Group { .. } => {
                             let tabs = element(&view, "tabs")?;
                             let body = element(&view, "body")?;
-                            world
-                                .entity_mut(element(&view, "menu")?)
-                                .insert(Control::Menu(*id));
-                            Chrome::Group { view, tabs, body }
+                            let menu = element(&view, "menu")?;
+                            let tabs_parent = world
+                                .get::<ChildOf>(tabs)
+                                .ok_or("Tabs lost their authored parent")?
+                                .parent();
+                            let menu_parent = world
+                                .get::<ChildOf>(menu)
+                                .ok_or("Menu lost its authored parent")?
+                                .parent();
+                            world.entity_mut(menu).insert(Control::Menu(*id));
+                            Chrome::Group {
+                                view,
+                                tabs,
+                                body,
+                                menu,
+                                tabs_parent,
+                                menu_parent,
+                            }
                         }
                         Node::Split { .. } => {
                             let divider = element(&view, "divider")?;

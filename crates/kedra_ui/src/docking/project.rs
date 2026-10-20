@@ -9,8 +9,11 @@ use kedra_docking::{
 };
 use kedra_scene::instance::CompiledPrefab;
 use std::{collections::BTreeMap, sync::Arc};
+#[path = "headers.rs"]
+mod headers;
 #[path = "staging.rs"]
 mod staging;
+pub use headers::HeaderDestination;
 
 /// Compiled, dependency-ready authored chrome shared by product and measurement.
 pub struct Skin {
@@ -26,6 +29,9 @@ enum Chrome {
         view: UiView,
         tabs: Entity,
         body: Entity,
+        menu: Entity,
+        tabs_parent: Entity,
+        menu_parent: Entity,
     },
     Split {
         view: UiView,
@@ -53,6 +59,7 @@ struct Tab {
 /// Content retirement remains feature-owned, including approved document closure.
 #[derive(Default)]
 pub struct Projection {
+    header_destinations: BTreeMap<NodeId, HeaderDestination>,
     nodes: BTreeMap<NodeId, Chrome>,
     tabs: BTreeMap<ViewId, Tab>,
     content: BTreeMap<ViewId, Entity>,
@@ -206,9 +213,11 @@ impl Projection {
                 return Err("Docking host is not ready for projection".into());
             }
         }
+        self.validate_headers(world, state, hosts)?;
         let prepared = self.prepare(world, state, stash, skin, scope, density)?;
         // All fallible validation/allocation precedes the publication boundary.
         prepared.publish(world, self, stash);
+        self.restore_headers(world);
         self.reconcile_focus(world, state);
         // Park feature roots before retiring any chrome ancestor. This is the
         // lifetime boundary: despawning a stale group must never despawn content.
@@ -342,9 +351,36 @@ impl Projection {
                     tabs: order,
                     active,
                 },
-                Chrome::Group { tabs, body, .. },
+                Chrome::Group {
+                    tabs, body, menu, ..
+                },
             ) => {
                 let (tabs, body) = (*tabs, *body);
+                if let Some(destination) = self.header_destinations.get(&id) {
+                    world.entity_mut(tabs).insert(ChildOf(destination.row));
+                    world.entity_mut(*menu).insert(ChildOf(destination.menu));
+                    if let Some(slot) = world
+                        .get::<crate::window_chrome::HeaderSlot>(destination.row)
+                        .copied()
+                    {
+                        world
+                            .entity_mut(tabs)
+                            .insert(crate::window_chrome::HeaderRegion {
+                                header: slot.header,
+                                role: crate::window_chrome::RegionRole::Client,
+                            });
+                    }
+                } else {
+                    world
+                        .entity_mut(tabs)
+                        .remove::<crate::window_chrome::HeaderRegion>();
+                }
+                class(
+                    world,
+                    root,
+                    "integrated",
+                    self.header_destinations.contains_key(&id),
+                );
                 world.entity_mut(tabs).insert(TabRail { host, group: id });
                 if world.get::<ScrollPosition>(tabs).is_none() {
                     world.entity_mut(tabs).insert(ScrollPosition::default());

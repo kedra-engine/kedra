@@ -245,11 +245,25 @@ fn fresh_float_errors_and_timeout_leave_source_and_retire_only_owned_entities() 
 fn floating_close_hides_records_and_retires_after_retained_content_moves() -> TestResult {
     let (mut app, _, b) = setup()?;
     let world = app.world_mut();
+    sources(world)?;
     world.resource_scope(
         |world, mut state: Mut<EditorWorkspace>| -> Result<(), String> {
             let content = world.spawn(Text::new("retained")).id();
             state.renderer.register(b, content)?;
             let (host, native) = staged(world, &mut state, Selection::View(b))?;
+            let frame = crate::views::mount(
+                world,
+                native.root,
+                crate::views::document(0xc0600000000040008000000000000001),
+                "test-frame",
+            )?;
+            let caption = crate::views::mount(
+                world,
+                frame.root,
+                crate::views::document(0xc0900000000040008000000000000001),
+                "test-caption",
+            )?;
+            crate::chrome::bind_window(world, &caption, native.window, Some(frame.root))?;
             state.surfaces.get_mut(&host).ok_or("surface")?.staged = None;
             redraw(world, &mut state)?;
             world
