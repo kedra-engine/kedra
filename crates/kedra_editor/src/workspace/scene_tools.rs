@@ -1,6 +1,53 @@
-//! Overlay hit precedence. Use the same rendered, clipped logical geometry as docking.
+//! Scene View tool hits, bindings and explicit keyboard/projection commands.
+//! Use the same rendered, clipped logical geometry as docking.
 use super::*;
 use crate::scene_view::orientation::Axis;
+
+pub(super) fn projection(
+    world: &mut World,
+    state: &EditorWorkspace,
+    view: ViewId,
+    orthographic: bool,
+) -> Result<(), String> {
+    super::scene_input::cancel(world);
+    if let Some(camera) = state
+        .panels
+        .scenes
+        .get(&view)
+        .and_then(|scene| scene.navigation(world))
+    {
+        let current = matches!(
+            world.get::<bevy::camera::Projection>(camera),
+            Some(bevy::camera::Projection::Orthographic(_))
+        );
+        if current != orthographic {
+            crate::scene_view::camera::command(
+                world,
+                camera,
+                crate::scene_view::camera::Command::Projection,
+            )?;
+        }
+    }
+    Ok(())
+}
+
+pub(super) fn align(
+    world: &mut World,
+    state: &EditorWorkspace,
+    view: ViewId,
+    axis: Axis,
+) -> Result<(), String> {
+    super::scene_input::cancel(world);
+    if let Some(camera) = state
+        .panels
+        .scenes
+        .get(&view)
+        .and_then(|scene| scene.navigation(world))
+    {
+        crate::scene_view::orientation::align(world, camera, axis)?;
+    }
+    Ok(())
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(super) enum Tool {

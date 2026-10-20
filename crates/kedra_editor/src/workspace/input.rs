@@ -168,25 +168,7 @@ fn dispatch(world: &mut World, control: Option<Control>, action: Option<Action>,
                         super::scene_menu::open(world, &mut state, view, anchor, kind)?;
                     }
                     Action::SceneProjection(view, orthographic) => {
-                        super::scene_input::cancel(world);
-                        if let Some(camera) = state
-                            .panels
-                            .scenes
-                            .get(&view)
-                            .and_then(|scene| scene.navigation(world))
-                        {
-                            let current = matches!(
-                                world.get::<bevy::camera::Projection>(camera),
-                                Some(bevy::camera::Projection::Orthographic(_))
-                            );
-                            if current != orthographic {
-                                crate::scene_view::camera::command(
-                                    world,
-                                    camera,
-                                    crate::scene_view::camera::Command::Projection,
-                                )?;
-                            }
-                        }
+                        super::scene_tools::projection(world, &state, view, orthographic)?;
                     }
                     Action::SceneGrid(view) => {
                         if let Some(scene) = state.panels.scenes.get_mut(&view) {
@@ -207,15 +189,7 @@ fn dispatch(world: &mut World, control: Option<Control>, action: Option<Action>,
                         }
                     }
                     Action::SceneAxis(view, axis) => {
-                        super::scene_input::cancel(world);
-                        if let Some(camera) = state
-                            .panels
-                            .scenes
-                            .get(&view)
-                            .and_then(|scene| scene.navigation(world))
-                        {
-                            crate::scene_view::orientation::align(world, camera, axis)?;
-                        }
+                        super::scene_tools::align(world, &state, view, axis)?;
                     }
                     Action::SceneLight(view, enabled) => {
                         if let Some(scene) = state.panels.scenes.get_mut(&view) {
