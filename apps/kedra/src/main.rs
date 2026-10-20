@@ -1,4 +1,8 @@
 //! Desktop and asset-tool entry point; no project code is built or executed.
+#![cfg_attr(
+    all(target_os = "windows", not(debug_assertions)),
+    windows_subsystem = "windows"
+)]
 use clap::{Parser, Subcommand};
 use std::{path::PathBuf, process::ExitCode};
 

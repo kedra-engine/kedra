@@ -103,22 +103,25 @@ assets. A failed build retains diagnostic evidence and does not publish a packag
 
 ## Packaging tool choice
 
-Prefer pinned `cargo-packager` as an external build-time CLI. Its supported formats
+Use maintained `cargo-packager` in the tooling-only build crate. Its supported formats
 include app/DMG, NSIS/MSI, AppImage and deb, and its configuration is reusable outside
 this monorepo. It supports explicit resource/icon/binary metadata without adopting
 a web runtime. Its upstream is active and permissively licensed.
 
-Before adoption, verify the actual released Rust CLI version, license, toolchain
-compatibility, transitive security posture, native-tool requirements, download
-verification and generated package behavior. An npm release tag is not evidence
-of the matching Rust CLI release. Do not add its large library graph to runtime
-crates or silently bypass supply-chain checks to install it.
+The released 0.11.8 frozen graph fails current advisory checks, including a zip
+major that cannot be repaired by a compatible lock update. Reviewed upstream
+commit `5c1824ba8022401e9ef0de36ff1a12c5acf60237` updates that major; use its library
+with CLI features disabled, resolving compatible security updates through the
+existing workspace lockfile. This replaces the initially preferred external CLI,
+not the packaging implementation. See [ADR 0023](../../decisions/0023-desktop-distribution.md).
+Verify license, compatibility, dependencies, native helpers and actual outputs.
+Do not add packaging to runtime, exempt an extra lockfile or silence advisories.
 
 `cargo-dist` is a maintained alternative with strong release orchestration and
 archive/installer support. For this slice, standard native GUI bundling and shared
 project metadata favor cargo-packager; adding both would duplicate ownership.
 Use existing GitHub release APIs/CLI for the small publishing step. If the selected
-released packager fails a required format, report the compatibility finding and
+packager revision fails a required format, report the compatibility finding and
 revise this choice before inventing an installer or adopting a second framework.
 
 ## Platform contracts

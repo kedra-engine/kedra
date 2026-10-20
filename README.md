@@ -90,7 +90,9 @@ commands.
 
 Repository: <https://github.com/kedra-engine/kedra>.
 GitHub Actions runs on Linux, Windows and macOS with fresh coverage. Warm-cache
-measurements and protected-main PR acceptance remain pending; see [CI](docs/ci.md).
+measurements and protected-main PR acceptance are verified for the CI baseline;
+see [CI](docs/ci.md). Native distribution remains under
+[implementation and acceptance](docs/distribution.md).
 
 To run the repository's Rust checks:
 

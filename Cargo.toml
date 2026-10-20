@@ -1,5 +1,5 @@
 [workspace]
-members = ["xtask", "apps/kedra", "crates/*"]
+members = ["xtask", "apps/kedra", "tools/kedra", "crates/*"]
 resolver = "3"
 
 [workspace.package]
@@ -10,6 +10,8 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/kedra-engine/kedra"
 
 [workspace.dependencies]
+cargo-packager = { version = "=0.11.8", git = "https://github.com/crabnebula-dev/cargo-packager.git", rev = "5c1824ba8022401e9ef0de36ff1a12c5acf60237", default-features = false, features = ["rustls-tls", "platform-certs"] }
+kedra_build = { path = "crates/kedra_build", version = "=0.1.0" }
 bevy = { version = "=0.20.0", default-features = false, features = ["std"] }
 kedra_project = { path = "crates/kedra_project", version = "=0.1.0" }
 kedra_desktop = { path = "crates/kedra_desktop", version = "=0.1.0" }
