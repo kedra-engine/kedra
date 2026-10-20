@@ -69,7 +69,7 @@ fn source_admission_keeps_one_workspace_and_rejects_collisions_without_writes() 
     let policies = ComponentPolicies::default();
     let before = std::fs::read(dir.path().join("one.prefab.ron"))?;
     let source = source::read(dir.path())?;
-    let scope = source::admit(source, &types, &policies)?;
+    let (scope, _) = source::admit(source, &types, &policies)?;
     assert_eq!(scope.working.documents().len(), 2);
     assert_eq!(source::paths(&scope).len(), 2);
     assert!(!scope.working.can_undo());
@@ -106,7 +106,7 @@ fn repeated_open_preserves_selection_and_latest_locator_wins() -> TestResult {
     let dir = tempfile::tempdir()?;
     write(dir.path(), "one.prefab.ron", 1)?;
     write(dir.path(), "two.prefab.ron", 2)?;
-    let scope = source::admit(
+    let (scope, compiled) = source::admit(
         source::read(dir.path())?,
         &bevy::reflect::TypeRegistry::default(),
         &ComponentPolicies::default(),
@@ -114,6 +114,7 @@ fn repeated_open_preserves_selection_and_latest_locator_wins() -> TestResult {
     let mut documents = Documents {
         paths: source::paths(&scope),
         scope: Some(scope),
+        compiled,
         ..Default::default()
     };
     let mut world = World::new();

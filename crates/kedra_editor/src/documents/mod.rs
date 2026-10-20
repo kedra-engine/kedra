@@ -1,4 +1,5 @@
 //! Project-owned source sessions. Browser selection is never document activation.
+pub(crate) mod inspection;
 mod source;
 use bevy::{
     prelude::*,
@@ -11,7 +12,7 @@ use kedra_scene::{
     reflection::ComponentPolicies,
 };
 use std::{collections::BTreeMap, path::PathBuf};
-type SourceResult = (u64, Result<Option<Workspace>, String>);
+type SourceResult = (u64, Result<Option<source::Admission>, String>);
 
 pub(crate) struct Opened {
     pub path: PathBuf,
@@ -28,6 +29,8 @@ pub(crate) struct Ready {
 #[derive(Default)]
 pub(crate) struct Documents {
     scope: Option<Workspace>,
+    scope_identity: inspection::ScopeIdentity,
+    compiled: BTreeMap<DocumentId, std::sync::Arc<kedra_scene::instance::CompiledPrefab>>,
     paths: BTreeMap<PathBuf, DocumentId>,
     pub opened: BTreeMap<DocumentId, Opened>,
     pub active: Option<DocumentId>,
@@ -142,9 +145,10 @@ impl Documents {
             // The inventory belongs to this coordinator/project, not the requested
             // tab. Only the most recent locator can activate after it is admitted.
             match result {
-                Ok(Some(scope)) => {
+                Ok(Some((scope, compiled))) => {
                     self.paths = source::paths(&scope);
                     self.scope = Some(scope);
+                    self.compiled = compiled;
                     self.checked = self.pending.clone();
                 }
                 Ok(None) if clock == self.clock => {

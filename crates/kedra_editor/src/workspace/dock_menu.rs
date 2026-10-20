@@ -63,6 +63,33 @@ pub(super) fn menu(
                     Action::HierarchyDetails(*active),
                 ));
             }
+            if let Some(panel) = state.panels.inspectors.get(active) {
+                items.push(("Search properties".into(), Action::InspectorSearch(*active)));
+                if panel.state.target.is_some() {
+                    items.push((
+                        if panel.state.locked {
+                            "Unlock Inspector"
+                        } else {
+                            "Lock Inspector"
+                        }
+                        .into(),
+                        Action::InspectorLock(*active),
+                    ));
+                }
+                items.push((
+                    if panel.state.raw {
+                        "Use custom presentations"
+                    } else {
+                        "Use default reflected view"
+                    }
+                    .into(),
+                    Action::InspectorRaw(*active),
+                ));
+                items.push((
+                    "Toggle source details".into(),
+                    Action::InspectorDetails(*active),
+                ));
+            }
             items.push(("Float active tab".into(), Action::FloatView(*active)));
         }
         if host != state.host {

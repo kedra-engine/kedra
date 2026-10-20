@@ -293,17 +293,26 @@ pub(super) fn admit(
     source: SourceSnapshot,
     types: &TypeRegistry,
     policies: &ComponentPolicies,
-) -> Result<Workspace, String> {
+) -> Result<Admission, String> {
     let mut loader = SourceHandles {
         source: &source,
         error: None,
     };
-    let workspace = Workspace::open(source.clone(), types, policies, &mut loader);
+    let (workspace, compiled) =
+        Workspace::open_compiled(source.clone(), types, policies, &mut loader);
     if let Some(error) = loader.error.or_else(|| workspace.diagnostic.clone()) {
         return Err(error);
     }
-    Ok(workspace)
+    Ok((workspace, compiled))
 }
+
+pub(super) type Admission = (
+    Workspace,
+    BTreeMap<
+        kedra_scene::document::DocumentId,
+        std::sync::Arc<kedra_scene::instance::CompiledPrefab>,
+    >,
+);
 
 pub(super) fn paths(workspace: &Workspace) -> BTreeMap<PathBuf, kedra_scene::document::DocumentId> {
     workspace

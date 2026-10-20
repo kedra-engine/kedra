@@ -58,7 +58,7 @@ fn reflected_asset_components_validate_without_materializing_runtime_assets()
     types.register::<Handle<Image>>();
     let mut policies = ComponentPolicies::default();
     policies.register::<ImageReference>(&mut types, "fixture.image", 1, |_| Ok(()))?;
-    let scope = admit(read(root.path())?, &types, &policies)?;
+    let (scope, _) = admit(read(root.path())?, &types, &policies)?;
     assert_eq!(scope.working.documents().len(), 1);
     std::fs::remove_file(root.path().join("icon.svg.meta"))?;
     assert!(admit(read(root.path())?, &types, &policies).is_err());

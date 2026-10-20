@@ -44,7 +44,8 @@ The repository currently provides:
   Hierarchy displays composed source nodes with read-only navigation and selection.
   Read-only Scene View renders supported spatial/UI documents and previews
   PNG/static-GLB assets with an explicit matching delivery. Spatial navigation and
-  scoped opaque-mesh selection are implemented; Inspector is not connected yet.
+  scoped opaque-mesh selection are implemented. The read-only Inspector follows
+  source selection, with lock, search and shared reflected field presentations.
 - Shared scene and prefab documents, composition, instantiation and guarded
   source-editing APIs. The editor's own UI uses authored sources.
 - Asset processing and verified deliveries consumed through shared runtime loaders.

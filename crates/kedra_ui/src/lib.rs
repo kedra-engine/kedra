@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 pub mod authored;
 pub mod docking;
+pub mod fields;
 pub mod native_input;
 pub mod styles;
 pub mod tooltip;

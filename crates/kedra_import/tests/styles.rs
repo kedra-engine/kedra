@@ -10,6 +10,8 @@ use std::{
     time::{Duration, Instant},
 };
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+#[path = "styles/inspector.rs"]
+mod inspector;
 
 fn consumer(root: &Path, manifest: kedra_assets::delivery::Manifest) -> App {
     let mut app = App::new();
@@ -620,10 +622,13 @@ fn workbench_styles_are_verified_assets_not_an_editor_only_loader() -> Result<()
         styles,
         [
             "fixtures/docking.css",
+            "fixtures/inspector.css",
             "styles/asset-browser.css",
             "styles/controls.css",
             "styles/docking.css",
             "styles/hierarchy.css",
+            "styles/inspector.css",
+            "styles/properties.css",
             "styles/scene-view.css",
             "styles/startup.css",
             "styles/tokens.css",

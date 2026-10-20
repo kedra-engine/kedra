@@ -122,7 +122,8 @@ and workspace structure. Flair styles them; native Bevy widgets supply text
 editing, clipboard and modal navigation. The editor has [Assets](ui/asset-browser.md),
 Hierarchy, Document Preview and Inspector panels. Assets provides navigation,
 search and read-only source document Open. Hierarchy displays composed source
-nodes; Inspector and the initial Preview slot are empty. Source tabs host
+nodes; Inspector displays source components through the shared read-only field kit.
+The initial Preview slot is empty. Source tabs host
 read-only [Scene View](ui/scene-view.md) for supported spatial/UI documents, with
 an explicit matching verified project delivery. PNG/static-GLB Open uses separate
 asset previews. Spatial navigation and scoped opaque-mesh selection are available;

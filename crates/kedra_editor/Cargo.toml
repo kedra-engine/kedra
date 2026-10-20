@@ -20,7 +20,8 @@ serde_with.workspace = true
 uuid.workspace = true
 bevy_remote.workspace = true
 kedra_app.workspace = true
-kedra_ui.workspace = true
+kedra_ui = { workspace = true, features = ["system-fonts"] }
+kedra_inspector.workspace = true
 kedra_scene = { workspace = true, features = ["render"] }
 kedra_docking.workspace = true
 kedra_authoring.workspace = true

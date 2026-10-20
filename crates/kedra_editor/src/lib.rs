@@ -13,6 +13,7 @@ pub mod domain;
 mod entry;
 mod entry_preview;
 mod hierarchy;
+mod inspector;
 mod jobs;
 mod loading;
 mod model;
@@ -38,6 +39,7 @@ impl Plugin for EditorPlugin {
         chrome::install(app);
         asset_browser::install(app);
         hierarchy::install(app);
+        inspector::install(app);
         scene_view::install(app);
         workspace::install(app);
         app.init_state::<AppPhase>()

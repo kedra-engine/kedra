@@ -27,6 +27,10 @@ pub(super) enum Action {
     HierarchySearch(ViewId),
     HierarchyReveal(ViewId),
     HierarchyDetails(ViewId),
+    InspectorSearch(ViewId),
+    InspectorLock(ViewId),
+    InspectorRaw(ViewId),
+    InspectorDetails(ViewId),
     SceneCommand(ViewId, crate::scene_view::camera::Command),
     SceneMenu(ViewId, super::scene_menu::Kind),
     SceneProjection(ViewId, bool),
@@ -266,6 +270,24 @@ fn dispatch(world: &mut World, control: Option<Control>, action: Option<Action>,
                     }
                     Action::Select(view) => {
                         apply(world, &mut state, Command::Activate(view))?;
+                    }
+                    Action::InspectorSearch(view)
+                    | Action::InspectorLock(view)
+                    | Action::InspectorRaw(view)
+                    | Action::InspectorDetails(view) => {
+                        if super::inspector_visible(&state, view)
+                            && let Some(panel) = state.panels.inspectors.get_mut(&view)
+                        {
+                            panel.action(
+                                world,
+                                match action {
+                                    Action::InspectorSearch(_) => crate::inspector::Action::Search,
+                                    Action::InspectorLock(_) => crate::inspector::Action::Lock,
+                                    Action::InspectorRaw(_) => crate::inspector::Action::Raw,
+                                    _ => crate::inspector::Action::Details,
+                                },
+                            )?;
+                        }
                     }
                     Action::HierarchySearch(view)
                     | Action::HierarchyReveal(view)

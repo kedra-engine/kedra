@@ -2,11 +2,20 @@
 use super::components::*;
 use bevy::{prelude::*, text::TextReadWriteMode, ui::InteractionDisabled};
 
-pub(super) fn editing(
-    mut inputs: Query<(Has<InteractionDisabled>, &mut TextReadWriteMode), With<UiEditable>>,
-) {
-    for (disabled, mut mode) in &mut inputs {
-        let next = if disabled {
+type EditableInputs<'w, 's> = Query<
+    'w,
+    's,
+    (
+        Has<InteractionDisabled>,
+        Option<&'static crate::fields::FieldAccess>,
+        &'static mut TextReadWriteMode,
+    ),
+    With<UiEditable>,
+>;
+
+pub(super) fn editing(mut inputs: EditableInputs<'_, '_>) {
+    for (disabled, access, mut mode) in &mut inputs {
+        let next = if disabled || access.is_some() {
             TextReadWriteMode::ReadOnly
         } else {
             TextReadWriteMode::Editable

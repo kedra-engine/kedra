@@ -28,7 +28,7 @@ authored scenes/UI, source-editing APIs, application automation and retained nat
 docking. The editor exposes a [read-only Asset Browser](ui/asset-browser.md) and
 [source document sessions](ui/source-documents.md), with a read-only
 [Hierarchy](ui/hierarchy.md), initial read-only [Scene View](ui/scene-view.md)
-projection and an empty Inspector slot. There is no stable game
+projection and a source-bound read-only Inspector. There is no stable game
 SDK, scene editor, document Save or project
 execution. See [architecture](architecture.md) for ownership boundaries.
 
@@ -89,19 +89,20 @@ modify the serving editor shell live or replace later 3D authoring acceptance.
 [ADR 0012](decisions/0012-document-sessions-and-selection.md) proposes the shared
 document/selection and opening contract, with separate ADRs for each dockable tool.
 
-### Next delivery: read-only Scene View before Inspector
+### Read-only Scene View and Inspector foundation
 
-[ADR 0017](decisions/0017-read-only-scene-view.md) defines the next slice: render an
+[ADR 0017](decisions/0017-read-only-scene-view.md) defines the rendering slice: render an
 opened scene/prefab, navigate with orbit/pan/zoom and free flight, frame objects,
 use grid/axes and standard views, and select objects in sync with Hierarchy.
 Complete it through separately demonstrated render/resource, navigation/docking
-and selection slices, then connect the read-only Inspector. Camera and selection
+and selection slices. The [read-only Inspector](ui/inspector.md) now connects to
+the same source selection without requiring renderer readiness. Camera and selection
 state are not document edits. Gizmos, source mutation and Play remain excluded.
 
 The initial projection profile supports spatial/UI documents and PNG/static-GLB
 inspection with an explicit matching verified delivery. Spatial camera navigation
 and opaque-mesh selection are implemented; remaining native input acceptance is
-the gate before the complete read-only slice and Inspector handoff. Source
+the gate before full native acceptance of the read-only slice. Source
 admission alone is insufficient for rendering. This work takes delivery priority
 over the earlier UI-first preview/Inspector sequence without replacing the
 independent passive UI-preview contract in ADR 0016. Own-editor source admission

@@ -1,0 +1,9 @@
+(
+ version:1,id:"19a00000-0000-4000-8000-000000000001",kind:Prefab,title:"Shared property row",root:"19a00000-0000-4000-8000-000000000002",base:None,
+ nodes:[
+  (id:"19a00000-0000-4000-8000-000000000002",name:"Property row",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["property-row"]))}),
+  (id:"19a00000-0000-4000-8000-000000000003",name:"Property label",parent:Some((instances:[],node:"19a00000-0000-4000-8000-000000000002")),components:{"ui.id":(version:1,value:("label")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["property-label","text"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:false))}),
+  (id:"19a00000-0000-4000-8000-000000000004",name:"Editor slot",parent:Some((instances:[],node:"19a00000-0000-4000-8000-000000000002")),components:{"ui.id":(version:1,value:("editor")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["property-editor"]))}),
+  (id:"19a00000-0000-4000-8000-000000000005",name:"Property diagnostic",parent:Some((instances:[],node:"19a00000-0000-4000-8000-000000000002")),components:{"ui.id":(version:1,value:("diagnostic")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["property-diagnostic","text","hidden"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:true))}),
+ ],instances:[],overrides:[],ports:{},
+)

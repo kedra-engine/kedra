@@ -28,6 +28,31 @@ pub(super) fn project_manager(
 pub(super) fn sources(world: &mut World) -> TestResult {
     let documents: &[(u128, &[&str])] = &[
         (
+            0x19a00000000040008000000000000001,
+            &["label", "editor", "diagnostic"],
+        ),
+        (0x19a10000000040008000000000000001, &["value"]),
+        (
+            0x19a20000000040008000000000000001,
+            &["title", "toggle", "body"],
+        ),
+        (
+            0x19a30000000040008000000000000001,
+            &[
+                "name",
+                "identity",
+                "source",
+                "message",
+                "toolbar",
+                "search",
+                "close-search",
+                "entries",
+                "track",
+                "thumb",
+                "locked",
+            ],
+        ),
+        (
             0x11e00000000040008000000000000001,
             &[
                 "search",
@@ -227,12 +252,22 @@ pub(super) fn sources(world: &mut World) -> TestResult {
                 "tooltip",
                 "count",
                 "empty",
+                "source",
+                "label",
+                "diagnostic",
+                "value",
             ]
             .contains(key)
             {
                 components.insert(
                     "ui.caption".into(),
                     ComponentData::ron(1, "(text:\"Test\",justify:Left,wrap:false)")?,
+                );
+            }
+            if *key == "value" {
+                components.insert(
+                    "ui.editable".into(),
+                    ComponentData::ron(1, "(autofocus:false,select_all:false)")?,
                 );
             }
             doc.nodes.push(SourceNode {

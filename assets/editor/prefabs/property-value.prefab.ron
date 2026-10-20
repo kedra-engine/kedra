@@ -1,0 +1,8 @@
+(
+ version:1,id:"19a10000-0000-4000-8000-000000000001",kind:Prefab,title:"Shared read-only value surface",root:"19a10000-0000-4000-8000-000000000002",base:None,
+ nodes:[
+  (id:"19a10000-0000-4000-8000-000000000002",name:"Value surface",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["property-value","field"]))}),
+  (id:"19a10000-0000-4000-8000-000000000003",name:"Native copyable value",parent:Some((instances:[],node:"19a10000-0000-4000-8000-000000000002")),components:{"ui.id":(version:1,value:("value")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["input","text"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:false)),"ui.editable":(version:1,value:(autofocus:false,select_all:false))}),
+  (id:"19a10000-0000-4000-8000-000000000004",name:"Read-only value icon",parent:Some((instances:[],node:"19a10000-0000-4000-8000-000000000002")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["icon"])),"ui.image":(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/property-lock.svg#1x")),(density:2.0,image:Path("editor://icons/property-lock.svg#2x")),(density:3.0,image:Path("editor://icons/property-lock.svg#3x")),(density:4.0,image:Path("editor://icons/property-lock.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))))}),
+ ],instances:[],overrides:[],ports:{},
+)

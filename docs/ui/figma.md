@@ -62,7 +62,18 @@ search, reveal and source details use the canonical group menu instead of persis
 text actions and a diagnostic footer. Read-only source diagnostics implement the ADR navigation
 contract; no rename, reparent or prefab-editing affordance implies support.
 
-## Planned field behavior
+## Inspector and shared property controls
+
+[Inspector](inspector.md) uses composition `108:8790`, search `108:8936` and the
+Visibility example `108:9034`. Shared row and section sources are `11:142` and
+`11:499`; read-only TextField is `49:554` (26px, 9px horizontal padding, 6px gap).
+`property-lock.svg` is the exact UI-KIT export used by `49:554` and the property row,
+not a fabricated icon. Sections reuse exact `browser-down.svg` / `browser-right.svg`
+exports listed above. No community assets or screenshot backgrounds are used.
+Diagnostic, unavailable, no-results and narrow states still require owner visual
+review; native captures do not constitute pinned Figma pixel-equivalence evidence.
+
+## Scene View and planned field editing
 
 [Scene View](scene-view.md) follows the confirmed `108:9202` content shell and
 `108:8644` toolbar: 38px height, projection/lighting selects, selected grid and
