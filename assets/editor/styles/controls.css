@@ -1,0 +1,50 @@
+.button, .project-row, .field {
+    outline-width:0px; outline-offset:0px; outline-color:transparent;
+}
+.button {
+    height:var(--control-height); min-width:80px; padding:0 12px;
+    align-items:center; justify-content:center; flex-shrink:0;
+    border-radius:var(--control-radius); background-color:transparent;
+}
+.button:hover { background-color:var(--hover); }
+.button:active { background-color:var(--pressed); }
+.button:disabled { background-color:var(--panel); }
+.button:focus-visible, .project-row:focus-visible { outline-width:1px; outline-offset:2px; outline-color:var(--focus); }
+.button.raised, .button.primary { border:1px solid var(--border); border-top-color:var(--control-top-edge); box-shadow:0px 1px 0.5px #00000066; }
+.button.raised { background-color:var(--raised); }
+.button.raised:hover { background-color:var(--hover); }
+.button.raised:active { background-color:var(--pressed); }
+.button.primary { background-color:var(--accent); }
+.button.primary:hover { background-color:var(--accent-hover); }
+.button.primary:active { background-color:var(--accent-pressed); }
+.button.primary .text { color:var(--on-accent); }
+.button.quiet .text { font-family:var(--font-ui); font-weight:400; }
+/* Figma IconButton / Flat: reusable toolbar appearance, not a raised command. */
+.button.flat { width:26px; min-width:26px; height:26px; min-height:26px; padding:0px; border:0px; background-color:transparent; }
+.button.flat:hover { background-color:var(--header); }
+.button.flat:active { background-color:var(--pressed); }
+.button.flat.selected { background-color:var(--selected); }
+.button.flat.selected:hover { background-color:var(--accent-hover); }
+.button.flat.selected:active { background-color:var(--accent-pressed); }
+.button.flat:disabled { background-color:transparent; }
+.button.flat.selected:disabled { background-color:var(--selected); }
+.button.flat:focus-visible { outline-width:2px; outline-offset:1px; }
+.field { width:100%; min-width:0px; height:var(--control-height); min-height:var(--control-height); padding:0 9px; border:1px solid var(--border); border-radius:var(--control-radius); align-items:center; background-color:var(--field); }
+.field:has(.input:focus) { outline-width:1px; outline-offset:1px; outline-color:var(--focus); }
+.input { width:100%; min-width:0px; height:16px; flex-grow:1; }
+.icon { width:16px; height:16px; flex-shrink:0; }
+.spacer { flex-grow:1; min-width:0px; min-height:0px; }
+.window-control { width:44px; min-width:44px; height:32px; padding:0px; border:0px; border-radius:0px; }
+.project-row { width:100%; min-width:0px; height:64px; min-height:64px; padding:0 12px; column-gap:12px; align-items:center; flex-shrink:0; background-color:var(--panel); }
+.project-row:hover { background-color:var(--hover); }
+.project-row:checked, .project-row:active { background-color:var(--selected); }
+.project-row:checked .text { color:var(--on-accent); }
+.project-row > .open { width:72px; min-width:72px; }
+.thumbnail { width:32px; height:32px; flex-shrink:0; align-items:center; justify-content:center; border-radius:var(--control-radius); background-color:var(--field); }
+.row-identity { flex-basis:0px; flex-grow:1; min-width:0px; row-gap:4px; flex-direction:column; overflow:clip; }
+.row-identity .text { height:16px; width:100%; min-width:0px; overflow:clip; flex-shrink:0; }
+.scrollbar { display:flex; width:4px; min-width:4px; flex-shrink:0; background-color:transparent; }
+.scrollbar-thumb { background-color:var(--muted); }
+.missing-recovery { column-gap:12px; align-items:center; flex-shrink:0; }
+.missing-recovery .button { width:84px; }
+.tooltip { padding:4px 8px; background-color:var(--field); border:1px solid var(--border); border-radius:var(--control-radius); overflow:clip; font-family:var(--font-ui); font-size:12px; line-height:16px; color:var(--text); }

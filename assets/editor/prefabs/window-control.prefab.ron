@@ -1,0 +1,8 @@
+(
+ version:1,id:"c0800000-0000-4000-8000-000000000001",kind:Prefab,title:"Close window control",root:"c0110000-0000-4000-8000-000000000001",base:Some("c0100000-0000-4000-8000-000000000001"),nodes:[],instances:[],ports:{},
+ overrides:[
+  RemoveNode((instances:[],node:"c0110000-0000-4000-8000-000000000002")),
+  SetComponent(node:(instances:[],node:"c0110000-0000-4000-8000-000000000001"),component:"ui.classes",data:(version:1,value:(names:["button","window-control"]))),
+  AddNode((id:"c0810000-0000-4000-8000-000000000001",name:"Window glyph",parent:Some((instances:[],node:"c0110000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["icon"])),"ui.image":(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/close.svg#1x")),(density:2.0,image:Path("editor://icons/close.svg#2x")),(density:3.0,image:Path("editor://icons/close.svg#3x")),(density:4.0,image:Path("editor://icons/close.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))))})),
+ ],
+)

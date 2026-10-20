@@ -1,0 +1,62 @@
+.button, .icon, .text, .search-host, .field-group, .loading-actions,
+.startup-log, .missing-recovery, .empty-projects {
+    /* Flair needs an explicit value when the temporary .hidden class is removed. */
+    display:flex;
+}
+.window-frame { width:100%; height:100%; min-width:0px; min-height:0px; border:1px solid var(--frame-border); border-radius:var(--popup-radius); overflow:clip; flex-direction:column; background-color:var(--canvas); }
+.window-frame.maximized { border:0px; border-radius:0px; }
+.frame-highlight { position:absolute; left:1px; right:1px; top:1px; height:1px; background-color:#ffffff1f; }
+.titlebar { width:100%; min-width:0px; height:32px; min-height:32px; flex-shrink:0; align-items:center; overflow:clip; background-color:var(--canvas); }
+.title-balance, .window-controls { width:132px; height:32px; flex-shrink:0; }
+.window-controls { justify-content:end; }
+.title-host { flex-grow:1; flex-basis:0px; min-width:0px; height:32px; padding:0 12px; align-items:center; justify-content:center; overflow:clip; }
+.window-title { min-width:0px; max-width:100%; overflow:clip; }
+.projects-body, .loading-body { width:100%; min-width:0px; flex-basis:0px; flex-grow:1; min-height:0px; padding:40px; flex-direction:column; overflow:clip; }
+.projects-body { row-gap:20px; background-color:var(--panel); }
+.loading-body { row-gap:16px; background-color:var(--canvas); }
+.manager-header { width:100%; min-height:40px; column-gap:8px; align-items:center; flex-shrink:0; }
+.manager-header .button { width:120px; }
+.recent-header { width:100%; min-height:26px; column-gap:12px; align-items:center; flex-shrink:0; }
+.search-host { width:220px; }
+.search-toggle { width:26px; min-width:26px; height:26px; align-items:center; justify-content:center; }
+.recent-content { width:100%; flex-grow:1; min-height:0px; flex-direction:column; overflow-y:scroll; }
+.empty-projects { width:100%; height:100%; flex-direction:column; align-items:center; justify-content:center; row-gap:12px; }
+/* Secondary startup information should not compete with project names/actions. */
+.recent-header .strong, .destination .strong, .startup-phase { font-family:var(--font-ui); font-weight:400; }
+.empty-projects .title { font-family:var(--font-strong); font-weight:500; }
+.rows { width:100%; min-width:0px; flex-direction:column; row-gap:2px; }
+.manager-footer { width:100%; min-height:28px; align-items:center; flex-shrink:0; }
+.modal-barrier { position:absolute; left:0px; top:0px; width:100%; height:100%; align-items:center; justify-content:center; background-color:var(--modal-scrim); }
+.dialog { width:640px; max-width:95%; height:400px; max-height:95%; padding:24px; row-gap:12px; flex-direction:column; flex-shrink:0; border-radius:var(--popup-radius); background-color:var(--menu); outline-width:1px; outline-offset:-1px; outline-color:var(--border); box-shadow:0px 9px 20px #0000006b; }
+.field-group { width:100%; row-gap:6px; flex-direction:column; }
+.directory-row { width:100%; column-gap:8px; align-items:center; }
+.directory-row .field { flex-basis:0px; flex-grow:1; }
+.browse { width:84px; }
+.destination { width:100%; min-width:0px; min-height:56px; padding:8px 12px; row-gap:4px; flex-direction:column; overflow:clip; background-color:var(--panel); }
+.destination-value { width:100%; min-width:0px; overflow:clip; }
+.open-notice { width:100%; height:56px; flex-shrink:0; padding:10px 12px; column-gap:10px; align-items:center; overflow:clip; background-color:var(--warning-panel); }
+.open-notice .text { flex-grow:1; min-width:0px; }
+.dialog-actions { width:100%; min-height:28px; column-gap:8px; align-items:center; }
+.submit { width:156px; }
+.engine-identity { width:100%; height:28px; flex-shrink:0; align-items:start; overflow:clip; }
+.brand { width:160px; height:28px; flex-shrink:0; }
+.opening-project { width:100%; min-width:0px; height:56px; row-gap:4px; flex-direction:column; flex-shrink:0; overflow:clip; }
+.opening-project .text { width:100%; min-width:0px; flex-shrink:0; overflow:clip; }
+.opening-project .heading { height:36px; }
+.opening-project .mono { height:16px; }
+.startup-status { width:100%; height:48px; column-gap:12px; align-items:center; flex-shrink:0; }
+.startup-phase { flex-grow:1; min-width:0px; overflow:clip; }
+.loading-actions { width:100%; height:26px; column-gap:8px; align-items:start; flex-shrink:0; }
+.log-toggle { width:132px; }
+.back { width:156px; }
+.retry { width:120px; }
+.startup-log { position:absolute; left:40px; right:40px; top:220px; bottom:80px; overflow-y:scroll; background-color:var(--field); }
+.startup-log .text { width:100%; }
+.editor-canvas { width:100%; flex-grow:1; min-height:0px; background-color:var(--canvas); }
+.hidden { display:none; }
+.boot-body { width:100%; flex-grow:1; min-height:0px; padding:40px; row-gap:16px; flex-direction:column; overflow:clip; background-color:var(--canvas); }
+.boot-identity { width:100%; height:128px; flex-shrink:0; column-gap:16px; align-items:center; overflow:clip; }
+.boot-brand { width:260px; height:84px; flex-shrink:0; flex-direction:column; row-gap:4px; }
+.boot-wordmark { font-family:var(--font-heading); font-size:48px; font-weight:600; line-height:56px; letter-spacing:-1.4px; }
+.boot-motif { width:128px; height:128px; flex-shrink:0; }
+.boot-build { width:100%; height:16px; flex-shrink:0; align-items:start; overflow:clip; }

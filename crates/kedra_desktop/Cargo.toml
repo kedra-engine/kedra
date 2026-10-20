@@ -1,0 +1,16 @@
+[package]
+name = "kedra_desktop"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Owned native window surfaces for the Kedra editor"
+
+[package.metadata.kedra]
+layer = "editor"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_winit", "bevy_core_pipeline", "bevy_ui", "bevy_input_focus", "custom_cursor"] }
+
+[lints]
+workspace = true

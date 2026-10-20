@@ -1,0 +1,26 @@
+[package]
+name = "kedra_ui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Shared retained UI identity and geometry contracts for Kedra applications"
+
+[package.metadata.kedra]
+layer = "runtime"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_ui", "bevy_input_focus", "bevy_ui_widgets", "bevy_picking", "serialize"] }
+kedra_scene.workspace = true
+kedra_docking.workspace = true
+serde.workspace = true
+bevy_flair.workspace = true
+# Preserve native Node serde semantics while rejecting ignored/misspelled authored fields.
+serde_ignored = "=0.1.14"
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+ron.workspace = true
+uuid.workspace = true

@@ -1,0 +1,29 @@
+[package]
+name = "kedra_import"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Host-only native Bevy asset processing and checked editor delivery"
+
+[package.metadata.kedra]
+layer = "import"
+
+[dependencies]
+bevy = { workspace = true, features = ["multi_threaded", "asset_processor", "bevy_text", "png", "bevy_gltf", "bevy_pbr"] }
+kedra_assets = { workspace = true, features = ["model-support"] }
+kedra_scene.workspace = true
+bevy_flair.workspace = true
+kedra_ui.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ron.workspace = true
+uuid.workspace = true
+tempfile.workspace = true
+walkdir = "2"
+resvg = { version = "=0.48.1", default-features = false }
+image = { version = "=0.25.10", default-features = false, features = ["png"] }
+read-fonts = "=0.41.0"
+
+[lints]
+workspace = true

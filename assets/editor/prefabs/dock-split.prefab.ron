@@ -1,0 +1,7 @@
+(
+ version:1,id:"d0300000-0000-4000-8000-000000000001",kind:Prefab,title:"Dock split",root:"d0310000-0000-4000-8000-000000000001",base:None,
+ nodes:[
+  (id:"d0310000-0000-4000-8000-000000000001",name:"Split",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-split"]))}),
+  (id:"d0310000-0000-4000-8000-000000000002",name:"Divider",parent:Some((instances:[],node:"d0310000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("divider")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-divider"]))}),
+ ],instances:[],overrides:[],ports:{},
+)

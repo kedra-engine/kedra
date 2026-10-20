@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "scenario": "loading-client-current",
+  "fixture": "calibration-three-project-history",
+  "profile": {
+    "id": "macos-metal-local-dpr1-reduced",
+    "platform": "macos",
+    "renderer": "metal-apple-m3-pro",
+    "environment": "uncertified-local-review",
+    "logical_size": [640, 360],
+    "dpr": 1,
+    "color_space": "srgb_assumed",
+    "motion": "reduced"
+  },
+  "reference": {
+    "image": "startup-2026-10-18-v2/loading.png",
+    "sha256": "c27929c038f9cad53380e99048c56153010f87142b7a04831d48fa05f5cc9d6b",
+    "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=71-4575",
+    "kind": "design_reference",
+    "approval": "pending",
+    "export_size": [640, 360],
+    "crop": [0, 0, 640, 360],
+    "crop_reason": "Complete updated Figma client frame; export has no external shadow, crop or mask."
+  },
+  "animation": {"mode": "static"},
+  "comparison": {
+    "normalized_yiq_tolerance": 0.05,
+    "budget": {"max_changed_pixels": 4608, "max_changed_ppm": 20000},
+    "max_excluded_ppm": 0,
+    "allow_uniform_reason": null
+  },
+  "exclusions": [],
+  "critical_regions": [
+    {"name": "custom-frame", "rect": [0, 0, 640, 33], "budget": {"max_changed_pixels": 422, "max_changed_ppm": 20000}},
+    {"name": "brand", "rect": [41, 73, 160, 28], "budget": {"max_changed_pixels": 89, "max_changed_ppm": 20000}},
+    {"name": "version", "rect": [576, 73, 23, 16], "budget": {"max_changed_pixels": 7, "max_changed_ppm": 20000}},
+    {"name": "footer", "rect": [41, 293, 132, 26], "budget": {"max_changed_pixels": 68, "max_changed_ppm": 20000}}
+  ]
+}

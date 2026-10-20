@@ -1,0 +1,10 @@
+(
+ version:1,id:"d0400000-0000-4000-8000-000000000001",kind:Prefab,title:"Retained editor information panel",root:"d0410000-0000-4000-8000-000000000001",base:None,
+ nodes:[
+  (id:"d0410000-0000-4000-8000-000000000001",name:"Panel content",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-content"]))}),
+  (id:"d0410000-0000-4000-8000-000000000002",name:"Heading",parent:Some((instances:[],node:"d0410000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("heading")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","title"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:false))}),
+  (id:"d0410000-0000-4000-8000-000000000003",name:"Information",parent:Some((instances:[],node:"d0410000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("information")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","secondary","dock-information"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:true))}),
+  (id:"d0410000-0000-4000-8000-000000000004",name:"Draft field",parent:Some((instances:[],node:"d0410000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["field"]))}),
+  (id:"d0410000-0000-4000-8000-000000000005",name:"Draft",parent:Some((instances:[],node:"d0410000-0000-4000-8000-000000000004")),components:{"ui.id":(version:1,value:("draft")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","input"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:false)),"ui.editable":(version:1,value:(autofocus:false,select_all:false))}),
+ ],instances:[],overrides:[],ports:{},
+)

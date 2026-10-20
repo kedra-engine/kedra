@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "fixture": "docking.fixture.v1",
+  "reference_revision": "flat-icon-buttons-common-dock-menu",
+  "approval": "human_reviewed",
+  "reason": "Owner accepts current native text rasterization/weight and inactive-tab fill. Fixed text interiors below are exempt from pixel identity; borders, glyph icons, geometry and all remaining pixels retain strict budgets. Native semantic text and interaction checks remain required.",
+  "max_excluded_ppm": 15000,
+  "required_text": {
+    "i02-compass": {"dock.drag/title":"Panel C"},
+    "i03-direct": {"dock.drag/title":"Panel C"},
+    "i05-merge-preview": {"dock.drag/title":"Panel C"},
+    "i06-merged": {"dock/view/ViewId(f0000000-0000-4000-8000-000000000001)/title":"Panel A","dock/view/ViewId(f0000000-0000-4000-8000-000000000003)/title":"Panel C"},
+    "i07-insertion": {"dock.drag/title":"Panel C","dock/view/ViewId(f0000000-0000-4000-8000-000000000003)/title":"Panel C","dock/view/ViewId(f0000000-0000-4000-8000-000000000004)/title":"Panel D"},
+    "i08-reordered": {"dock/view/ViewId(f0000000-0000-4000-8000-000000000003)/title":"Panel C","dock/view/ViewId(f0000000-0000-4000-8000-000000000004)/title":"Panel D"},
+    "i09-blocked": {"dock.drag/title":"Panel C","dock.drag/reason":"Not enough room · dock as tab"},
+    "i14-float-main": {"dock/view/ViewId(f0000000-0000-4000-8000-000000000004)/title":"Panel D"},
+    "i15-redock": {"dock.drag/title":"Panel C","dock/view/ViewId(f0000000-0000-4000-8000-000000000004)/title":"Panel D"},
+    "i17-compact-blocked": {"dock.drag/title":"Panel C","dock.drag/reason":"Not enough room · dock as tab"}
+  },
+  "text_interiors": {
+    "i00-baseline": [],
+    "i01-compact": [],
+    "i02-compass": [[827,292,58,20]],
+    "i03-direct": [[1074,292,58,20]],
+    "i04-split-result": [],
+    "i05-merge-preview": [[194,442,58,20]],
+    "i06-merged": [[12,42,58,20],[116,42,58,20]],
+    "i07-insertion": [[316,512,58,20],[420,512,58,20],[562,547,58,20]],
+    "i08-reordered": [[316,512,58,20],[420,512,58,20]],
+    "i09-blocked": [[230,445,210,38]],
+    "i10-splitter-hover": [],
+    "i11-resized": [],
+    "i12-maximized": [],
+    "i13-overflow": [],
+    "i14-float-main": [[316,512,58,20]],
+    "i14-float-window": [],
+    "i15-redock": [[316,512,58,20],[458,547,58,20]],
+    "i16-restored": [],
+    "i17-compact-blocked": [[230,365,210,38]],
+    "i18-macos": []
+  }
+}

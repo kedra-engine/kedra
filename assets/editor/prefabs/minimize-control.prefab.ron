@@ -1,0 +1,4 @@
+(
+ version:1,id:"c0800000-0000-4000-8000-000000000002",kind:Prefab,title:"Minimize control",root:"c0110000-0000-4000-8000-000000000001",base:Some("c0800000-0000-4000-8000-000000000001"),nodes:[],instances:[],ports:{},
+ overrides:[SetComponent(node:(instances:[],node:"c0810000-0000-4000-8000-000000000001"),component:"ui.image",data:(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/minus.svg#1x")),(density:2.0,image:Path("editor://icons/minus.svg#2x")),(density:3.0,image:Path("editor://icons/minus.svg#3x")),(density:4.0,image:Path("editor://icons/minus.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0)))))],
+)

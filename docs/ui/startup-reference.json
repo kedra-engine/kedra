@@ -1,0 +1,35 @@
+{
+  "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT",
+  "nodes": {"boot":"71:4556", "manager": "71:4622", "create": "71:4819", "open": "71:5038", "loading": "71:4575"},
+  "coordinate_space": "logical window pixels, independent of renderer DPR",
+  "viewport": [1120, 720],
+  "tolerance": 1.0,
+  "manager": {
+    "window.chrome": [1, 1, 1119, 33],
+    "projects.panel": [1, 33, 1119, 719],
+    "projects.open": [831, 80, 951, 106],
+    "projects.new": [959, 80, 1079, 106],
+    "projects.search_toggle": [1053, 133, 1079, 159]
+  },
+  "create": {
+    "entry.dialog": [240, 160, 880, 560],
+    "entry.browse": [772, 330, 856, 356],
+    "entry.cancel": [264, 509, 344, 535],
+    "entry.submit": [700, 509, 856, 535]
+  },
+  "loading": {
+    "loading.panel": [1, 33, 639, 359],
+    "loading.engine": [41, 73, 599, 101],
+    "loading.brand": [41, 73, 201, 101],
+    "loading.project": [41, 117, 599, 173],
+    "loading.status": [41, 189, 599, 237],
+    "loading.spinner": [41, 205, 57, 221],
+    "loading.actions": [41, 293, 599, 319],
+    "loading.log_toggle": [41, 293, 173, 319]
+  },
+  "pixels": {
+    "manager": [[10, 10, 36, 36, 36], [10, 40, 48, 48, 48], [100, 600, 48, 48, 48], [966, 82, 65, 107, 157], [838, 82, 83, 83, 83]],
+    "create": [[250, 170, 40, 40, 40]],
+    "open": [[250, 170, 40, 40, 40]]
+  }
+}

@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="SVG/scene">
+<mask id="stroke0_0_458" fill="white">
+<path d="M2.5 3H13.5V13H2.5V3Z"/>
+</mask>
+<path id="Vector" d="M2.5 3H13.5V13H2.5V3Z" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke="#C9C9C9" mask="url(#stroke0_0_458)"/>
+<path id="Vector_2" d="M3 11L6.5 7L9.5 10L11.5 8L13.5 11" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#B2BBC8"/>
+<path id="Vector_3" d="M11.2 5.5C11.2 5.8866 10.8866 6.2 10.5 6.2C10.1134 6.2 9.8 5.8866 9.8 5.5C9.8 5.1134 10.1134 4.8 10.5 4.8C10.8866 4.8 11.2 5.1134 11.2 5.5Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#B2BBC8"/>
+</g>
+</svg>

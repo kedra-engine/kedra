@@ -1,0 +1,7 @@
+(
+ version:1,id:"71b5b4f7-698f-467d-a6dd-643693172135",kind:Prefab,title:"Native vertical scrollbar",root:"2cc80e30-221a-4aaf-9cc6-e7633ca221a1",base:None,
+ nodes:[
+  (id:"2cc80e30-221a-4aaf-9cc6-e7633ca221a1",name:"Scrollbar track",parent:None,components:{"ui.id":(version:1,value:("track")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["scrollbar"]))}),
+  (id:"2cc80e30-221a-4aaf-9cc6-e7633ca221a2",name:"Scrollbar thumb",parent:Some((instances:[],node:"2cc80e30-221a-4aaf-9cc6-e7633ca221a1")),components:{"ui.id":(version:1,value:("thumb")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["scrollbar-thumb"]))}),
+ ],instances:[],overrides:[],ports:{},
+)

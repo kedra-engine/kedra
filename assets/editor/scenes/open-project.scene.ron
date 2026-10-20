@@ -1,0 +1,20 @@
+(
+ version:1,id:"c0400000-0000-4000-8000-000000000002",kind:Scene,title:"Open project modal",root:"c0410000-0000-4000-8000-000000000001",base:Some("c0400000-0000-4000-8000-000000000001"),nodes:[],instances:[],ports:{},
+ overrides:[
+  SetField(node:(instances:[],node:"c0410000-0000-4000-8000-000000000003"),component:"ui.caption",version:1,path:"text",value:"Open project"),
+  SetField(node:(instances:[],node:"c0410000-0000-4000-8000-000000000004"),component:"ui.caption",version:1,path:"text",value:"Local Kedra project"),
+  SetComponent(node:(instances:[],node:"c0410000-0000-4000-8000-000000000005"),component:"ui.classes",data:(version:1,value:(names:["field-group","hidden"]))),
+  SetField(node:(instances:[],node:"c0410000-0000-4000-8000-000000000008"),component:"ui.caption",version:1,path:"text",value:"Project folder"),
+  SetField(node:(instances:[],node:"c0410000-0000-4000-8000-00000000000b"),component:"ui.caption",version:1,path:"text",value:"Project sources"),
+  SetComponent(node:(instances:[],node:"c0410000-0000-4000-8000-00000000000b"),component:"ui.id",data:(version:1,value:("entry.preview_name"))),
+  SetComponent(node:(instances:[],node:"c0410000-0000-4000-8000-00000000000b"),component:"ui.classes",data:(version:1,value:(names:["text","strong"]))),
+  SetComponent(node:(instances:[],node:"c0410000-0000-4000-8000-00000000000c"),component:"ui.classes",data:(version:1,value:(names:["text","caption","muted","destination-value"]))),
+  SetField(node:(instances:["c0420000-0000-4000-8000-000000000001"],node:"c0210000-0000-4000-8000-000000000002"),component:"ui.editable",version:1,path:"autofocus",value:false),
+  SetField(node:(instances:["c0420000-0000-4000-8000-000000000002"],node:"c0210000-0000-4000-8000-000000000002"),component:"ui.editable",version:1,path:"autofocus",value:true),
+  SetField(node:(instances:["c0420000-0000-4000-8000-000000000005"],node:"c0110000-0000-4000-8000-000000000002"),component:"ui.caption",version:1,path:"text",value:"Open project"),
+  AddNode((id:"c0440000-0000-4000-8000-000000000001",name:"Project source safety notice",parent:Some((instances:[],node:"c0410000-0000-4000-8000-000000000002")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["open-notice"]))})),
+  AddNode((id:"c0440000-0000-4000-8000-000000000002",name:"Safety notice glyph",parent:Some((instances:[],node:"c0440000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["icon"])),"ui.image":(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/warning.svg#1x")),(density:2.0,image:Path("editor://icons/warning.svg#2x")),(density:3.0,image:Path("editor://icons/warning.svg#3x")),(density:4.0,image:Path("editor://icons/warning.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))))})),
+  AddNode((id:"c0440000-0000-4000-8000-000000000003",name:"Truthful source safety copy",parent:Some((instances:[],node:"c0440000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text"])),"ui.caption":(version:1,value:(text:"Opening validates this project's sources.\nProject code is not executed.",justify:Left,wrap:false))})),
+  SetChildOrder(node:(instances:[],node:"c0410000-0000-4000-8000-000000000002"),children:[(instances:[],node:"c0410000-0000-4000-8000-000000000003"),(instances:[],node:"c0410000-0000-4000-8000-000000000004"),(instances:[],node:"c0410000-0000-4000-8000-000000000005"),(instances:[],node:"c0410000-0000-4000-8000-000000000007"),(instances:[],node:"c0410000-0000-4000-8000-00000000000a"),(instances:[],node:"c0440000-0000-4000-8000-000000000001"),(instances:[],node:"c0410000-0000-4000-8000-00000000000d"),(instances:[],node:"c0410000-0000-4000-8000-00000000000e"),(instances:[],node:"c0410000-0000-4000-8000-00000000000f")]),
+ ],
+)

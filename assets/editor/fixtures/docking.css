@@ -1,0 +1,9 @@
+/* Fixture-owned content only. Production docking chrome/rules are never forked. */
+@import "../styles/workbench.css";
+.dock-fixture { display:flex; flex-direction:column; flex-grow:1; min-width:0px; min-height:0px; }
+.dock-fixture-panel { display:flex; position:relative; flex-direction:column; flex-grow:1; min-width:0px; min-height:0px; align-items:center; justify-content:center; }
+.dock-fixture .dock-fixture-identity { color:var(--muted); font-family:var(--font-heading); font-size:16px; line-height:24px; }
+.dock-fixture-field { position:absolute; left:16px; bottom:16px; width:172px; }
+.dock-fixture .dock-fixture-field { display:flex; }
+.dock-fixture .dock-fixture-field.hidden { display:none; }
+.dock-fixture .dock-tab { width:100px; max-width:100px; }

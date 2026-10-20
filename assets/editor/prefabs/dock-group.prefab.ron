@@ -1,0 +1,11 @@
+(
+ version:1,id:"d0100000-0000-4000-8000-000000000001",kind:Prefab,title:"Dock group",root:"d0110000-0000-4000-8000-000000000001",base:None,
+ nodes:[
+  (id:"d0110000-0000-4000-8000-000000000001",name:"Group",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-group"]))}),
+  (id:"d0110000-0000-4000-8000-000000000002",name:"Rail",parent:Some((instances:[],node:"d0110000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-rail"]))}),
+  (id:"d0110000-0000-4000-8000-000000000003",name:"Tabs",parent:Some((instances:[],node:"d0110000-0000-4000-8000-000000000002")),components:{"ui.id":(version:1,value:("tabs")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-tabs"]))}),
+  (id:"d0110000-0000-4000-8000-000000000006",name:"Menu",parent:Some((instances:[],node:"d0110000-0000-4000-8000-000000000002")),components:{"ui.id":(version:1,value:("menu")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["button","flat","dock-action"])),"ui.button":(version:1,value:())}),
+  (id:"d0110000-0000-4000-8000-000000000007",name:"Menu glyph",parent:Some((instances:[],node:"d0110000-0000-4000-8000-000000000006")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["icon"])),"ui.image":(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/dock-more.svg#1x")),(density:2.0,image:Path("editor://icons/dock-more.svg#2x")),(density:3.0,image:Path("editor://icons/dock-more.svg#3x")),(density:4.0,image:Path("editor://icons/dock-more.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))))}),
+  (id:"d0110000-0000-4000-8000-000000000008",name:"Content slot",parent:Some((instances:[],node:"d0110000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("body")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-body"]))}),
+  ],instances:[],overrides:[SetChildOrder(node:(instances:[],node:"d0110000-0000-4000-8000-000000000002"),children:[(instances:[],node:"d0110000-0000-4000-8000-000000000003"),(instances:[],node:"d0110000-0000-4000-8000-000000000006")])],ports:{},
+)

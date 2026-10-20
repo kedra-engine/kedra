@@ -1,0 +1,31 @@
+(
+    version: 1,
+    id: "b61f8b8d-784c-42c0-96c0-ebd105d425c7",
+    kind: Scene,
+    title: "Editor lighting studio",
+    root: "bf658e97-34c5-4ada-9e60-0b5ab1fc1da1",
+    base: None,
+    nodes: [
+        (
+            id: "bf658e97-34c5-4ada-9e60-0b5ab1fc1da1",
+            name: "Studio environment",
+            parent: None,
+            components: {
+                "scene.environment": (version: 1, value: (asset: Path("editor://environments/studio.environment.ron"))),
+                "scene.transform": (version: 1, value: (translation: (0.0,0.0,0.0), rotation: (0.0,0.0,0.0,1.0), scale: (1.0,1.0,1.0))),
+            },
+        ),
+        (
+            id: "bf658e97-34c5-4ada-9e60-0b5ab1fc1da2",
+            name: "Studio key light",
+            parent: Some((instances: [], node: "bf658e97-34c5-4ada-9e60-0b5ab1fc1da1")),
+            components: {
+                "scene.sun": (version: 1, value: (color: Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0)), illuminance: 15000.0)),
+                "scene.transform": (version: 1, value: (translation: (0.0,0.0,0.0), rotation: (-0.37731227,-0.22787414,-0.09634364,0.89242744), scale: (1.0,1.0,1.0))),
+            },
+        ),
+    ],
+    instances: [],
+    ports: {},
+    overrides: [],
+)

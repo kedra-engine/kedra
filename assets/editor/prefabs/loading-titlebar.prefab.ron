@@ -1,0 +1,7 @@
+(
+ version:1,id:"c0900000-0000-4000-8000-000000000002",kind:Prefab,title:"Loading caption",root:"c0910000-0000-4000-8000-000000000001",base:Some("c0900000-0000-4000-8000-000000000001"),nodes:[],instances:[],ports:{},
+ overrides:[
+  SetComponent(node:(instances:["c0920000-0000-4000-8000-000000000001"],node:"c0110000-0000-4000-8000-000000000001"),component:"ui.classes",data:(version:1,value:(names:["button","window-control","hidden"]))),
+  SetComponent(node:(instances:["c0920000-0000-4000-8000-000000000002"],node:"c0110000-0000-4000-8000-000000000001"),component:"ui.classes",data:(version:1,value:(names:["button","window-control","hidden"]))),
+ ],
+)

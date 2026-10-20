@@ -1,0 +1,10 @@
+(
+ version:1,id:"d0200000-0000-4000-8000-000000000001",kind:Prefab,title:"Dock tab",root:"d0210000-0000-4000-8000-000000000001",base:None,
+ nodes:[
+  (id:"d0210000-0000-4000-8000-000000000001",name:"Tab",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-tab"]))}),
+  (id:"d0210000-0000-4000-8000-000000000002",name:"Draggable label",parent:Some((instances:[],node:"d0210000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("label")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-label"])),"ui.button":(version:1,value:())}),
+  (id:"d0210000-0000-4000-8000-000000000003",name:"Title",parent:Some((instances:[],node:"d0210000-0000-4000-8000-000000000002")),components:{"ui.id":(version:1,value:("title")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","dock-tab-title"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:false))}),
+  (id:"d0210000-0000-4000-8000-000000000004",name:"Close",parent:Some((instances:[],node:"d0210000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("close")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-tab-close"])),"ui.button":(version:1,value:())}),
+  (id:"d0210000-0000-4000-8000-000000000005",name:"Close glyph",parent:Some((instances:[],node:"d0210000-0000-4000-8000-000000000004")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["icon"])),"ui.image":(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/close.svg#1x")),(density:2.0,image:Path("editor://icons/close.svg#2x")),(density:3.0,image:Path("editor://icons/close.svg#3x")),(density:4.0,image:Path("editor://icons/close.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))))}),
+ ],instances:[],overrides:[],ports:{},
+)

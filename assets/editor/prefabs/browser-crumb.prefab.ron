@@ -1,0 +1,8 @@
+(
+ version:1,id:"afbe6799-efde-4231-9e46-e7d3ecfe626b",kind:Prefab,title:"Source breadcrumb action",root:"4057bb7a-fec2-4ed2-a0eb-af5ce83e9d87",base:None,
+ nodes:[
+  (id:"4057bb7a-fec2-4ed2-a0eb-af5ce83e9d87",name:"Breadcrumb",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.button":(version:1,value:()),"ui.classes":(version:1,value:(names:["button","browser-crumb"]))}),
+  (id:"4057bb7a-fec2-4ed2-a0eb-af5ce83e9d88",name:"Folder label",parent:Some((instances:[],node:"4057bb7a-fec2-4ed2-a0eb-af5ce83e9d87")),components:{"ui.id":(version:1,value:("name")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","secondary"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:false))}),
+  (id:"4057bb7a-fec2-4ed2-a0eb-af5ce83e9d89",name:"Path separator",parent:Some((instances:[],node:"4057bb7a-fec2-4ed2-a0eb-af5ce83e9d87")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["icon"])),"ui.image":(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/browser-right.svg#1x")),(density:2.0,image:Path("editor://icons/browser-right.svg#2x")),(density:3.0,image:Path("editor://icons/browser-right.svg#3x")),(density:4.0,image:Path("editor://icons/browser-right.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))))}),
+ ],instances:[],overrides:[],ports:{},
+)

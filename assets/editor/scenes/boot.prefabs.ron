@@ -1,0 +1,10 @@
+[
+ "editor://prefabs/button.prefab.ron",
+ "editor://prefabs/window-control.prefab.ron",
+ "editor://prefabs/minimize-control.prefab.ron",
+ "editor://prefabs/maximize-control.prefab.ron",
+ "editor://prefabs/titlebar.prefab.ron",
+ "editor://prefabs/loading-titlebar.prefab.ron",
+ "editor://prefabs/window-frame.prefab.ron",
+ "editor://scenes/boot.scene.ron",
+]

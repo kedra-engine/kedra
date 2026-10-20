@@ -1,0 +1,29 @@
+[package]
+name = "kedra_scene"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Authored scene composition and isolated Bevy prefab instances"
+
+[package.metadata.kedra]
+layer = "runtime"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_asset", "bevy_camera", "bevy_image", "bevy_world_serialization", "serialize"] }
+serde.workspace = true
+serde_with.workspace = true
+ron.workspace = true
+uuid.workspace = true
+thiserror.workspace = true
+futures-lite = { version = "2.6", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[features]
+# Opt-in native spatial hydration, shared by editor and standalone render hosts.
+render = ["bevy/bevy_pbr", "bevy/bevy_core_pipeline"]
+
+[lints]
+workspace = true

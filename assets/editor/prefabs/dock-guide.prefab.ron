@@ -1,0 +1,7 @@
+(
+ version:1,id:"d0700000-0000-4000-8000-000000000001",kind:Prefab,title:"Dock guide",root:"d0710000-0000-4000-8000-000000000001",base:None,
+ nodes:[
+  (id:"d0710000-0000-4000-8000-000000000001",name:"Guide",parent:None,components:{"ui.id":(version:1,value:("guide")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-guide"]))}),
+  (id:"d0710000-0000-4000-8000-000000000002",name:"Glyph",parent:Some((instances:[],node:"d0710000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("glyph")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["icon"])),"ui.image":(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/dock-guide-tab.svg#1x")),(density:2.0,image:Path("editor://icons/dock-guide-tab.svg#2x")),(density:3.0,image:Path("editor://icons/dock-guide-tab.svg#3x")),(density:4.0,image:Path("editor://icons/dock-guide-tab.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))))}),
+ ],instances:[],overrides:[],ports:{},
+)

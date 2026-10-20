@@ -1,0 +1,7 @@
+(
+ version:1,id:"90c60c16-5338-46f6-93bc-e27731ee6708",kind:Prefab,title:"Flat browser icon action",root:"eeb629b8-14fa-46d1-bd9b-33867c45794d",base:None,
+ nodes:[
+  (id:"eeb629b8-14fa-46d1-bd9b-33867c45794d",name:"Flat action",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.button":(version:1,value:()),"ui.classes":(version:1,value:(names:["button","browser-icon"]))}),
+  (id:"493275a5-a254-45db-a2a5-fb856fe88eb7",name:"Action icon",parent:Some((instances:[],node:"eeb629b8-14fa-46d1-bd9b-33867c45794d")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["icon"])),"ui.image":(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/browser-right.svg#1x")),(density:2.0,image:Path("editor://icons/browser-right.svg#2x")),(density:3.0,image:Path("editor://icons/browser-right.svg#3x")),(density:4.0,image:Path("editor://icons/browser-right.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))))}),
+ ],instances:[],overrides:[],ports:{},
+)

@@ -1,0 +1,28 @@
+[package]
+name = "kedra_assets"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Verified asset delivery and stable Bevy asset sources"
+
+[package.metadata.kedra]
+layer = "runtime"
+
+[features]
+model-support = ["dep:gltf"]
+
+[dependencies]
+gltf = { version = "=1.4.1", default-features = false, features = ["KHR_lights_punctual"], optional = true }
+bevy = { workspace = true, features = ["bevy_asset", "bevy_image", "png"] }
+serde.workspace = true
+serde_json.workspace = true
+ron.workspace = true
+uuid.workspace = true
+sha2.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

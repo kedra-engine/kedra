@@ -1,0 +1,4 @@
+(
+ version:1,id:"c0700000-0000-4000-8000-000000000001",kind:Scene,title:"Empty editor host",root:"c0710000-0000-4000-8000-000000000001",base:None,
+ nodes:[(id:"c0710000-0000-4000-8000-000000000001",name:"Empty editor canvas",parent:None,components:{"ui.id":(version:1,value:("editor.canvas")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["editor-canvas"]))})],instances:[],overrides:[],ports:{},
+)

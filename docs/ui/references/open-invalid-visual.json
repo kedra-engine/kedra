@@ -1,0 +1,13 @@
+{
+  "schema":1,"scenario":"startup-open-invalid","fixture":"isolated-three-project-history-invalid-open",
+  "profile":{"id":"macos-metal-local-dpr1-reduced","platform":"macos","renderer":"metal-apple-m3-pro","environment":"uncertified-local-review","logical_size":[1120,720],"dpr":1,"color_space":"srgb_assumed","motion":"reduced"},
+  "reference":{
+    "image":"startup-2026-10-18-v2/open-invalid.png","sha256":"f4d1313fdf1bf8a2bd19b5c9b73e0733a16dc20c73140289e8372f84a01c5a9d",
+    "source":"https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=71-5150",
+    "kind":"design_reference","approval":"pending","export_size":[1120,720],"crop":[0,0,1120,720],"crop_reason":"Complete manager and invalid open modal; no cropping or exclusions."
+  },
+  "animation":{"mode":"static"},
+  "comparison":{"normalized_yiq_tolerance":0.05,"budget":{"max_changed_pixels":16128,"max_changed_ppm":20000},"max_excluded_ppm":0,"allow_uniform_reason":null},
+  "exclusions":[],
+  "critical_regions":[{"name":"custom-frame","rect":[0,0,1120,33],"budget":{"max_changed_pixels":739,"max_changed_ppm":20000}},{"name":"invalid-modal","rect":[240,160,640,400],"budget":{"max_changed_pixels":5120,"max_changed_ppm":20000}}]
+}

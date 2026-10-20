@@ -1,0 +1,11 @@
+(
+ version:1,id:"c0800000-0000-4000-8000-000000000003",kind:Prefab,title:"Maximize and restore control",root:"c0110000-0000-4000-8000-000000000001",base:Some("c0800000-0000-4000-8000-000000000001"),nodes:[],instances:[],ports:{},
+ overrides:[
+  SetComponent(node:(instances:[],node:"c0810000-0000-4000-8000-000000000001"),component:"ui.id",data:(version:1,value:("window.maximize_glyph"))),
+  SetComponent(node:(instances:[],node:"c0810000-0000-4000-8000-000000000001"),component:"ui.image",data:(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/maximize.svg#1x")),(density:2.0,image:Path("editor://icons/maximize.svg#2x")),(density:3.0,image:Path("editor://icons/maximize.svg#3x")),(density:4.0,image:Path("editor://icons/maximize.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))))),
+  AddNode((id:"c0810000-0000-4000-8000-000000000002",name:"Restore glyph",parent:Some((instances:[],node:"c0110000-0000-4000-8000-000000000001")),components:{
+   "ui.id":(version:1,value:("window.restore_glyph")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["icon","hidden"])),
+   "ui.image":(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/restore.svg#1x")),(density:2.0,image:Path("editor://icons/restore.svg#2x")),(density:3.0,image:Path("editor://icons/restore.svg#3x")),(density:4.0,image:Path("editor://icons/restore.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0)))),
+  })),
+ ],
+)

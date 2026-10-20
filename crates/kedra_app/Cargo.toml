@@ -1,0 +1,35 @@
+[package]
+name = "kedra_app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Shared Kedra application host, command surface and authenticated automation"
+
+[package.metadata.kedra]
+layer = "runtime"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_ui", "bevy_winit", "bevy_render", "bevy_log", "multi_threaded", "png", "x11", "wayland"] }
+bevy_remote.workspace = true
+kedra_assets.workspace = true
+kedra_ui.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+tempfile.workspace = true
+async-channel = "2"
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio"] }
+tokio = { version = "1", features = ["rt", "net", "sync", "time", "macros"] }
+subtle = "2.6"
+image.workspace = true
+
+[dev-dependencies]
+kedra_docking.workspace = true
+kedra_scene.workspace = true
+bevy_flair.workspace = true
+tower = { version = "0.5", features = ["util"] }
+bevy = { workspace = true, features = ["bevy_core_pipeline", "bevy_ui_render", "async_executor", "bevy_log", "x11", "wayland"] }
+
+[lints]
+workspace = true

@@ -1,0 +1,10 @@
+(
+ version:1,id:"d0800000-0000-4000-8000-000000000001",kind:Prefab,title:"Dock drag identity",root:"d0810000-0000-4000-8000-000000000001",base:None,
+ nodes:[
+  (id:"d0810000-0000-4000-8000-000000000001",name:"Ghost",parent:None,components:{"ui.id":(version:1,value:("ghost")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-ghost"]))}),
+  (id:"d0810000-0000-4000-8000-000000000002",name:"Grip",parent:Some((instances:[],node:"d0810000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("glyph")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["icon"])),"ui.image":(version:1,value:(variants:[(density:1.0,image:Path("editor://icons/dock-grip.svg#1x")),(density:2.0,image:Path("editor://icons/dock-grip.svg#2x")),(density:3.0,image:Path("editor://icons/dock-grip.svg#3x")),(density:4.0,image:Path("editor://icons/dock-grip.svg#4x"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))))}),
+  (id:"d0810000-0000-4000-8000-000000000003",name:"Copy",parent:Some((instances:[],node:"d0810000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-ghost-copy"]))}),
+  (id:"d0810000-0000-4000-8000-000000000004",name:"Title",parent:Some((instances:[],node:"d0810000-0000-4000-8000-000000000003")),components:{"ui.id":(version:1,value:("title")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","strong"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:false))}),
+  (id:"d0810000-0000-4000-8000-000000000005",name:"Reason",parent:Some((instances:[],node:"d0810000-0000-4000-8000-000000000003")),components:{"ui.id":(version:1,value:("reason")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","dock-blocked-reason"])),"ui.caption":(version:1,value:(text:"Not enough room · dock as tab",justify:Left,wrap:false))}),
+ ],instances:[],overrides:[],ports:{},
+)

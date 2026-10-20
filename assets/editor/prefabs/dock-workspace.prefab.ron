@@ -1,0 +1,13 @@
+(
+ version:1,id:"d0500000-0000-4000-8000-000000000001",kind:Prefab,title:"Dock workspace controls",root:"d0510000-0000-4000-8000-000000000001",base:None,
+ nodes:[
+  (id:"d0510000-0000-4000-8000-000000000001",name:"Workspace",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-workspace"]))}),
+  (id:"d0510000-0000-4000-8000-000000000002",name:"Toolbar",parent:Some((instances:[],node:"d0510000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-toolbar"]))}),
+  (id:"d0510000-0000-4000-8000-000000000003",name:"Status",parent:Some((instances:[],node:"d0510000-0000-4000-8000-000000000002")),components:{"ui.id":(version:1,value:("status")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","muted","dock-status"])),"ui.caption":(version:1,value:(text:"Drag labels to dock. Shift-drag moves the whole group. Escape cancels.",justify:Left,wrap:false))}),
+  (id:"d0510000-0000-4000-8000-000000000004",name:"Host",parent:Some((instances:[],node:"d0510000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("host")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-host"]))}),
+  (id:"d0510000-0000-4000-8000-000000000005",name:"Hidden retained roots",parent:Some((instances:[],node:"d0510000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("stash")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-stash"]))}),
+ ],instances:[
+  (id:"d0520000-0000-4000-8000-000000000001",asset:"c0100000-0000-4000-8000-000000000001",parent:(instances:[],node:"d0510000-0000-4000-8000-000000000002"),bindings:{},overrides:[SetComponent(node:(instances:[],node:"c0110000-0000-4000-8000-000000000001"),component:"ui.id",data:(version:1,value:("panels"))),SetField(node:(instances:[],node:"c0110000-0000-4000-8000-000000000002"),component:"ui.caption",version:1,path:"text",value:"Panels")]),
+  (id:"d0520000-0000-4000-8000-000000000002",asset:"c0100000-0000-4000-8000-000000000001",parent:(instances:[],node:"d0510000-0000-4000-8000-000000000002"),bindings:{},overrides:[SetComponent(node:(instances:[],node:"c0110000-0000-4000-8000-000000000001"),component:"ui.id",data:(version:1,value:("reset"))),SetField(node:(instances:[],node:"c0110000-0000-4000-8000-000000000002"),component:"ui.caption",version:1,path:"text",value:"Reset layout")]),
+ ],overrides:[],ports:{},
+)

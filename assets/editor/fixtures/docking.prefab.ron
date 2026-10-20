@@ -1,0 +1,9 @@
+(
+ version:1,id:"d0900000-0000-4000-8000-000000000001",kind:Prefab,title:"Dock acceptance content",root:"d0910000-0000-4000-8000-000000000001",base:None,
+ nodes:[
+  (id:"d0910000-0000-4000-8000-000000000001",name:"Fixture panel",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-fixture","dock-fixture-panel"])),"ui.stylesheet":(version:1,value:(asset:Path("editor://fixtures/docking.css")))}),
+  (id:"d0910000-0000-4000-8000-000000000002",name:"Identity",parent:Some((instances:[],node:"d0910000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("identity")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","dock-fixture-identity"])),"ui.caption":(version:1,value:(text:"",justify:Center,wrap:false))}),
+  (id:"d0910000-0000-4000-8000-000000000003",name:"Draft surface",parent:Some((instances:[],node:"d0910000-0000-4000-8000-000000000001")),components:{"ui.id":(version:1,value:("field")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["field","dock-fixture-field","hidden"]))}),
+  (id:"d0910000-0000-4000-8000-000000000004",name:"Draft",parent:Some((instances:[],node:"d0910000-0000-4000-8000-000000000003")),components:{"ui.id":(version:1,value:("draft")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","input"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:false)),"ui.editable":(version:1,value:(autofocus:false,select_all:false))}),
+ ],instances:[],overrides:[],ports:{},
+)

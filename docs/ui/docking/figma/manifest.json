@@ -1,0 +1,30 @@
+{
+ "schema":1,
+ "file":"2EZlK40cfx2Mub7GmDyI70",
+ "page":"92:3713",
+ "exported":"2026-10-19",
+ "revision":"flat-icon-buttons-common-dock-menu",
+ "source":"Independent Figma MCP PNG exports, native frame resolution, no cropping/resizing. Owner-requested reference refresh after design changes; not application goldens.",
+ "frames":[
+  {"name":"i00-baseline","node":"97:6482","size":[1200,800],"sha256":"7222602dc702154fbf6659ece5b1f344c0f4cd92fb8b7d811c3d5d019de68eaf"},
+  {"name":"i01-compact","node":"97:6565","size":[960,640],"sha256":"a37eb847f82a34f4ce9d549ba8473332f1918fa8f727f5490ce6b967f585d814"},
+  {"name":"i02-compass","node":"97:6648","size":[1200,800],"sha256":"7d98d36bec378d0e8a98599d29192e715c24fa111982d62d2b828c77596ce817"},
+  {"name":"i03-direct","node":"97:6753","size":[1200,800],"sha256":"351ad2e0f950fe68b0227a8e2d33016ae200c58994f0bc355d51e9557838d8e2"},
+  {"name":"i04-split-result","node":"97:6843","size":[1200,800],"sha256":"58c7e458168971b1a982e9192215195cbbb5278cccf1e736250dfe70dbf3ac16"},
+  {"name":"i05-merge-preview","node":"97:6946","size":[1200,800],"sha256":"4dc53ec61f07393dce1525e78944d36dabe71232678d95abb0b1a9a462740e4e"},
+  {"name":"i06-merged","node":"97:7051","size":[1200,800],"sha256":"2658380eff478b858a5b0a5df3766607dc01de97425844dbe0536b3a0b6a0419"},
+  {"name":"i07-insertion","node":"97:7156","size":[1200,800],"sha256":"350221e49b5918f3abcdf32318263e92295eeff4d0098f61f007105c5e7b7ef2"},
+  {"name":"i08-reordered","node":"97:7246","size":[1200,800],"sha256":"ada2f39ff411881820b7e55bfa07c6010eaa4dcad426ffcf7cfb896619097650"},
+  {"name":"i09-blocked","node":"97:7331","size":[1200,800],"sha256":"13a13c94273d89a402fa8367cece7a8c68ee97e5c3d4e09059739519a9cea23d"},
+  {"name":"i10-splitter-hover","node":"97:7437","size":[1200,800],"sha256":"424bdbb9a6458eb911d0a56e4074436a9daa24de3988c094a80b65719f9d9dc9"},
+  {"name":"i11-resized","node":"97:7520","size":[1200,800],"sha256":"1cfed277b84af18f8bd947fac1c20744d142895dc8d2e5e6ad83dd14b969b8ce"},
+  {"name":"i12-maximized","node":"97:7603","size":[1200,800],"sha256":"048f47e011c0d3f2b1209a7f9883a142a331ff89db7122469a7c8bd858e37fd1"},
+  {"name":"i13-overflow","node":"97:7645","size":[1200,800],"sha256":"b0a6976136c389bce9b68ce8dfbf054d52a6cf4657103c3fe88d9db9d49be212"},
+  {"name":"i14-float-main","node":"97:7735","size":[1200,800],"sha256":"dd4a7f5d05659ae3233820f9110c20175dda6f02f71f37b946213536deb8ef78"},
+  {"name":"i14-float-window","node":"97:7817","size":[640,480],"sha256":"253caab54fa6734f175da14c8a82b679fa05e0d5225fa577ae929f09af647a18"},
+  {"name":"i15-redock","node":"97:7857","size":[1200,800],"sha256":"9be064d737ffc0038ae9af23748b2becde0bd9b2a0efd4f4c6d2666488545c19"},
+  {"name":"i16-restored","node":"97:7946","size":[1200,800],"sha256":"7222602dc702154fbf6659ece5b1f344c0f4cd92fb8b7d811c3d5d019de68eaf"},
+  {"name":"i17-compact-blocked","node":"97:8029","size":[960,640],"sha256":"4a02d3f08b707c19a30b0d16946f1efe78ce984276a7cc74226bd32081da8da1"},
+  {"name":"i18-macos","node":"97:8135","size":[1200,800],"sha256":"10c4e1f0daa67cf432c1b7b8e9d9f004b6be9ec2f8addfa86f2d7c8d85c3dedf"}
+ ]
+}

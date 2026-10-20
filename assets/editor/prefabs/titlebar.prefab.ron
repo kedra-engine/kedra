@@ -1,0 +1,14 @@
+(
+ version:1,id:"c0900000-0000-4000-8000-000000000001",kind:Prefab,title:"Right native caption",root:"c0910000-0000-4000-8000-000000000001",base:None,ports:{},
+ nodes:[
+  (id:"c0910000-0000-4000-8000-000000000001",name:"Native titlebar",parent:None,components:{"ui.id":(version:1,value:("window.chrome")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["titlebar"]))}),
+  (id:"c0910000-0000-4000-8000-000000000002",name:"Symmetric title balance",parent:Some((instances:[],node:"c0910000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["title-balance"]))}),
+  (id:"c0910000-0000-4000-8000-000000000003",name:"Draggable title background",parent:Some((instances:[],node:"c0910000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["title-host"]))}),
+  (id:"c0910000-0000-4000-8000-000000000004",name:"Native window title",parent:Some((instances:[],node:"c0910000-0000-4000-8000-000000000003")),components:{"ui.id":(version:1,value:("window.title")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","secondary","window-title"])),"ui.caption":(version:1,value:(text:"",justify:Center,wrap:false))}),
+  (id:"c0910000-0000-4000-8000-000000000005",name:"Window controls",parent:Some((instances:[],node:"c0910000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["window-controls"]))}),
+ ],instances:[
+  (id:"c0920000-0000-4000-8000-000000000001",asset:"c0800000-0000-4000-8000-000000000002",parent:(instances:[],node:"c0910000-0000-4000-8000-000000000005"),bindings:{},overrides:[SetComponent(node:(instances:[],node:"c0110000-0000-4000-8000-000000000001"),component:"ui.id",data:(version:1,value:("window.minimize")))]),
+  (id:"c0920000-0000-4000-8000-000000000002",asset:"c0800000-0000-4000-8000-000000000003",parent:(instances:[],node:"c0910000-0000-4000-8000-000000000005"),bindings:{},overrides:[SetComponent(node:(instances:[],node:"c0110000-0000-4000-8000-000000000001"),component:"ui.id",data:(version:1,value:("window.maximize")))]),
+  (id:"c0920000-0000-4000-8000-000000000003",asset:"c0800000-0000-4000-8000-000000000001",parent:(instances:[],node:"c0910000-0000-4000-8000-000000000005"),bindings:{},overrides:[SetComponent(node:(instances:[],node:"c0110000-0000-4000-8000-000000000001"),component:"ui.id",data:(version:1,value:("window.close")))]),
+ ],overrides:[],
+)

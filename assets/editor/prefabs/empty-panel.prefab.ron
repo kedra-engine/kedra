@@ -1,0 +1,6 @@
+(
+ version:1,id:"1a95bec3-2a48-4041-a1ee-60754f991938",kind:Prefab,title:"Empty dockable authoring panel",root:"66ba138e-a159-4736-a7e2-286171ab5283",base:None,
+ nodes:[
+  (id:"66ba138e-a159-4736-a7e2-286171ab5283",name:"Empty authoring panel",parent:None,components:{"ui.id":(version:1,value:("empty")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dock-content"]))}),
+ ],instances:[],overrides:[],ports:{},
+)

@@ -1,0 +1,8 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame">
+<mask id="stroke0_0_18" fill="white">
+<path d="M3 3H9H13V13H9H3V3Z"/>
+</mask>
+<path id="Vector" d="M9 3H8.4V13H9H9.6V3H9ZM3 3V1.8C2.33726 1.8 1.8 2.33726 1.8 3L3 3ZM13 3H14.2C14.2 2.33726 13.6627 1.8 13 1.8V3ZM13 13V14.2C13.6627 14.2 14.2 13.6627 14.2 13H13ZM3 13H1.8C1.8 13.6627 2.33726 14.2 3 14.2L3 13ZM3 3V4.2H9V3V1.8H3V3ZM9 3V4.2H13V3V1.8H9V3ZM13 3H11.8V13H13H14.2V3H13ZM13 13V11.8H9V13V14.2H13V13ZM9 13V11.8H3V13V14.2H9V13ZM3 13H4.2V3H3H1.8V13H3Z" fill="#858585" mask="url(#stroke0_0_18)"/>
+</g>
+</svg>

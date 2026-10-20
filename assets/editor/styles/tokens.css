@@ -1,0 +1,54 @@
+/* Workbench values live here. Game themes own their own files and namespaces. */
+@font-face { font-family: "Interface"; src: url("editor://fonts/Inter-Regular.ttf"); }
+@font-face { font-family: "InterfaceMedium"; src: url("editor://fonts/Inter-Medium.ttf"); }
+@font-face { font-family: "InterfaceSemibold"; src: url("editor://fonts/Inter-SemiBold.ttf"); }
+@font-face { font-family: "KedraMono"; src: url("editor://fonts/JetBrainsMono-Regular.ttf"); }
+
+.theme {
+    --canvas: #242424;
+    --panel: #303030;
+    --menu: #282828;
+    --field: #252525;
+    --raised: #535353;
+    --header: #3d3d3d;
+    --hover: #626262;
+    --pressed: #292929;
+    --border: #1c1c1c;
+    /* Figma's 14% white inner light over the dark control stroke, in sRGB.
+       Paint the resulting top stroke: a child overlay shifts it into the fill
+       and native linear-light alpha blending otherwise makes it too bright. */
+    --control-top-edge: #3c3c3c;
+    --frame-border: #717171;
+    --text: #eeeeee;
+    --secondary: #c9c9c9;
+    --muted: #afafaf;
+    --on-accent: #ffffff;
+    --accent: #416b9d;
+    --accent-hover: #436e9f;
+    --accent-pressed: #36557c;
+    --selected: #45668f;
+    --selection-inactive: #3a3a3a;
+    --focus: #b1d2ff;
+    --error: #f0a3a3;
+    --warning: #e8bf80;
+    --warning-panel: #403728;
+    --font-ui: "Interface";
+    --font-strong: "InterfaceMedium";
+    --font-heading: "InterfaceSemibold";
+    --font-mono: "KedraMono";
+    --control-height: 26px;
+    --control-radius: 3px;
+    --popup-radius: 5px;
+    /* Native linear-light blending: this yields Figma's 21/255 scrim over #303030. */
+    --modal-scrim: #000000bf;
+}
+.text { font-family: var(--font-ui); font-size:12px; font-weight:400; line-height:16px; color:var(--text); }
+.strong { font-family:var(--font-strong); font-weight:500; }
+.caption { font-size:11px; }
+.title { font-family:var(--font-heading); font-weight:600; font-size:16px; line-height:24px; }
+.heading { font-family:var(--font-heading); font-weight:600; font-size:28px; line-height:36px; }
+.mono { font-family:var(--font-mono); font-size:11px; }
+.secondary { color:var(--secondary); }
+.muted { color:var(--muted); }
+.warning { color:var(--warning); }
+.text.error { color:var(--error); }

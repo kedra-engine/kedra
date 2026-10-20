@@ -1,0 +1,57 @@
+/* Native docking chrome follows Figma 97:6482; only the model supplies ratios. */
+.dock-group, .dock-split, .dock-tabs, .dock-body, .dock-content, .dock-tab,
+.dock-rail, .dock-label, .dock-action, .dock-tab-close, .dock-divider,
+.dock-workspace, .dock-toolbar, .dock-host, .dock-measure, .dock-preview,
+.dock-menu, .dock-content > .field { display:flex; }
+.editor-canvas { flex-direction:column; min-width:0px; overflow:clip; }
+.dock-group { flex-direction:column; min-width:240px; min-height:160px; overflow:clip; background-color:var(--panel); }
+.dock-rail { height:32px; min-height:32px; flex-shrink:0; padding:0 4px; column-gap:4px; align-items:center; background-color:var(--canvas); }
+.dock-tabs { flex-grow:1; flex-basis:0px; min-width:0px; height:32px; align-items:end; column-gap:4px; overflow-x:scroll; }
+.dock-tab { height:28px; min-height:28px; min-width:100px; max-width:240px; flex-shrink:0; align-items:center; border:1px solid transparent; border-bottom:0px; border-radius:5px 5px 0px 0px; background-color:var(--canvas); }
+.dock-tab.active { border-color:#1b1b1b; background-color:var(--panel); }
+/* The native rounded border is the complete tab rim. A separate inset strip
+   would brighten the fill and terminate with square ends at the corners. */
+.dock-label { position:relative; top:-0.5px; height:100%; padding:0 32px 0 12px; align-items:center; flex-grow:1; min-width:0px; overflow:clip; }
+.dock-tab-title { color:var(--muted); overflow:clip; }
+.dock-tab.active .dock-tab-title { font-family:var(--font-ui); color:var(--secondary); }
+.dock-group.focused .dock-tab.active .dock-tab-title { font-family:var(--font-strong); color:var(--text); }
+.dock-tab-close { position:absolute; right:0px; top:1px; width:20px; height:24px; flex-shrink:0; align-items:center; justify-content:center; visibility:hidden; background-color:var(--canvas); }
+.dock-tab.active .dock-tab-close { background-color:var(--panel); }
+.dock-tab:hover .dock-tab-close, .dock-tab:has(.dock-label:focus-visible) .dock-tab-close { visibility:visible; }
+.dock-tab-close:hover { background-color:var(--hover); }
+.dock-action { width:26px; min-width:26px; height:26px; min-height:26px; padding:0px; flex-shrink:0; }
+.dock-body { flex-grow:1; flex-basis:0px; min-width:0px; min-height:0px; flex-direction:column; overflow:clip; }
+.dock-split { flex-grow:1; flex-basis:0px; min-width:0px; min-height:0px; overflow:clip; flex-direction:row; }
+.dock-split.vertical { flex-direction:column; }
+.dock-divider { width:4px; min-width:4px; height:100%; flex-shrink:0; background-color:var(--canvas); }
+.dock-split.vertical > .dock-divider { width:100%; height:4px; min-height:4px; }
+.dock-divider:hover { background-color:var(--selected); }
+.dock-divider:focus-visible { background-color:var(--focus); }
+.dock-split.collapsed > .dock-divider { display:none; }
+.dock-stash { display:none; }
+.dock-content { flex-grow:1; width:100%; min-width:0px; min-height:0px; padding:16px; row-gap:12px; flex-direction:column; overflow-y:scroll; }
+.dock-information { width:100%; min-width:0px; flex-shrink:0; }
+.dock-toolbar { height:30px; min-height:30px; flex-shrink:0; padding:2px 6px; column-gap:8px; align-items:center; background-color:var(--canvas); }
+.dock-toolbar .button { height:26px; }
+.dock-host { display:flex; position:relative; flex-grow:1; flex-basis:0px; min-width:0px; min-height:0px; overflow:scroll; }
+.dock-workspace { width:100%; flex-grow:1; min-height:0px; min-width:0px; flex-direction:column; }
+.dock-status { flex-grow:1; min-width:0px; overflow:clip; }
+.dock-measure { position:absolute; left:0px; top:0px; width:100%; height:100%; visibility:hidden; }
+.dock-preview { position:absolute; border:1px solid var(--focus); background-color:#416b9d1a; }
+.dock-menu { position:absolute; width:224px; padding:6px; row-gap:4px; flex-direction:column; overflow-y:scroll; background-color:var(--menu); border:1px solid var(--border); box-shadow:0px 9px 20px #0000006b; }
+.dock-menu .button { width:100%; justify-content:start; }
+.hidden { display:none; }
+.dock-guide { display:flex; position:absolute; width:28px; height:28px; align-items:center; justify-content:center; background-color:var(--menu); border:1px solid var(--frame-border); }
+.dock-guide.target { background-color:var(--accent); border-color:var(--focus); }
+.dock-guide.unavailable { background-color:var(--menu); border-color:#1b1b1b; }
+.dock-insertion { display:flex; position:absolute; width:2px; height:28px; background-color:var(--focus); }
+.dock-ghost { display:flex; position:absolute; width:144px; height:32px; padding:6px 8px; column-gap:8px; align-items:center; background-color:var(--menu); border:1px solid var(--frame-border); }
+.dock-ghost.blocked { width:272px; height:56px; background-color:var(--warning-panel); border-color:var(--warning); }
+.dock-ghost-copy { display:flex; flex-direction:column; row-gap:2px; min-width:0px; overflow:clip; }
+.dock-blocked-reason { display:none; font-size:11px; color:var(--warning); }
+.dock-ghost.blocked .dock-blocked-reason { display:flex; }
+.dock-tab.active.dragging { background-color:#282828; border-color:#212121; }
+.dock-tab.dragging .dock-tab-title { color:#555555; }
+.dock-tab.active.dragging .dock-tab-title, .dock-group.focused .dock-tab.active.dragging .dock-tab-title { color:#6b6b6b; }
+.dock-guide.hidden, .dock-insertion.hidden { display:none; }
+.dock-tab.dragging .dock-tab-close { visibility:hidden; }

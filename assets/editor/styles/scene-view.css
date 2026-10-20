@@ -1,0 +1,20 @@
+/* UI-KIT 108:8644 viewport tools, adapted to the read-only command profile. */
+.scene-view { display:flex; flex-direction:column; width:100%; min-width:0px; min-height:0px; flex-grow:1; overflow:clip; background-color:var(--panel); }
+.scene-toolbar { display:flex; flex-wrap:wrap; align-items:center; column-gap:6px; row-gap:6px; height:auto; min-height:38px; flex-shrink:0; padding:6px 8px; width:100%; }
+.scene-select { min-width:0px; height:26px; padding:0 9px; column-gap:6px; justify-content:flex-start; flex-shrink:0; }
+.scene-select .text { flex-shrink:0; }
+.scene-projection { width:128px; }
+.scene-lighting { width:68px; }
+.scene-lighting.editor-lighting { width:88px; }
+.scene-select:has(.dock-menu) { background-color:var(--pressed); border-top-color:var(--border); box-shadow:none; }
+.scene-disclosure { margin-left:auto; flex-shrink:0; }
+.scene-grid { width:26px; min-width:26px; height:26px; padding:0; flex-shrink:0; }
+.scene-grid { border:1px solid var(--border); border-top-color:var(--control-top-edge); }
+.scene-grid.selected { background-color:var(--selected); border-top-color:var(--border); }
+.scene-icon { width:16px; height:16px; }
+.scene-heading { display:none; }
+.scene-caption { font-size:11px; flex-shrink:0; }
+.scene-units { width:72px; height:26px; flex-shrink:0; align-items:center; padding:0 9px; border:1px solid var(--border); border-radius:var(--control-radius); background-color:var(--raised); }
+.scene-viewport { display:flex; flex-grow:1; flex-basis:0px; width:100%; min-width:0px; min-height:0px; overflow:clip; background-color:#242b34; }
+.scene-image { position:absolute; min-width:0px; min-height:0px; }
+.scene-diagnostic { position:absolute; left:8px; right:8px; top:8px; max-height:80%; padding:8px; background-color:var(--panel); overflow-y:scroll; overflow-x:clip; }

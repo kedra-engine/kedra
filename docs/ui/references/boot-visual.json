@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "scenario": "startup-engine-boot",
+  "fixture": "engine-initialization-before-project-workflow",
+  "profile": {"id":"macos-metal-local-dpr1-reduced","platform":"macos","renderer":"metal-apple-m3-pro","environment":"uncertified-local-review","logical_size":[640,360],"dpr":1,"color_space":"srgb_assumed","motion":"reduced"},
+  "reference": {
+    "image":"startup-2026-10-18-v2/boot.png",
+    "sha256":"bed6b7a88e02425f03fc3f916b665bb446cdff80890bbd233384382f63818981",
+    "source":"https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=71-4556",
+    "kind":"design_reference","approval":"pending","export_size":[640,360],"crop":[0,0,640,360],
+    "crop_reason":"Complete Figma engine splash; no cropping, exclusions or application-derived pixels."
+  },
+  "animation":{"mode":"static"},
+  "comparison":{"normalized_yiq_tolerance":0.05,"budget":{"max_changed_pixels":4608,"max_changed_ppm":20000},"max_excluded_ppm":0,"allow_uniform_reason":null},
+  "exclusions":[],
+  "critical_regions":[
+    {"name":"custom-frame","rect":[0,0,640,33],"budget":{"max_changed_pixels":422,"max_changed_ppm":20000}},
+    {"name":"splash-body","rect":[1,33,638,326],"budget":{"max_changed_pixels":4159,"max_changed_ppm":20000}}
+  ]
+}
