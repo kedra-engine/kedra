@@ -1,15 +1,23 @@
 """Native inspection refuses missing/unreviewed inputs before extracting anything."""
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import subprocess
 import sys
 import tempfile
 import unittest
 import os
 
-from inspect_package import inspect_appimage, verify_macho, run
+from inspect_package import inspect_appimage, verify_macho, run, nsis_command_line
 
 
 class InspectionTests(unittest.TestCase):
+    def test_nsis_destination_is_the_unquoted_final_command_line_tail(self):
+        installer = PureWindowsPath(r"C:\packages space\Kedra installer.exe")
+        destination = PureWindowsPath(r"C:\installed Юникод space")
+        self.assertEqual(
+            nsis_command_line(installer, destination),
+            '"C:\\packages space\\Kedra installer.exe" /S /D=C:\\installed Юникод space',
+        )
+
     def test_real_command_diagnostics_and_arguments_preserve_unicode(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "installed Юникод space"
