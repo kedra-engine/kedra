@@ -202,6 +202,10 @@ from protected `main` with an exact source SHA and a new Cargo-matching tag.
 Preflight requires protected-main ancestry, genuine successful repository push CI
 at that exact SHA, and the current GitHub Actions `CI required` result. Existing
 tags/releases are refused rather than overwritten.
+The source's `.github/workflows` tree must also match the current default branch:
+GitHub's release API can require workflow-write permission for other targets,
+which the ordinary Actions token cannot acquire. This is checked before building
+and again at publication, without introducing a personal token or widening access.
 
 Three standard native runners use the same command and independent pinned Git
 consumer, with dependency-only caches separated from validation/coverage roles.
@@ -235,8 +239,15 @@ this run's artifacts and validates all five package sizes/hashes/source identiti
 a new draft, checks the complete uploaded set and GitHub digests, binds the tag
 to the reviewed source, and only then publishes an explicitly unsigned prerelease.
 An upload/policy failure leaves an unpublished draft; reruns never replace it.
+Draft creation uses the REST response's release ID for subsequent inspection and
+publication. GitHub's by-tag release endpoint is used only after publication;
+it is documented for published releases, not draft discovery. Asset transport
+remains the maintained GitHub CLI, with verified server sizes/digests before the
+ID-based update clears `draft`.
 
-The workflow and publisher still need actual hosted/native and public download
-acceptance. Their presence in source is not evidence of a successful release.
+The unsigned `v0.1.0` prerelease is publicly available. Its native package matrix
+passed, and publication was completed through an authorized manual recovery.
+The corrected automatic draft-to-published path still needs hosted acceptance;
+manual recovery is not evidence that the automated publisher succeeded.
 See [ADR 0023](decisions/0023-desktop-distribution.md) for ownership/security and
 license obligations.

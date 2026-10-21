@@ -89,6 +89,17 @@ build inputs beyond the evidence available.
 
 ## Consequences and verification
 
+Use the GitHub Releases lifecycle as documented: create a draft, retain the numeric
+ID returned by REST, upload through the maintained CLI, verify the draft by ID,
+then publish that same ID. The by-tag endpoint is for published releases and is
+not a draft lookup. Exercise the whole publisher with real local artifact files
+and mocked remote boundaries, including upload/digest/source/tag failure paths.
+Keep ordinary Actions token permissions; reject source/default-branch workflow
+tree differences before building and again before publication, because GitHub's
+release API can require workflow-write permission that `GITHUB_TOKEN` cannot have.
+See [GitHub's release API contract](https://docs.github.com/en/rest/releases/releases)
+and [typed GitHub CLI API fields](https://cli.github.com/manual/gh_api).
+
 The application fixture must build/package outside the editor workspace with its
 own metadata, resources and launcher; a public pinned Git-consumer check follows
 the implementation commit. Tooling must never rely on its compile-time source

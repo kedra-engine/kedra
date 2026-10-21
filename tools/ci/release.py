@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only GitHub release preflight; no build hooks, tags or releases are created."""
+"""GitHub release preflight and validated draft-to-publication lifecycle."""
 from __future__ import annotations
 
 import argparse
@@ -33,14 +33,24 @@ def validate_ci(runs: list[dict], source: str, repository: str) -> int:
     raise ValueError("Exact source revision has no successful repository push CI run")
 
 
-def api(path: str) -> object:
-    result = subprocess.run(["gh", "api", path], text=True, capture_output=True, check=True)
+def api(path: str, *arguments: str) -> object:
+    result = subprocess.run(["gh", "api", path, *arguments], text=True,
+                            stdout=subprocess.PIPE, check=True)
     return json.loads(result.stdout)
 
 
 def validate_package_result(result: str | None) -> None:
     if result != "success":
         raise ValueError("Publisher requires a successful current-run package matrix")
+
+
+def validate_workflow_trees(source: list[dict], current: list[dict]) -> None:
+    selected = {entry["sha"] for entry in source
+                if entry["name"] == "workflows" and entry["type"] == "dir"}
+    default = {entry["sha"] for entry in current
+               if entry["name"] == "workflows" and entry["type"] == "dir"}
+    if len(selected) != 1 or selected != default:
+        raise ValueError("Release source workflows differ from the default branch; GITHUB_TOKEN cannot publish this target")
 
 
 def publish(directory: Path, source: str, tag: str, repository: str) -> None:
@@ -85,13 +95,22 @@ Install and limitation details: https://github.com/{repository}/blob/{source}/do
     def gh(*arguments: str) -> None:
         subprocess.run(["gh", "release", *arguments, "--repo", repository], check=True)
     print("Publisher: creating a new draft; no existing tag/release is overwritten", flush=True)
-    gh("create", tag, "--target", source, "--draft", "--prerelease", "--title", f"Kedra {tag}",
-       "--notes-file", str(notes))
+    prefix = f"repos/{repository}"
+    created = api(f"{prefix}/releases", "--method", "POST",
+                  "-f", "tag_name=" + tag, "-f", "target_commitish=" + source,
+                  "-F", "draft=true", "-F", "prerelease=true",
+                  "-f", "name=Kedra " + tag, "-F", "body=@" + str(notes))
+    release_id = created["id"]
+    if type(release_id) is not int or release_id <= 0:
+        raise ValueError("Draft creation returned no valid release ID")
+    release_path = f"{prefix}/releases/{release_id}"
     paths = [entry["path"] for entry in entries] + [sums, inventory]
     gh("upload", tag, *map(str, paths))
-    release = api(f"repos/{repository}/releases/tags/{quote(tag, safe='')}")
+    # GitHub's by-tag endpoint is for published releases, not drafts.
+    release = api(release_path)
     expected = {path.name: path for path in paths}
-    if (not release["draft"] or not release["prerelease"]
+    if (release["id"] != release_id or release["tag_name"] != tag
+            or not release["draft"] or not release["prerelease"]
             or release["target_commitish"] != source
             or len(release["assets"]) != len(expected)
             or {asset["name"] for asset in release["assets"]} != set(expected)):
@@ -104,7 +123,6 @@ Install and limitation details: https://github.com/{repository}/blob/{source}/do
         if asset["size"] != path.stat().st_size or asset.get("digest") != digest:
             raise ValueError("Uploaded asset differs; leaving draft unpublished")
     # Create the tag atomically at the reviewed source if draft creation did not.
-    prefix = f"repos/{repository}"
     refs = api(f"{prefix}/git/matching-refs/tags/{quote(tag, safe='')}")
     exact = [ref for ref in refs if ref["ref"] == "refs/tags/" + tag]
     if exact:
@@ -113,10 +131,11 @@ Install and limitation details: https://github.com/{repository}/blob/{source}/do
     else:
         subprocess.run(["gh", "api", "--method", "POST", f"{prefix}/git/refs",
                         "-f", "ref=refs/tags/" + tag, "-f", "sha=" + source], check=True)
-    gh("edit", tag, "--draft=false", "--prerelease")
+    api(release_path, "--method", "PATCH", "-F", "draft=false", "-F", "prerelease=true")
     final = api(f"{prefix}/releases/tags/{quote(tag, safe='')}")
     ref = api(f"{prefix}/git/ref/tags/{quote(tag, safe='')}")
-    if final["draft"] or not final["prerelease"] or ref["object"]["sha"] != source:
+    if (final["id"] != release_id or final["draft"] or not final["prerelease"]
+            or ref["object"]["sha"] != source):
         raise ValueError("Published release identity readback failed")
     print("SUCCESS: complete prerelease published at " + final["html_url"], flush=True)
 
@@ -141,6 +160,8 @@ def main() -> None:
     comparison = api(f"{prefix}/compare/{source}...main")
     if comparison["status"] not in ("ahead", "identical"):
         raise ValueError("Release source must belong to protected main history")
+    validate_workflow_trees(api(f"{prefix}/contents/.github?ref={source}"),
+                            api(f"{prefix}/contents/.github?ref=main"))
     print("Release preflight: checking actual successful CI at the exact source", flush=True)
     runs = api(f"{prefix}/actions/workflows/ci.yml/runs?head_sha={source}&event=push&per_page=100")
     run_id = validate_ci(runs["workflow_runs"], source, repository)
