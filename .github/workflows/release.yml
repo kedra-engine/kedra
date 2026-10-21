@@ -24,6 +24,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  PYTHONUTF8: '1'
   CARGO_BUILD_JOBS: '4'
   CARGO_INCREMENTAL: '0'
   CARGO_PROFILE_DEV_DEBUG: line-tables-only
@@ -102,6 +103,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev libfuse2t64 patchelf file binutils
+      - name: Native distribution inspection regressions
+        run: python3 -X utf8 -m unittest discover -s tools/distribution -p 'test*.py'
       - uses: Swatinem/rust-cache@v2
         with:
           key: desktop-release-${{ runner.os }}-${{ runner.arch }}

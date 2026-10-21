@@ -6,10 +6,30 @@ import tempfile
 import unittest
 import os
 
-from inspect_package import inspect_appimage
+from inspect_package import inspect_appimage, verify_macho, run
 
 
 class InspectionTests(unittest.TestCase):
+    def test_real_command_diagnostics_and_arguments_preserve_unicode(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "installed Юникод space"
+            result = run([sys.executable, "-c", "import sys; print(sys.argv[1])", path],
+                         capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(result.stdout.strip(), str(path))
+
+    @unittest.skipUnless(sys.platform == "darwin", "Mach-O architecture verification requires macOS")
+    def test_macho_architecture_verification_uses_real_native_binary(self):
+        import platform
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            binary = root / "application Юникод"
+            subprocess.run(["cc", "-x", "c", "-o", str(binary), "-"],
+                           input="int main(void) { return 0; }\n", text=True, encoding="utf-8", check=True)
+            architecture = platform.machine()
+            verify_macho(binary, architecture)
+            with self.assertRaises(subprocess.CalledProcessError):
+                verify_macho(binary, "x86_64" if architecture == "arm64" else "arm64")
+
     @unittest.skipIf(os.name == "nt", "POSIX executable-script fixture for AppImage inspection")
     def test_broken_apprun_cannot_pass_by_launching_the_inner_binary(self):
         with tempfile.TemporaryDirectory() as temporary:
