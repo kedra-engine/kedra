@@ -9,14 +9,13 @@ TARGET_FORMATS = {
     "x86_64-pc-windows-msvc": {"nsis": "exe", "zip": "zip"},
     "x86_64-unknown-linux-gnu": {"appimage": "AppImage", "tar.gz": "tar.gz"},
     "aarch64-apple-darwin": {"dmg": "dmg"},
-    "x86_64-apple-darwin": {"dmg": "dmg"},
 }
 
 
 def verify(root: Path, source: str, version: str) -> list[dict]:
     expected_directories = {"package-" + target for target in TARGET_FORMATS}
     if {path.name for path in root.iterdir()} != expected_directories:
-        raise ValueError("Release requires exactly all four target artifact groups")
+        raise ValueError("Release requires exactly the three supported editor target artifact groups")
     entries = []
     for target, formats in TARGET_FORMATS.items():
         folder = root / ("package-" + target)

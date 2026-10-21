@@ -4502,12 +4502,14 @@ dependencies = [
  "image",
  "kedra_assets",
  "kedra_import",
+ "object",
  "serde",
  "serde_json",
  "sha2 0.10.9",
  "tar",
  "tauri-icns",
  "tempfile",
+ "toml",
  "tracing-subscriber",
  "ureq",
  "walkdir",
@@ -5585,6 +5587,18 @@ dependencies = [
  "objc2 0.5.3",
  "objc2-core-location",
  "objc2-foundation 0.2.2",
+]
+
+[[package]]
+name = "object"
+version = "0.40.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd229a0361b9d0d4396176e02d65897f487eebeab7caa6d443855ee152ca0b9c"
+dependencies = [
+ "crc32fast",
+ "hashbrown 0.17.1",
+ "indexmap",
+ "memchr",
 ]
 
 [[package]]

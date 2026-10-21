@@ -2,6 +2,7 @@
 use std::{
     ffi::OsString,
     fs,
+    io::Write,
     path::Path,
     process::{Command, ExitCode},
 };
@@ -74,6 +75,50 @@ fn run(project: &Path, output: &Path) -> ExitCode {
 }
 
 #[test]
+fn editor_release_profile_reaches_real_rustc_with_bevy_recommended_optimizations()
+-> Result<(), Box<dyn std::error::Error>> {
+    let project = fixture()?;
+    let workspace: toml::Value = toml::from_str(include_str!("../../../Cargo.toml"))?;
+    if let Some(release) = workspace
+        .get("profile")
+        .and_then(|profile| profile.get("release"))
+    {
+        let mut profiles = toml::Table::new();
+        profiles.insert("release".into(), release.clone());
+        let mut configuration = toml::Table::new();
+        configuration.insert("profile".into(), toml::Value::Table(profiles));
+        fs::OpenOptions::new()
+            .append(true)
+            .open(project.path().join("Cargo.toml"))?
+            .write_all(format!("\n{}", toml::to_string(&configuration)?).as_bytes())?;
+    }
+    let result = Command::new(std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into()))
+        .args([
+            "build",
+            "--locked",
+            "--release",
+            "--verbose",
+            "--message-format=json",
+        ])
+        .current_dir(project.path())
+        .output()?;
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let diagnostics = String::from_utf8(result.stderr)?;
+    let invocation = diagnostics
+        .lines()
+        .find(|line| line.contains("--crate-name independent_app"))
+        .ok_or("Actual application rustc invocation missing")?;
+    assert!(invocation.contains("opt-level=3"), "{invocation}");
+    assert!(invocation.contains("lto=thin"), "{invocation}");
+    assert!(invocation.contains("codegen-units=1"), "{invocation}");
+    Ok(())
+}
+
+#[test]
 fn independent_release_build_stages_real_binary_verified_assets_icons_and_notices()
 -> Result<(), Box<dyn std::error::Error>> {
     let project = fixture()?;
@@ -135,6 +180,28 @@ fn unsupported_native_resources_are_rejected_before_compilation_or_output_creati
         fs::read_to_string(project.path().join("settings.cfg"))?,
         "required application defaults"
     );
+    Ok(())
+}
+
+#[test]
+fn unsupported_native_component_inputs_fail_before_build_scripts_or_staging()
+-> Result<(), Box<dyn std::error::Error>> {
+    for input in [
+        "files = { 'plugin.so' = 'usr/lib/independent-app/plugin.so' }",
+        "libs = ['libunknown.so']",
+        "bins = ['extra-helper']",
+        "linuxdeployPlugins = { unknown = 'https://example.invalid/plugin.sh' }",
+    ] {
+        let project = fixture()?;
+        let manifest = project.path().join("Cargo.toml");
+        let before = fs::read_to_string(&manifest)?;
+        fs::write(&manifest, before.replace("[package.metadata.kedra.distribution]",
+            &format!("[package.metadata.packager.appimage]\n{input}\n[package.metadata.kedra.distribution]")))?;
+        let output = project.path().join("distribution");
+        assert_eq!(run(project.path(), &output), ExitCode::FAILURE, "{input}");
+        assert!(!project.path().join("build-script-ran").exists());
+        assert!(!output.exists());
+    }
     Ok(())
 }
 

@@ -92,7 +92,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev pax-utils
       - uses: Swatinem/rust-cache@v2
         with:
           key: native-${{ runner.os }}-${{ runner.arch }}
@@ -121,6 +121,11 @@ jobs:
         run: cargo xtask check --non-interactive
       - name: Default, minimal and isolated runtime features
         run: cargo xtask features --non-interactive
+      - name: Real native dependency notices and modified LGPL-library relink
+        if: runner.os == 'Linux'
+        env:
+          KEDRA_NATIVE_EVIDENCE: ${{ runner.temp }}/native-runtime-evidence
+        run: cargo test -p kedra_build --lib --locked native_distribution -- --ignored --nocapture
       - name: Retain failure and timing diagnostics
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -130,6 +135,7 @@ jobs:
             target/xtask/logs/*.log
             target/ci/windows-build/**
             target/cargo-timings/*.html
+            ${{ runner.temp }}/native-runtime-evidence/*
           if-no-files-found: warn
           retention-days: 7
 

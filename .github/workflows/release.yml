@@ -75,11 +75,9 @@ jobs:
           - os: macos-15
             target: aarch64-apple-darwin
             jobs: '4'
-          - os: macos-15-intel
-            target: x86_64-apple-darwin
-            jobs: '4'
     env:
       CARGO_BUILD_JOBS: ${{ matrix.jobs }}
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target/distribution-cargo
       RELEASE_SOURCE: ${{ needs.preflight.outputs.source }}
       RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
       RELEASE_TARGET: ${{ matrix.target }}
@@ -102,15 +100,15 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev libfuse2t64 patchelf file binutils
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev libfuse2t64 patchelf file binutils pax-utils
       - name: Native distribution inspection regressions
         run: python3 -X utf8 -m unittest discover -s tools/distribution -p 'test*.py'
       - uses: Swatinem/rust-cache@v2
         with:
-          key: desktop-release-${{ runner.os }}-${{ runner.arch }}
+          key: desktop-release-v2-${{ runner.os }}-${{ runner.arch }}
           env-vars: ImageOS ImageVersion
           workspaces: |
-            . -> target
+            . -> target/distribution-cargo
             . -> target/kedra-build-bootstrap
           cache-workspace-crates: false
           cache-all-crates: false
@@ -124,26 +122,33 @@ jobs:
           fallback: none
       - name: Audit immutable application dependency graph
         run: cargo deny --locked check
+      - name: Real native dependency notices and modified LGPL-library relink
+        if: runner.os == 'Linux'
+        env:
+          KEDRA_NATIVE_EVIDENCE: ${{ runner.temp }}/native-runtime-evidence
+        run: cargo test -p kedra_build --lib --locked native_distribution -- --ignored --nocapture
       - name: Isolated audited license collector (no project dependency downgrades)
         run: python3 tools/distribution/install_about.py --output "$RUNNER_TEMP/cargo-about"
       - name: Same shared native packaging command for every application
-        run: cargo kedra package --package kedra --target "$RELEASE_TARGET" --output target/release-package
+        run: cargo kedra package --package kedra --target "$RELEASE_TARGET" --output "$RUNNER_TEMP/release-package"
       - name: Inspect actual installer/archive and installed executable
-        run: python3 tools/distribution/inspect_package.py target/release-package --target "$RELEASE_TARGET" --source "$RELEASE_SOURCE" --version "${RELEASE_TAG#v}"
+        run: python3 tools/distribution/inspect_package.py "$RUNNER_TEMP/release-package" --target "$RELEASE_TARGET" --source "$RELEASE_SOURCE" --version "${RELEASE_TAG#v}"
       - name: Independent pinned public Git consumer and unchanged project aliases
-        run: python3 tools/distribution/validate_fixture.py --revision "$RELEASE_SOURCE" --package
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/consumer-cargo
+        run: python3 tools/distribution/validate_fixture.py --revision "$RELEASE_SOURCE" --package --workspace "$RUNNER_TEMP/distribution-consumer"
       - name: Retain only validated release files
         uses: actions/upload-artifact@v7
         with:
           name: package-${{ matrix.target }}
           path: |
-            target/release-package/*.exe
-            target/release-package/*.zip
-            target/release-package/*.AppImage
-            target/release-package/*.tar.gz
-            target/release-package/*.dmg
-            target/release-package/artifact-inventory.json
-            target/release-package/SHA256SUMS
+            ${{ runner.temp }}/release-package/*.exe
+            ${{ runner.temp }}/release-package/*.zip
+            ${{ runner.temp }}/release-package/*.AppImage
+            ${{ runner.temp }}/release-package/*.tar.gz
+            ${{ runner.temp }}/release-package/*.dmg
+            ${{ runner.temp }}/release-package/artifact-inventory.json
+            ${{ runner.temp }}/release-package/SHA256SUMS
           if-no-files-found: error
           retention-days: 1
       - name: Bounded failure diagnostics and isolated tool lock evidence
@@ -153,9 +158,10 @@ jobs:
           name: distribution-diagnostics-${{ matrix.target }}
           path: |
             target/xtask/logs/*.log
-            target/release-package/packages/native-config.json
-            target/release-package/packages/native-output.json
+            ${{ runner.temp }}/release-package/packages/native-config.json
+            ${{ runner.temp }}/release-package/packages/native-output.json
             ${{ runner.temp }}/cargo-about/source/cargo-about-0.9.2/Cargo.lock
+            ${{ runner.temp }}/native-runtime-evidence/*
           if-no-files-found: warn
           retention-days: 3
 

@@ -151,7 +151,7 @@ fn covered_identity(package: &Value) -> Result<(&str, &str), String> {
     ))
 }
 
-fn publish_source(bytes: &[u8], path: &Path, expected: &str) -> Result<(), String> {
+pub(crate) fn publish_source(bytes: &[u8], path: &Path, expected: &str) -> Result<(), String> {
     if format!("{:x}", Sha256::digest(bytes)) != expected {
         return Err("Covered source archive differs from its Cargo.lock checksum".into());
     }

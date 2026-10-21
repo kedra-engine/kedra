@@ -38,6 +38,9 @@ project-local command, with unsigned first releases and no paid services.
 - Compile/package jobs are read-only. Only the final complete-artifact publisher
   may write a GitHub prerelease after exact-revision successful CI. No code signing
   or notarization is claimed without certificates.
+- The shared builder retains macOS Intel as a supported native target. The owner
+  selects only Windows x64, Linux x64 and macOS Apple Silicon for Kedra editor
+  CI/CD; Intel editor builds/downloads are not part of the release matrix.
 
 ## Alternatives and dependency justification
 
@@ -118,3 +121,43 @@ Configured packaging is fail-closed on missing collectors, unresolved license
 texts, wrong source checksums and unsupported covered-source provenance. Package
 full copyright/license notices and MPL source archives, not merely a table of
 package license names. Font and modified-Winit notices retain existing provenance.
+
+### Native Linux redistribution boundary
+
+Rust notices cannot account for native libraries added by linuxdeploy or the
+AppImage executable prefix. Reuse `lddtree` for ELF dependency discovery,
+`dpkg-query` for native ownership/source identity and the distro's complete
+copyright/common-license records. The initial native adapter supports Ubuntu
+24.04. Unknown ownership and new or changed bundled-library terms fail closed.
+Exact reviewed copyright hashes are an admission policy for the known permissive
+runtime libraries, not another license parser. Libraries with additional source
+obligations are not approved merely because their notice was collected.
+
+Select the reviewed AppImage runtime through supported `LDAI_RUNTIME_FILE`, then
+verify the real image prefix and mirrored AppRun helper. Distribute runtime and
+libfuse sources, the AppImage libfuse patch, license texts and corresponding
+linkable objects/headers for other static dependencies inside both Linux packages.
+Use standard Docker, APK, Meson and upstream Make/autotools for recipient relinking;
+no custom runtime, bundler, package parser or second build framework is introduced.
+Native CI must demonstrate an actual modified-LGPL-library relink and native
+execution. Unavailable local Docker is unverified, not a passing relink result.
+
+Keep generated packages and independent-consumer sources outside cached Cargo
+targets. The release role uses distinct Cargo-only targets and runner-temporary
+package/consumer directories. Existing output rejection remains intact. A changed
+cache schema must not restore caches containing old source-specific packages.
+
+Use maintained MIT/Apache `object` 0.40.0 for ELF sections, dynamic tables and
+symbol identities. Read-only ELF/std features are enabled in tooling; its writer
+is dev-only for valid cross-platform regression fixtures. This adds one locked
+package while reusing existing transitive dependencies. No binary-format parser
+is implemented locally. The AppImage prefix comparison derives only the standard
+16-byte mutable digest range from the SHA-pinned input. Distro identities bind
+loaded sections and resolved symbols/dependencies despite ordinary RPATH/section
+renumbering, rather than trusting a matching filename. Reject extra native inputs
+until provenance/source support exists, and inspect all AppDir ELF locations.
+
+Preserve GCC startup/runtime GPLv3 and Runtime Library Exception notices as well
+as the explicit libraries' notices. Clearly identify standard compiler components
+not supplied in the source kit and the relied-upon standard-toolchain exception;
+retain real link maps and package/compiler inventories from native relink checks.

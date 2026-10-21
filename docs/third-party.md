@@ -46,6 +46,50 @@ duplicate-version exceptions and the time-bounded unmaintained-parser exception.
 
 ## Source provenance and publication
 
+### Native Linux components
+
+Cargo license collection covers Rust crates only. Linux packages additionally
+preserve full distro-native copyright records and referenced common-license
+texts, and include an AppImage runtime source/relink kit. See
+[distribution](distribution.md) for locations and acceptance limits.
+
+The reviewed bundled ELF source families are Brotli (MIT), bzip2 (its BSD-style
+license), libffi (MIT/Expat runtime implementation), libpng (libpng license) and
+Wayland (MIT/X11). Full distro copyright files are preserved, including notices
+for build/test/packaging sources that are not part of those runtime libraries.
+Exact copyright hashes gate admission; unknown or changed terms require review.
+This is intentionally not a custom parser guessing which DEP-5/SPDX clauses apply
+to a compiled library. lddtree/dpkg-query own dependency/ownership discovery.
+
+The AppImage runtime's libfuse 3.15.0 is LGPL-2.1 and has the AppImage project's
+2024-11-24 fusermount-discovery patch. The full original source, exact patch,
+LGPL text, complete runtime source and relink inputs accompany Linux packages.
+musl, squashfuse, zstd, zlib and mimalloc retain their own notices. The included
+Alpine APKs preserve corresponding linkable objects/headers; supplemental upstream
+musl/zlib source archives are not represented as Alpine's patched sources.
+Modification and reverse engineering for debugging LGPL modifications remain
+permitted. Native relink and installed-material acceptance must pass before release.
+These safeguards provide compliance evidence, not an independent legal opinion.
+
+The native runtime also contains GCC startup/runtime code under GPL-3.0 with
+the GCC Runtime Library Exception 3.1. Preserve both full texts, record the original
+GCC/clang versions and retain the recipient rebuild's actual link map/toolchain
+inventory. The kit explicitly relies on the LGPL standard-toolchain exception
+for compiler-provided startup objects rather than claiming those are included
+in the other libraries' APKs. AppRun's detected GCC startup/compiler versions are
+older and use the same runtime-exception terms; its glibc is dynamically supplied
+by the host, not bundled inside that helper.
+
+AppRun is a reviewed MIT-licensed mirrored helper. Its copyright notice is retained
+in the accompanying pinned AppRun.c; the mirrored binary is hash-verified. No
+bit-identical recompilation claim is made for that older permissive binary.
+
+The regression fixture `tests/fixtures/distribution/native-brotli.copyright` is an
+unmodified MIT notice from Ubuntu's Brotli `1.1.0-2build2` package:
+<https://changelogs.ubuntu.com/changelogs/pool/main/b/brotli/brotli_1.1.0-2build2/copyright>.
+
+### Winit and project sources
+
 Winit 0.30.13 is consumed from the public
 [Kedra fork](https://github.com/kedra-engine/winit), pinned to
 `948d27f0007602d2536a8974fd483c6fd33d19d3`. Its upstream base is

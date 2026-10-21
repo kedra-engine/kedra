@@ -233,14 +233,14 @@ Windows build.rs/resource inputs; fixture resource inputs and notices.
 
 **Files:** .github/workflows/release.yml; tool install/version docs; CI policy.
 **Consumes:** cargo kedra package and native inspection/smoke contract.
-**Produces:** validated four-target package artifacts from one explicit revision.
+**Produces:** validated three-target editor package artifacts from one explicit revision.
 
 - [ ] Add manual workflow_dispatch with validated version/tag and reviewed source
   identity. Verify successful CI required from this repository's Actions workflow
   at that exact commit; reject wrong tag/version, unrelated SHA and missing green.
 - [ ] Use read-only permissions for preflight/build/inspect; actions:read only where
   needed to inspect CI. Checkout never persists credentials. No privileged PR path.
-- [ ] Run native targets on windows-2025, ubuntu-24.04, macos-15 and macos-15-intel;
+- [ ] Run editor targets on windows-2025, ubuntu-24.04 and macos-15;
   assert toolchain/target architecture and call the same cargo kedra command.
   Keep target matrix independent/fail-fast false and timeouts/resource limits visible.
 - [ ] Cache only dependencies and verified build-time tools; separate release-role
@@ -252,7 +252,7 @@ Windows build.rs/resource inputs; fixture resource inputs and notices.
 - [ ] Validate with actionlint/zizmor and actual manual package jobs. Deliberately
   reject a bad version/SHA in read-only preflight; missing/failed matrix entries
   cannot reach publisher. No YAML-value tests or fake successful result injection.
-- [ ] Expected: all four actual native package jobs pass on a reviewed revision.
+- [ ] Expected: all three actual editor package jobs pass on a reviewed revision.
   Commit workflow and factual tested prerequisites; publish nothing yet.
 
 ## Task 8: Narrow release publication and first prerelease

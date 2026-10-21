@@ -1,0 +1,146 @@
+[
+  {
+    "file": "type2-runtime-fedfad51.tar.gz",
+    "url": "https://codeload.github.com/AppImage/type2-runtime/tar.gz/fedfad51acc2860b2916a1eef32ba4a500ff31ef",
+    "sha256": "e27ea3c837e9c660e1a9a2993b673ae93bbb53077330efba8654031e302d4e8e",
+    "notices": ["type2-runtime-fedfad51acc2860b2916a1eef32ba4a500ff31ef/LICENSE"]
+  },
+  {
+    "file": "fuse-3.15.0.tar.xz",
+    "url": "https://github.com/libfuse/libfuse/releases/download/fuse-3.15.0/fuse-3.15.0.tar.xz",
+    "sha256": "70589cfd5e1cff7ccd6ac91c86c01be340b227285c5e200baa284e401eea2ca0",
+    "notices": ["fuse-3.15.0/LICENSE", "fuse-3.15.0/LGPL2.txt"]
+  },
+  {
+    "file": "squashfuse-0.5.2.tar.gz",
+    "url": "https://codeload.github.com/vasi/squashfuse/tar.gz/0.5.2",
+    "sha256": "db0238c5981dabbd80ee09ae15387f390091668ca060a7bc38047912491443d3",
+    "notices": ["squashfuse-0.5.2/LICENSE"]
+  },
+  {
+    "file": "musl-1.2.5.tar.gz",
+    "url": "https://musl.libc.org/releases/musl-1.2.5.tar.gz",
+    "sha256": "a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4",
+    "notices": ["musl-1.2.5/COPYRIGHT"]
+  },
+  {
+    "file": "zlib-1.3.2.tar.gz",
+    "url": "https://zlib.net/fossils/zlib-1.3.2.tar.gz",
+    "sha256": "bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16",
+    "notices": ["zlib-1.3.2/LICENSE"]
+  },
+  {
+    "file": "zstd-1.5.6.tar.gz",
+    "url": "https://codeload.github.com/facebook/zstd/tar.gz/v1.5.6",
+    "sha256": "30f35f71c1203369dc979ecde0400ffea93c27391bfd2ac5a9715d2173d92ff7",
+    "notices": ["zstd-1.5.6/LICENSE"]
+  },
+  {
+    "file": "mimalloc-2.1.7.tar.gz",
+    "url": "https://codeload.github.com/microsoft/mimalloc/tar.gz/v2.1.7",
+    "sha256": "0eed39319f139afde8515010ff59baf24de9e47ea316a315398e8027d198202d",
+    "notices": ["mimalloc-2.1.7/LICENSE"]
+  },
+  {
+    "file": "musl-dev-1.2.5-r11.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/musl-dev-1.2.5-r11.apk",
+    "sha256": "d3b5ab01046a92b9a168b790f516606e320f015cbd4deeb584c5e115a02124ba",
+    "notices": []
+  },
+  {
+    "file": "zlib-static-1.3.2-r1.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/zlib-static-1.3.2-r1.apk",
+    "sha256": "20dd85bd5b2fcdc714014ede97e4f18ea50c28468198332ad7305d369d55526c",
+    "notices": []
+  },
+  {
+    "file": "zlib-dev-1.3.2-r1.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/zlib-dev-1.3.2-r1.apk",
+    "sha256": "f6cd9e9abcbf7e0b75c84d4b00f239ff790eb0a6ef7c7c01d43a35af1ba5d3a6",
+    "notices": []
+  },
+  {
+    "file": "zstd-static-1.5.6-r2.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/zstd-static-1.5.6-r2.apk",
+    "sha256": "c82da00816b8dfec70f91d0f1d979aa9558bf5c4e1a15ab354f05c6dba5e7ca1",
+    "notices": []
+  },
+  {
+    "file": "zstd-dev-1.5.6-r2.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/zstd-dev-1.5.6-r2.apk",
+    "sha256": "a96d7dc92a56d916fa0b0643e11aac8fbfa28dc417fb86aa669f8cbea3c9dbea",
+    "notices": []
+  },
+  {
+    "file": "mimalloc2-dev-2.1.7-r0.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/community/x86_64/mimalloc2-dev-2.1.7-r0.apk",
+    "sha256": "9b140b549613492ad23a8c0749c17e38d9ad737d7b22b7927e035b03f8c4ac3f",
+    "notices": []
+  },
+  {
+    "file": "musl-1.2.5-r11.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/musl-1.2.5-r11.apk",
+    "sha256": "61e84757a8bfbc0d7fa8f4ce6de9cd4d791714369d78f6a08e5b03510fb2a623",
+    "notices": []
+  },
+  {
+    "file": "zlib-1.3.2-r1.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/zlib-1.3.2-r1.apk",
+    "sha256": "52ed3729bec11d63313f38ade503d40650bb57a36ec72a0050619391fb6bfd5e",
+    "notices": []
+  },
+  {
+    "file": "zstd-1.5.6-r2.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/zstd-1.5.6-r2.apk",
+    "sha256": "0b6c7723b35c2d3333f2dd1a18c73c2efbd220933b0eda2757bb5892e268c404",
+    "notices": []
+  },
+  {
+    "file": "zstd-libs-1.5.6-r2.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/zstd-libs-1.5.6-r2.apk",
+    "sha256": "45a06bfc107f44502b7e0503fcd5c8d2d2e6cff255134ed959275eb99caf9979",
+    "notices": []
+  },
+  {
+    "file": "mimalloc2-2.1.7-r0.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/community/x86_64/mimalloc2-2.1.7-r0.apk",
+    "sha256": "fb91cf2044e28fd2e6786efa2953d3e371bf949879688da88268db2085099858",
+    "notices": []
+  },
+  {
+    "file": "mimalloc2-insecure-2.1.7-r0.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/community/x86_64/mimalloc2-insecure-2.1.7-r0.apk",
+    "sha256": "078b69f8cd6734b49e23da7f92538639bc7f651e0eb5bf6a7023e3af1548a72d",
+    "notices": []
+  },
+  {
+    "file": "mimalloc2-debug-2.1.7-r0.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/community/x86_64/mimalloc2-debug-2.1.7-r0.apk",
+    "sha256": "7a565661d54e925ecc04ca874a9d666b5dd63677063a527d9adabb023ca36e2d",
+    "notices": []
+  },
+  {
+    "file": "GCC-COPYING3",
+    "url": "https://raw.githubusercontent.com/gcc-mirror/gcc/releases/gcc-14.2.0/COPYING3",
+    "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+    "notices": []
+  },
+  {
+    "file": "GCC-COPYING.RUNTIME",
+    "url": "https://raw.githubusercontent.com/gcc-mirror/gcc/releases/gcc-14.2.0/COPYING.RUNTIME",
+    "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74",
+    "notices": []
+  },
+  {
+    "file": "GCC-crtstuff.c",
+    "url": "https://raw.githubusercontent.com/gcc-mirror/gcc/releases/gcc-14.2.0/libgcc/crtstuff.c",
+    "sha256": "5859380c2242ce108b323fe216847df6f2be052fa98ca56eb6284daacda3befd",
+    "notices": []
+  },
+  {
+    "file": "AppRun.c",
+    "url": "https://raw.githubusercontent.com/AppImage/AppImageKit/2b8f5b39c41d3895e6b6b88a45b1905f4ffce4ef/src/AppRun.c",
+    "sha256": "79c8a946886f7966f8b3a54bb7e8f81c46828625552db7b33a8d6d28a03e4268",
+    "notices": []
+  }
+]

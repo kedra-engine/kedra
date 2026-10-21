@@ -14,7 +14,12 @@ class ReleaseArtifactTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.sha = "a" * 40
-        for target, formats in TARGET_FORMATS.items():
+        fixture_formats = {
+            "x86_64-pc-windows-msvc": {"nsis": "exe", "zip": "zip"},
+            "x86_64-unknown-linux-gnu": {"appimage": "AppImage", "tar.gz": "tar.gz"},
+            "aarch64-apple-darwin": {"dmg": "dmg"},
+        }
+        for target, formats in fixture_formats.items():
             folder = self.root / ("package-" + target)
             folder.mkdir()
             entries = []
@@ -32,7 +37,7 @@ class ReleaseArtifactTests(unittest.TestCase):
                 f"{entry['sha256']}  {entry['name']}\n" for entry in entries))
 
     def test_exact_complete_set_passes(self):
-        self.assertEqual(len(verify(self.root, self.sha, "0.1.0")), 6)
+        self.assertEqual(len(verify(self.root, self.sha, "0.1.0")), 5)
 
     def test_missing_target_extra_file_wrong_hash_and_wrong_sha_fail(self):
         target = next(iter(TARGET_FORMATS))
