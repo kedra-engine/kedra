@@ -28,7 +28,15 @@ add detail, but may not weaken repository-wide safety or quality requirements.
   schedulers or generic frameworks. Evaluate compatibility, maintenance, license,
   security and dependency cost. Document why custom code is necessary when no
   suitable solution exists; project-specific policy is not a reason to rebuild its tooling.
-- A new crate needs a real responsibility and consumer, not speculative scaffolding.
+- Prefer cohesive crates over accumulating unrelated functionality in a host crate.
+  When functionality has an independent responsibility, a clear API and a valid
+  place in the dependency DAG, extract it into its own crate as part of the change.
+  One real consumer is sufficient; do not wait for a second consumer or keep an
+  independent mechanism inside the editor merely because the editor uses it first.
+  Keep host-specific UI, orchestration and lifecycle authorization in the host.
+- A new crate needs a real responsibility and consumer, not speculative scaffolding,
+  an empty forwarding layer or arbitrary fragmentation. Review crate boundaries
+  before implementation; keeping an independent mechanism in a host needs rationale.
 
 ## Implementation and verification
 

@@ -636,6 +636,7 @@ fn workbench_styles_are_verified_assets_not_an_editor_only_loader() -> Result<()
             "styles/scene-view.css",
             "styles/startup.css",
             "styles/tokens.css",
+            "styles/updates.css",
             "styles/workbench.css",
         ]
     );

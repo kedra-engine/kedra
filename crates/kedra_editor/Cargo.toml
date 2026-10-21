@@ -12,6 +12,7 @@ layer = "editor"
 [dependencies]
 bevy = { workspace = true, features = ["bevy_state", "multi_threaded", "ui_bevy_render", "ui_picking", "png", "bevy_pbr", "bevy_gltf", "pan_orbit_camera", "render_dev_tools", "mesh_picking", "bevy_gizmos_render"] }
 kedra_project.workspace = true
+kedra_update.workspace = true
 kedra_desktop.workspace = true
 kedra_assets = { workspace = true, features = ["model-support"] }
 serde_json.workspace = true
@@ -31,11 +32,11 @@ unicase = "=2.9.0"
 bevy_flair.workspace = true
 directories = "6"
 tempfile.workspace = true
+sha2.workspace = true
 rfd = { version = "=0.17.2", default-features = false, features = ["xdg-portal", "wayland"] }
 
 [dev-dependencies]
 image.workspace = true
-sha2.workspace = true
 
 [features]
 # Native opt-in acceptance host; does not install EditorPlugin or project startup.

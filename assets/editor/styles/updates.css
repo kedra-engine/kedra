@@ -1,0 +1,16 @@
+.editor-titlebar .update-control { width:22px; min-width:22px; height:22px; min-height:22px; padding:0; }
+.editor-titlebar .update-control.ready { width:64px; min-width:64px; }
+.update-control .update-label, .update-spinner, .update-warning { display:none; }
+.update-control.ready .update-label { display:flex; }
+.update-control.ready .update-icon, .update-control.busy .update-icon, .update-control.failed .update-icon { display:none; }
+.update-control.busy .update-spinner, .update-control.failed .update-warning { display:flex; }
+.update-popover { position:absolute; width:350px; min-width:0; padding:12px; row-gap:8px; flex-direction:column; align-items:stretch; background-color:var(--menu); border:1px solid var(--border); border-radius:var(--popup-radius); box-shadow:0px 9px 20px #0000006b; }
+.update-popover .text { width:100%; min-width:0; min-height:0; flex-shrink:0; }
+.update-popover .update-status { height:22px; }
+.update-popover .update-notes { max-height:112px; overflow:clip; }
+.update-popover.failed .update-status { color:var(--error); }
+.update-control.primary .update-popover .text { color:var(--text); }
+.update-control.primary .update-popover .secondary { color:var(--secondary); }
+.update-control.primary .update-popover .muted { color:var(--muted); }
+.update-progress { height:3px; min-height:3px; width:100%; flex-shrink:0; background-color:var(--raised); }
+.update-progress-fill { height:3px; background-color:var(--accent); }

@@ -68,6 +68,9 @@ pub(crate) fn bind_scene_controls(
     scene_tools::bind(world, view, id)
 }
 impl EditorWorkspace {
+    pub(crate) fn update_ready(&self) -> bool {
+        self.pending.is_none() && self.gesture.is_none() && self.documents.update_clean()
+    }
     pub(crate) fn navigation_input(&self, world: &World) -> serde_json::Value {
         scene_input::diagnostics(world, self)
     }
@@ -82,6 +85,14 @@ impl EditorWorkspace {
     }
 }
 mod storage;
+pub(crate) fn save_for_update(world: &mut World) -> Result<(), String> {
+    if !world.contains_resource::<EditorWorkspace>() {
+        return Err("Editor workspace is unavailable".into());
+    }
+    world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
+        storage::save_checked(world, &mut state)
+    })
+}
 #[cfg(test)]
 mod test_support;
 

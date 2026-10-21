@@ -16,6 +16,7 @@ bevy = { version = "=0.20.0", default-features = false, features = ["std"] }
 kedra_project = { path = "crates/kedra_project", version = "=0.1.0" }
 kedra_desktop = { path = "crates/kedra_desktop", version = "=0.1.0" }
 kedra_editor = { path = "crates/kedra_editor", version = "=0.1.0" }
+kedra_update = { path = "crates/kedra_update", version = "=0.1.0" }
 kedra_assets = { path = "crates/kedra_assets", version = "=0.1.0" }
 kedra_import = { path = "crates/kedra_import", version = "=0.1.0" }
 kedra_ui = { path = "crates/kedra_ui", version = "=0.1.0" }

@@ -119,6 +119,7 @@ pub(crate) fn bind_window(
         }
     }
     crate::workspace::bind_header(world, view);
+    crate::updates::bind(world, view)?;
     if cfg!(target_os = "macos")
         && let Ok(native) = view.element("window.native")
     {

@@ -2,6 +2,38 @@
 use super::*;
 
 #[test]
+fn installation_identity_is_native_only_and_does_not_mark_other_applications()
+-> Result<(), Box<dyn std::error::Error>> {
+    let directory = tempfile::tempdir()?;
+    assert!(
+        installation_marker(
+            directory.path(),
+            "independent-app",
+            "0.1.0",
+            NativeTarget::Linux
+        )?
+        .is_none()
+    );
+    let resource = installation_marker(directory.path(), "kedra", "0.1.0", NativeTarget::Linux)?
+        .ok_or("Marker missing")?;
+    let Resource::Mapped { src, target } = resource else {
+        return Err("Mapped marker expected".into());
+    };
+    assert_eq!(target, PathBuf::from("kedra-installation.json"));
+    let data: serde_json::Value = serde_json::from_slice(&fs::read(src)?)?;
+    assert_eq!(data["kind"], "AppImage");
+    assert_eq!(data["target"], "x86_64-unknown-linux-gnu");
+    assert_eq!(data["version"], "0.1.0");
+    assert!(
+        !directory
+            .path()
+            .join("assets/kedra-installation.json")
+            .exists()
+    );
+    Ok(())
+}
+
+#[test]
 fn generated_icons_produce_a_real_icns_bundle_without_native_sdk_tools()
 -> Result<(), Box<dyn std::error::Error>> {
     let directory = tempfile::tempdir()?;

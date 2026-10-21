@@ -4,6 +4,27 @@ use crate::workspace::input::regression_tests::setup;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 #[test]
+fn update_flush_propagates_save_failure_without_authorizing_exit() -> TestResult {
+    let (mut app, _, _) = setup()?;
+    app.add_message::<AppExit>();
+    app.world_mut()
+        .resource_mut::<EditorWorkspace>()
+        .preferences
+        .task = Some(IoTaskPool::get().spawn(async { Err("cancelled or failed save".into()) }));
+    assert!(crate::workspace::save_for_update(app.world_mut()).is_err());
+    assert!(app.world().resource::<Messages<AppExit>>().is_empty());
+    assert_eq!(
+        app.world()
+            .resource::<EditorWorkspace>()
+            .preferences
+            .error
+            .as_deref(),
+        Some("cancelled or failed save")
+    );
+    Ok(())
+}
+
+#[test]
 fn dirty_async_write_then_exit_flush_keeps_latest_published_state() -> TestResult {
     let dir = tempfile::tempdir()?;
     let path = dir.path().join("workspace.json");
