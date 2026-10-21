@@ -16,6 +16,42 @@ fn help_and_version_do_not_require_project_or_native_packaging_tools() {
 }
 
 #[test]
+fn explicit_tool_setup_help_is_project_independent() {
+    assert_eq!(
+        kedra_build::run_cli(args(&["cargo kedra", "tools", "install-about", "--help"])),
+        ExitCode::SUCCESS
+    );
+}
+
+#[test]
+fn run_help_explains_build_then_launch_without_requiring_a_project() {
+    assert_eq!(
+        kedra_build::run_cli(args(&["cargo kedra", "run", "--help"])),
+        ExitCode::SUCCESS
+    );
+}
+
+#[test]
+fn explicit_tool_setup_rejects_tampered_archive_without_creating_output() -> std::io::Result<()> {
+    let directory = tempfile::tempdir()?;
+    let archive = directory.path().join("source.crate");
+    std::fs::write(&archive, b"not the reviewed source")?;
+    let output = directory.path().join("tool");
+    let command = vec![
+        "cargo kedra".into(),
+        "tools".into(),
+        "install-about".into(),
+        "--archive".into(),
+        archive.into_os_string(),
+        "--output".into(),
+        output.as_os_str().to_owned(),
+    ];
+    assert_eq!(kedra_build::run_cli(command), ExitCode::FAILURE);
+    assert!(!output.exists());
+    Ok(())
+}
+
+#[test]
 fn incomplete_unknown_and_unsupported_commands_fail() {
     for command in [
         vec!["cargo kedra"],

@@ -49,6 +49,8 @@ The repository currently provides:
 - Shared scene and prefab documents, composition, instantiation and guarded
   source-editing APIs. The editor's own UI uses authored sources.
 - Asset processing and verified deliveries consumed through shared runtime loaders.
+- Shared CLI tooling to build, verify, package and explicitly launch standalone
+  desktop applications without an installed editor; see [distribution](docs/distribution.md).
 - Opt-in remote application observation, input injection and renderer captures.
 - Rust unit/integration tests, headless QA-tool tests and local native UI fixtures.
 

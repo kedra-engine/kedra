@@ -131,6 +131,13 @@ and delivery APIs own assets, and maintained cargo-packager owns native formats.
 No runtime/editor dependency on this tool is introduced. See
 [distribution contracts](distribution.md) and [ADR 0023](decisions/0023-desktop-distribution.md).
 
+The shared builder owns runnable application assembly, generic installed-package
+verification and explicit standalone launch. `build-result.json` is a verified
+client handoff; Cargo metadata owns settings. Future editor integration invokes
+the same project-local CLI, without importing tooling into runtime/editor crates.
+CI supplies machines/credentials and adds application-specific tests/publication,
+not missing build steps. See [ADR 0025](decisions/0025-verified-build-and-run.md).
+
 `xtask` is a thin command orchestrator. `cargo_metadata` owns Cargo's metadata
 schema and invocation; Git owns the repository file inventory. The small custom
 checks enforce Kedra's layer DAG, license declaration and per-file growth policy,

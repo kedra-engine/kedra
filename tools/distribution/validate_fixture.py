@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import time
 
 
 def run(arguments: list[str], workspace: Path) -> None:
@@ -77,12 +78,19 @@ def main() -> None:
     for forbidden in ("kedra_editor", "kedra_import", "kedra_build", "cargo-packager"):
         if forbidden in tree:
             raise RuntimeError(f"Runtime dependency graph contains {forbidden}")
-    binary = workspace / "distribution/application" / (
-        "distribution-fixture.exe" if os.name == "nt" else "distribution-fixture"
-    )
+    result = json.loads((workspace / "distribution/build-result.json").read_text(encoding="utf-8"))
+    binary = workspace / "distribution" / result["executable"]
     runtime_environment = os.environ.copy()
     runtime_environment.pop("KEDRA_ASSETS", None)
     subprocess.run([str(binary)], cwd=workspace.parent, env=runtime_environment, check=True)
+    marker = workspace / "launch-marker"
+    run([cargo, "kedra", "run", "--release", "--package", "distribution-fixture",
+         "--output", "run-distribution", "--", "--launch-marker", str(marker)], workspace)
+    deadline = time.monotonic() + 20
+    while not marker.exists() and time.monotonic() < deadline:
+        time.sleep(.05)
+    if marker.read_text(encoding="utf-8") != "SUCCESS: launched independent verified application\n":
+        raise RuntimeError("Independent build-and-run did not launch the verified application")
     print(f"SUCCESS: independent application and unchanged aliases verified: {workspace}", flush=True)
 
 

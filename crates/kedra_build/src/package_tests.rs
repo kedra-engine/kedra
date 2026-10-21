@@ -92,7 +92,7 @@ notices = ["NOTICE.txt"]
             .success()
     );
     let icons = crate::icons::generate(&root.path().join("icon.svg"), &root.path().join("icons"))?;
-    let mut config = application.native;
+    let mut config = application.native.clone();
     config.binaries = vec![Binary::new("signature-probe").main(true)];
     config.binaries_dir = Some(root.path().to_path_buf());
     config.out_dir = root.path().join("packages");
@@ -116,6 +116,7 @@ notices = ["NOTICE.txt"]
             .output()
     };
     let valid = verify(&app)?;
+    crate::verify::macos(&application, &app)?;
     assert!(
         valid.status.success(),
         "{}",
@@ -141,6 +142,7 @@ notices = ["NOTICE.txt"]
         !verify(&app)?.status.success(),
         "Changing resources must invalidate the signature"
     );
+    assert!(crate::verify::macos(&application, &app).is_err());
     fs::write(
         &manifest,
         format!(

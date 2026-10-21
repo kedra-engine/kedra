@@ -29,10 +29,44 @@ pub(crate) fn create(
         .as_ref()
         .map(|directory| crate::native_runtime::prepare(&stage.join("licenses"), directory.path()))
         .transpose()?;
+    let format = match app.target {
+        NativeTarget::Windows => PackageFormat::Nsis,
+        NativeTarget::Linux => PackageFormat::AppImage,
+        NativeTarget::MacArm | NativeTarget::MacIntel => PackageFormat::Dmg,
+    };
+    let config = configuration(app, stage, &output.join("packages"), icons, format)?;
+    fs::create_dir(&config.out_dir).map_err(|e| e.to_string())?;
+    let generated = crate::worker::package(
+        &config,
+        app.package
+            .manifest_path
+            .parent()
+            .ok_or("Application directory missing")?
+            .as_std_path(),
+        native_runtime.as_deref(),
+    )?;
+    collect(
+        app,
+        stage,
+        output,
+        &config,
+        generated,
+        &native_libraries,
+        native_runtime.as_deref(),
+    )
+}
+
+pub(crate) fn configuration(
+    app: &Application,
+    stage: &Path,
+    output: &Path,
+    icons: Vec<PathBuf>,
+    format: PackageFormat,
+) -> Result<cargo_packager::Config, String> {
     let mut config = app.native.clone();
     config.binaries = vec![Binary::new(&app.binary).main(true)];
     config.binaries_dir = Some(stage.to_path_buf());
-    config.out_dir = output.join("packages");
+    config.out_dir = output.to_path_buf();
     config.target_triple = Some(app.target.triple().into());
     config.icons = Some(native_icons(app.target, icons)?);
     config.resources = Some(
@@ -51,21 +85,19 @@ pub(crate) fn create(
             })
             .collect::<Result<_, String>>()?,
     );
-    config.formats = Some(vec![match app.target {
-        NativeTarget::Windows => PackageFormat::Nsis,
-        NativeTarget::Linux => PackageFormat::AppImage,
-        NativeTarget::MacArm | NativeTarget::MacIntel => PackageFormat::Dmg,
-    }]);
-    fs::create_dir(&config.out_dir).map_err(|e| e.to_string())?;
-    let generated = crate::worker::package(
-        &config,
-        app.package
-            .manifest_path
-            .parent()
-            .ok_or("Application directory missing")?
-            .as_std_path(),
-        native_runtime.as_deref(),
-    )?;
+    config.formats = Some(vec![format]);
+    Ok(config)
+}
+
+fn collect(
+    app: &Application,
+    stage: &Path,
+    output: &Path,
+    config: &cargo_packager::Config,
+    generated: Vec<crate::worker::NativeOutput>,
+    native_libraries: &[crate::native_licenses::Library],
+    native_runtime: Option<&Path>,
+) -> Result<Vec<(PathBuf, &'static str)>, String> {
     let prefix = format!(
         "{}-{}-{}",
         app.package.name,
@@ -91,11 +123,9 @@ pub(crate) fn create(
             if package.format == PackageFormat::AppImage {
                 crate::native_runtime::verify_prefix(
                     &source,
-                    native_runtime
-                        .as_deref()
-                        .ok_or("Selected AppImage runtime missing")?,
+                    native_runtime.ok_or("Selected AppImage runtime missing")?,
                 )?;
-                crate::native_licenses::verify(&source, &native_libraries, &app.binary, stage)?;
+                crate::native_licenses::verify(&source, native_libraries, app, stage)?;
             }
             if !source
                 .canonicalize()
@@ -167,7 +197,7 @@ fn native_icons(target: NativeTarget, icons: Vec<PathBuf>) -> Result<Vec<String>
         .collect()
 }
 
-fn portable_zip(stage: &Path, path: &Path, prefix: &str) -> Result<(), String> {
+pub(crate) fn portable_zip(stage: &Path, path: &Path, prefix: &str) -> Result<(), String> {
     let mut archive = zip::ZipWriter::new(fs::File::create_new(path).map_err(|e| e.to_string())?);
     let options = zip::write::SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated);
