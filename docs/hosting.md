@@ -2,11 +2,12 @@
 
 Repository: <https://github.com/kedra-engine/kedra>, public, default branch `main`.
 The initial complete GitHub Actions run passed; comparable warm acceptance is
-pending. Active ruleset `Protected main` (25504920) requires PRs, resolved review
+verified. Active ruleset `Protected main` (25504920) requires PRs, resolved review
 threads, an up-to-date base and `CI required` from GitHub Actions (app 15368).
 It denies force pushes and branch deletion and has no bypass actors. Required
 human approvals are zero for the single-maintainer model. Server rules were read
-back; a real green PR still needs acceptance. Confidential contacts remain
+back; real PRs were blocked before checks and accepted normally after green CI.
+Confidential contacts remain
 unverified. Local source files alone do not apply or prove server settings.
 
 ## Before wider public contributions

@@ -5,9 +5,11 @@
 Repository: <https://github.com/kedra-engine/kedra>. The
 [workflow](../.github/workflows/ci.yml) runs PR/main validation on managed
 GitHub-hosted runners. The initial complete hosted run passed on all three OSes;
-fresh line coverage was 85.02%. Comparable warm-cache acceptance remains pending.
-Main has an active PR/status-check ruleset; its green-PR acceptance still needs
-verification. Local commands remain independent entry points.
+fresh line coverage was 85.02%. Same-revision warm-cache acceptance and genuine
+protected-main PR acceptance are verified. The repaired-main baseline at
+`e58d090249e5539408a5019fdd968026de4143be` passed every hosted group in run
+39503345256. New distribution changes still require their own hosted acceptance.
+Local commands remain independent entry points.
 Releases, Kubernetes, private infrastructure and self-hosted runners are outside
 this workflow. The exact Winit fork revision is public on GitHub; see
 [source provenance](third-party.md#source-provenance-and-publication).
@@ -74,7 +76,8 @@ All jobs have only `contents: read`, checkout does not persist its token, and no
 corporate secrets or publishing/OIDC permissions are supplied. External actions
 use owner-selected floating stable major tags: checkout/setup-python/upload-artifact
 v7, rust-cache/install-action v2 and mise-action v5. These tags can move; they are not
-immutable source identities. The narrow zizmor ref policy covers only these six reviewed
+immutable source identities. Release download-artifact uses reviewed stable v8.
+The narrow zizmor ref policy covers only these reviewed
 actions; all other security audits remain enabled. Tool installs use pinned
 versions and checksum verification without an automatic source-build fallback.
 Mise 2026.10.15 uses explicit Aqua backends for actionlint, zizmor, rumdl, lychee
@@ -118,17 +121,19 @@ Reference: [CI run 39484899924, attempt 1][initial-ci],
 commit `ecc155809deedf94b6b6c552813ee04aad6ef8cc`. Job durations include setup,
 checks, artifact upload and cache save; they are not compilation-only timings.
 
-| Job | Cold duration |
-| --- | --- |
-| Native Linux x86_64 | 12m 18s |
-| Native macOS arm64 | 17m 43s |
-| Native Windows x86_64 | 54m 36s |
-| Fresh Linux coverage | 10m 03s |
+| Job | Cold duration | Warm duration (same SHA, attempt 2) |
+| --- | --- | --- |
+| Native Linux x86_64 | 12m 18s | 5m 10s |
+| Native macOS arm64 | 17m 43s | 8m 04s |
+| Native Windows x86_64 | 54m 36s | 18m 19s |
+| Fresh Linux coverage | 10m 03s | 5m 22s |
 
 LCOV contains 23,535 covered lines of 27,683 (85.02%). Eight dependency/tool caches
-occupied 5.22 GiB after this run, below the default allowance. Cache existence is
-not proof of a warm hit or speedup; those measurements remain pending. In
-particular Windows cold latency is substantial and must not be described as fast.
+occupied 5.22 GiB after the cold run and 5.51 GiB after the warm run, below the
+default allowance. Warm logs show exact Rust dependency cache hits for all native
+and coverage jobs; fresh warm coverage remained 85.02%. Policy's Rust cache safely
+missed due to changed preinstalled secondary compiler identity. Windows cold
+latency remains substantial and must not be described as fast.
 This is headless Rust/QA acceptance, not native UI or packaged-editor acceptance.
 
 [initial-ci]: https://github.com/kedra-engine/kedra/actions/runs/39484899924/attempts/1

@@ -12,7 +12,7 @@ asset code owns delivery reading and appropriate platform resource lookup. Nativ
 bundling uses cargo-packager; GitHub alone owns release scheduling/publication.
 
 **Tech Stack:** Rust 1.98, Cargo, clap, cargo_metadata, duct, existing Kedra import
-and asset crates, cargo-packager 0.11.8 CLI, winresource 0.1.34, GitHub Actions/CLI.
+and asset crates, reviewed cargo-packager library, winresource 0.1.34, GitHub Actions/CLI.
 
 **Spec:** [Approved design](../specs/2026-10-20-desktop-distribution-design.md).
 
@@ -103,9 +103,12 @@ them. Internal types may evolve together; do not expose a speculative build SDK.
 **Consumes:** CI acceptance; approved spec and existing artwork/import pipeline.
 **Produces:** verified tool install/prerequisite contract for the four targets.
 
-- [ ] Pin released cargo-packager 0.11.8 and inspect its released config schema,
+- [ ] Evaluate released cargo-packager 0.11.8 and inspect its released config schema,
   license, checksummed installation choices, transitive advisories and required
   native tools. Do not infer CLI support from npm tags or current upstream main.
+  Released graph evaluation found security blockers; use the maintained library
+  at `5c1824ba8022401e9ef0de36ff1a12c5acf60237` with the audited workspace lockfile
+  and CLI features disabled, as documented in ADR 0023. Do not exempt advisories.
 - [ ] Validate winresource 0.1.34 as a Windows-only build dependency: license,
   resource compiler behavior, icon/version support and Cargo compatibility.
 - [ ] Verify tiny actual native packager outputs before adopting configuration:
@@ -208,7 +211,7 @@ Windows build.rs/resource inputs; fixture resource inputs and notices.
 - [ ] Add failing tests for missing format/architecture/version, failed packager,
   unexpected/duplicate artifact and inventory/hash mismatch. Do not snapshot
   generated packager configuration; inspect resulting files and behavior.
-- [ ] Invoke pinned cargo-packager directly with argument arrays and native config.
+- [ ] Invoke the reviewed cargo-packager library with its native typed config.
   It owns app/DMG, NSIS and AppImage internals. Use maintained archive tooling for
   portable ZIP/TAR.GZ. No competing shell/YAML bundler implementation.
 - [ ] Generate a typed inventory binding source SHA, app/version, target, basename,

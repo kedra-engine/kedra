@@ -1,0 +1,4 @@
+[alias]
+# An existing project command that application tooling must leave unchanged.
+xtask = "version"
+kedra = "run --locked --package distribution-fixture-tool --target-dir target/kedra-build-bootstrap --"

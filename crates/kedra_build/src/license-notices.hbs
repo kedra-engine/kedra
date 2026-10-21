@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Dependency license notices</title>
+<h1>Dependency licenses and copyrights</h1>
+<p>Dependencies retain their original licenses. The notices below were collected
+by cargo-about from the selected application's native dependency graph.</p>
+<p>Exact checksum-verified crates.io archives for MPL-covered dependencies are
+bundled in <code>covered-sources/</code> as <code>name-version.crate</code> files
+(standard gzip-compressed tar archives). These sources remain available under
+their upstream licenses; no additional restriction is imposed on covered rights.</p>
+{{#each licenses}}
+<section><h2>{{name}} ({{id}})</h2><ul>
+{{#each used_by}}<li>{{crate.name}} {{crate.version}} — {{crate.source}}</li>{{/each}}
+</ul><pre style="white-space:pre-wrap">{{text}}</pre></section>
+{{/each}}
+</html>

@@ -1,0 +1,1 @@
+Independent application resources, not the editor's assets.

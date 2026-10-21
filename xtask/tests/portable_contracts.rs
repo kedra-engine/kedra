@@ -38,10 +38,30 @@ fn winit_fork_retains_exact_revision_and_reviewed_source() -> Result<(), Box<dyn
         policy["sources"]["allow-git"]
             .as_array()
             .ok_or("source allowlist missing")?,
-        &[toml::Value::String(
-            "https://github.com/kedra-engine/winit.git".into()
-        )]
+        &[
+            toml::Value::String("https://github.com/kedra-engine/winit.git".into()),
+            toml::Value::String("https://github.com/crabnebula-dev/cargo-packager.git".into()),
+        ]
     );
+    Ok(())
+}
+
+#[test]
+fn native_packager_source_is_reviewed_and_fixed() -> Result<(), Box<dyn std::error::Error>> {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .ok_or("workspace root missing")?;
+    let manifest: toml::Value = toml::from_str(&std::fs::read_to_string(root.join("Cargo.toml"))?)?;
+    let packager = &manifest["workspace"]["dependencies"]["cargo-packager"];
+    assert_eq!(
+        packager["git"].as_str(),
+        Some("https://github.com/crabnebula-dev/cargo-packager.git")
+    );
+    assert_eq!(
+        packager["rev"].as_str(),
+        Some("5c1824ba8022401e9ef0de36ff1a12c5acf60237")
+    );
+    assert_eq!(packager["default-features"].as_bool(), Some(false));
     Ok(())
 }
 

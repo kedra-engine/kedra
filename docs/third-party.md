@@ -27,11 +27,12 @@ license notices, inform recipients how to obtain the covered source under MPL,
 and make that source available. Any modifications to covered files must also be
 provided under MPL. Do not impose terms that restrict recipients' MPL rights.
 
-The source links above identify current upstream archives; they are not a
-complete binary-release compliance pipeline. Before publishing an installer,
-archive the exact checksum-verified covered sources (including any local
-modifications), bundle upstream license/copyright notices and this source-access
-notice with the distribution, and verify recipient access. Other dependency-license
+The source links above identify upstream archives. Configured native packaging
+now bundles full cargo-about copyright/license notices and original MPL-covered
+crates.io archives verified against Cargo.lock under `licenses/covered-sources`.
+Non-registry covered sources fail pending explicit support; do not omit local
+modifications from their required source distribution. Before publication, verify
+recipient access to the installed notices and archives. Other dependency-license
 failures remain subject to
 separate review, not automatic approval by these exceptions.
 

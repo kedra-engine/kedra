@@ -125,6 +125,12 @@ Planned functionality is separate from implemented behavior in the [roadmap](roa
 
 ## Repository tooling dependencies
 
+Application builds use tooling-layer `kedra_build` through a thin project-local
+`cargo kedra` launcher. Cargo owns compilation/artifact discovery, existing import
+and delivery APIs own assets, and maintained cargo-packager owns native formats.
+No runtime/editor dependency on this tool is introduced. See
+[distribution contracts](distribution.md) and [ADR 0023](decisions/0023-desktop-distribution.md).
+
 `xtask` is a thin command orchestrator. `cargo_metadata` owns Cargo's metadata
 schema and invocation; Git owns the repository file inventory. The small custom
 checks enforce Kedra's layer DAG, license declaration and per-file growth policy,

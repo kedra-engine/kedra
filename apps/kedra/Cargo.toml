@@ -9,12 +9,32 @@ publish = false
 [package.metadata.kedra]
 layer = "tooling"
 
+[package.metadata.packager]
+productName = "Kedra"
+identifier = "dev.kedra.editor"
+description = "Open-source game development environment built on Bevy"
+publisher = "Kedra contributors"
+
+[package.metadata.packager.macos]
+minimumSystemVersion = "15.0"
+
+[package.metadata.kedra.distribution]
+assets = "../../assets/editor"
+profile = "editor-desktop"
+namespace = "editor"
+icon = "../../assets/editor/startup/project-mark-compact.svg"
+notices = ["../../LICENSE-MIT", "../../LICENSE-APACHE", "../../docs/third-party.md"]
+license-config = "../../about.toml"
+
 [dependencies]
 bevy = { workspace = true, features = ["async_executor", "bevy_log", "bevy_clipboard", "multi_threaded", "custom_cursor", "x11", "wayland"] }
 kedra_editor.workspace = true
 kedra_import.workspace = true
 kedra_assets.workspace = true
 clap = { version = "4.5", features = ["derive"] }
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = "=0.1.34"
 
 [lints]
 workspace = true
