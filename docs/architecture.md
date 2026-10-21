@@ -63,7 +63,7 @@ native marker checks and explicit macOS staging/replacement. It has no workspace
 or Bevy dependencies. The editor supplies trusted application configuration and
 owns workers, UI, source/input settlement, preferences and exit authorization.
 An installation writer is not an authoring writer and never saves project sources.
-See [ADR 0025](decisions/0025-editor-self-update.md) and the
+See [ADR 0026](decisions/0026-editor-self-update.md) and the
 [crate contract](../crates/kedra_update/README.md); native update acceptance is pending.
 
 [ADR 0009](decisions/0009-property-editing-and-inspector.md) proposes the full
@@ -138,6 +138,13 @@ Application builds use tooling-layer `kedra_build` through a thin project-local
 and delivery APIs own assets, and maintained cargo-packager owns native formats.
 No runtime/editor dependency on this tool is introduced. See
 [distribution contracts](distribution.md) and [ADR 0023](decisions/0023-desktop-distribution.md).
+
+The shared builder owns runnable application assembly, generic installed-package
+verification and explicit standalone launch. `build-result.json` is a verified
+client handoff; Cargo metadata owns settings. Future editor integration invokes
+the same project-local CLI, without importing tooling into runtime/editor crates.
+CI supplies machines/credentials and adds application-specific tests/publication,
+not missing build steps. See [ADR 0025](decisions/0025-verified-build-and-run.md).
 
 `xtask` is a thin command orchestrator. `cargo_metadata` owns Cargo's metadata
 schema and invocation; Git owns the repository file inventory. The small custom

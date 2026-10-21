@@ -5,9 +5,8 @@ import sys
 import tempfile
 import unittest
 import os
-import plistlib
 
-from inspect_package import inspect_appimage, verify_macho, verify_macos_signature, run, nsis_command_line
+from editor_package_smoke import inspect_appimage, run, nsis_command_line
 
 
 class InspectionTests(unittest.TestCase):
@@ -25,43 +24,6 @@ class InspectionTests(unittest.TestCase):
             result = run([sys.executable, "-c", "import sys; print(sys.argv[1])", path],
                          capture_output=True, text=True, encoding="utf-8")
             self.assertEqual(result.stdout.strip(), str(path))
-
-    @unittest.skipUnless(sys.platform == "darwin", "Mach-O architecture verification requires macOS")
-    def test_macho_architecture_verification_uses_real_native_binary(self):
-        import platform
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            binary = root / "application Юникод"
-            subprocess.run(["cc", "-x", "c", "-o", str(binary), "-"],
-                           input="int main(void) { return 0; }\n", text=True, encoding="utf-8", check=True)
-            architecture = platform.machine()
-            verify_macho(binary, architecture)
-            with self.assertRaises(subprocess.CalledProcessError):
-                verify_macho(binary, "x86_64" if architecture == "arm64" else "arm64")
-
-    @unittest.skipUnless(sys.platform == "darwin", "Bundle signature verification requires macOS")
-    def test_macos_bundle_signature_rejects_linker_only_and_changed_resources(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            app = Path(temporary) / "Kedra Юникод.app"
-            contents = app / "Contents"
-            (contents / "MacOS").mkdir(parents=True)
-            (contents / "Resources").mkdir()
-            (contents / "Info.plist").write_bytes(plistlib.dumps({
-                "CFBundleExecutable": "probe", "CFBundleIdentifier": "dev.kedra.signature-probe",
-                "CFBundlePackageType": "APPL", "CFBundleVersion": "1.2.3",
-            }))
-            binary = contents / "MacOS/probe"
-            subprocess.run(["cc", "-x", "c", "-o", str(binary), "-"],
-                           input="int main(void) { return 0; }\n", text=True, check=True)
-            resource = contents / "Resources/notice.txt"
-            resource.write_text("Original resource\n")
-            with self.assertRaises(subprocess.CalledProcessError):
-                verify_macos_signature(app)
-            subprocess.run(["codesign", "--force", "--sign", "-", str(app)], check=True)
-            verify_macos_signature(app)
-            resource.write_text("Changed resource\n")
-            with self.assertRaises(subprocess.CalledProcessError):
-                verify_macos_signature(app)
 
     @unittest.skipIf(os.name == "nt", "POSIX executable-script fixture for AppImage inspection")
     def test_broken_apprun_cannot_pass_by_launching_the_inner_binary(self):
@@ -92,7 +54,7 @@ class InspectionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             result = subprocess.run([
-                sys.executable, str(Path(__file__).with_name("inspect_package.py")),
+                sys.executable, str(Path(__file__).with_name("editor_package_smoke.py")),
                 str(directory), "--target", "aarch64-apple-darwin",
                 "--source", "a" * 40, "--version", "0.1.0",
             ], capture_output=True, text=True)

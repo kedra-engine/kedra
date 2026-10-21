@@ -71,6 +71,13 @@ Forced termination can leave an incomplete log and no final summary.
 Architecture-policy and CLI integration tests exist today. The other categories become required
 with their corresponding implementation, not empty placeholder jobs.
 
+Ordinary CI does not build optimized editor releases or run full application
+build/package/launch acceptance as an additional test matrix. Shared-build tests
+use unit/failure-path checks and small dependency-free debug fixtures. Do not add
+tests merely to assert Cargo release settings. Actual optimized editor packages
+and independent application build/run acceptance belong to the explicitly
+dispatched Desktop distribution workflow, not every PR or coverage run.
+
 ## Evidence
 
 Report exact commands, target, revision (including dirty changes), exit status and

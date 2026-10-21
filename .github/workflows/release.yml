@@ -92,22 +92,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - name: Native Rust toolchain and PE inspection tools
-        run: |
-          rustup show active-toolchain
-          rustup component add llvm-tools-preview
+      - name: Native Rust toolchain
+        run: rustup show active-toolchain
       - name: Linux native packaging prerequisites
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev libfuse2t64 patchelf file binutils pax-utils
-      - name: Native macOS package-inspector regressions
-        if: runner.os == 'macOS'
-        working-directory: tools/distribution
-        run: >-
-          python3 -X utf8 -m unittest
-          test_inspect_package.InspectionTests.test_macho_architecture_verification_uses_real_native_binary
-          test_inspect_package.InspectionTests.test_macos_bundle_signature_rejects_linker_only_and_changed_resources
       - uses: Swatinem/rust-cache@v2
         with:
           key: desktop-release-v2-${{ runner.os }}-${{ runner.arch }}
@@ -129,11 +120,13 @@ jobs:
         if: runner.os == 'Linux'
         run: cargo deny --locked check
       - name: Isolated audited license collector (no project dependency downgrades)
-        run: python3 tools/distribution/install_about.py --output "$RUNNER_TEMP/cargo-about"
+        run: |
+          cargo kedra tools install-about --output "$RUNNER_TEMP/cargo-about"
+          echo "$RUNNER_TEMP/cargo-about/bin" >> "$GITHUB_PATH"
       - name: Same shared native packaging command for every application
         run: cargo kedra package --package kedra --target "$RELEASE_TARGET" --output "$RUNNER_TEMP/release-package"
-      - name: Inspect actual installer/archive and installed executable
-        run: python3 tools/distribution/inspect_package.py "$RUNNER_TEMP/release-package" --target "$RELEASE_TARGET" --source "$RELEASE_SOURCE" --version "${RELEASE_TAG#v}"
+      - name: Editor-specific installed CLI smoke checks
+        run: python3 tools/distribution/editor_package_smoke.py "$RUNNER_TEMP/release-package" --target "$RELEASE_TARGET" --source "$RELEASE_SOURCE" --version "${RELEASE_TAG#v}" --disposable-windows-host
       - name: Independent pinned public Git consumer and unchanged project aliases
         env:
           CARGO_TARGET_DIR: ${{ runner.temp }}/consumer-cargo

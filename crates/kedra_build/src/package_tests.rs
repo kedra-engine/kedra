@@ -2,6 +2,32 @@
 use super::*;
 
 #[test]
+fn standalone_application_configuration_does_not_create_native_installation_markers()
+-> Result<(), Box<dyn std::error::Error>> {
+    let mut fixture = crate::test_support::fixture()?;
+    fixture.app.package.name = "kedra".parse()?;
+    let output = fixture.root.path().join("standalone-output");
+    let config = configuration(
+        &fixture.app,
+        &fixture.stage,
+        &output,
+        vec![fixture.root.path().join("icons/32.png")],
+        PackageFormat::App,
+    )?;
+    assert!(
+        !output.exists(),
+        "Configuration must not reserve output or generate install metadata"
+    );
+    assert!(!fixture.stage.join("kedra-installation.json").exists());
+    assert_eq!(config.formats, Some(vec![PackageFormat::App]));
+    let resources = config.resources.ok_or("Missing resources")?;
+    assert_eq!(resources.len(), 2);
+    assert!(resources.iter().all(|resource| matches!(resource,
+        Resource::Mapped { target, .. } if target == Path::new("assets") || target == Path::new("licenses"))));
+    Ok(())
+}
+
+#[test]
 fn installation_identity_is_native_only_and_does_not_mark_other_applications()
 -> Result<(), Box<dyn std::error::Error>> {
     let directory = tempfile::tempdir()?;
@@ -124,7 +150,7 @@ notices = ["NOTICE.txt"]
             .success()
     );
     let icons = crate::icons::generate(&root.path().join("icon.svg"), &root.path().join("icons"))?;
-    let mut config = application.native;
+    let mut config = application.native.clone();
     config.binaries = vec![Binary::new("signature-probe").main(true)];
     config.binaries_dir = Some(root.path().to_path_buf());
     config.out_dir = root.path().join("packages");
@@ -148,6 +174,7 @@ notices = ["NOTICE.txt"]
             .output()
     };
     let valid = verify(&app)?;
+    crate::verify::macos(&application, &app)?;
     assert!(
         valid.status.success(),
         "{}",
@@ -173,6 +200,7 @@ notices = ["NOTICE.txt"]
         !verify(&app)?.status.success(),
         "Changing resources must invalidate the signature"
     );
+    assert!(crate::verify::macos(&application, &app).is_err());
     fs::write(
         &manifest,
         format!(

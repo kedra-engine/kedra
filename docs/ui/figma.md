@@ -80,7 +80,7 @@ UI-KIT export of `327:17759`, packaged at 1x–4x density; no third-party artwor
 or screenshot background is introduced. The authored indicator derives from the
 shared button and reuses the existing spinner/warning assets. It follows the
 22px indicator, 64 x 22 Primary Ready control and hover/focus-only popover contract
-in [ADR 0025](../decisions/0025-editor-self-update.md). Native rendered/input
+in [ADR 0026](../decisions/0026-editor-self-update.md). Native rendered/input
 acceptance remains unverified; source geometry is not evidence of frame fidelity.
 
 ## Hierarchy source exports

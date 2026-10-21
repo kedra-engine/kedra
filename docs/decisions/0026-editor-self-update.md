@@ -1,4 +1,4 @@
-# ADR 0025: Development-stage editor self-update and safe restart
+# ADR 0026: Development-stage editor self-update and safe restart
 
 - Status: MVP scope and inline implementation approved; native acceptance pending
 - Date: 2026-10-21

@@ -15,7 +15,7 @@ and explicit exit authorization. The crate never decides when the application ma
 **Tech Stack:** Existing Rust 1.98 dependencies and maintained `self_update::Move`;
 no new third-party dependencies.
 
-**Spec:** [ADR 0025](../../decisions/0025-editor-self-update.md), plus the approved
+**Spec:** [ADR 0026](../../decisions/0026-editor-self-update.md), plus the approved
 extraction boundary above.
 
 ## Global constraints
@@ -79,7 +79,7 @@ scheduler, provider framework or forwarding modules in the editor.
 ## Task 2: Reconnect the editor and document the actual boundary
 
 **Files:** `crates/kedra_editor/src/updates/{mod,exit,view}.rs`, editor lifecycle
-tests, `docs/architecture.md`, `docs/decisions/0025-editor-self-update.md`, original
+tests, `docs/architecture.md`, `docs/decisions/0026-editor-self-update.md`, original
 update plan.
 
 **Interfaces:** The editor constructs configuration for the official Kedra

@@ -19,7 +19,7 @@ tempfile, SHA-256 and a maintained HTTPS client. Prefer the already-resolved ure
 3.4.2 TLS/platform-verifier configuration used by `kedra_build`, without depending
 on that tooling crate. Admit any direct dependencies through existing policy.
 
-**Spec:** [ADR 0025](../../decisions/0025-editor-self-update.md).
+**Spec:** [ADR 0026](../../decisions/0026-editor-self-update.md).
 
 ## Global constraints
 
@@ -58,18 +58,18 @@ on that tooling crate. Admit any direct dependencies through existing policy.
 - Modify `assets/editor/prefabs/editor-titlebar.prefab.ron`, existing styles and exact
   Figma-exported icons/sidecars. No screenshot backgrounds or fabricated symbols.
 - Modify `crates/kedra_editor/Cargo.toml`/`Cargo.lock` only for admitted dependencies.
-- Modify `docs/decisions/0024-editor-self-update.md` and `docs/ui/figma.md` for contracts
+- Modify `docs/decisions/0026-editor-self-update.md` and `docs/ui/figma.md` for contracts
   and provenance. Any package-marker change belongs to `kedra_build` packaging and
   its tests, never to a runtime filesystem writer.
 - No workflow/publisher edits until finished CI/CD contracts have been reconciled.
 
 ## Task 1: Close platform capability selection without expanding packaging
 
-**Files:** ADR 0024; read existing `kedra_build/src/{package,inventory}.rs`,
+**Files:** ADR 0026; read existing `kedra_build/src/{package,inventory}.rs`,
 `tools/ci/release*.py`, actual upstream installer sources and installation metadata.
 
 **Interfaces:** Produce one explicit `Automatic` or `Manual` choice for each primary
-kind, with its maintained backend and refusal rules recorded in ADR 0024. This
+kind, with its maintained backend and refusal rules recorded in ADR 0026. This
 choice is consumed by `installation::detect()` in Task 2.
 
 - [ ] Inspect the final CI/CD inventory and exact installation layouts after its
