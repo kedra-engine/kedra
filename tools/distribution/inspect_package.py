@@ -63,12 +63,16 @@ def inspect_macos(package: Path, work: Path, target: str, version: str) -> None:
         raise ValueError("Installed app identity differs from release metadata")
     binary = app / "Contents/MacOS/kedra"
     architecture = "arm64" if target.startswith("aarch64") else "x86_64"
-    run(["lipo", "-verify_arch", architecture, binary])
+    verify_macho(binary, architecture)
     run(["otool", "-L", binary])
     run(["vtool", "-show-build", binary])
     icon = app / "Contents/Resources" / info["CFBundleIconFile"]
     run(["sips", "-g", "pixelWidth", "-g", "pixelHeight", icon])
     verify_cli(binary, app / "Contents/Resources/assets", version)
+
+
+def verify_macho(binary: Path, architecture: str) -> None:
+    run(["lipo", binary, "-verify_arch", architecture])
 
 
 def inspect_linux(packages: dict[str, Path], work: Path, version: str) -> None:

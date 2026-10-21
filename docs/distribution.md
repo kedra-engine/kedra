@@ -76,7 +76,7 @@ The narrow installer uses checksum-pinned upstream source, refreshes and audits
 an isolated tool lockfile, then installs that exact graph with `--locked`:
 
 ```sh
-python3 tools/distribution/install_about.py --output /OUTSIDE_CARGO_WORKSPACE/about-tool
+python3 -X utf8 tools/distribution/install_about.py --output /OUTSIDE_CARGO_WORKSPACE/about-tool
 ```
 
 Put the resulting `bin` directory on PATH before packaging. CI uses `RUNNER_TEMP`
@@ -129,8 +129,8 @@ or published template. The helper copies it into an isolated workspace with its
 own lockfile and project-local launcher:
 
 ```sh
-python3 tools/distribution/validate_fixture.py --package
-python3 tools/distribution/validate_fixture.py --revision EXACT_PUBLIC_GIT_SHA --package
+python3 -X utf8 tools/distribution/validate_fixture.py --package
+python3 -X utf8 tools/distribution/validate_fixture.py --revision EXACT_PUBLIC_GIT_SHA --package
 ```
 
 It explicitly selects local or pinned public Git dependencies, preserves the
@@ -152,6 +152,10 @@ Native inspection mounts/unpacks actual distributions and exercises installed
 CLI/resources/notices. Physical-input, OS-trust and GUI acceptance are separate.
 Build/inspection jobs have read-only repository permissions. Package artifacts
 are retained one day, bounded diagnostic/tool-lock evidence three days.
+Python tooling runs in the standard UTF-8 mode, including on Windows; Unicode
+paths are not removed or replaced to accommodate legacy console code pages.
+macOS architecture checks use the native `lipo` input-first command form and test
+both a matching and a mismatching architecture against an actual compiled binary.
 
 `publish` defaults to false, permitting actual build-only acceptance first. Only
 the final publisher receives `contents: write`. It does not checkout or build
