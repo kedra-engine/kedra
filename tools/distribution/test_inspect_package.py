@@ -5,8 +5,9 @@ import sys
 import tempfile
 import unittest
 import os
+import plistlib
 
-from inspect_package import inspect_appimage, verify_macho, run, nsis_command_line
+from inspect_package import inspect_appimage, verify_macho, verify_macos_signature, run, nsis_command_line
 
 
 class InspectionTests(unittest.TestCase):
@@ -37,6 +38,30 @@ class InspectionTests(unittest.TestCase):
             verify_macho(binary, architecture)
             with self.assertRaises(subprocess.CalledProcessError):
                 verify_macho(binary, "x86_64" if architecture == "arm64" else "arm64")
+
+    @unittest.skipUnless(sys.platform == "darwin", "Bundle signature verification requires macOS")
+    def test_macos_bundle_signature_rejects_linker_only_and_changed_resources(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            app = Path(temporary) / "Kedra Юникод.app"
+            contents = app / "Contents"
+            (contents / "MacOS").mkdir(parents=True)
+            (contents / "Resources").mkdir()
+            (contents / "Info.plist").write_bytes(plistlib.dumps({
+                "CFBundleExecutable": "probe", "CFBundleIdentifier": "dev.kedra.signature-probe",
+                "CFBundlePackageType": "APPL", "CFBundleVersion": "1.2.3",
+            }))
+            binary = contents / "MacOS/probe"
+            subprocess.run(["cc", "-x", "c", "-o", str(binary), "-"],
+                           input="int main(void) { return 0; }\n", text=True, check=True)
+            resource = contents / "Resources/notice.txt"
+            resource.write_text("Original resource\n")
+            with self.assertRaises(subprocess.CalledProcessError):
+                verify_macos_signature(app)
+            subprocess.run(["codesign", "--force", "--sign", "-", str(app)], check=True)
+            verify_macos_signature(app)
+            resource.write_text("Changed resource\n")
+            with self.assertRaises(subprocess.CalledProcessError):
+                verify_macos_signature(app)
 
     @unittest.skipIf(os.name == "nt", "POSIX executable-script fixture for AppImage inspection")
     def test_broken_apprun_cannot_pass_by_launching_the_inner_binary(self):
