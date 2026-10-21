@@ -219,9 +219,10 @@ fn verify_notice_delivery(staged: &Path, installed: &Path) -> Result<(), String>
 pub(crate) fn verify(
     appimage: &Path,
     libraries: &[Library],
-    binary: &str,
+    app: &crate::config::Application,
     staged: &Path,
 ) -> Result<(), String> {
+    let binary = &app.binary;
     let temporary = tempfile::tempdir().map_err(|e| e.to_string())?;
     let status = Command::new(appimage)
         .arg("--appimage-extract")
@@ -264,6 +265,13 @@ pub(crate) fn verify(
             ));
         }
     }
+    crate::package_verify::installed(
+        app,
+        staged,
+        &root,
+        &root.join("usr/bin").join(binary),
+        &root.join("usr/lib").join(binary).join("assets"),
+    )?;
     Ok(())
 }
 

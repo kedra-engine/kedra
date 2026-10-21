@@ -17,6 +17,7 @@ repository validation; application tooling does not replace that alias.
 
 ```sh
 cargo kedra build --release --package kedra --output target/editor-build
+cargo kedra run --package kedra --output target/editor-run -- --help
 cargo kedra package --package kedra --target aarch64-apple-darwin --output target/editor-package
 ```
 
@@ -25,7 +26,23 @@ reports an inventory as a successful distribution. Without `--output`, `build`
 reserves a fresh directory under Cargo's target directory. Neither default nor
 explicit output may be inside source assets. Packaging always builds release.
 Cargo executes project build scripts: use these commands only on trusted projects.
-They do not launch the editor or run project gameplay.
+Only explicit `run` launches the selected application after a successful build
+and verification. `build` and `package` do not execute application CLI/gameplay.
+
+`build` produces an ordinary signed `.app` on macOS without requiring a DMG;
+Windows/Linux produce an executable with adjacent assets and notices. A version-1
+`build-result.json` records application/version/target and output-relative
+`application_root`, `executable` and `resources` locations. It is written only
+after validation; it is a result handoff, not project configuration.
+
+`run` uses that same invocation's verified result, never an older output. Arguments
+after `--` retain their exact boundaries and Unicode. Launch does not use source
+assets or the source working directory, and does not inject `KEDRA_ASSETS`.
+Windows/Linux direct children have closed stdin and persistent
+`application-stdout.log`/`application-stderr.log` in the output. macOS uses Launch
+Services to open the actual bundle. Closing the launcher does not intentionally
+terminate the app. Launch acceptance is distinct from runtime exit, GUI readiness
+or physical input; dispatch failure leaves the verified application on disk.
 
 Editor packages use Cargo's release profile with `opt-level = 3`,
 `codegen-units = 1` and `lto = "thin"`, following Bevy's optional
@@ -37,7 +54,11 @@ policy in their own workspace Cargo.toml rather than overriding it globally.
 
 Supported native hosts/targets are Windows x64 MSVC, Linux x64 GNU, macOS ARM64
 and macOS Intel. Cross-platform SDK installation is not provided. Native builds
-need the normal [platform prerequisites](../CONTRIBUTING.md). macOS DMG creation
+need the normal [platform prerequisites](../CONTRIBUTING.md). Windows package
+inspection additionally requires maintained 7-Zip (`7z` on PATH). NSIS contents
+are extracted without executing the installer: a temporary install destination
+does not isolate registry, shortcuts or application-termination side effects.
+macOS DMG creation
 uses system disk-image tools; Windows installers use upstream NSIS helpers;
 Linux AppImage uses upstream linuxdeploy/AppRun tools. The reviewed packager
 downloads helpers to its OS cache. Some helper downloads are not cryptographically
@@ -83,9 +104,9 @@ reuses the editor's importer and runtime verifier. Build/package never implicitl
 initialize or replace source identities.
 
 Applications can also configure `license-config`, a package-relative cargo-about
-configuration. Packaging then requires cargo-about 0.9.2, collects native normal
-dependency licenses with failure on unresolved licenses, renders full copyright/
-license notices, and bundles checksum-verified original `.crate` source archives
+configuration. Build and packaging then require cargo-about 0.9.2, collect native normal
+dependency licenses with failure on unresolved licenses, render full copyright/
+license notices, and bundle checksum-verified original `.crate` source archives
 for MPL-covered crates.io dependencies. Unknown non-registry covered-source
 provenance fails rather than silently omitting sources. Local build paths are not
 published in the notice HTML. This is additional compliance evidence, not a
@@ -127,11 +148,11 @@ checks retain an actual linker input map and toolchain/package inventory.
 The released collector's frozen TLS graph has current advisories; its library's
 krates dependency also pins indexmap/petgraph versions incompatible with this
 workspace. Do not downgrade project dependencies or patch upstream to force it in.
-The narrow installer uses checksum-pinned upstream source, refreshes and audits
+The explicit shared installer uses checksum-pinned upstream source, refreshes and audits
 an isolated tool lockfile, then installs that exact graph with `--locked`:
 
 ```sh
-python3 -X utf8 tools/distribution/install_about.py --output /OUTSIDE_CARGO_WORKSPACE/about-tool
+cargo kedra tools install-about --output /OUTSIDE_CARGO_WORKSPACE/about-tool
 ```
 
 Put the resulting `bin` directory on PATH before packaging. CI uses `RUNNER_TEMP`
@@ -140,6 +161,12 @@ application graph; they are not another tracked lockfile or wrapper crate. The
 tool's security updates are resolved at installation time, so its graph is not
 claimed identical across installation dates. Each installation is audited before
 compiling, and existing tool directories are never overwritten.
+
+The installer is part of `kedra_build`, not a Python repository script. It requires
+Cargo and cargo-deny for the advisory audit. Setup is explicit: builds never
+download/install a missing collector or system SDK automatically. Native tools
+and configured collectors are checked before expensive application compilation.
+Help/version do not require a project or packaging prerequisites.
 
 ```sh
 cargo kedra assets init assets
@@ -160,6 +187,18 @@ takes precedence over `KEDRA_ASSETS`, then the executable-relative default.
 opening a window; an explicit verification path remains supported. Native package
 inspection invokes this command without overrides from an unrelated directory.
 Linux inspection runs extracted `AppRun`, not just the inner ELF executable.
+
+The shared builder validates executable format/architecture, delivery checksums,
+configured notices and macOS bundle identity/signature. Packaging inspects actual
+DMG/NSIS/ZIP/tar/AppImage contents before writing its successful inventory. Native
+Linux library/runtime/source checks remain part of package creation. These checks
+use each application's metadata and never require editor-specific CLI commands.
+The separate `editor_package_smoke.py` is an editor acceptance test: it extracts
+packages again to exercise the editor's installed CLI/resource lookup, not to
+finish or repair a build. Other applications do not need that test driver.
+Its Windows install/uninstall acceptance requires the explicit
+`--disposable-windows-host` option and is intended only for disposable CI runners,
+not a developer machine with an existing application installation.
 
 ## Outputs and identity
 
@@ -201,6 +240,8 @@ It explicitly selects local or pinned public Git dependencies, preserves the
 xtask alias, generates icons/sidecars, invokes the same build/package command and
 runs the staged runtime consumer. It rejects editor/import/tool dependencies in
 the application's normal graph. A local-path run does not prove public Git works.
+It also exercises `cargo kedra run` and waits for an application-owned launch
+marker after the independently launched runtime verifies its delivery.
 
 ## GitHub release boundary
 
@@ -219,8 +260,8 @@ consumer, with dependency-only caches separated from validation/coverage roles.
 The target-independent application dependency audit runs once on Linux, not once
 per package OS. All runners still install cargo-deny because the isolated license
 collector has its own freshly resolved tool graph to audit before compilation.
-Portable Python regressions run in CI; CD retains the macOS-native architecture
-and bundle-signature regressions that Linux cannot execute. Source-kit
+Generic architecture, signature and packaging regressions live with `kedra_build`
+and run in native Rust CI. Python retains editor-specific smoke regressions. Source-kit
 preparation and modified-LGPL-library relink regressions run in native Linux CI
 when packaging inputs change, rather than repeating them during every release.
 Actual package inspection and the independent public Git consumer still run on

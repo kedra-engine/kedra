@@ -82,17 +82,7 @@ pub(crate) fn generate(app: &Application, config: &Path, output: &Path) -> Resul
 }
 
 fn collect(app: &Application, config: &Path) -> Result<Value, String> {
-    let version = Command::new("cargo-about")
-        .arg("--version")
-        .output()
-        .map_err(|e| {
-            format!("Install audited cargo-about 0.9.2 for configured package notices: {e}")
-        })?;
-    if !version.status.success()
-        || String::from_utf8_lossy(&version.stdout).trim() != "cargo-about 0.9.2"
-    {
-        return Err("Configured package notices require cargo-about 0.9.2".into());
-    }
+    crate::tools::check_about()?;
     let result = Command::new("cargo-about")
         .args([
             "generate",

@@ -10,13 +10,14 @@ pub(crate) fn execute(
     release: bool,
     output: Option<&Path>,
     package: bool,
-) -> Result<(), String> {
+) -> Result<crate::application::BuiltApplication, String> {
+    crate::tools::preflight(app, package)?;
     let output = fresh_output(app, output)?;
     eprintln!("Kedra / {} / {}", app.package.name, app.target.triple());
     eprintln!("Output: {}", output.display());
     let stage = output.join("application");
     fs::create_dir(&stage).map_err(|e| e.to_string())?;
-    eprintln!("[1/4] Preparing application icons and verified resource delivery");
+    eprintln!("Preparing application icons and verified resource delivery");
     let pngs = icons::generate(&app.distribution.icon, &stage.join("icons"))?;
     let assets = stage.join("assets");
     kedra_import::build(
@@ -39,11 +40,11 @@ pub(crate) fn execute(
         let mut input = fs::File::open(source).map_err(|e| e.to_string())?;
         std::io::copy(&mut input, &mut destination).map_err(|e| e.to_string())?;
     }
-    if package && let Some(config) = &app.distribution.license_config {
+    if let Some(config) = &app.distribution.license_config {
         eprintln!("Collecting dependency notices and covered source archives with cargo-about");
         crate::licenses::generate(app, config, &notices)?;
     }
-    eprintln!("[2/4] Compiling application with Cargo");
+    eprintln!("Compiling application with Cargo");
     let executable = compiler::build(app, release, &stage.join("icons/application.ico"))?;
     fs::copy(
         &executable,
@@ -54,22 +55,33 @@ pub(crate) fn execute(
         ),
     )
     .map_err(|e| e.to_string())?;
+    eprintln!("Assembling and verifying runnable application");
+    let result = crate::application::assemble(app, &stage, &output, pngs.clone())?;
+    crate::verify::application(app, &output, &result)?;
     if package {
-        eprintln!("[3/4] Generating native and portable packages");
+        eprintln!("Generating native and portable packages");
         let artifacts = package::create(app, &stage, &output, pngs)?;
-        eprintln!("[4/4] Hashing and recording exact package inventory");
-        inventory::write(app, &output, artifacts)?;
-    } else {
-        eprintln!("[3/4] Verified application staging: {}", stage.display());
-        eprintln!("[4/4] Build completed; native packaging was not requested");
+        record_packages(app, &stage, &output, artifacts)?;
     }
+    crate::application::publish(&output, &result)?;
     eprintln!(
         "SUCCESS: {} {} ({})",
         app.package.name,
         app.package.version,
         app.target.triple()
     );
-    Ok(())
+    Ok(crate::application::BuiltApplication { output, result })
+}
+
+pub(crate) fn record_packages(
+    app: &Application,
+    stage: &Path,
+    output: &Path,
+    artifacts: Vec<(PathBuf, &'static str)>,
+) -> Result<(), String> {
+    crate::package_verify::verify(app, stage, &artifacts)?;
+    eprintln!("Hashing and recording exact package inventory");
+    inventory::write(app, output, artifacts)
 }
 
 fn fresh_output(app: &Application, requested: Option<&Path>) -> Result<PathBuf, String> {

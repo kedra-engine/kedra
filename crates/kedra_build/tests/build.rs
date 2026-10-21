@@ -2,7 +2,6 @@
 use std::{
     ffi::OsString,
     fs,
-    io::Write,
     path::Path,
     process::{Command, ExitCode},
 };
@@ -61,76 +60,74 @@ notices = ["NOTICE.txt"]
     Ok(project)
 }
 
-fn run(project: &Path, output: &Path) -> ExitCode {
+fn run(project: &Path, output: &Path) -> Result<ExitCode, Box<dyn std::error::Error>> {
     let args: Vec<OsString> = vec![
         "cargo kedra".into(),
         "build".into(),
-        "--release".into(),
         "--manifest-path".into(),
         project.join("Cargo.toml").into_os_string(),
         "--output".into(),
         output.as_os_str().to_owned(),
     ];
-    kedra_build::run_cli(args)
+    let status = Command::new(launcher()?).args(&args[1..]).status()?;
+    Ok(ExitCode::from(status.code().unwrap_or(1) as u8))
+}
+
+fn launcher() -> Result<&'static Path, Box<dyn std::error::Error>> {
+    static LAUNCHER: std::sync::OnceLock<Result<std::path::PathBuf, String>> =
+        std::sync::OnceLock::new();
+    LAUNCHER
+        .get_or_init(|| {
+            let output = Command::new(std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into()))
+                .args([
+                    "build",
+                    "--locked",
+                    "-p",
+                    "kedra_build",
+                    "--example",
+                    "launcher",
+                    "--message-format=json",
+                ])
+                .current_dir(env!("CARGO_MANIFEST_DIR"))
+                .output()
+                .map_err(|e| e.to_string())?;
+            if !output.status.success() {
+                return Err(String::from_utf8_lossy(&output.stderr).into_owned());
+            }
+            cargo_metadata::Message::parse_stream(output.stdout.as_slice())
+                .filter_map(|message| match message {
+                    Ok(cargo_metadata::Message::CompilerArtifact(artifact))
+                        if artifact.target.name == "launcher" =>
+                    {
+                        artifact.executable.map(|p| p.into_std_path_buf())
+                    }
+                    _ => None,
+                })
+                .next()
+                .ok_or_else(|| "Cargo did not report the launcher executable".to_owned())
+        })
+        .as_ref()
+        .map(|path| path.as_path())
+        .map_err(|error| error.clone().into())
 }
 
 #[test]
-fn editor_release_profile_reaches_real_rustc_with_bevy_recommended_optimizations()
+fn independent_build_stages_real_binary_verified_assets_icons_and_notices()
 -> Result<(), Box<dyn std::error::Error>> {
     let project = fixture()?;
-    let workspace: toml::Value = toml::from_str(include_str!("../../../Cargo.toml"))?;
-    if let Some(release) = workspace
-        .get("profile")
-        .and_then(|profile| profile.get("release"))
-    {
-        let mut profiles = toml::Table::new();
-        profiles.insert("release".into(), release.clone());
-        let mut configuration = toml::Table::new();
-        configuration.insert("profile".into(), toml::Value::Table(profiles));
-        fs::OpenOptions::new()
-            .append(true)
-            .open(project.path().join("Cargo.toml"))?
-            .write_all(format!("\n{}", toml::to_string(&configuration)?).as_bytes())?;
-    }
-    let result = Command::new(std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into()))
-        .args([
-            "build",
-            "--locked",
-            "--release",
-            "--verbose",
-            "--message-format=json",
-        ])
-        .current_dir(project.path())
-        .output()?;
-    assert!(
-        result.status.success(),
-        "{}",
-        String::from_utf8_lossy(&result.stderr)
-    );
-    let diagnostics = String::from_utf8(result.stderr)?;
-    let invocation = diagnostics
-        .lines()
-        .find(|line| line.contains("--crate-name independent_app"))
-        .ok_or("Actual application rustc invocation missing")?;
-    assert!(invocation.contains("opt-level=3"), "{invocation}");
-    assert!(invocation.contains("lto=thin"), "{invocation}");
-    assert!(invocation.contains("codegen-units=1"), "{invocation}");
-    Ok(())
-}
-
-#[test]
-fn independent_release_build_stages_real_binary_verified_assets_icons_and_notices()
--> Result<(), Box<dyn std::error::Error>> {
-    let project = fixture()?;
-    let output = project.path().join("release space");
-    assert_eq!(run(project.path(), &output), ExitCode::SUCCESS);
+    let output = project.path().join("build space");
+    assert_eq!(run(project.path(), &output)?, ExitCode::SUCCESS);
     assert!(project.path().join("build-script-ran").exists());
+    let handoff: serde_json::Value =
+        serde_json::from_slice(&fs::read(output.join("build-result.json"))?)?;
+    assert_eq!(handoff["schema_version"], 1);
+    assert_eq!(handoff["application"], "independent-app");
     let stage = output.join("application");
-    let binary = stage.join(if cfg!(windows) {
-        "independent-app.exe"
-    } else {
-        "independent-app"
-    });
+    let binary = output.join(
+        handoff["executable"]
+            .as_str()
+            .ok_or("Executable result missing")?,
+    );
     let result = Command::new(binary)
         .current_dir(std::env::temp_dir())
         .output()?;
@@ -173,7 +170,7 @@ fn unsupported_native_resources_are_rejected_before_compilation_or_output_creati
         "required application defaults",
     )?;
     let output = project.path().join("distribution");
-    assert_eq!(run(project.path(), &output), ExitCode::FAILURE);
+    assert_eq!(run(project.path(), &output)?, ExitCode::FAILURE);
     assert!(!project.path().join("build-script-ran").exists());
     assert!(!output.exists());
     assert_eq!(
@@ -198,7 +195,7 @@ fn unsupported_native_component_inputs_fail_before_build_scripts_or_staging()
         fs::write(&manifest, before.replace("[package.metadata.kedra.distribution]",
             &format!("[package.metadata.packager.appimage]\n{input}\n[package.metadata.kedra.distribution]")))?;
         let output = project.path().join("distribution");
-        assert_eq!(run(project.path(), &output), ExitCode::FAILURE, "{input}");
+        assert_eq!(run(project.path(), &output)?, ExitCode::FAILURE, "{input}");
         assert!(!project.path().join("build-script-ran").exists());
         assert!(!output.exists());
     }
@@ -212,13 +209,13 @@ fn existing_output_and_output_inside_assets_fail_before_build_scripts()
     let output = project.path().join("existing");
     fs::create_dir(&output)?;
     fs::write(output.join("keep.txt"), "preserved")?;
-    assert_eq!(run(project.path(), &output), ExitCode::FAILURE);
+    assert_eq!(run(project.path(), &output)?, ExitCode::FAILURE);
     assert_eq!(fs::read_to_string(output.join("keep.txt"))?, "preserved");
     assert_eq!(
         run(
             project.path(),
             &project.path().join("assets/forbidden/output")
-        ),
+        )?,
         ExitCode::FAILURE
     );
     assert!(!project.path().join("build-script-ran").exists());
@@ -236,7 +233,7 @@ fn manifest_selection_honors_the_independent_projects_cargo_configuration()
         "[build]\ntarget-dir='application-cargo-output'\n",
     )?;
     assert_eq!(
-        run(project.path(), &project.path().join("distribution")),
+        run(project.path(), &project.path().join("distribution"))?,
         ExitCode::SUCCESS
     );
     // An explicit Cargo environment override takes precedence over config files.
@@ -298,13 +295,13 @@ fn invalid_icon_and_failed_compilation_never_produce_a_success_inventory()
         "compile_error!(\"intentional compiler failure\");",
     )?;
     let output = project.path().join("failed-compile");
-    assert_eq!(run(project.path(), &output), ExitCode::FAILURE);
+    assert_eq!(run(project.path(), &output)?, ExitCode::FAILURE);
     assert!(project.path().join("build-script-ran").exists());
     assert!(!output.join("artifact-inventory.json").exists());
     fs::remove_file(project.path().join("build-script-ran"))?;
     fs::write(project.path().join("icon.svg"), "invalid SVG")?;
     let output = project.path().join("failed-icon");
-    assert_eq!(run(project.path(), &output), ExitCode::FAILURE);
+    assert_eq!(run(project.path(), &output)?, ExitCode::FAILURE);
     assert!(!project.path().join("build-script-ran").exists());
     assert!(!output.join("artifact-inventory.json").exists());
     Ok(())

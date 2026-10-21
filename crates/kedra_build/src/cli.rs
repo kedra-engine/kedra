@@ -29,6 +29,11 @@ struct AppArgs {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Explicitly prepare user-local build tools; never installs system SDKs.
+    Tools {
+        #[command(subcommand)]
+        command: ToolCommand,
+    },
     #[command(hide = true)]
     BundleNative {
         #[arg(long)]
@@ -47,7 +52,18 @@ enum Command {
         #[arg(long)]
         output: PathBuf,
     },
-    /// Compile and prepare a fresh verified resource distribution.
+    /// Build, verify, then explicitly launch a fresh standalone application.
+    Run {
+        #[command(flatten)]
+        app: AppArgs,
+        #[arg(long)]
+        release: bool,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(last = true)]
+        arguments: Vec<OsString>,
+    },
+    /// Compile and prepare a fresh verified runnable application.
     Build {
         #[command(flatten)]
         app: AppArgs,
@@ -69,6 +85,17 @@ enum Command {
 enum AssetCommand {
     /// Assign missing sidecars without replacing existing resource identities.
     Init { source: PathBuf },
+}
+
+#[derive(Subcommand)]
+enum ToolCommand {
+    /// Install checksum-verified cargo-about with an isolated advisory-audited lock.
+    InstallAbout {
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        archive: Option<PathBuf>,
+    },
 }
 
 pub(crate) fn run(args: impl IntoIterator<Item = OsString>) -> ExitCode {
@@ -93,7 +120,25 @@ pub(crate) fn run(args: impl IntoIterator<Item = OsString>) -> ExitCode {
 }
 
 fn execute(command: Command) -> Result<(), String> {
+    if let Command::Run {
+        app,
+        release,
+        output,
+        arguments,
+    } = command
+    {
+        let application =
+            Application::load(&app.manifest_path, app.package.as_deref(), app.target)?;
+        let built = pipeline::execute(&application, release, output.as_deref(), false)?;
+        return crate::launch::request(&application, &built, &arguments);
+    }
     let (args, release, output, package) = match command {
+        Command::Run { .. } => unreachable!("Run handled before non-launching operations"),
+        Command::Tools {
+            command: ToolCommand::InstallAbout { output, archive },
+        } => {
+            return crate::tools::install_about(&output, archive.as_deref());
+        }
         Command::BundleNative { config, report } => {
             return crate::worker::execute(&config, &report);
         }
@@ -122,5 +167,5 @@ fn execute(command: Command) -> Result<(), String> {
         Command::Package { app, output } => (app, true, Some(output), true),
     };
     let application = Application::load(&args.manifest_path, args.package.as_deref(), args.target)?;
-    pipeline::execute(&application, release, output.as_deref(), package)
+    pipeline::execute(&application, release, output.as_deref(), package).map(|_| ())
 }

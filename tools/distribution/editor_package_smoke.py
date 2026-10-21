@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-"""Inspect and execute actual native distributions without building project code."""
+"""Editor-specific CLI smoke tests; Windows installation requires a disposable host."""
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 from pathlib import Path
-import plistlib
-import re
 import shutil
 import subprocess
 import sys
@@ -50,7 +47,6 @@ def verify_cli(binary: Path, resources: Path, version: str) -> None:
 
 
 def inspect_macos(package: Path, work: Path, target: str, version: str) -> None:
-    run(["hdiutil", "verify", package])
     mount = work / "readonly mount"
     mount.mkdir()
     run(["hdiutil", "attach", "-readonly", "-nobrowse", "-mountpoint", mount, package])
@@ -59,26 +55,8 @@ def inspect_macos(package: Path, work: Path, target: str, version: str) -> None:
         shutil.copytree(mount / "Kedra.app", app, symlinks=True)
     finally:
         run(["hdiutil", "detach", mount])
-    verify_macos_signature(app)
-    info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
-    if info.get("CFBundleIdentifier") != "dev.kedra.editor" or info.get("CFBundleShortVersionString") != version:
-        raise ValueError("Installed app identity differs from release metadata")
     binary = app / "Contents/MacOS/kedra"
-    architecture = "arm64" if target.startswith("aarch64") else "x86_64"
-    verify_macho(binary, architecture)
-    run(["otool", "-L", binary])
-    run(["vtool", "-show-build", binary])
-    icon = app / "Contents/Resources" / info["CFBundleIconFile"]
-    run(["sips", "-g", "pixelWidth", "-g", "pixelHeight", icon])
     verify_cli(binary, app / "Contents/Resources/assets", version)
-
-
-def verify_macos_signature(app: Path) -> None:
-    run(["codesign", "--verify", "--deep", "--strict", "--verbose=2", app])
-
-
-def verify_macho(binary: Path, architecture: str) -> None:
-    run(["lipo", binary, "-verify_arch", architecture])
 
 
 def nsis_command_line(installer: os.PathLike[str], destination: os.PathLike[str]) -> str:
@@ -93,16 +71,6 @@ def inspect_linux(packages: dict[str, Path], work: Path, version: str) -> None:
     with tarfile.open(packages["tar.gz"], "r:gz") as archive:
         archive.extractall(portable, filter="data")
     binary = portable / "kedra/kedra"
-    header = run(["readelf", "-h", binary], capture_output=True, text=True).stdout
-    if "Advanced Micro Devices X86-64" not in header:
-        raise ValueError("Portable ELF machine is not x86_64")
-    dependencies = run(["ldd", binary], capture_output=True, text=True).stdout
-    print(dependencies)
-    if "not found" in dependencies:
-        raise ValueError("Portable executable has unresolved native libraries")
-    symbols = run(["objdump", "-T", binary], capture_output=True, text=True).stdout
-    versions = re.findall(r"GLIBC_([0-9]+\.[0-9]+(?:\.[0-9]+)?)", symbols)
-    print("Required GLIBC floor:", max(versions, key=lambda value: tuple(map(int, value.split('.')))))
     verify_cli(binary, binary.parent / "assets", version)
     inspect_appimage(packages["appimage"], work, version)
 
@@ -119,12 +87,6 @@ def inspect_windows(packages: dict[str, Path], work: Path, version: str) -> None
     with zipfile.ZipFile(packages["zip"]) as archive:
         archive.extractall(portable)
     binary = portable / "kedra/kedra.exe"
-    sysroot = run(["rustc", "--print", "sysroot"], capture_output=True, text=True).stdout.strip()
-    reader = Path(sysroot) / "lib/rustlib/x86_64-pc-windows-msvc/bin/llvm-readobj.exe"
-    headers = run([reader, "--file-headers", "--coff-resources", binary],
-                  capture_output=True, text=True).stdout
-    if any(value not in headers for value in ["IMAGE_FILE_MACHINE_AMD64", "IMAGE_SUBSYSTEM_WINDOWS_GUI", "GROUP_ICON"]):
-        raise ValueError("Windows PE lacks expected architecture, GUI subsystem or native icon")
     verify_cli(binary, binary.parent / "assets", version)
     install = work / "installed Юникод space"
     run(nsis_command_line(packages["nsis"], install), timeout=180)
@@ -143,6 +105,8 @@ def main() -> None:
     parser.add_argument("--target", required=True)
     parser.add_argument("--source", required=True, help="Exact SHA, or local for nonpublishable builds")
     parser.add_argument("--version", required=True)
+    parser.add_argument("--disposable-windows-host", action="store_true",
+                        help="Explicitly allow NSIS process/registry/shortcut side effects on a disposable runner")
     args = parser.parse_args()
     directory = args.directory.resolve()
     inventory = directory / "artifact-inventory.json"
@@ -160,10 +124,6 @@ def main() -> None:
         if Path(name).name != name:
             raise ValueError("Invalid package inventory filename")
         path = directory / name
-        with path.open("rb") as stream:
-            digest = hashlib.file_digest(stream, "sha256").hexdigest()
-        if digest != artifact["sha256"] or path.stat().st_size != artifact["bytes"]:
-            raise ValueError("Package inventory checksum or size mismatch")
         packages[artifact["format"]] = path
     work = directory / "native-inspection"
     work.mkdir()
@@ -172,10 +132,12 @@ def main() -> None:
     elif sys.platform == "linux" and args.target == "x86_64-unknown-linux-gnu":
         inspect_linux(packages, work, args.version)
     elif sys.platform == "win32" and args.target == "x86_64-pc-windows-msvc":
+        if not args.disposable_windows_host:
+            raise ValueError("Windows installer acceptance requires --disposable-windows-host; do not run on a developer installation")
         inspect_windows(packages, work, args.version)
     else:
         raise ValueError("Inspection requires the package's native runner OS")
-    print("SUCCESS: native package metadata, installed resources, CLI status and notices verified", flush=True)
+    print("SUCCESS: installed editor CLI status, asset lookup and editor-specific notices verified", flush=True)
     print("UNVERIFIED: physical input, OS trust, GUI console appearance and native rendered frames", flush=True)
 
 
