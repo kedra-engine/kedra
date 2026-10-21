@@ -59,6 +59,7 @@ def inspect_macos(package: Path, work: Path, target: str, version: str) -> None:
         shutil.copytree(mount / "Kedra.app", app, symlinks=True)
     finally:
         run(["hdiutil", "detach", mount])
+    verify_macos_signature(app)
     info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
     if info.get("CFBundleIdentifier") != "dev.kedra.editor" or info.get("CFBundleShortVersionString") != version:
         raise ValueError("Installed app identity differs from release metadata")
@@ -70,6 +71,10 @@ def inspect_macos(package: Path, work: Path, target: str, version: str) -> None:
     icon = app / "Contents/Resources" / info["CFBundleIconFile"]
     run(["sips", "-g", "pixelWidth", "-g", "pixelHeight", icon])
     verify_cli(binary, app / "Contents/Resources/assets", version)
+
+
+def verify_macos_signature(app: Path) -> None:
+    run(["codesign", "--verify", "--deep", "--strict", "--verbose=2", app])
 
 
 def verify_macho(binary: Path, architecture: str) -> None:

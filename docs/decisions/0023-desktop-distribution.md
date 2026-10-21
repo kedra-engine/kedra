@@ -89,6 +89,27 @@ build inputs beyond the evidence available.
 
 ## Consequences and verification
 
+macOS packages must have a complete resource-sealing bundle signature, not merely
+the linker's Mach-O signature. Use cargo-packager's maintained inside-out signing
+with explicit identities preserved and ad-hoc `-` as the credential-free default.
+Verify the installed app copied from the actual DMG using strict recursive
+codesign validation. Test that resource mutation fails validation. Do not use
+`--deep` for signing, custom resource exclusions, quarantine removal or a global
+Gatekeeper bypass as the packaging fix. Ad-hoc integrity does not establish
+Developer ID trust or notarization; see Apple's
+[Code Signing In Depth](https://developer.apple.com/library/archive/technotes/tn2206/_index.html).
+
+Use the GitHub Releases lifecycle as documented: create a draft, retain the numeric
+ID returned by REST, upload through the maintained CLI, verify the draft by ID,
+then publish that same ID. The by-tag endpoint is for published releases and is
+not a draft lookup. Exercise the whole publisher with real local artifact files
+and mocked remote boundaries, including upload/digest/source/tag failure paths.
+Keep ordinary Actions token permissions; reject source/default-branch workflow
+tree differences before building and again before publication, because GitHub's
+release API can require workflow-write permission that `GITHUB_TOKEN` cannot have.
+See [GitHub's release API contract](https://docs.github.com/en/rest/releases/releases)
+and [typed GitHub CLI API fields](https://cli.github.com/manual/gh_api).
+
 The application fixture must build/package outside the editor workspace with its
 own metadata, resources and launcher; a public pinned Git-consumer check follows
 the implementation commit. Tooling must never rely on its compile-time source

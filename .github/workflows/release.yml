@@ -101,10 +101,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev libfuse2t64 patchelf file binutils pax-utils
-      - name: Native macOS architecture-inspector regression
+      - name: Native macOS package-inspector regressions
         if: runner.os == 'macOS'
         working-directory: tools/distribution
-        run: python3 -X utf8 -m unittest test_inspect_package.InspectionTests.test_macho_architecture_verification_uses_real_native_binary
+        run: >-
+          python3 -X utf8 -m unittest
+          test_inspect_package.InspectionTests.test_macho_architecture_verification_uses_real_native_binary
+          test_inspect_package.InspectionTests.test_macos_bundle_signature_rejects_linker_only_and_changed_resources
       - uses: Swatinem/rust-cache@v2
         with:
           key: desktop-release-v2-${{ runner.os }}-${{ runner.arch }}
