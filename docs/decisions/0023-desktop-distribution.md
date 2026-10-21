@@ -137,6 +137,10 @@ Select the reviewed AppImage runtime through supported `LDAI_RUNTIME_FILE`, then
 verify the real image prefix and mirrored AppRun helper. Distribute runtime and
 libfuse sources, the AppImage libfuse patch, license texts and corresponding
 linkable objects/headers for other static dependencies inside both Linux packages.
+The selected runtime binary is a temporary packager input, not a license resource;
+its executable code is already present in the AppImage prefix. The materials kit
+contains the sources and static-library objects needed to build a replacement,
+not another runtime executable for linuxdeploy to process as a bundled library.
 Use standard Docker, APK, Meson and upstream Make/autotools for recipient relinking;
 no custom runtime, bundler, package parser or second build framework is introduced.
 Native CI must demonstrate an actual modified-LGPL-library relink and native

@@ -20,11 +20,15 @@ pub(crate) fn create(
     } else {
         Vec::new()
     };
-    let native_runtime = if app.target == NativeTarget::Linux {
-        Some(crate::native_runtime::prepare(&stage.join("licenses"))?)
+    let runtime_directory = if app.target == NativeTarget::Linux {
+        Some(tempfile::tempdir().map_err(|e| e.to_string())?)
     } else {
         None
     };
+    let native_runtime = runtime_directory
+        .as_ref()
+        .map(|directory| crate::native_runtime::prepare(&stage.join("licenses"), directory.path()))
+        .transpose()?;
     let mut config = app.native.clone();
     config.binaries = vec![Binary::new(&app.binary).main(true)];
     config.binaries_dir = Some(stage.to_path_buf());

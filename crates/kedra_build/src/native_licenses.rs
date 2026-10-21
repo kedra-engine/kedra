@@ -241,21 +241,7 @@ pub(crate) fn verify(
     {
         return Err("Bundled application differs from the compiled application".into());
     }
-    let installed_runtime = root
-        .join("usr/lib")
-        .join(binary)
-        .join("licenses/appimage-runtime/runtime-x86_64");
-    if fs::read(&installed_runtime).map_err(|e| e.to_string())?
-        != fs::read(staged.join("licenses/appimage-runtime/runtime-x86_64"))
-            .map_err(|e| e.to_string())?
-    {
-        return Err("Bundled runtime relink material differs from the selected runtime".into());
-    }
-    let bundled_packages = verify_libraries(
-        &root,
-        libraries,
-        &[application, root.join("AppRun"), installed_runtime],
-    )?;
+    let bundled_packages = verify_libraries(&root, libraries, &[application, root.join("AppRun")])?;
     let installed = root
         .join("usr/lib")
         .join(binary)

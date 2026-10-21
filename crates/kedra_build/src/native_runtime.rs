@@ -20,7 +20,7 @@ struct Material {
     notices: Vec<String>,
 }
 
-pub(crate) fn prepare(notices: &Path) -> Result<PathBuf, String> {
+pub(crate) fn prepare(notices: &Path, runtime_directory: &Path) -> Result<PathBuf, String> {
     let directory = notices.join("appimage-runtime");
     fs::create_dir(&directory).map_err(|e| e.to_string())?;
     let materials: Vec<Material> =
@@ -67,7 +67,7 @@ pub(crate) fn prepare(notices: &Path) -> Result<PathBuf, String> {
     ] {
         write_new(&directory.join(name), content)?;
     }
-    let runtime = directory.join("runtime-x86_64");
+    let runtime = runtime_directory.join("runtime-x86_64");
     download(
         "https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64",
         &runtime,
@@ -213,9 +213,14 @@ mod tests {
     fn native_distribution_materials_provide_sources_and_modified_library_relink()
     -> Result<(), Box<dyn std::error::Error>> {
         let root = tempfile::tempdir()?;
-        let runtime = prepare(root.path())?;
+        let runtime_directory = tempfile::tempdir()?;
+        let runtime = prepare(root.path(), runtime_directory.path())?;
         verify_prefix(&runtime, &runtime)?;
         let directory = root.path().join("appimage-runtime");
+        assert!(
+            !directory.join("runtime-x86_64").exists(),
+            "The packaging runtime is an input, not a license resource"
+        );
         assert!(
             directory.join("GCC-COPYING3").is_file(),
             "GCC runtime license must accompany linked startup code"
@@ -277,7 +282,7 @@ mod tests {
                 }
             }
         }
-        assert!(prepare(root.path()).is_err());
+        assert!(prepare(root.path(), runtime_directory.path()).is_err());
         Ok(())
     }
 

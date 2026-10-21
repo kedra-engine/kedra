@@ -14,10 +14,11 @@ restricts those LGPL rights. See `fuse-3.15.0.tar.xz-1.NOTICE` for the full LGPL
 ## Exact provenance
 
 Runtime source: AppImage/type2-runtime
-`fedfad51acc2860b2916a1eef32ba4a500ff31ef`. The accompanying `runtime-x86_64`
-is the official x86-64 binary, SHA-256
+`fedfad51acc2860b2916a1eef32ba4a500ff31ef`. Packaging uses the official x86-64
+runtime binary, SHA-256
 `617aa77314d57c8b8e4fae9c3f0b35af7b30d5529cb69e98f64f92510ed98a46`.
-Its executable bytes form the distributed AppImage's prefix. appimagetool fills
+Its executable bytes form the distributed AppImage's prefix; a second executable
+copy is not included in these materials. appimagetool fills
 the standard 16-byte `.digest_md5` section; every other prefix byte is verified
 against this input. ELF section boundaries come from the pinned input, not from
 the generated image.
