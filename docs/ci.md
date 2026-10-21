@@ -45,8 +45,12 @@ Native and coverage jobs allow 180 minutes; light jobs allow 30 minutes and the
 final gate five minutes. GitHub documents a six-hour hosted-job execution maximum.
 These budgets do not imply measured runtimes. Superseded PR runs are cancelled;
 accepted main runs are not cancelled just because a newer main exists. Compilation
-uses nonincremental, line-table debug profiles and four jobs on Linux/macOS, one
+uses nonincremental, line-table debug profiles and four jobs on Linux/macOS, two
 on Windows to bound simultaneous MSVC linking. Local developer defaults do not change.
+The two-job Windows budget is based on hosted four-CPU/16-GiB samples with at
+least 6.38 GiB free under the previous one-job budget; it still requires hosted
+timing and memory acceptance. Release compilation also uses two Windows jobs,
+without changing its optimization, codegen-unit or Thin LTO settings.
 
 ## Cache and permission boundaries
 
@@ -60,7 +64,14 @@ the managed image's ImageOS/ImageVersion,
 an explicit OS/architecture and native versus coverage role. Coverage additionally
 pins the llvm-cov tool role and uses a separate `target/llvm-cov-target` cache.
 
-Only successful main-push jobs save shared caches; PR jobs restore without saving.
+Only main-push jobs may save shared CI caches; PR jobs restore without saving.
+Native jobs enable the action's supported `cache-on-failure` option, retaining
+compiled dependencies even when later validation fails. Policy and coverage jobs
+still save only on success. Main-ref distribution jobs also retain dependency-only
+caches after failure, with packages and independent consumers outside cache paths.
+The action filters and saves in its job post-step, not immediately after compilation;
+cancellation or runner termination can still prevent saving. Failed checks remain
+failed, and restoring dependencies never reuses their previous test outcomes.
 GitHub's branch scope keeps PR-created caches out of main. Tests, coverage profiles,
 advisory refresh and secret scans always run anew. Native caching does not certify
 the correctness of artifacts. Misses must build normally. Cache restores are
@@ -71,6 +82,9 @@ eviction can reduce reuse and must be observed before performance claims. No pai
 increase is implicit. Logs/LCOV and bounded Windows diagnostics are retained for
 seven days, including after failure when available. Successful coverage requires
 a nonempty LCOV; absence after an earlier failure does not turn the job green.
+Changing `CARGO_BUILD_JOBS` changes the action's environment hash, so the Windows
+two-job configuration initially needs a new cache. Managed-image changes can also
+invalidate reuse; old cold/warm measurements below do not certify this configuration.
 
 All jobs have only `contents: read`, checkout does not persist its token, and no
 corporate secrets or publishing/OIDC permissions are supplied. External actions
@@ -143,7 +157,7 @@ This is headless Rust/QA acceptance, not native UI or packaged-editor acceptance
 Keep `tools/ci/windows-build.ps1` and its success/failure/sampling regression suite:
 
 ```powershell
-$env:CARGO_BUILD_JOBS = '1'
+$env:CARGO_BUILD_JOBS = '2'
 $env:CARGO_PROFILE_DEV_DEBUG = 'line-tables-only'
 $env:CARGO_PROFILE_TEST_DEBUG = 'line-tables-only'
 pwsh -NoProfile -File tools/ci/test-windows-build.ps1
@@ -162,7 +176,7 @@ compiler/linker CPU/memory, system memory and disk every 15 seconds, including a
 initial synchronous sample, without dumping environment variables. Evidence is in
 `target/ci/windows-build/` and, when Cargo produces it, `target/cargo-timings/`.
 Retain evidence before subsequent tests and after failures; forced termination
-can prevent a final sample. One build job reduces competing MSVC links; it does
+can prevent a final sample. Two build jobs bound competing MSVC links; this does
 not serialize tests. Line-table debug profiles retain source locations, not full
 interactive variable/type inspection; use separate full-debug builds for that.
 These are optional local resource settings, not changed workspace defaults or
