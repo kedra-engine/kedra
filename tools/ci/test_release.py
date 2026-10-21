@@ -1,26 +1,15 @@
 """Release preflight fails closed on source identity and genuine CI results."""
 import unittest
 
-from release import validate_identity, validate_ci, validate_matrix
+from release import validate_identity, validate_ci, validate_package_result
 
 
 class ReleasePolicyTests(unittest.TestCase):
-    def test_publisher_requires_each_actual_native_job_to_succeed(self):
-        targets = ["x86_64-pc-windows-msvc", "x86_64-unknown-linux-gnu",
-                   "aarch64-apple-darwin"]
-        jobs = [{"name": f"Package ({target})", "status": "completed", "conclusion": "success"}
-                for target in targets]
-        validate_matrix(jobs)
-        with self.assertRaises(ValueError):
-            validate_matrix(jobs[:-1])
-        with self.assertRaises(ValueError):
-            validate_matrix(jobs + [jobs[0]])
-        with self.assertRaises(ValueError):
-            validate_matrix(jobs + [{"name": "Package (x86_64-apple-darwin)",
-                                     "status": "completed", "conclusion": "success"}])
-        for conclusion in ["failure", "cancelled", "skipped", None]:
-            with self.subTest(conclusion=conclusion), self.assertRaises(ValueError):
-                validate_matrix([dict(jobs[0], conclusion=conclusion), *jobs[1:]])
+    def test_publisher_requires_successful_scheduler_package_result(self):
+        validate_package_result("success")
+        for result in ["failure", "cancelled", "skipped", "in_progress", "", None]:
+            with self.subTest(result=result), self.assertRaises(ValueError):
+                validate_package_result(result)
 
     def test_identity_requires_exact_sha_and_cargo_version(self):
         sha = "a" * 40
