@@ -58,6 +58,14 @@ Do not interpret an empty engine graph as proven player isolation.
 
 ## Module rules
 
+`kedra_update` owns blocking release validation, verified download/package lifetime,
+native marker checks and explicit macOS staging/replacement. It has no workspace
+or Bevy dependencies. The editor supplies trusted application configuration and
+owns workers, UI, source/input settlement, preferences and exit authorization.
+An installation writer is not an authoring writer and never saves project sources.
+See [ADR 0026](decisions/0026-editor-self-update.md) and the
+[crate contract](../crates/kedra_update/README.md); native update acceptance is pending.
+
 [ADR 0009](decisions/0009-property-editing-and-inspector.md) proposes the full
 authoring slice's field interactions and isolated own-source preview. The
 [read-only Inspector profile](ui/inspector.md) implements shared `kedra_ui::fields`

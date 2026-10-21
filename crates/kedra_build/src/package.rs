@@ -34,8 +34,16 @@ pub(crate) fn create(
         NativeTarget::Linux => PackageFormat::AppImage,
         NativeTarget::MacArm | NativeTarget::MacIntel => PackageFormat::Dmg,
     };
-    let config = configuration(app, stage, &output.join("packages"), icons, format)?;
+    let mut config = configuration(app, stage, &output.join("packages"), icons, format)?;
     fs::create_dir(&config.out_dir).map_err(|e| e.to_string())?;
+    if let Some(marker) = installation_marker(
+        &config.out_dir,
+        app.package.name.as_str(),
+        &app.package.version.to_string(),
+        app.target,
+    )? {
+        config.resources.get_or_insert_default().push(marker);
+    }
     let generated = crate::worker::package(
         &config,
         app.package
@@ -195,6 +203,36 @@ fn native_icons(target: NativeTarget, icons: Vec<PathBuf>) -> Result<Vec<String>
                 .ok_or("Native icon paths must be Unicode".to_string())
         })
         .collect()
+}
+
+fn installation_marker(
+    output: &Path,
+    name: &str,
+    version: &str,
+    target: NativeTarget,
+) -> Result<Option<Resource>, String> {
+    if name != "kedra" || target == NativeTarget::MacIntel {
+        return Ok(None);
+    }
+    let kind = match target {
+        NativeTarget::Windows => "Nsis",
+        NativeTarget::Linux => "AppImage",
+        NativeTarget::MacArm => "MacApp",
+        NativeTarget::MacIntel => return Ok(None),
+    };
+    let path = output.join("kedra-installation.json");
+    let bytes = serde_json::to_vec_pretty(&serde_json::json!({
+        "schema":1,"application":"kedra","version":version,"kind":kind,"target":target.triple()
+    }))
+    .map_err(|e| e.to_string())?;
+    fs::write(&path, bytes).map_err(|e| e.to_string())?;
+    Ok(Some(Resource::Mapped {
+        src: path
+            .to_str()
+            .ok_or("Native marker path must be Unicode")?
+            .into(),
+        target: "kedra-installation.json".into(),
+    }))
 }
 
 pub(crate) fn portable_zip(stage: &Path, path: &Path, prefix: &str) -> Result<(), String> {

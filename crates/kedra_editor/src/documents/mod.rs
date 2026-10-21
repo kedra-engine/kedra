@@ -44,6 +44,18 @@ pub(crate) struct Documents {
     asset_ready: Option<PathBuf>,
 }
 impl Documents {
+    pub(crate) fn update_clean(&self) -> bool {
+        self.pending.is_none()
+            && self.task.is_none()
+            && self.scope.as_ref().is_none_or(|scope| {
+                scope.pending().is_none()
+                    && scope
+                        .working
+                        .documents()
+                        .keys()
+                        .all(|id| !scope.working.dirty(*id))
+            })
+    }
     /// Immutable admission baseline used only to verify a renderer delivery.
     pub(crate) fn scene_source(&self) -> Option<&kedra_authoring::persistence::SourceSnapshot> {
         self.scope.as_ref().map(|scope| &scope.source)

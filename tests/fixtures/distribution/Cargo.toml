@@ -32,7 +32,7 @@ notices = ["NOTICE.txt"]
 license-config = "about.toml"
 
 [dependencies]
-kedra_assets = "=0.1.2"
+kedra_assets = "=0.1.3"
 
 [target.'cfg(windows)'.build-dependencies]
 winresource = "=0.1.34"

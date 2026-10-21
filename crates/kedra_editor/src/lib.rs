@@ -21,6 +21,7 @@ mod recent;
 mod remote;
 mod scene_view;
 mod screens;
+mod updates;
 mod views;
 mod workspace;
 use bevy::prelude::*;
@@ -37,6 +38,7 @@ pub struct EditorPlugin;
 impl Plugin for EditorPlugin {
     fn build(&self, app: &mut App) {
         chrome::install(app);
+        updates::install(app);
         asset_browser::install(app);
         hierarchy::install(app);
         inspector::install(app);
@@ -146,6 +148,7 @@ pub fn run(
         EditorPlugin,
     ));
     remote::install(&mut app);
+    updates::configure(app.world_mut(), state_directory.as_deref())?;
     app.world_mut().resource_mut::<boot::Boot>().delivery = Some((assets.clone(), manifest));
     if let Some(directory) = state_directory {
         let directory = std::path::absolute(directory)
@@ -179,10 +182,23 @@ pub fn run(
             .resource_mut::<kedra_ui::authored::components::UiMotion>()
             .reduced = true;
     }
+    let handoff = updates::handoff(app.world_mut());
     let exit = app.run();
+    let update = handoff.try_recv().ok();
+    drop(app);
     if exit.is_error() {
         Err("Editor stopped with an error; inspect the diagnostics above.".into())
     } else {
+        if let Some((prepared, arguments)) = update
+            && let Err(error) = prepared.commit(&arguments)
+        {
+            rfd::MessageDialog::new()
+                .set_title("Kedra update failed")
+                .set_level(rfd::MessageLevel::Error)
+                .set_description(&error)
+                .show();
+            return Err(error);
+        }
         Ok(())
     }
 }

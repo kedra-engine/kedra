@@ -72,6 +72,17 @@ Existing `browser-search.svg` and `scene-down.svg` share canonical UI-KIT search
 down geometry. Native macOS button illustrations are not substitute controls.
 These exports do not update the old pinned visual references.
 
+## Update indicator source
+
+The accepted update family is `327:17756`, with indicator `327:17796` and
+status-only popover `327:17900`. `assets/editor/icons/update.svg` is the project
+UI-KIT export of `327:17759`, packaged at 1x–4x density; no third-party artwork
+or screenshot background is introduced. The authored indicator derives from the
+shared button and reuses the existing spinner/warning assets. It follows the
+22px indicator, 64 x 22 Primary Ready control and hover/focus-only popover contract
+in [ADR 0026](../decisions/0026-editor-self-update.md). Native rendered/input
+acceptance remains unverified; source geometry is not evidence of frame fidelity.
+
 ## Hierarchy source exports
 
 Read-only [Hierarchy](hierarchy.md) follows `128:32776` under `125:17354`:

@@ -10,6 +10,7 @@
     "editor://prefabs/maximize-control.prefab.ron",
     "editor://prefabs/titlebar.prefab.ron",
     "editor://prefabs/editor-titlebar.prefab.ron",
+    "editor://prefabs/update-indicator.prefab.ron",
     "editor://prefabs/loading-titlebar.prefab.ron",
     "editor://scenes/loading.scene.ron",
     "editor://scenes/projects.scene.ron",

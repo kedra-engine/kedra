@@ -219,6 +219,11 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
     }));
 }
 pub(super) fn save(world: &World, state: &mut EditorWorkspace) {
+    if let Err(error) = save_checked(world, state) {
+        warn!("Workspace preferences not saved: {error}");
+    }
+}
+pub(super) fn save_checked(world: &World, state: &mut EditorWorkspace) -> Result<(), String> {
     if let Some(task) = state.preferences.task.take() {
         match block_on(task) {
             Ok(bytes) => state.preferences.baseline = Some(bytes),
@@ -227,18 +232,17 @@ pub(super) fn save(world: &World, state: &mut EditorWorkspace) {
             }
         }
     }
-    if state.preferences.error.is_some() {
-        return;
+    if let Some(error) = &state.preferences.error {
+        return Err(error.clone());
     }
     if let Some(path) = &state.preferences.path {
-        match encoded(world, state).and_then(|bytes| {
+        let bytes = encoded(world, state).and_then(|bytes| {
             write(path, state.preferences.baseline.as_deref(), &bytes)?;
             Ok(bytes)
-        }) {
-            Ok(bytes) => state.preferences.baseline = Some(bytes),
-            Err(error) => warn!("Workspace preferences not saved: {error}"),
-        }
+        })?;
+        state.preferences.baseline = Some(bytes);
     }
+    Ok(())
 }
 pub(super) fn save_on_exit(world: &mut World) {
     if world.resource::<Messages<AppExit>>().is_empty()
