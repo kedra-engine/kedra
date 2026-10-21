@@ -43,10 +43,11 @@ The owner approved this direction, amended to use `kedra_build` and `cargo kedra
 | Windows | x86_64 MSVC | NSIS installer `.exe` | Portable `.zip` |
 | Linux | x86_64 GNU | `.AppImage` | Portable `.tar.gz` |
 | macOS | Apple Silicon arm64 | `.dmg` containing `Kedra.app` | None initially |
-| macOS | Intel x86_64 | Separate `.dmg` containing `Kedra.app` | None initially |
 
-Use native standard hosted runners: Windows 2025, Ubuntu 24.04, macOS 15 arm64
-and macOS 15 Intel. No paid runners or cross-compilation SDK workaround is required.
+Use native standard hosted runners: Windows 2025, Ubuntu 24.04 and macOS 15 arm64.
+The owner's amended editor CI/CD scope excludes Intel macOS builds/downloads;
+the shared builder retains Intel macOS target support for other applications.
+No paid runners or cross-compilation SDK workaround is required.
 The builder must validate actual runner/target architecture rather than infer it
 from a generic OS label. Universal macOS binaries and Windows/Linux arm64 are
 deferred, not advertised as supported.
@@ -226,7 +227,7 @@ explicit version/tag and exact reviewed main commit. Require successful CI for
 that exact commit, not the latest green run from some other revision. Reject a
 tag/version mismatch, an unrelated commit and an existing conflicting release.
 
-All compile/package/test jobs have read-only permissions. Build all four targets
+All compile/package/test jobs have read-only permissions. Build all three editor targets
 independently and require the entire artifact matrix before publication. Keep
 release compilation caches separate from native-test/coverage roles; cache only
 dependencies and never reuse cached test results or source-specific bundles.

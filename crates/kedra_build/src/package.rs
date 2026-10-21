@@ -15,6 +15,16 @@ pub(crate) fn create(
     output: &Path,
     icons: Vec<PathBuf>,
 ) -> Result<Vec<(PathBuf, &'static str)>, String> {
+    let native_libraries = if app.target == NativeTarget::Linux {
+        crate::native_licenses::collect(&stage.join(&app.binary), &stage.join("licenses"))?
+    } else {
+        Vec::new()
+    };
+    let native_runtime = if app.target == NativeTarget::Linux {
+        Some(crate::native_runtime::prepare(&stage.join("licenses"))?)
+    } else {
+        None
+    };
     let mut config = app.native.clone();
     config.binaries = vec![Binary::new(&app.binary).main(true)];
     config.binaries_dir = Some(stage.to_path_buf());
@@ -50,6 +60,7 @@ pub(crate) fn create(
             .parent()
             .ok_or("Application directory missing")?
             .as_std_path(),
+        native_runtime.as_deref(),
     )?;
     let prefix = format!(
         "{}-{}-{}",
@@ -72,6 +83,15 @@ pub(crate) fn create(
         for source in package.paths {
             if !source.is_file() {
                 return Err("Native package file is missing".into());
+            }
+            if package.format == PackageFormat::AppImage {
+                crate::native_runtime::verify_prefix(
+                    &source,
+                    native_runtime
+                        .as_deref()
+                        .ok_or("Selected AppImage runtime missing")?,
+                )?;
+                crate::native_licenses::verify(&source, &native_libraries, &app.binary, stage)?;
             }
             if !source
                 .canonicalize()

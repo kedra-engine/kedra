@@ -14,14 +14,22 @@ pub(crate) struct NativeOutput {
     pub paths: Vec<PathBuf>,
 }
 
-pub(crate) fn package(config: &Config, directory: &Path) -> Result<Vec<NativeOutput>, String> {
+pub(crate) fn package(
+    config: &Config,
+    directory: &Path,
+    runtime: Option<&Path>,
+) -> Result<Vec<NativeOutput>, String> {
     let config_path = config.out_dir.join("native-config.json");
     let report_path = config.out_dir.join("native-output.json");
     let bytes = serde_json::to_vec_pretty(config).map_err(|e| e.to_string())?;
     fs::File::create_new(&config_path)
         .and_then(|mut file| file.write_all(&bytes))
         .map_err(|e| e.to_string())?;
-    let status = Command::new(std::env::current_exe().map_err(|e| e.to_string())?)
+    let mut worker = Command::new(std::env::current_exe().map_err(|e| e.to_string())?);
+    if let Some(runtime) = runtime {
+        worker.env("LDAI_RUNTIME_FILE", runtime);
+    }
+    let status = worker
         .args(["bundle-native", "--config"])
         .arg(&config_path)
         .arg("--report")

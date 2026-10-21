@@ -7,7 +7,7 @@ from release import validate_identity, validate_ci, validate_matrix
 class ReleasePolicyTests(unittest.TestCase):
     def test_publisher_requires_each_actual_native_job_to_succeed(self):
         targets = ["x86_64-pc-windows-msvc", "x86_64-unknown-linux-gnu",
-                   "aarch64-apple-darwin", "x86_64-apple-darwin"]
+                   "aarch64-apple-darwin"]
         jobs = [{"name": f"Package ({target})", "status": "completed", "conclusion": "success"}
                 for target in targets]
         validate_matrix(jobs)
@@ -15,6 +15,9 @@ class ReleasePolicyTests(unittest.TestCase):
             validate_matrix(jobs[:-1])
         with self.assertRaises(ValueError):
             validate_matrix(jobs + [jobs[0]])
+        with self.assertRaises(ValueError):
+            validate_matrix(jobs + [{"name": "Package (x86_64-apple-darwin)",
+                                     "status": "completed", "conclusion": "success"}])
         for conclusion in ["failure", "cancelled", "skipped", None]:
             with self.subTest(conclusion=conclusion), self.assertRaises(ValueError):
                 validate_matrix([dict(jobs[0], conclusion=conclusion), *jobs[1:]])

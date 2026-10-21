@@ -114,6 +114,26 @@ impl Application {
         {
             return Err("Additional packager.resources are not supported; declare compiled delivery inputs in distribution.assets and license files in distribution.notices".into());
         }
+        if native.appimage.as_ref().is_some_and(|config| {
+            config
+                .libs
+                .as_ref()
+                .is_some_and(|values| !values.is_empty())
+                || config
+                    .bins
+                    .as_ref()
+                    .is_some_and(|values| !values.is_empty())
+                || config
+                    .files
+                    .as_ref()
+                    .is_some_and(|values| !values.is_empty())
+                || config
+                    .linuxdeploy_plugins
+                    .as_ref()
+                    .is_some_and(|values| !values.is_empty())
+        }) {
+            return Err("Additional appimage libs, bins, files and plugins require explicit native provenance/source support and are not supported".into());
+        }
         if native.product_name.is_empty()
             || native.product_name.contains(['/', '\\'])
             || native.product_name.chars().any(char::is_control)

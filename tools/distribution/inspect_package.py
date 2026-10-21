@@ -18,9 +18,10 @@ import time
 import zipfile
 
 
-def run(arguments: list[str], **kwargs) -> subprocess.CompletedProcess:
-    print("+ " + " ".join(map(str, arguments)), flush=True)
-    return subprocess.run(list(map(str, arguments)), check=True, **kwargs)
+def run(arguments: list[str] | str, **kwargs) -> subprocess.CompletedProcess:
+    command = arguments if isinstance(arguments, str) else list(map(str, arguments))
+    print("+ " + (command if isinstance(command, str) else " ".join(command)), flush=True)
+    return subprocess.run(command, check=True, **kwargs)
 
 
 def verify_cli(binary: Path, resources: Path, version: str) -> None:
@@ -75,6 +76,12 @@ def verify_macho(binary: Path, architecture: str) -> None:
     run(["lipo", binary, "-verify_arch", architecture])
 
 
+def nsis_command_line(installer: os.PathLike[str], destination: os.PathLike[str]) -> str:
+    # NSIS requires /D= to be the unquoted final tail, even when it contains spaces.
+    # https://nsis.sourceforge.io/Docs/Chapter3.html#installerusage
+    return subprocess.list2cmdline([str(installer), "/S"]) + " /D=" + str(destination)
+
+
 def inspect_linux(packages: dict[str, Path], work: Path, version: str) -> None:
     portable = work / "portable Юникод space"
     portable.mkdir()
@@ -115,7 +122,7 @@ def inspect_windows(packages: dict[str, Path], work: Path, version: str) -> None
         raise ValueError("Windows PE lacks expected architecture, GUI subsystem or native icon")
     verify_cli(binary, binary.parent / "assets", version)
     install = work / "installed Юникод space"
-    run([packages["nsis"], "/S", "/D=" + str(install)], timeout=180)
+    run(nsis_command_line(packages["nsis"], install), timeout=180)
     verify_cli(install / "kedra.exe", install / "assets", version)
     run([install / "uninstall.exe", "/S"], timeout=180)
     deadline = time.monotonic() + 60

@@ -67,7 +67,7 @@ def publish(directory: Path, source: str, tag: str, repository: str) -> None:
 
 Source: `{source}`. All native packages passed exact-revision CI and package checks.
 
-- Windows x64: NSIS installer and portable ZIP; macOS ARM64/Intel: separate DMGs;
+- Windows x64: NSIS installer and portable ZIP; macOS Apple Silicon: ARM64 DMG;
   Linux x64: AppImage and portable TAR.GZ. macOS requires version 15 or newer.
 - Unsigned and not notarized: Gatekeeper/SmartScreen warnings are expected. Do not
   disable OS protections globally. Verify SHA256SUMS before installing.
