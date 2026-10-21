@@ -457,8 +457,8 @@ mod tests {
         let root = dir.path().join("Kedra.app");
         installed_fixture(&root)?;
         let installation = Installation::open(&crate::config::fixture(), root.canonicalize()?)?;
-        installation.lease.try_lock()?;
-        let observer = installation.clone();
+        // Portable ownership fixture, not a native installation transaction.
+        // Actual shared/exclusive conversion is covered on macOS below.
         let staging = tempfile::tempdir_in(dir.path())?;
         let staging_path = staging.path().to_owned();
         fs::write(staging.path().join("owned"), b"staged")?;
@@ -468,11 +468,29 @@ mod tests {
             installation,
             staging,
             backup: Some(backup),
-            exclusive: true,
+            exclusive: false,
         });
         assert_eq!(fs::read(root.join("Contents/MacOS/kedra"))?, b"fixture");
         assert!(!staging_path.exists());
         assert!(!backup_path.exists());
+        Ok(())
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn cancelled_preparation_restores_shared_installation_lease() -> TestResult {
+        let dir = tempfile::tempdir()?;
+        let root = dir.path().join("Kedra.app");
+        installed_fixture(&root)?;
+        let installation = Installation::open(&crate::config::fixture(), root.canonicalize()?)?;
+        installation.lease.try_lock()?;
+        let observer = installation.clone();
+        drop(Prepared {
+            installation,
+            staging: tempfile::tempdir_in(dir.path())?,
+            backup: Some(tempfile::tempdir_in(dir.path())?),
+            exclusive: true,
+        });
         let second = Installation::open(&crate::config::fixture(), root.canonicalize()?)?;
         assert!(
             observer.lease.try_lock().is_err(),
@@ -489,7 +507,6 @@ mod tests {
         let root = dir.path().join("Kedra.app");
         installed_fixture(&root)?;
         let installation = Installation::open(&crate::config::fixture(), root.canonicalize()?)?;
-        installation.lease.try_lock()?;
         let staging = tempfile::tempdir_in(dir.path())?;
         let staging_path = staging.path().to_owned();
         let backup = tempfile::tempdir_in(dir.path())?;
@@ -499,7 +516,7 @@ mod tests {
             installation,
             staging,
             backup: Some(backup),
-            exclusive: true,
+            exclusive: false,
         };
         assert!(prepared.commit(&[]).is_err());
         assert_eq!(fs::read(root.join("Contents/MacOS/kedra"))?, b"fixture");
@@ -514,7 +531,6 @@ mod tests {
         let root = dir.path().join("Kedra.app");
         installed_fixture(&root)?;
         let installation = Installation::open(&crate::config::fixture(), root.canonicalize()?)?;
-        installation.lease.try_lock()?;
         let staging = tempfile::tempdir_in(dir.path())?;
         // Force spawn failure after replacement without executing any code.
         fs::create_dir(staging.path().join("Kedra.app"))?;
@@ -524,7 +540,7 @@ mod tests {
             installation,
             staging,
             backup: Some(backup),
-            exclusive: true,
+            exclusive: false,
         };
         let error = prepared
             .commit(&[])
