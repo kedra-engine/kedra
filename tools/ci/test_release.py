@@ -1,10 +1,20 @@
 """Release preflight fails closed on source identity and genuine CI results."""
 import unittest
 
-from release import validate_identity, validate_ci, validate_package_result
+from release import validate_identity, validate_ci, validate_package_result, validate_workflow_trees
 
 
 class ReleasePolicyTests(unittest.TestCase):
+    def test_source_workflows_must_match_default_branch_for_github_token(self):
+        workflows = {"name": "workflows", "type": "dir", "sha": "a" * 40}
+        validate_workflow_trees([workflows], [workflows])
+        validate_workflow_trees([workflows, {"name": "ci-paths.yml", "type": "file", "sha": "b" * 40}],
+                                [workflows])
+        for source, current in (([], [workflows]), ([workflows], []),
+                                ([workflows], [dict(workflows, sha="b" * 40)])):
+            with self.subTest(source=source, current=current), self.assertRaises(ValueError):
+                validate_workflow_trees(source, current)
+
     def test_publisher_requires_successful_scheduler_package_result(self):
         validate_package_result("success")
         for result in ["failure", "cancelled", "skipped", "in_progress", "", None]:

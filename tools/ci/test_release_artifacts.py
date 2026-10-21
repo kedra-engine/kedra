@@ -1,11 +1,11 @@
 """Real files exercise exact complete release identity and integrity checks."""
-import hashlib
 import json
 from pathlib import Path
 import tempfile
 import unittest
 
 from release_artifacts import TARGET_FORMATS, verify
+from publisher_fixtures import write_packages
 
 
 class ReleaseArtifactTests(unittest.TestCase):
@@ -14,27 +14,7 @@ class ReleaseArtifactTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.sha = "a" * 40
-        fixture_formats = {
-            "x86_64-pc-windows-msvc": {"nsis": "exe", "zip": "zip"},
-            "x86_64-unknown-linux-gnu": {"appimage": "AppImage", "tar.gz": "tar.gz"},
-            "aarch64-apple-darwin": {"dmg": "dmg"},
-        }
-        for target, formats in fixture_formats.items():
-            folder = self.root / ("package-" + target)
-            folder.mkdir()
-            entries = []
-            for kind, extension in formats.items():
-                name = f"kedra-0.1.0-{target}.{extension}"
-                content = (name + " test payload").encode()
-                (folder / name).write_bytes(content)
-                entries.append({"name": name, "format": kind, "bytes": len(content),
-                                "sha256": hashlib.sha256(content).hexdigest()})
-            (folder / "artifact-inventory.json").write_text(json.dumps({
-                "schema": 1, "application": "kedra", "version": "0.1.0",
-                "target": target, "source_revision": self.sha, "artifacts": entries,
-            }))
-            (folder / "SHA256SUMS").write_text("".join(
-                f"{entry['sha256']}  {entry['name']}\n" for entry in entries))
+        write_packages(self.root, self.sha)
 
     def test_exact_complete_set_passes(self):
         self.assertEqual(len(verify(self.root, self.sha, "0.1.0")), 5)
