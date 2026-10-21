@@ -261,6 +261,52 @@ mod tests {
     }
 
     #[test]
+    fn lint_and_documentation_stages_run_real_cargo_on_a_small_workspace() -> crate::Result<()> {
+        let root = tempfile::tempdir()?;
+        std::fs::create_dir(root.path().join("src"))?;
+        std::fs::write(
+            root.path().join("Cargo.toml"),
+            "[package]\nname = \"command_fixture\"\nversion = \"0.0.0\"\nedition = \"2024\"\n[workspace]\n",
+        )?;
+        std::fs::write(
+            root.path().join("src/lib.rs"),
+            "/// Return the fixture value.\npub fn value() -> u32 { 42 }\n",
+        )?;
+        let lock = std::process::Command::new("cargo")
+            .current_dir(root.path())
+            .args(["generate-lockfile", "--offline"])
+            .output()?;
+        assert!(
+            lock.status.success(),
+            "{}",
+            String::from_utf8_lossy(&lock.stderr)
+        );
+        for task in [Task::Lint, Task::Doc] {
+            let stage = task.stages().pop().ok_or("Cargo stage missing")?;
+            let Stage::Cargo { args, rustdoc, .. } = stage else {
+                return Err("Lint and documentation must invoke Cargo".into());
+            };
+            assert_eq!(rustdoc, task == Task::Doc);
+            let output = std::process::Command::new("cargo")
+                .current_dir(root.path())
+                .args(args)
+                .env("CARGO_TARGET_DIR", root.path().join("target"))
+                .output()?;
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+        assert!(
+            root.path()
+                .join("target/doc/command_fixture/index.html")
+                .is_file()
+        );
+        Ok(())
+    }
+
+    #[test]
     fn clippy_forbids_unsafe_even_without_manifest_inheritance() -> crate::Result<()> {
         let root = tempfile::tempdir()?;
         std::fs::create_dir(root.path().join("src"))?;

@@ -43,29 +43,8 @@ fn formatting_command_checks_real_sources() {
 }
 
 #[test]
-fn lint_and_documentation_commands_run_real_cargo() {
-    // Keep nested builds outside the active cargo-test target lock.
-    let target = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../target/xtask-cli");
-    for task in ["lint", "doc"] {
-        let output = match command()
-            .arg(task)
-            .env("CARGO_TARGET_DIR", &target)
-            .output()
-        {
-            Ok(output) => output,
-            Err(error) => panic!("could not run {task}: {error}"),
-        };
-        assert!(
-            output.status.success(),
-            "{}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-    }
-}
-
-#[test]
 fn unavailable_tools_fail_instead_of_reporting_success() {
-    for task in ["fmt", "doc", "architecture", "files"] {
+    for task in ["fmt", "lint", "doc", "architecture", "files"] {
         let output = match command()
             .arg(task)
             .env("PATH", "")

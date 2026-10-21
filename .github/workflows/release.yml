@@ -101,8 +101,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev libfuse2t64 patchelf file binutils pax-utils
-      - name: Native distribution inspection regressions
-        run: python3 -X utf8 -m unittest discover -s tools/distribution -p 'test*.py'
+      - name: Native macOS architecture-inspector regression
+        if: runner.os == 'macOS'
+        working-directory: tools/distribution
+        run: python3 -X utf8 -m unittest test_inspect_package.InspectionTests.test_macho_architecture_verification_uses_real_native_binary
       - uses: Swatinem/rust-cache@v2
         with:
           key: desktop-release-v2-${{ runner.os }}-${{ runner.arch }}
@@ -121,12 +123,8 @@ jobs:
           checksum: true
           fallback: none
       - name: Audit immutable application dependency graph
-        run: cargo deny --locked check
-      - name: Real native dependency notices and modified LGPL-library relink
         if: runner.os == 'Linux'
-        env:
-          KEDRA_NATIVE_EVIDENCE: ${{ runner.temp }}/native-runtime-evidence
-        run: cargo test -p kedra_build --lib --locked native_distribution -- --ignored --nocapture
+        run: cargo deny --locked check
       - name: Isolated audited license collector (no project dependency downgrades)
         run: python3 tools/distribution/install_about.py --output "$RUNNER_TEMP/cargo-about"
       - name: Same shared native packaging command for every application

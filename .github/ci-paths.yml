@@ -1,0 +1,29 @@
+# Maintained dorny/paths-filter owns matching and change discovery. Unknown inputs
+# trigger Rust checks; only known documentation/Python/workflow-only paths opt out.
+rust:
+  - '**'
+  - '!*.md'
+  - '!docs/**/*.md'
+  - '!tools/**/*.py'
+  - '!.github/**'
+  - '!.rumdl.toml'
+  - '!lychee.toml'
+python:
+  - 'tools/**/*.py'
+  - '.github/**'
+markdown:
+  - '**/*.md'
+  - 'docs/**'
+  - '.rumdl.toml'
+  - 'lychee.toml'
+workflows:
+  - '.github/**'
+distribution:
+  - 'crates/kedra_build/**'
+  - 'tools/distribution/**'
+  - 'tools/kedra/**'
+  - 'tests/fixtures/distribution/**'
+  - 'Cargo.toml'
+  - 'Cargo.lock'
+  - 'rust-toolchain.toml'
+  - '.cargo/**'
