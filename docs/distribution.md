@@ -1,12 +1,11 @@
 # Desktop application distribution
 
-Native editor distribution is under implementation. There is no verified public
-release yet. Package/process checks do not certify physical input, OS integration
-or all rendered UI states. Current packages are unsigned and not notarized.
-Native renderer acceptance remains unverified on the local macOS host: its desktop
-session is locked, and both installed-editor and independent pure-Bevy control
-captures are black. Resource/process checks cannot substitute for unlocked-screen
-interaction and frame acceptance. This is not a confirmed product-rendering fix.
+The public `v0.1.0` prerelease has a known macOS bundle-signature defect; local
+re-signing is required for that asset. New macOS packages default to complete
+ad-hoc bundle signing, not a linker-only executable signature. They are still not
+Developer ID-signed or notarized; Windows packages remain unsigned. Signature
+integrity checks do not certify Gatekeeper trust, physical input, OS integration
+or rendered UI. Native interaction and frame acceptance remain separate requirements.
 
 ## Shared application tooling
 
@@ -169,6 +168,14 @@ Linux inspection runs extracted `AppRun`, not just the inner ELF executable.
 - macOS editor: ARM64 `.dmg` for Apple Silicon, containing an ordinary `.app`.
   The shared builder can also produce Intel DMGs for other applications.
 
+The maintained packager signs macOS nested code and the completed bundle
+inside-out, using an explicitly configured identity or ad-hoc `-` by default.
+All resources and `Info.plist` must be sealed before creating the DMG. Inspection
+copies the app from the actual disk image and runs
+`codesign --verify --deep --strict --verbose=2` before executing its CLI. A valid
+ad-hoc signature is not an Apple-trusted identity or notarization; users may still
+need the normal macOS approval flow. No global Gatekeeper settings are changed.
+
 `artifact-inventory.json` and `SHA256SUMS` bind application/version, target,
 basenames, sizes and SHA-256 hashes. A clean Git workspace root supplies its exact
 source revision. Dirty/non-Git builds have `source_revision: null` and are not
@@ -212,8 +219,8 @@ consumer, with dependency-only caches separated from validation/coverage roles.
 The target-independent application dependency audit runs once on Linux, not once
 per package OS. All runners still install cargo-deny because the isolated license
 collector has its own freshly resolved tool graph to audit before compilation.
-Portable Python regressions run in CI; CD retains only the macOS
-native architecture-inspector regression that Linux cannot execute. Source-kit
+Portable Python regressions run in CI; CD retains the macOS-native architecture
+and bundle-signature regressions that Linux cannot execute. Source-kit
 preparation and modified-LGPL-library relink regressions run in native Linux CI
 when packaging inputs change, rather than repeating them during every release.
 Actual package inspection and the independent public Git consumer still run on

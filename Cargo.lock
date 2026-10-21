@@ -4419,7 +4419,7 @@ dependencies = [
 
 [[package]]
 name = "kedra"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "clap",
@@ -4440,7 +4440,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_app"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-channel",
  "axum",
@@ -4463,7 +4463,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_assets"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "gltf",
@@ -4478,7 +4478,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_authoring"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "kedra_scene",
@@ -4491,7 +4491,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_build"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cargo-lock",
  "cargo-packager",
@@ -4518,7 +4518,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_desktop"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "kedra_ui",
@@ -4528,7 +4528,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_docking"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -4539,7 +4539,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_editor"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "bevy_flair",
@@ -4569,7 +4569,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_import"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "bevy_flair",
@@ -4589,7 +4589,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_inspector"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "bevy_flair",
@@ -4602,7 +4602,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_project"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde",
  "tempfile",
@@ -4613,7 +4613,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_scene"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "futures-lite",
@@ -4627,7 +4627,7 @@ dependencies = [
 
 [[package]]
 name = "kedra_ui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bevy",
  "bevy_flair",

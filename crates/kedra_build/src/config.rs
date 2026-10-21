@@ -158,6 +158,15 @@ impl Application {
             return Err("Native package version differs from Cargo package version".into());
         }
         native.version = package.version.to_string();
+        if matches!(target, NativeTarget::MacArm | NativeTarget::MacIntel) {
+            // The linker signature does not seal a complete .app. Let the
+            // maintained packager sign nested code and resources inside-out.
+            native
+                .macos
+                .get_or_insert_with(Default::default)
+                .signing_identity
+                .get_or_insert_with(|| "-".into());
+        }
         let binaries: Vec<_> = package
             .targets
             .iter()

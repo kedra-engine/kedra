@@ -77,8 +77,9 @@ Source: `{source}`. All native packages passed exact-revision CI and package che
 
 - Windows x64: NSIS installer and portable ZIP; macOS Apple Silicon: ARM64 DMG;
   Linux x64: AppImage and portable TAR.GZ. macOS requires version 15 or newer.
-- Unsigned and not notarized: Gatekeeper/SmartScreen warnings are expected. Do not
-  disable OS protections globally. Verify SHA256SUMS before installing.
+- Windows packages are unsigned. macOS packages use ad-hoc signatures, not a
+  Developer ID identity, and are not notarized. Gatekeeper/SmartScreen approval
+  may be required; do not disable OS protections globally. Verify SHA256SUMS.
 - Linux was built on Ubuntu 24.04. AppImage is not universally compatible with
   older glibc, graphics drivers or missing FUSE. Windows OS floor remains unverified.
 - Package inspection verifies native architecture, resources, CLI diagnostics and

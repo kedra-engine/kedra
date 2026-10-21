@@ -89,6 +89,16 @@ build inputs beyond the evidence available.
 
 ## Consequences and verification
 
+macOS packages must have a complete resource-sealing bundle signature, not merely
+the linker's Mach-O signature. Use cargo-packager's maintained inside-out signing
+with explicit identities preserved and ad-hoc `-` as the credential-free default.
+Verify the installed app copied from the actual DMG using strict recursive
+codesign validation. Test that resource mutation fails validation. Do not use
+`--deep` for signing, custom resource exclusions, quarantine removal or a global
+Gatekeeper bypass as the packaging fix. Ad-hoc integrity does not establish
+Developer ID trust or notarization; see Apple's
+[Code Signing In Depth](https://developer.apple.com/library/archive/technotes/tn2206/_index.html).
+
 Use the GitHub Releases lifecycle as documented: create a draft, retain the numeric
 ID returned by REST, upload through the maintained CLI, verify the draft by ID,
 then publish that same ID. The by-tag endpoint is for published releases and is

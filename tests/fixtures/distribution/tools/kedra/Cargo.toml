@@ -9,7 +9,7 @@ publish = false
 layer = "tooling"
 
 [dependencies]
-kedra_build = "=0.1.0"
+kedra_build = "=0.1.1"
 
 [lints]
 workspace = true
