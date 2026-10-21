@@ -27,7 +27,7 @@ build)
     ;;
 inside)
     # apk verifies official package signatures as well as the outer SHA-256 pins.
-    apk add --no-network --allow-downgrades /materials/*.apk
+    apk add --no-network /materials/*.apk
     cd /work/fuse
     CFLAGS='-ffile-prefix-map=/work=.' meson setup --prefix=/usr --default-library=static build
     ninja -C build -v install

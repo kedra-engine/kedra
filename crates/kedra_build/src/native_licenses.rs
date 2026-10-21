@@ -96,12 +96,7 @@ fn command_output(command: &mut Command) -> Result<String, String> {
 
 fn owner(path: &Path) -> Result<String, String> {
     let output = command_output(Command::new("dpkg-query").arg("--search").arg(path))?;
-    let owners: BTreeSet<_> = output
-        .lines()
-        .filter_map(|line| line.split_once(": "))
-        .filter(|(_, owned)| Path::new(owned) == path)
-        .map(|(package, _)| package.to_owned())
-        .collect();
+    let owners = package_owners(&output, path);
     if owners.len() != 1 {
         return Err(format!(
             "Native library has missing/ambiguous distro ownership: {}",
@@ -112,6 +107,22 @@ fn owner(path: &Path) -> Result<String, String> {
         .into_iter()
         .next()
         .ok_or("Native library owner missing".into())
+}
+
+fn package_owners(output: &str, path: &Path) -> BTreeSet<String> {
+    output
+        .lines()
+        .filter_map(|line| line.split_once(": "))
+        .filter(|(_, owned)| Path::new(owned) == path)
+        // dpkg-query also reports diversion descriptions, not just owners.
+        // Accept literal package identities, including a multiarch qualifier.
+        .filter(|(package, _)| {
+            package.bytes().all(|byte| {
+                byte.is_ascii_lowercase() || byte.is_ascii_digit() || b"+.:-".contains(&byte)
+            })
+        })
+        .map(|(package, _)| package.to_owned())
+        .collect()
 }
 
 fn package_metadata(metadata: &str) -> Result<Library, String> {
@@ -321,6 +332,21 @@ fn verify_libraries(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dpkg_diversion_diagnostics_are_not_package_ownership_records() {
+        let alias = Path::new("/lib64/ld-linux-x86-64.so.2");
+        let diversion = "diversion by libc6 from: /lib64/ld-linux-x86-64.so.2\ndiversion by libc6 to: /lib64/ld-linux-x86-64.so.2.usr-is-merged\n";
+        assert!(package_owners(diversion, alias).is_empty());
+        let real = Path::new("/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2");
+        assert_eq!(
+            package_owners(
+                "libc6:amd64: /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2\n",
+                real
+            ),
+            BTreeSet::from(["libc6:amd64".into()])
+        );
+    }
 
     fn library() -> Library {
         Library {
