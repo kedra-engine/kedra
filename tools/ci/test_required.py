@@ -1,5 +1,6 @@
 """Exercise the real required-check entry point against GitHub needs results."""
 
+import itertools
 import json
 import os
 from pathlib import Path
@@ -10,11 +11,14 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "tools/ci/required.py"
-JOBS = ("policy", "native", "coverage", "supply-chain", "repository", "secrets", "python-qa")
+JOBS = ("changes", "policy", "native", "coverage", "supply-chain", "repository", "secrets", "python-qa")
+FILTERS = ("rust", "python", "markdown", "workflows", "distribution")
 
 
 def successful_results():
-    return {job: {"result": "success", "outputs": {}} for job in JOBS}
+    results = {job: {"result": "success", "outputs": {}} for job in JOBS}
+    results["changes"]["outputs"] = {key: "true" for key in FILTERS}
+    return results
 
 
 class RequiredCheckTests(unittest.TestCase):
@@ -32,6 +36,52 @@ class RequiredCheckTests(unittest.TestCase):
         self.assertTrue(GATE.is_file(), "The configured gate entry point must exist")
         result = self.run_gate(json.dumps(successful_results()))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_only_jobs_not_selected_by_changed_paths_may_be_skipped(self):
+        for rust, python, markdown in itertools.product((True, False), repeat=3):
+            with self.subTest(rust=rust, python=python, markdown=markdown):
+                results = successful_results()
+                selected = {"rust": rust, "python": python, "markdown": markdown}
+                results["changes"]["outputs"].update({
+                    key: str(value).lower() for key, value in selected.items()
+                })
+                for job, wanted in (("native", rust), ("coverage", rust),
+                                    ("supply-chain", rust), ("python-qa", python),
+                                    ("repository", markdown)):
+                    results[job]["result"] = "success" if wanted else "skipped"
+                result = self.run_gate(json.dumps(results))
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                for job in JOBS:
+                    broken = json.loads(json.dumps(results))
+                    broken[job]["result"] = "failure"
+                    self.assertNotEqual(self.run_gate(json.dumps(broken)).returncode, 0)
+
+    def test_missing_or_malformed_change_selection_blocks(self):
+        for outputs in ({}, None, [], "true"):
+            with self.subTest(outputs=outputs):
+                results = successful_results()
+                results["changes"]["outputs"] = outputs
+                self.assertNotEqual(self.run_gate(json.dumps(results)).returncode, 0)
+        for key in FILTERS:
+            with self.subTest(missing=key):
+                results = successful_results()
+                del results["changes"]["outputs"][key]
+                self.assertNotEqual(self.run_gate(json.dumps(results)).returncode, 0)
+            for value in (None, "", "invalid", True, [], {}):
+                with self.subTest(key=key, value=value):
+                    results = successful_results()
+                    results["changes"]["outputs"][key] = value
+                    self.assertNotEqual(self.run_gate(json.dumps(results)).returncode, 0)
+
+    def test_valid_step_selections_do_not_change_job_requirements(self):
+        for workflows, distribution in itertools.product(("true", "false"), repeat=2):
+            with self.subTest(workflows=workflows, distribution=distribution):
+                results = successful_results()
+                results["changes"]["outputs"].update({
+                    "workflows": workflows, "distribution": distribution,
+                })
+                result = self.run_gate(json.dumps(results))
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_each_failure_cancellation_skip_or_unknown_result_blocks(self):
         for job in JOBS:

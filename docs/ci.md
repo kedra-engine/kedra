@@ -9,6 +9,8 @@ fresh line coverage was 85.02%. Same-revision warm-cache acceptance and genuine
 protected-main PR acceptance are verified. The repaired-main baseline at
 `e58d090249e5539408a5019fdd968026de4143be` passed every hosted group in run
 39503345256. New distribution changes still require their own hosted acceptance.
+Changed-path selection and the lean cache layout also require hosted PR/push/
+merge-group acceptance and new measurements; the initial timings do not certify them.
 Local commands remain independent entry points.
 Releases, Kubernetes, private infrastructure and self-hosted runners are outside
 this workflow. The exact Winit fork revision is public on GitHub; see
@@ -16,29 +18,54 @@ this workflow. The exact Winit fork revision is public on GitHub; see
 
 ## Workflow and required result
 
-PRs targeting main, main pushes and merge queue events run without path filters.
-The seven job groups are `policy`, `native`, `coverage`, `supply-chain`,
-`repository`, `secrets` and `python-qa`. Native validation runs on ubuntu-24.04,
-windows-2025 and macos-15 with matrix fail-fast disabled. Clippy, full workspace
-tests, doctests, API docs and default/minimal/isolated-runtime features are not
-replaced by compilation-only checks. The OS labels are managed images, not a
-bit-for-bit reproducible OS pin; Rust is selected by `rust-toolchain.toml`.
+PRs targeting main, main pushes and merge queue events always create `CI required`;
+workflow-level path filters do not leave branch protection waiting for a missing
+check. A lightweight `changes` job uses maintained `dorny/paths-filter@v4` and
+[path groups](../.github/ci-paths.yml) to select work. Manual CI dispatch selects
+every group. Detection uses the action's Git mode, not the file-count-limited PR
+REST endpoint. PRs compare the checked-out merge commit with the event's base SHA;
+main pushes compare against their before SHA, and merge groups against their base SHA.
+
+| Change | Selected work, in addition to file policy and history secret scan |
+| --- | --- |
+| Root/docs Markdown only | Markdown and links; no Rust matrix, coverage or native cache transfer |
+| Python tools only | Python suites; no Rust matrix, coverage or native cache transfer |
+| `.github/` only | Workflow syntax/security and Python gate/tool tests |
+| Rust, manifests, locks, assets, native scripts or unknown inputs | Native matrix, fresh coverage and dependency audit |
+| Mixed changes | Union of the corresponding groups |
+
+Markdown embedded under crates is a Rust input, not a documentation-only exception.
+Unknown paths conservatively select Rust checks. Native validation runs on
+ubuntu-24.04, windows-2025 and macos-15 with fail-fast disabled. Clippy, workspace
+tests/doctests and default/minimal/isolated-runtime features run on each selected
+OS. Linux workspace unit/integration tests run once in the required coverage job,
+not again in native Linux; doctests remain in native Linux because coverage does
+not run them. API documentation runs once on Linux. Rust formatting/architecture
+run once in policy, and portable-contract tests are included in workspace tests.
+No compilation-only prebuild replaces or precedes the Windows test execution.
+The xtask command-stage regression uses a tiny real Cargo workspace, rather than
+running full-workspace lint/docs recursively into a second `target/xtask-cli`.
+CLI missing-tool failures and the real unsafe-code rejection fixture remain
+covered; native CI still executes the actual full-workspace xtask commands.
+The OS labels are managed images, not a bit-for-bit reproducible OS pin; Rust is
+selected by `rust-toolchain.toml`.
 
 Native and coverage jobs wait for the lightweight policy/workflow checks, avoiding
 expensive compilation for a known policy failure. The matrix platforms remain
 independent of each other's failures.
 
-`CI required` always evaluates all seven expected job-group results, including
-the native matrix result. It succeeds only if every result is `success`; missing,
-extra, failed, cancelled, malformed and skipped results fail closed. The actual
-configured gate entry point has positive and negative behaviour tests:
+`CI required` evaluates change selection and all seven job-group results. Selected
+jobs must succeed; unselected jobs must be `skipped`. Failed change detection,
+missing/extra results, malformed selection, failures, cancellations and unexpected
+skips fail closed. The configured entry point tests all selection combinations
+and their failure paths:
 
 ```sh
 python3 -m unittest discover -s tools/ci -p 'test*.py'
 ```
 
-No YAML parser, configuration snapshot tests or CI executor is added. The small
-Python gate enforces Kedra's exact expected results; GitHub owns scheduling and
+No custom diff walker, glob matcher, YAML snapshot tests or CI executor is added.
+The Python gate enforces Kedra's expected results; GitHub owns scheduling and
 execution. actionlint and zizmor validate workflow syntax and security directly.
 
 Native and coverage jobs allow 180 minutes; light jobs allow 30 minutes and the
@@ -65,6 +92,13 @@ an explicit OS/architecture and native versus coverage role. Coverage additional
 pins the llvm-cov tool role and uses a separate `target/llvm-cov-target` cache.
 
 Only main-push jobs may save shared CI caches; PR jobs restore without saving.
+The policy cache includes only `target/xtask-bootstrap`, not a separate workspace
+test target. Its `policy-bootstrap-v2` key prevents restoring the obsolete wider
+cache. The `native-lean-v2` key avoids restoring the obsolete nested `xtask-cli`
+dependency tree. Both key changes incur one initial rebuild, not migration or
+deletion of remote cache entries. Native/coverage/distribution caches remain
+separate because their compiler profiles and consumers differ; docs/Python-only
+runs never restore or save them.
 Native jobs enable the action's supported `cache-on-failure` option, retaining
 compiled dependencies even when later validation fails. Policy and coverage jobs
 still save only on success. Main-ref distribution jobs also retain dependency-only
@@ -72,8 +106,9 @@ caches after failure, with packages and independent consumers outside cache path
 The action filters and saves in its job post-step, not immediately after compilation;
 cancellation or runner termination can still prevent saving. Failed checks remain
 failed, and restoring dependencies never reuses their previous test outcomes.
-GitHub's branch scope keeps PR-created caches out of main. Tests, coverage profiles,
-advisory refresh and secret scans always run anew. Native caching does not certify
+GitHub's branch scope keeps PR-created caches out of main. Selected tests, coverage
+profiles and advisory checks run anew, as does the always-on history secret scan.
+Native caching does not certify
 the correctness of artifacts. Misses must build normally. Cache restores are
 optional acceleration, never permission to skip a check.
 
@@ -86,17 +121,21 @@ Changing `CARGO_BUILD_JOBS` changes the action's environment hash, so the Window
 two-job configuration initially needs a new cache. Managed-image changes can also
 invalidate reuse; old cold/warm measurements below do not certify this configuration.
 
-All jobs have only `contents: read`, checkout does not persist its token, and no
+Jobs have `contents: read`, checkout does not persist its token, and no
 corporate secrets or publishing/OIDC permissions are supplied. External actions
 use owner-selected floating stable major tags: checkout/setup-python/upload-artifact
-v7, rust-cache/install-action v2 and mise-action v5. These tags can move; they are not
-immutable source identities. Release download-artifact uses reviewed stable v8.
+v7, rust-cache/install-action v2, mise-action v5 and paths-filter v4. These tags can
+move; they are not immutable source identities. Release download-artifact uses
+reviewed stable v8.
 The narrow zizmor ref policy covers only these reviewed
 actions; all other security audits remain enabled. Tool installs use pinned
 versions and checksum verification without an automatic source-build fallback.
 Mise 2026.10.15 uses explicit Aqua backends for actionlint, zizmor, rumdl, lychee
 and gitleaks; its signed binary checksums and upstream tool checksum definitions
 are checked by maintained installers. Rust Cargo tools use install-action.
+Path selection uses Git without pull-request API permissions. The history secret
+scan covers the clean checkout's tracked source as well, without repeating a
+directory scan.
 Mise tool caches save only on main pushes and do not persist GitHub credentials.
 Untrusted PR execution uses
 `pull_request`, never a privileged `pull_request_target` checkout. Compilation and
@@ -154,7 +193,9 @@ This is headless Rust/QA acceptance, not native UI or packaged-editor acceptance
 
 ## Windows build diagnostics
 
-Keep `tools/ci/windows-build.ps1` and its success/failure/sampling regression suite:
+`tools/ci/windows-build.ps1` remains a manual diagnostic command with its
+success/failure/sampling regression suite. Normal CI no longer runs its separate
+`--no-run` build before executing the same tests:
 
 ```powershell
 $env:CARGO_BUILD_JOBS = '2'
@@ -184,11 +225,12 @@ measured completion guarantees.
 
 ## Acceptance requirements
 
-- Validate each reviewed change and the merged state on Linux, Windows and macOS.
-  No path skips or ignored failures may weaken required checks. One broken
-  platform must not suppress diagnostics from the others.
-- Retain the complete validation map, fresh >=80% Rust line coverage, and refreshed
-  dependency advisories. Coverage is a floor, not proof of correctness.
+- Validate Rust-affecting changes and their merged state on Linux, Windows and
+  macOS. Only the declared changed-path plan may skip work; unexpected skips and
+  ignored failures remain errors. One broken platform must not suppress the others.
+- Retain the complete validation map, fresh >=80% Rust line coverage and refreshed
+  dependency advisories for Rust-affecting changes. No previous test/coverage
+  outcomes are cached. Coverage is a floor, not proof of correctness.
 - An aggregate must reject empty/malformed/missing results as well as failures,
   cancellations and unexpected skips. Test the actual configured aggregate's
   negative paths in the configured entry point; an unused helper is not evidence.

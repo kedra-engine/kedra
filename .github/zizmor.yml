@@ -12,3 +12,4 @@ rules:
         Swatinem/rust-cache: ref-pin
         taiki-e/install-action: ref-pin
         jdx/mise-action: ref-pin
+        dorny/paths-filter: ref-pin

@@ -205,6 +205,15 @@ tags/releases are refused rather than overwritten.
 
 Three standard native runners use the same command and independent pinned Git
 consumer, with dependency-only caches separated from validation/coverage roles.
+The target-independent application dependency audit runs once on Linux, not once
+per package OS. All runners still install cargo-deny because the isolated license
+collector has its own freshly resolved tool graph to audit before compilation.
+Portable Python regressions run in CI; CD retains only the macOS
+native architecture-inspector regression that Linux cannot execute. Source-kit
+preparation and modified-LGPL-library relink regressions run in native Linux CI
+when packaging inputs change, rather than repeating them during every release.
+Actual package inspection and the independent public Git consumer still run on
+each native target: these verify different artifacts and installed behavior.
 Native inspection mounts/unpacks actual distributions and exercises installed
 CLI/resources/notices. Physical-input, OS-trust and GUI acceptance are separate.
 Cargo dependency caches are restricted to `target/distribution-cargo` and the
