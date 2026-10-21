@@ -221,8 +221,8 @@ both a matching and a mismatching architecture against an actual compiled binary
 `publish` defaults to false, permitting actual build-only acceptance first. Only
 the final publisher receives `contents: write`. It does not checkout or build
 application sources: it loads only narrow policy files from the immutable main
-workflow SHA, consumes this run's artifacts, rechecks the actual complete native
-job set and validates all five package sizes/hashes/source identities. It creates
+workflow SHA, requires the scheduler's successful native matrix result, consumes
+this run's artifacts and validates all five package sizes/hashes/source identities. It creates
 a new draft, checks the complete uploaded set and GitHub digests, binds the tag
 to the reviewed source, and only then publishes an explicitly unsigned prerelease.
 An upload/policy failure leaves an unpublished draft; reruns never replace it.

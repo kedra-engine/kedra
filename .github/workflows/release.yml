@@ -178,6 +178,7 @@ jobs:
     env:
       RELEASE_SOURCE: ${{ needs.preflight.outputs.source }}
       RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
+      RELEASE_PACKAGE_RESULT: ${{ needs.package.result }}
     steps:
       - uses: actions/setup-python@v7
         with:

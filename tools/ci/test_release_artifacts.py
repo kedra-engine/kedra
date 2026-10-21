@@ -39,6 +39,19 @@ class ReleaseArtifactTests(unittest.TestCase):
     def test_exact_complete_set_passes(self):
         self.assertEqual(len(verify(self.root, self.sha, "0.1.0")), 5)
 
+    def test_missing_or_unsupported_target_group_fails(self):
+        folder = self.root / ("package-" + next(iter(TARGET_FORMATS)))
+        missing = self.root.with_name(self.root.name + "-missing-target")
+        folder.rename(missing)
+        try:
+            with self.assertRaises(ValueError):
+                verify(self.root, self.sha, "0.1.0")
+        finally:
+            missing.rename(folder)
+        (self.root / "package-x86_64-apple-darwin").mkdir()
+        with self.assertRaises(ValueError):
+            verify(self.root, self.sha, "0.1.0")
+
     def test_missing_target_extra_file_wrong_hash_and_wrong_sha_fail(self):
         target = next(iter(TARGET_FORMATS))
         folder = self.root / ("package-" + target)

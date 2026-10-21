@@ -12,7 +12,7 @@ import tomllib
 from pathlib import Path
 from urllib.parse import quote
 
-from release_artifacts import TARGET_FORMATS, verify
+from release_artifacts import verify
 
 
 def validate_identity(source: str, tag: str, version: str) -> tuple[str, str]:
@@ -38,20 +38,18 @@ def api(path: str) -> object:
     return json.loads(result.stdout)
 
 
-def validate_matrix(jobs: list[dict]) -> None:
-    packages = [job for job in jobs if job["name"].startswith("Package (")]
-    if (len(packages) != len(TARGET_FORMATS)
-            or {job["name"] for job in packages} != {f"Package ({target})" for target in TARGET_FORMATS}
-            or any(job["status"] != "completed" or job["conclusion"] != "success" for job in packages)):
-        raise ValueError("Publisher requires each actual current-run native job to succeed")
+def validate_package_result(result: str | None) -> None:
+    if result != "success":
+        raise ValueError("Publisher requires a successful current-run package matrix")
 
 
 def publish(directory: Path, source: str, tag: str, repository: str) -> None:
     run_id = os.environ["GITHUB_RUN_ID"]
     if not run_id.isdecimal() or os.environ.get("GITHUB_REF") != "refs/heads/main":
         raise ValueError("Publication requires the current official main workflow run")
-    jobs = api(f"repos/{repository}/actions/runs/{run_id}/jobs?filter=latest&per_page=100")
-    validate_matrix(jobs["jobs"])
+    # The scheduler's needs result is authoritative; REST job status can lag even
+    # after every step and the workflow itself have completed.
+    validate_package_result(os.environ.get("RELEASE_PACKAGE_RESULT"))
     entries = verify(directory, source, tag[1:])
     metadata = directory.parent / "verified-release-metadata"
     metadata.mkdir()
