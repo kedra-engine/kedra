@@ -77,7 +77,7 @@ jobs:
           - os: ubuntu-24.04
             cargo-jobs: '4'
           - os: windows-2025
-            cargo-jobs: '1'
+            cargo-jobs: '2'
           - os: macos-15
             cargo-jobs: '4'
     env:
@@ -103,7 +103,7 @@ jobs:
           cache-workspace-crates: false
           cache-all-crates: false
           cache-bin: false
-          cache-on-failure: false
+          cache-on-failure: true
           save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       - name: Windows diagnostic wrapper regression tests
         if: runner.os == 'Windows'
