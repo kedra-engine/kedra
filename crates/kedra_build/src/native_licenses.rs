@@ -22,11 +22,8 @@ pub(crate) fn collect(executable: &Path, notices: &Path) -> Result<Vec<Library>,
     eprintln!("Collecting native ELF ownership and copyright with lddtree/dpkg-query");
     let directory = notices.join("native-libraries");
     fs::create_dir(&directory).map_err(|e| e.to_string())?;
-    // Ubuntu's apt-installed pyelftools belongs to its system Python, not a
-    // virtualenv or setup-python interpreter selected through PATH.
     let dependencies = command_output(
-        Command::new("/usr/bin/python3")
-            .arg("/usr/bin/lddtree")
+        crate::tools::lddtree_command()
             .arg("--list")
             .arg(executable),
     )?;

@@ -1,6 +1,19 @@
 //! Installer failure paths use real archives and process boundaries, never network.
 use super::*;
 
+#[test]
+fn distro_lddtree_probe_uses_system_python_instead_of_path_python() {
+    let command = prerequisite_command("lddtree");
+    assert_eq!(command.get_program(), "/usr/bin/python3");
+    assert_eq!(
+        command.get_args().collect::<Vec<_>>(),
+        vec![std::ffi::OsStr::new("/usr/bin/lddtree")]
+    );
+    let other = prerequisite_command("tar");
+    assert_eq!(other.get_program(), "tar");
+    assert!(other.get_args().next().is_none());
+}
+
 #[cfg(target_os = "macos")]
 #[test]
 fn native_prerequisite_probes_accept_the_real_system_tools() {

@@ -163,8 +163,23 @@ fn cargo() -> std::ffi::OsString {
     std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into())
 }
 
+fn prerequisite_command(tool: &str) -> Command {
+    if tool == "lddtree" {
+        lddtree_command()
+    } else {
+        Command::new(tool)
+    }
+}
+
+pub(crate) fn lddtree_command() -> Command {
+    // apt's pyelftools belongs to the distro Python, not setup-python or a venv.
+    let mut command = Command::new("/usr/bin/python3");
+    command.arg("/usr/bin/lddtree");
+    command
+}
+
 fn probe(tool: &str, argument: &str) -> Result<(), String> {
-    let result = Command::new(tool)
+    let result = prerequisite_command(tool)
         .arg(argument)
         .output()
         .map_err(|e| format!("Install the native prerequisite {tool}: {e}"))?;
