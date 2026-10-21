@@ -1,6 +1,7 @@
 # Editor self-update MVP implementation plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to
+> implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ship the accepted update indicator and verified release download for three
 primary desktop installations, using manual installation wherever safe automatic
@@ -58,7 +59,7 @@ on that tooling crate. Admit any direct dependencies through existing policy.
   Figma-exported icons/sidecars. No screenshot backgrounds or fabricated symbols.
 - Modify `crates/kedra_editor/Cargo.toml`/`Cargo.lock` only for admitted dependencies.
 - Modify `docs/decisions/0024-editor-self-update.md` and `docs/ui/figma.md` for contracts
-   and provenance. Any package-marker change belongs to `kedra_build` packaging and
+  and provenance. Any package-marker change belongs to `kedra_build` packaging and
   its tests, never to a runtime filesystem writer.
 - No workflow/publisher edits until finished CI/CD contracts have been reconciled.
 
