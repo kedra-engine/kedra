@@ -121,6 +121,11 @@ jobs:
         run: cargo xtask check --non-interactive
       - name: Default, minimal and isolated runtime features
         run: cargo xtask features --non-interactive
+      - name: Match the release job's Python environment
+        uses: actions/setup-python@v7
+        if: runner.os == 'Linux'
+        with:
+          python-version: '3.13'
       - name: Real native dependency notices and modified LGPL-library relink
         if: runner.os == 'Linux'
         env:
