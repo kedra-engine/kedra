@@ -34,6 +34,11 @@ main pushes compare against their before SHA, and merge groups against their bas
 | Rust, manifests, locks, assets, native scripts or unknown inputs | Native matrix, fresh coverage and dependency audit |
 | Mixed changes | Union of the corresponding groups |
 
+Known routing limit: JSON/PNG changes to QA policies and reference images do not
+currently select the Python validators. Those files still select Rust work when
+applicable; that is not a substitute for their Python checks. Run the QA suite
+explicitly or use manual full CI for those changes until their routing is added.
+
 Markdown embedded under crates is a Rust input, not a documentation-only exception.
 Unknown paths conservatively select Rust checks. Native validation runs on
 ubuntu-24.04, windows-2025 and macos-15 with fail-fast disabled. Clippy, workspace
