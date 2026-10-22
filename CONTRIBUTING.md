@@ -63,6 +63,10 @@ Review every generated line, verify citations and APIs, and report actual tests.
 Do not submit unattended bulk-generated changes or synthetic test results.
 Disclose material AI assistance in the PR; disclosure is not a substitute for review.
 
+[Optional repository search](docs/ai-search.md) provides ready-made CLI/MCP setup
+for AI-assisted work. It uses each contributor's own credentials and local index;
+ordinary builds, tests and CI do not require it.
+
 ## Licensing
 
 By intentionally submitting a contribution, you agree to license it under
