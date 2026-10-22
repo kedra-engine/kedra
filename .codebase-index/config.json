@@ -1,0 +1,33 @@
+{
+  "scope": "project",
+  "embeddingProvider": "custom",
+  "embeddingFallback": false,
+  "include": ["**/*.rs", "**/*.md", "**/*.toml"],
+  "exclude": [
+    "**/target/**",
+    "**/.git/**",
+    "**/.codebase-index/**",
+    "**/node_modules/**"
+  ],
+  "indexing": {
+    "mode": "hybrid",
+    "autoIndex": true,
+    "autoIndexWaitMs": 10000,
+    "watchFiles": true,
+    "pauseBackgroundIndexingOnBattery": false,
+    "requireProjectMarker": true,
+    "maxFileSize": 65536,
+    "maxDepth": -1,
+    "maxFilesPerDirectory": 1000,
+    "autoGc": true,
+    "gcIntervalDays": 7
+  },
+  "search": {
+    "maxResults": 10,
+    "contextLines": 2,
+    "fusionStrategy": "rrf",
+    "rerankTopN": 20
+  },
+  "reranker": {"enabled": false},
+  "effectivenessMetrics": {"enabled": true}
+}

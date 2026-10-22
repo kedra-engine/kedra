@@ -1,4 +1,9 @@
 /target/
+/.codebase-index/index/
+/opencode.json
+/opencode.jsonc
+/.opencode/opencode.json
+/.opencode/opencode.jsonc
 /.rumdl_cache/
 .DS_Store
 *.profraw
