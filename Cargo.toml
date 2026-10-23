@@ -1,5 +1,6 @@
 [workspace]
-members = ["xtask", "apps/kedra", "tools/kedra", "crates/*"]
+members = ["xtask", "apps/kedra", "tools/kedra", "tools/test", "crates/*"]
+exclude = ["tests/fixtures/test_project"]
 resolver = "3"
 
 [workspace.package]
@@ -12,6 +13,9 @@ repository = "https://github.com/kedra-engine/kedra"
 [workspace.dependencies]
 cargo-packager = { version = "=0.11.8", git = "https://github.com/crabnebula-dev/cargo-packager.git", rev = "5c1824ba8022401e9ef0de36ff1a12c5acf60237", default-features = false, features = ["rustls-tls", "platform-certs"] }
 kedra_build = { path = "crates/kedra_build", version = "=0.1.3" }
+kedra_test = { path = "crates/kedra_test", version = "=0.1.3" }
+kedra_script = { path = "crates/kedra_script", version = "=0.1.3" }
+kedra_script_bevy = { path = "crates/kedra_script_bevy", version = "=0.1.3" }
 bevy = { version = "=0.20.0", default-features = false, features = ["std"] }
 kedra_project = { path = "crates/kedra_project", version = "=0.1.3" }
 kedra_desktop = { path = "crates/kedra_desktop", version = "=0.1.3" }
@@ -54,6 +58,12 @@ dbg_macro = "deny"
 opt-level = 3
 codegen-units = 1
 lto = "thin"
+
+# Exercise the shipping capability boundary without optimizing the whole editor.
+[profile.release-boundary]
+inherits = "dev"
+debug-assertions = false
+debug = 0
 
 # ADR 0020: AppKit must not steal client drags in the transparent titlebar.
 [patch.crates-io]

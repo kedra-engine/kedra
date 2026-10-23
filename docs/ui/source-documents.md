@@ -66,8 +66,8 @@ Rendering additionally requires an explicit matching verified project delivery;
 source validity does not imply resource or frame readiness. PNG/static-GLB Open
 uses a separate raw-asset view, not a manufactured source document session.
 [Hierarchy](hierarchy.md) displays the active session's immutable composed graph
-and selects validated scoped node addresses. Inspector and document editing
-controls are not connected. Closing/hiding a
+and selects validated scoped node addresses. The read-only [Inspector](inspector.md)
+follows the same scoped selection; document editing controls remain unavailable. Closing/hiding a
 read-only tab keeps its accepted source and docking descriptor reachable through
 Panels or another Open. Mixed floating-host Close remains safe only because these
 documents cannot become dirty. Editing must add the proposed settlement and close

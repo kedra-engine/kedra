@@ -40,9 +40,17 @@ fn complete_cli_reports_mutation_and_preserves_independent_inputs() -> Result<()
     actual.save(root.path().join("actual.png"))?;
     let reference_bytes = fs::read(root.path().join("reference.png"))?;
     let actual_bytes = fs::read(root.path().join("actual.png"))?;
-    let mut config: Value = serde_json::from_str(include_str!(
-        "../../docs/ui/references/loading-locked-visual.json"
-    ))?;
+    // Synthetic comparator contract, not product screenshot coverage.
+    let mut config = json!({"schema":1,"scenario":"mutation","fixture":"comparator-contract",
+        "profile":{"id":"synthetic","platform":"test","renderer":"synthetic","environment":"unit-test",
+            "logical_size":[640,360],"dpr":1,"color_space":"srgb_assumed","motion":"reduced"},
+        "reference":{"image":"reference.png","sha256":"0".repeat(64),"source":"Independent synthetic mutation input",
+            "kind":"design_reference","approval":"pending","export_size":[640,360],"crop":[0,0,640,360],
+            "crop_reason":"Complete synthetic fixture, not a UI baseline"},
+        "animation":{"mode":"static"},"comparison":{"normalized_yiq_tolerance":0.05,
+            "budget":{"max_changed_pixels":0,"max_changed_ppm":0},"max_excluded_ppm":0},
+        "exclusions":[],"critical_regions":[{"name":"mutation-point","rect":[0,0,32,32],
+            "budget":{"max_changed_pixels":0,"max_changed_ppm":0}}]});
     // This is an exact mutation fixture, independent of the design audit's budget.
     config["comparison"]["budget"] = json!({"max_changed_pixels":0,"max_changed_ppm":0});
     config["scenario"] = json!("unrelated-fixture <script>alert(1)</script>");

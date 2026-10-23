@@ -1,8 +1,10 @@
 # ADR 0009: Property editing, shared fields and inspector ownership
 
-Status: proposed for owner review. No field kit, inspector crate, document editor,
-preview transaction or filesystem writer is implemented by this ADR. Package and
-module names below describe intended ownership, not existing APIs.
+Status: full editing contract proposed for owner review. Shared `kedra_ui::fields`,
+`kedra_inspector` and the source-bound read-only Inspector exist; see the
+[current profile](../ui/inspector.md). Interactive source-edit sessions, cancellable
+candidate previews, settlement and filesystem Save remain unimplemented. Semantic
+editing names below specify future requirements, not the current read-only API.
 
 ## Context and scope
 
@@ -223,9 +225,9 @@ multi-object writes are deferred until atomic target-set semantics are specified
 
 | Package/module | Layer | Responsibility and consumer |
 | --- | --- | --- |
-| `kedra_ui::fields` (planned module) | runtime | Reusable field interactions and authored/native projection; consumed by inspector and an independent field fixture |
+| `kedra_ui::fields` (existing read-only presentation; editing proposed) | runtime | Reusable field interactions and authored/native projection; consumed by inspector and an independent field fixture |
 | `kedra_authoring::properties` (planned module) | authoring | Source bindings, candidate validation and edit-session semantics over existing workspace/policies; consumed by inspector binding adapter |
-| `kedra_inspector` (planned new crate) | editor | Generic Bevy-reflected value discovery, default and specialized editors, property rows and consumer-neutral edit intents; consumed by an independent value fixture and the editor inspector panel |
+| `kedra_inspector` (existing read-only crate; edits proposed) | editor | Generic Bevy-reflected value discovery, default and specialized editors, property rows and proposed consumer-neutral edit intents; consumed by an independent value fixture and the editor inspector panel |
 | `kedra_editor` | editor | Source-binding adapter, document/selection/view lifecycle, preview host, command routing and Save orchestration |
 | Existing source workspace and persistence modules | authoring | Accepted source/history and Save request/receipt authority, not widgets or filesystem publication |
 
@@ -245,8 +247,8 @@ Editor-owned selection and command capabilities are supplied through narrow inpu
 not a global editor service locator. Headless domain models remain ordinary Rust
 values; Bevy entities live in presentation adapters.
 
-Create the inspector crate only with its first real panel/fixture consumer and
-inherit the checked layer/lint/license rules. Keep the kit in the existing UI
+The inspector crate has real panel/value consumers and inherits the checked
+layer/lint/license rules. Keep the kit in the existing UI
 crate, rather than creating a crate per control or a forwarding facade. A later
 extraction needs a demonstrated independent responsibility; do not scaffold it now.
 Do not add a generic inspector-core crate, second reflection registry, scheduler,
@@ -330,7 +332,8 @@ Use the [current UI-kit source map](../ui/figma.md), not a new parallel widget s
 - `49:536`: TextField masters; `51:1497`: state examples.
 - `27:560`: NumberField masters; `51:1557`: state examples.
 - Both provide Default, Focus, Invalid, Mixed, ReadOnly, Disabled, Hover and Editing.
-- `108:8790`: inspector composition with component sections and property controls.
+- Current Inspector: Flat compact A `131:20213`/`131:20388`; the original
+  `108:8790` composition remains a source reference for component/property grouping.
 
 Focus/hover, value validity, access mode, mixed value and source provenance are
 orthogonal facts, not mutually exclusive domain states. For example, invalid
@@ -360,7 +363,7 @@ implement every increment together:
 4. **Authoring property sessions.** Headless source-bound candidates over an actual
    UI prefab. Prove stale transitive revisions, failed validation, no-ops and
    cancellation preserve sources, history, redo and save baseline.
-5. **Inspector composition.** Introduce the real inspector crate and panel consumer;
+5. **Editable Inspector composition.** Extend the existing read-only crate and panel;
    discover registered fields, select editors deterministically and show unsupported
    fields. Use the same kit, not inspector-only copies of the first controls.
 6. **Own-source document integration.** Hierarchy/selection, independent preview,
@@ -395,7 +398,7 @@ Before implementation, approve buffer/session resource limits and diagnostics;
 prove the native widget APIs needed by the retained-input contract; and review
 settlement UX and extension metadata shape. Full document lifecycle, filesystem
 durability, collections/structural edits, multi-object editing, asset/color pickers,
-CSS authoring and 3D viewport tools need their own focused specifications. This
+CSS authoring and editable 3D viewport tools need their own focused specifications. This
 ADR defines the common boundaries, not completion of those features.
 
 [bevy-widgets]: https://docs.rs/bevy/0.20.0/bevy/ui_widgets/index.html

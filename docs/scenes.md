@@ -1,7 +1,7 @@
 # Authored scenes and source editing
 
 `kedra_scene` and `kedra_authoring` provide the shared authored runtime and guarded
-source-editing APIs. Splash, startup forms, repeated rows, frames, captions and dock
+source-editing APIs. Startup forms, repeated rows, frames, captions and dock
 chrome use external sources and CSS. A filesystem authoring writer and editable
 scene feature are not implemented. [ADR 0005](decisions/0005-authored-scenes.md)
 defines the ownership contract; platform acceptance is separate.
@@ -48,6 +48,32 @@ in their owning modules, without crate-root compatibility re-exports.
 `PrefabReady` means a complete live graph exists, not that a native window or
 render frame exists. `UiReady` is a later hydration milestone and is likewise
 not frame evidence. Callers own retirement/cancellation of pending views.
+
+### Explicit startup scene
+
+After installing component policies and `PrefabPlugin`, add
+`kedra_scene::startup::StartupScenePlugin::new("game://Scenes/Main.scene.ron")`.
+The path must select a Scene member of that native catalog. The plugin waits for
+the published revision/dependencies and mounts once. `StartupScene::state()` exposes
+Loading, Mounted, Failed and Retired; the host owns diagnostics and exit policy.
+Removing a mounted root retires startup without remounting or choosing a fallback.
+
+Independent applications can use `kedra_app::launch::LaunchOptions` to share the
+standard CLI. `configure` applies the host's normal scene in every build; only
+debug-assertion builds admit `--scene` overrides and explicit remote flags. Release
+does not disable ordinary scene loading or game-facing Luau execution.
+
+The default mount uses ordinary native source instantiation. UI applications set
+the plugin's `mount` to `kedra_ui::authored::view::UiView::mount_scene`; native
+windows, cameras and behavior plugins remain explicitly host-owned. The UI adapter
+preserves source-authored `ui.id` and `ui.screen` identities. Passive projections
+strip both so previews cannot impersonate the application's serving UI.
+
+Choosing a scene does not run scripts. Hosts separately register trusted Luau
+programs; callers explicitly start a named scenario through the existing application
+protocol. See [ADR 0030](decisions/0030-explicit-startup-scenes.md) for startup,
+component-catalog and docking ownership. Compilation and native acceptance of the
+current composition remain unverified.
 
 ## Source format and delivery
 
@@ -147,9 +173,10 @@ live view. CSS owns geometry, type, borders and visual states; feature bindings
 own text/input values, selected/disabled state and dynamic classes. Games use
 their own stylesheets and theme boundaries. See [ADR 0006](decisions/0006-native-css-styling.md).
 
-Shared UI projection has headless tests and macOS native consumer checks. This is
-not platform-wide input/frame certification. Failed authored views remain explicit
-failures; there is no alternative manual editor layout.
+Shared UI projection has headless tests and opt-in native consumer scenarios for
+input, layout and renderer frames. Their presence is not acceptance of the current
+composition or platform-wide input/frame certification. Failed authored views
+remain explicit failures; there is no alternative manual editor layout.
 
 ## Authoring and Save
 
@@ -187,8 +214,8 @@ same document. Gameplay World state is never a Save input.
 ```sh
 cargo test -p kedra_scene --locked
 cargo test -p kedra_authoring --locked
-cargo test -p kedra_ui --test authored --locked
-cargo test -p kedra_import --test scenes --locked
+cargo test -p kedra_ui --test contracts --locked authored::
+cargo test -p kedra_import --test contracts --locked scenes::
 cargo xtask check --non-interactive
 ```
 

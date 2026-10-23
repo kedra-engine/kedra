@@ -8,7 +8,8 @@ The native dependency graph requires narrowly scoped license, duplicate-version
 and advisory exceptions. Retain registry/source checks, wildcard denial,
 advisory scanning and default duplicate denial. Do not use subtree exclusions.
 
-Local workspace dependencies specify `version = "=0.1.0"` alongside their path.
+Local workspace dependencies specify the exact aligned workspace release version
+(`version = "=0.1.3"`) alongside their path.
 Wildcard path dependencies are not allowed.
 
 ## Licenses
@@ -47,6 +48,8 @@ remove it when its consumer moves. No broad `skip-tree` or default warning level
 | redox_syscall 0.4.1 / 0.5.18 | Winit / parking_lot_core versus libredox's 0.9 |
 | rustc-hash 1.1.0 | naga/wgpu versus Flair's 2.x |
 | syn 2.0.119 | Bevy macros versus serde/clap/bytemuck's 3.x |
+| variadics_please 1.1.0 | BMS 0.23 procedural binding helpers versus Bevy 0.20's 2.x |
+| ordered-float 2.10.1 | mlua's serde-value 0.7 adapter versus WGPU's 5.5 line |
 | thiserror / thiserror-impl 1.0.69 | smithay/calloop/ndk versus Bevy's 2.x |
 | tiny-skia / tiny-skia-path 0.11.4 | sctk-adwaita versus resvg/usvg's 0.12 |
 | windows-sys 0.45.0 / 0.52.0 / 0.59.0 | JNI / Winit / rustix/colored versus current Windows adapters |
@@ -69,6 +72,47 @@ versions and allowed immediate caller. The test is part of `cargo xtask check`.
 Remove the exception when upstream changes, or explicitly review it before the
 deadline; do not automatically extend it. Linux exposure remains real even though
 the current macOS UI does not use these caption fonts.
+
+## Unmaintained BMS build-time diagnostics
+
+The owner approves a narrow exception for
+[RUSTSEC-2026-0173](https://rustsec.org/advisories/RUSTSEC-2026-0173), which reports
+`proc-macro-error2` as unmaintained, not a known vulnerability. No patched release
+exists. It executes as build-time procedural-macro diagnostic support, not as the
+Luau VM or gameplay interpreter. Build-time code still has developer/CI authority;
+this distinction reduces the runtime concern but is not a security guarantee.
+
+The reviewed registry-only chain is BMS 0.23.0 → `bevy_mod_scripting_lua 0.23.0` →
+`mlua 0.11.6` → `mlua_derive 0.11.0` → `proc-macro-error2 2.0.1`. BMS's Lua backend
+unconditionally enables mlua macros, so disabling default features does not remove
+this path. Its only other admitted immediate consumer is
+`bevy_mod_scripting_functions 0.23.0`, which also depends on the Lua backend.
+
+Admit this advisory ID until **2026-12-26 UTC**, matching the existing dependency
+review checkpoint. The regression checks exact versions, registry sources and all
+immediate callers along the chain. Additional versions/sources/callers, a future
+vulnerability advisory or a later review date do not inherit approval. Prefer an
+upstream maintained resolution; remove the exception when no consumer needs it,
+or explicitly review before the deadline rather than extending automatically.
+
+Shared Luau execution is implemented under [ADR 0029](0029-luau-runtime-evaluation.md).
+The required policy test always checks the main lock and review deadline. For the
+canonical runtime-only game in `tests/fixtures/test_project`, supply the actual
+resolved lock from its materialized copy explicitly before relying on the advisory
+ignore. The commands below assume that copy is at `target/test-project`; substitute
+the actual materialization directory consistently if different:
+
+```sh
+KEDRA_LUAU_LOCKFILE="$PWD/target/test-project/Cargo.lock" \
+  cargo test -p xtask --test dependency_policy --locked luau::
+cargo deny --manifest-path target/test-project/Cargo.toml --locked check licenses advisories
+```
+
+Both commands must pass for the same unchanged lock. Pinned cargo-deny 0.19.0
+can ignore an advisory ID but cannot express this chain or expiry; its success
+alone is insufficient. A missing or unreadable explicitly supplied lock fails.
+No generated/private fixture lock is required by ordinary CI. BMS's main-runtime
+chain is covered by the mandatory main-lock regression as well.
 
 ## Verification
 

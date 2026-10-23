@@ -1,0 +1,26 @@
+(
+ version:1,id:"ca100000-0000-4000-8000-000000000001",kind:Scene,title:"Component specimen canvas",root:"ca110000-0000-4000-8000-000000000001",base:None,
+ nodes:[
+  (id:"ca110000-0000-4000-8000-000000000001",name:"Canvas",parent:None,components:{
+   "ui.layout":(version:1,value:(node:(width:Percent(100.0),height:Percent(100.0),padding:(left:Px(32.0),right:Px(32.0),top:Px(32.0),bottom:Px(32.0)),align_items:Start))),
+   "ui.background":(version:1,value:(Srgba((red:0.1882353,green:0.1882353,blue:0.1882353,alpha:1.0)))),
+   "ui.classes":(version:1,value:(names:["theme"])),
+   "ui.stylesheet":(version:1,value:(asset:Path("editor://styles/workbench.css"))),
+    "ui.screen":(version:1,value:("ui-catalog")),
+    "editor.surface":(version:1,value:(width:640,height:360)),
+     "editor.catalog":(version:1,value:(empty_caption:"Save changes",field_text:"Main Camera",cursor_blink_seconds:86400.0,round_layout:true,hinting:Enabled,density:1.0)),
+  }),
+  (id:"ca110000-0000-4000-8000-000000000002",name:"Button slot",parent:Some((instances:[],node:"ca110000-0000-4000-8000-000000000001")),components:{
+   "ui.id":(version:1,value:("button-slot")),
+   "ui.layout":(version:1,value:(node:(display:None,width:Px(110.0),flex_direction:Column,align_items:Stretch))),
+  }),
+  (id:"ca110000-0000-4000-8000-000000000003",name:"Field slot",parent:Some((instances:[],node:"ca110000-0000-4000-8000-000000000001")),components:{
+   "ui.id":(version:1,value:("field-slot")),
+   "ui.layout":(version:1,value:(node:(display:None,width:Px(172.0),flex_direction:Column,align_items:Stretch))),
+  }),
+  (id:"ca110000-0000-4000-8000-000000000004",name:"Icon slot",parent:Some((instances:[],node:"ca110000-0000-4000-8000-000000000001")),components:{
+   "ui.id":(version:1,value:("icon-slot")),
+   "ui.layout":(version:1,value:(node:(display:None,width:Px(22.0),flex_direction:Column,align_items:Stretch))),
+  }),
+ ],instances:[],overrides:[],ports:{},
+)

@@ -29,6 +29,20 @@ struct AppArgs {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Build and run an ordinary project-owned Rust native test scenario target.
+    Test {
+        #[arg(long)]
+        manifest_path: PathBuf,
+        #[arg(long)]
+        package: String,
+        #[arg(long, required_unless_present = "example", conflicts_with = "example")]
+        bin: Option<String>,
+        /// An ordinary Cargo example can use a test dev-dependency in the app package.
+        #[arg(long)]
+        example: Option<String>,
+        #[arg(last = true)]
+        arguments: Vec<OsString>,
+    },
     /// Explicitly prepare user-local build tools; never installs system SDKs.
     Tools {
         #[command(subcommand)]
@@ -133,6 +147,24 @@ fn execute(command: Command) -> Result<(), String> {
         return crate::launch::request(&application, &built, &arguments);
     }
     let (args, release, output, package) = match command {
+        Command::Test {
+            manifest_path,
+            package,
+            bin,
+            example,
+            arguments,
+        } => {
+            let is_example = example.is_some();
+            let target = example.or(bin).ok_or("test requires --bin or --example")?;
+            return kedra_test::cargo::run(
+                &manifest_path,
+                &package,
+                &target,
+                is_example,
+                &arguments,
+            )
+            .map_err(|error| error.to_string());
+        }
         Command::Run { .. } => unreachable!("Run handled before non-launching operations"),
         Command::Tools {
             command: ToolCommand::InstallAbout { output, archive },

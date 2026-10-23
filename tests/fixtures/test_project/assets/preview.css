@@ -1,0 +1,6 @@
+@font-face { font-family:"FixtureUI"; src:url("game://Fixture-Inter.ttf"); }
+.hud { display:flex; width:100%; height:100%; padding:20px; flex-direction:column; align-items:flex-start; row-gap:12px; }
+.hud-title { font-family:"FixtureUI"; font-size:26px; color:#eeeeee; }
+.hud-note { font-family:"FixtureUI"; font-size:14px; color:#c0c6ce; }
+.hud-button,.hud-field { font-family:"FixtureUI"; font-size:14px; color:#eeeeee; padding:8px; background-color:#303030; }
+.hud-picture { width:96px; height:96px; }

@@ -73,19 +73,19 @@ fn mount(world: &mut World, state: &mut EditorWorkspace, host: HostId) -> Result
         .get(&host)
         .ok_or("Drag destination host was retired")?
         .root;
-    let ghost = crate::views::mount(
+    let ghost = crate::views::mount_asset(
         world,
         parent,
-        crate::views::document(0xd0800000000040008000000000000001),
+        "editor://prefabs/dock-ghost.prefab.ron",
         "dock.drag",
     )?;
     ignore(world, ghost.root, 300);
     let mut guides = Vec::new();
     for direction in DIRECTIONS {
-        let view = crate::views::mount(
+        let view = crate::views::mount_asset(
             world,
             parent,
-            crate::views::document(0xd0700000000040008000000000000001),
+            "editor://prefabs/dock-guide.prefab.ron",
             &format!("dock.guide/{direction}"),
         )?;
         ignore(world, view.root, 250);

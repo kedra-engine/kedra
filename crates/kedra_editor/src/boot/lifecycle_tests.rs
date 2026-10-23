@@ -1,7 +1,7 @@
 //! Windowless bootstrap retains integrity, timeout and source-readiness gates.
 #![allow(clippy::unwrap_used, reason = "Bootstrap lifecycle assertions")]
 use super::*;
-use crate::startup_tests::{app, assert_failure};
+use crate::test_support::{app, assert_failure};
 use std::time::Instant;
 
 fn empty_delivery() -> (tempfile::TempDir, kedra_assets::delivery::Manifest) {
@@ -94,7 +94,7 @@ fn missing_delivery_integrity_failure_and_deadline_remain_terminal_without_fallb
     poll(app.world_mut());
     assert_failure(app.world(), "delivery is not configured");
 
-    let mut app = crate::startup_tests::app();
+    let mut app = crate::test_support::app();
     let task = IoTaskPool::get().spawn(async { Err("integrity mismatch".into()) });
     let deadline = Instant::now() + Duration::from_secs(5);
     while !task.is_finished() {
@@ -114,7 +114,7 @@ fn missing_delivery_integrity_failure_and_deadline_remain_terminal_without_fallb
             .is_none()
     );
 
-    let mut app = crate::startup_tests::app();
+    let mut app = crate::test_support::app();
     app.world_mut()
         .resource_mut::<Time<Real>>()
         .advance_by(Duration::from_secs(30));

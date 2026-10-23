@@ -45,10 +45,10 @@ pub(crate) struct Panel {
 }
 impl Panel {
     pub fn mount(world: &mut World, parent: Entity, id: ViewId) -> Result<Self, String> {
-        let view = crate::views::mount(
+        let view = crate::views::mount_asset(
             world,
             parent,
-            crate::views::document(0x11e00000000040008000000000000001),
+            "editor://prefabs/hierarchy.prefab.ron",
             &format!("hierarchy/{id:?}"),
         )?;
         world

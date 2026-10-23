@@ -15,6 +15,8 @@ use std::{collections::BTreeMap, path::PathBuf};
 type SourceResult = (u64, Result<Option<source::Admission>, String>);
 
 pub(crate) struct Opened {
+    // Observation retains the admitted locator; source ownership stays in Workspace.
+    #[cfg(debug_assertions)]
     pub path: PathBuf,
     pub document: DocumentId,
     pub view: ViewId,
@@ -63,6 +65,7 @@ impl Documents {
     pub fn opening(&self) -> bool {
         self.pending.is_some()
     }
+    #[cfg(debug_assertions)]
     pub fn snapshot(&self) -> serde_json::Value {
         serde_json::json!({"active": self.active, "pending": self.pending, "read_only": true,
             "documents": self.opened.values().map(|d| serde_json::json!({"document":d.document, "path":d.path, "view":d.view, "selection":d.selected})).collect::<Vec<_>>()})
@@ -216,7 +219,7 @@ impl Documents {
         Some((
             doc.title.clone(),
             format!(
-                "{}\n\n{}\n{} source nodes · {} nested instances\n\nSource admitted read-only. Use Hierarchy to navigate composed nodes. Inspector, rendered preview, Save and source edits are unavailable.",
+                "{}\n\n{}\n{} source nodes · {} nested instances\n\nSource admitted read-only. Use Hierarchy to navigate composed nodes and Inspector to inspect selected values. Scene View requires a matching verified delivery and supported source data. Save and source edits are unavailable.",
                 self.scope.as_ref()?.path(id)?,
                 id.0,
                 doc.nodes.len(),
@@ -227,6 +230,7 @@ impl Documents {
     }
     pub fn published(&mut self, ready: Ready, view: ViewId, selected: NodeAddress) {
         self.opened.entry(ready.document).or_insert(Opened {
+            #[cfg(debug_assertions)]
             path: ready.path,
             document: ready.document,
             view,

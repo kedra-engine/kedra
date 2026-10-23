@@ -1,0 +1,491 @@
+{
+  "schema": 1,
+  "export": "Original full and derived glyph-free Figma source PNGs",
+  "purpose": "Integrity only; glyph-free images are temporary-clone exports, not untouched originals or approved references",
+  "frames": {
+    "button-quiet-hover/full": {
+      "image": "button-quiet-hover.full.png",
+      "sha256": "fb0e4bf6da073a4bd9801411b6efc62752b19f88ef8bb703010d21c1ecd24253",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1519"
+    },
+    "button-quiet-hover/shape": {
+      "image": "button-quiet-hover.shape.png",
+      "sha256": "dede6fc9cdaf86f84ba57c5e125b6a855eefd73e66a4bfa2434e3f024b396e98",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1519"
+    },
+    "button-quiet-pressed/full": {
+      "image": "button-quiet-pressed.full.png",
+      "sha256": "2b1f216bdac742e5b0a2f4201b71d61d5c9d47fca336796f44ece86b75197af1",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1522"
+    },
+    "button-quiet-pressed/shape": {
+      "image": "button-quiet-pressed.shape.png",
+      "sha256": "c75ef51f79da9a1543d5309fdc95a092ce1c396948a30405932b76b5903bb547",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1522"
+    },
+    "button-quiet-focus/full": {
+      "image": "button-quiet-focus.full.png",
+      "sha256": "aeb0e0c911d3495902d3769813758a83169b8b0ea325df3175e0f543dfafcae3",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1525"
+    },
+    "button-quiet-focus/shape": {
+      "image": "button-quiet-focus.shape.png",
+      "sha256": "453fe3d1f4cdc439140a38eecac74d2d5f3f02324a1cedc7ec2142878057c4f6",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1525"
+    },
+    "button-quiet-disabled/full": {
+      "image": "button-quiet-disabled.full.png",
+      "sha256": "cc6b41da70bf0913049ef96951e4adc7ff2817230469daf0e4fda8cbb1bc2f39",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1529"
+    },
+    "button-quiet-disabled/shape": {
+      "image": "button-quiet-disabled.shape.png",
+      "sha256": "98759dccd02c939d5d700e72728c1c8fa433e22eacb3d5223046806b30929f07",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1529"
+    },
+    "button-secondary-hover/full": {
+      "image": "button-secondary-hover.full.png",
+      "sha256": "f724a0154b563b1a30bbda939a3b4d93c69fdf7a4b65c4aa26df5a554c3caa68",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1535"
+    },
+    "button-secondary-hover/shape": {
+      "image": "button-secondary-hover.shape.png",
+      "sha256": "ec11a6226dbc8ecf1f2824343e59b2f363d48abdb148ef9a44d0439d220afc9a",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1535"
+    },
+    "button-secondary-pressed/full": {
+      "image": "button-secondary-pressed.full.png",
+      "sha256": "488ee682827089e819739b290854ec29c0ccbf4f0396d1b6021bd2f77fa12937",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1538"
+    },
+    "button-secondary-pressed/shape": {
+      "image": "button-secondary-pressed.shape.png",
+      "sha256": "2d21e6c53d919d540d4e3347309ddf2b37259dfa091fb72edc47c0e0ed95af2f",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1538"
+    },
+    "button-secondary-focus/full": {
+      "image": "button-secondary-focus.full.png",
+      "sha256": "e34ad871b46a4c44b41892817d316673df4e44e69896d8d8f62a20ab5ced7c73",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1541"
+    },
+    "button-secondary-focus/shape": {
+      "image": "button-secondary-focus.shape.png",
+      "sha256": "431f7b511a5d80beaeb1b5ec736f51d30e5380fc28c1ac0e65d03eb3c1dce0fd",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1541"
+    },
+    "button-secondary-disabled/full": {
+      "image": "button-secondary-disabled.full.png",
+      "sha256": "83fb1a9de2181835cf226a523dc72b784fd51565a6628cee68faa26d603f6f58",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1545"
+    },
+    "button-secondary-disabled/shape": {
+      "image": "button-secondary-disabled.shape.png",
+      "sha256": "d74c87785a4eb7ece2c1e8db2ccd89f723b2da47b48e215a7daf6414cb764bc8",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1545"
+    },
+    "button-flat/full": {
+      "image": "button-flat.full.png",
+      "sha256": "f96f24e349e74b786a901f99646f277b2f3d5dc993ffdb0b9f01574df4cae4b9",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1564"
+    },
+    "button-flat/shape": {
+      "image": "button-flat.shape.png",
+      "sha256": "f96f24e349e74b786a901f99646f277b2f3d5dc993ffdb0b9f01574df4cae4b9",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1564"
+    },
+    "button-flat-hover/full": {
+      "image": "button-flat-hover.full.png",
+      "sha256": "d6f43bc01aec843fa57d0375a89860f243236dd504a09b7c9c8722d8df3f16c9",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1571"
+    },
+    "button-flat-hover/shape": {
+      "image": "button-flat-hover.shape.png",
+      "sha256": "d6f43bc01aec843fa57d0375a89860f243236dd504a09b7c9c8722d8df3f16c9",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1571"
+    },
+    "button-flat-pressed/full": {
+      "image": "button-flat-pressed.full.png",
+      "sha256": "f48cf9a0a560fa56e219e684e5c0e36f8dfa99298eb7e3d09e1b570a4f611b82",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1578"
+    },
+    "button-flat-pressed/shape": {
+      "image": "button-flat-pressed.shape.png",
+      "sha256": "f48cf9a0a560fa56e219e684e5c0e36f8dfa99298eb7e3d09e1b570a4f611b82",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1578"
+    },
+    "button-flat-focus/full": {
+      "image": "button-flat-focus.full.png",
+      "sha256": "702e936529c6e97d4f8bd21d9fabbc60045bec5d4b430cc9d35f307ec4605618",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1585"
+    },
+    "button-flat-focus/shape": {
+      "image": "button-flat-focus.shape.png",
+      "sha256": "702e936529c6e97d4f8bd21d9fabbc60045bec5d4b430cc9d35f307ec4605618",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1585"
+    },
+    "button-flat-disabled/full": {
+      "image": "button-flat-disabled.full.png",
+      "sha256": "aedb146befbdd16ecb80c03fa791afd9d58b86d18a57f937a08e06d0b5a91187",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1593"
+    },
+    "button-flat-disabled/shape": {
+      "image": "button-flat-disabled.shape.png",
+      "sha256": "aedb146befbdd16ecb80c03fa791afd9d58b86d18a57f937a08e06d0b5a91187",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1593"
+    },
+    "button-quiet/full": {
+      "image": "button-quiet.full.png",
+      "sha256": "41516e04f5750feac85ba756869db1ce43139d940c069587f99c982db5ac3dc3",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1516"
+    },
+    "button-quiet/shape": {
+      "image": "button-quiet.shape.png",
+      "sha256": "98759dccd02c939d5d700e72728c1c8fa433e22eacb3d5223046806b30929f07",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1516"
+    },
+    "button-secondary/full": {
+      "image": "button-secondary.full.png",
+      "sha256": "99a0d2434180c1b8f8d231a5e75531e4055faa43b40a1e0464c3ca21c00b85bd",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1532"
+    },
+    "button-secondary/shape": {
+      "image": "button-secondary.shape.png",
+      "sha256": "beafcb96c534431076a8ad03c50f632cf94041a36aaba7ecf6b3fd0bb7a4ed1a",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1532"
+    },
+    "button-primary/full": {
+      "image": "button-primary.full.png",
+      "sha256": "412efcbc95c7fbef25a09ccbf26ef7ee8a13019cc42e8fa00320572c913e703a",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1548"
+    },
+    "button-primary/shape": {
+      "image": "button-primary.shape.png",
+      "sha256": "8dceafcd3d86e1b809e87cc7aeb786179e038744ceb05abf639de1059a8181bb",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1548"
+    },
+    "button-hover/full": {
+      "image": "button-hover.full.png",
+      "sha256": "59a46435d92f849eb29586d86de540e08c7dc1907225a485bbabefdd88a27c7b",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1551"
+    },
+    "button-hover/shape": {
+      "image": "button-hover.shape.png",
+      "sha256": "f7daa658594241e5314be9ce96bad1aa19e0d5c1396351a0dd055387b3dbd6d2",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1551"
+    },
+    "button-pressed/full": {
+      "image": "button-pressed.full.png",
+      "sha256": "f924b8a8c2542f2dff604ab6e9b54c12caa1764e0f1872e7931171dd340f966b",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1554"
+    },
+    "button-pressed/shape": {
+      "image": "button-pressed.shape.png",
+      "sha256": "c4c60a1e467ecda71ccdd4fb23e870c9ca9ddee4632a79835827131879e92999",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1554"
+    },
+    "button-focus/full": {
+      "image": "button-focus.full.png",
+      "sha256": "7aa49cc80638a2672b6f49e67009d08cebeab470e94435a296039f4f9c13cb08",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1557"
+    },
+    "button-focus/shape": {
+      "image": "button-focus.shape.png",
+      "sha256": "68c3b09af91a10cce4bda6add68297ef8f839681f21102607c6e0e5c3d95b167",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1557"
+    },
+    "button-disabled/full": {
+      "image": "button-disabled.full.png",
+      "sha256": "c6aed154554cfefaf4ffefff50caa0f738a146c5fbe77748d544e1b74b768489",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1561"
+    },
+    "button-disabled/shape": {
+      "image": "button-disabled.shape.png",
+      "sha256": "e8ac1189a8415eae1eef60a4a0eed390f2f5827e4cee71fa8eed79e7c98d8e41",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1561"
+    },
+    "field-default/full": {
+      "image": "field-default.full.png",
+      "sha256": "41945d2198257a5527910c3b21842b08d531285dc551e11c1b1f0fe25e54659e",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1600"
+    },
+    "field-default/shape": {
+      "image": "field-default.shape.png",
+      "sha256": "910ecf5e2068b0546b98e1ffbdbf541d199c4c1a4ef4f7cf1518b2465a4e98d9",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1600"
+    },
+    "field-focus/full": {
+      "image": "field-focus.full.png",
+      "sha256": "07fa6c4bcbba6cd4c66dd7c7a451b176eabc87937a7307a934b5942e95442c6d",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1604"
+    },
+    "field-focus/shape": {
+      "image": "field-focus.shape.png",
+      "sha256": "52f07e00435c526f56b7fdd3967dc7df76ab8328218ba62f6b25fe099ecab3fb",
+      "size": [
+        640,
+        360
+      ],
+      "kind": "design_reference",
+      "review": "pending",
+      "source": "https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/UI-KIT?node-id=352-1604"
+    }
+  }
+}

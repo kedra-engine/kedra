@@ -1,7 +1,8 @@
 (
  version:1,id:"c0100000-0000-4000-8000-000000000001",kind:Prefab,title:"Quiet action",root:"c0110000-0000-4000-8000-000000000001",base:None,
  nodes:[
-  (id:"c0110000-0000-4000-8000-000000000001",name:"Action",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.button":(version:1,value:()),"ui.classes":(version:1,value:(names:["button","quiet"]))}),
+  (id:"c0110000-0000-4000-8000-000000000001",name:"Action",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.button":(version:1,value:()),"ui.classes":(version:1,value:(names:["button","quiet","authored-focus"]))}),
   (id:"c0110000-0000-4000-8000-000000000002",name:"Action label",parent:Some((instances:[],node:"c0110000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","strong"])),"ui.caption":(version:1,value:(text:"",justify:Center,wrap:false))}),
- ],instances:[],overrides:[],ports:{},
+  (id:"c0110000-0000-4000-8000-000000000003",name:"Keyboard focus / no layout shift",parent:Some((instances:[],node:"c0110000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["control-focus"])),"ui.pickable":(version:1,value:(should_block_lower:false,is_hoverable:false))}),
+  ],instances:[],overrides:[],ports:{},
 )

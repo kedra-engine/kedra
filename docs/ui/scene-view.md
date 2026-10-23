@@ -4,7 +4,8 @@ Scene View implements the read-only projection, spatial navigation and scoped
 mesh-selection profile of [ADR 0017](../decisions/0017-read-only-scene-view.md).
 It uses retained document tabs and the existing docking system. Transform gizmos,
 Inspector editing and Play are not implemented. Native acceptance is separate
-from compilation; the opt-in scenarios below describe its verified boundary.
+from compilation; the opt-in scenarios below define checks, not a passing result
+for the current revision. Native acceptance remains pending.
 
 ## Supported targets
 
@@ -216,7 +217,8 @@ separation A `192:4579` on the Scene View studies page. See the detailed
 [controls contract](scene-view-controls-design.md). Existing dock chrome retains
 the title and single group menu. A fixed 38px toolbar contains View/Select and
 22px Flat eye/grid/sun controls, with the design's spacing and scoped palette.
-The old projection/lighting text selects, World/units and settings icon are removed.
+Projection and lighting commands use the scoped menus and navigation controls;
+there are no permanent World/units labels or settings action.
 Below 640px content width, View retains the selection command while Select hides.
 The 38px selection rail and 96px orientation control anchor to the canvas corners;
 short canvases hide unreachable navigation instead of accepting invisible input.
@@ -230,43 +232,38 @@ camera rotation; the gizmo is not a frozen perspective illustration. Shared
 Flat/Quiet controls, popup placement and keyboard focus remain authoritative.
 The Figma scene illustration is not an implementation image or a mesh-pixel baseline.
 
-Generate isolated fixture sources under `target/`. The fixture generates a static
-GLB from native Bevy cuboids with two opaque unlit materials (cyan/yellow); no
-external model, old metadata/cache or project code is imported:
+Use a fresh copy of the checked shared project under `target/`. Its static GLB was
+authored from native Bevy cuboids with two opaque unlit materials (cyan/yellow);
+no external model, metadata regeneration or project code execution is needed:
 
 ```sh
-cargo run -p kedra_editor --example scene_view_fixture -- target/scene-fixture
-cargo run -p kedra -- assets init 'target/scene-fixture/Scene View QA/assets'
-cargo run -p kedra -- assets build 'target/scene-fixture/Scene View QA/assets' target/scene-game --namespace game
+cp -R tests/fixtures/test_project target/scene-project
+cargo run -p kedra -- assets build target/scene-project/assets target/scene-game --namespace game
 cargo run -p kedra -- assets build assets/editor target/scene-editor --namespace editor
-cargo run -p kedra -- 'target/scene-fixture/Scene View QA' --assets target/scene-editor --project-assets target/scene-game \
+cargo run -p kedra -- target/scene-project --assets target/scene-editor --project-assets target/scene-game \
   --remote-port 0 --remote-credentials target/scene-credentials.json \
   --remote-artifacts target/scene-captures --state-directory target/scene-state
-python3 tools/qa/scene_view.py target/scene-credentials.json \
-  --project 'target/scene-fixture/Scene View QA' --state-directory target/scene-state --report target/scene-report.json
-KEDRA_SCENE_REPORT=target/scene-report.json cargo test -p kedra_editor --test scene_view_frames -- --ignored
-python3 tools/qa/scene_navigation.py target/scene-credentials.json \
-  --project 'target/scene-fixture/Scene View QA' --state-directory target/scene-state --report target/navigation-report.json
 ```
 
-The fixture refuses to overwrite its parent, records generated-model provenance/hash
-under `target/`, and retains the copied Inter font license. It creates PNG,
-UI-prefab, spatial and mixed-scene examples, including the generated model in the
-mixed scene. Tests never depend on the owner's model/files.
+For automated isolated acceptance instead of the manual launch above:
+
+```sh
+cargo xtask test -- features --only scene-view,scene-navigation --output target/test/scene
+```
+
+Automated runs refuse to overwrite a working-copy directory and retain the Inter
+font license. The canonical project already contains PNG, UI-prefab, spatial and
+mixed-scene examples, including the two-material model. No source generator runs
+during native tests, and tests never depend on the owner's model/files.
 
 Headless coverage exercises readiness, delivery mismatch, native GLB metadata,
 hierarchy remapping, bounded allocation, isolated render layers, passive input/
 observation ownership and disposal. Native QA opens PNG/GLB/UI/mixed targets,
-captures actual renderer frames, transfers a mixed view through Float/Redock and
-checks serving text input and unchanged source bytes. Frame assertions retain
-foreground, nonuniform, image/UI, warm-material and error-color checks and require
-both generated model color families independently in raw-GLB and mixed captures.
-Synthetic negative cases reject clear-only, grid-only and model-hidden frames;
-the old raw-GLB foreground predicate demonstrably accepts the grid-only case.
-Unlit materials avoid dependence on lighting intensity; color-family thresholds
-allow native tonemapping/antialiasing, not substitute geometry or synthetic native
-evidence. Compilation or an RPC receipt
-alone is not evidence of rendered contents. Injected input does not certify
+fences actual rendering, transfers a mixed view through Float/Redock and
+checks serving text input and unchanged source bytes. The generated GLB retains
+its two-material/source-geometry contract test. Scene View has no active screenshot
+goldens, saved PNG comparisons or synthetic screenshot tests. GPU fences verify
+renderer completion, not the visual identity of rendered content. Injected input does not certify
 physical mouse/trackpad, IME, monitor transitions or all material types. The
 navigation scenario exercises injected orbit/dolly, nested mesh selection,
 deselection, signed-axis alignment/flipping, orbit/zoom/pan controls, Escape/release,

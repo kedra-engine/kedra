@@ -2,6 +2,8 @@
 #[cfg(test)]
 mod lifecycle_tests;
 mod readbacks;
+#[cfg(test)]
+mod schema_tests;
 mod ui_canvas;
 use bevy::{
     camera::{RenderTarget, visibility::RenderLayers},
@@ -56,23 +58,8 @@ pub(super) fn supported(graph: &ResolvedGraph) -> Result<(), String> {
                     | "scene.surface"
                     | "scene.sun"
                     | "scene.model"
-                    | "ui.layout"
-                    | "ui.caption"
-                    | "ui.stylesheet"
-                    | "ui.classes"
-                    | "ui.id"
-                    | "ui.image"
-                    | "ui.button"
-                    | "ui.editable"
-                    | "ui.modal"
-                    | "ui.spin"
-                    | "ui.background"
-                    | "ui.border"
-                    | "ui.shadow"
-                    | "ui.z"
-                    | "ui.global_z"
-                    | "ui.outline"
-            ) {
+            ) && !kedra_ui::authored::supports_passive_component(key)
+            {
                 return Err(format!(
                     "Scene View does not render {key} on {}. UI preview and additional spatial schemas are separate slices; source navigation remains available.",
                     node.name

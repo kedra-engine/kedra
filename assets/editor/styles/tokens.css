@@ -19,6 +19,9 @@
     --text: #eeeeee;
     --secondary: #c9c9c9;
     --muted: #afafaf;
+    --disabled-text: #858585;
+    /* IconButton: disabled ink at 55% over the panel, as composited in Figma. */
+    --disabled-icon: #5f5f5f;
     --on-accent: #ffffff;
     --accent: #7950bc;
     --accent-hover: #865cc3;

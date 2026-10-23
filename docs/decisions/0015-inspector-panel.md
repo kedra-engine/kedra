@@ -1,6 +1,9 @@
 # ADR 0015: Inspector tool panel and target binding
 
-Status: proposed for owner review. This is the dockable panel contract, distinct
+Status: full editing/settlement contract proposed for owner review. The connected
+[read-only panel](../ui/inspector.md) implements source following, lock, search and
+shared reflected presentations, not editable sessions or Save. This is the
+dockable panel contract, distinct
 from the universal reflected editor in
 [ADR 0011](0011-universal-reflected-inspector.md) and field interaction in
 [ADR 0009](0009-property-editing-and-inspector.md).
@@ -8,7 +11,7 @@ from the universal reflected editor in
 ## Purpose and responsibility
 
 Inspector presents the active document's selected node, its components and their
-reflected values. It composes default/type/field editors from planned
+reflected values. It composes default/type/field editors from existing
 `kedra_inspector` and controls from `kedra_ui::fields`. It is not a Kedra-UI-only
 inspector, another source workspace or an unrestricted mutable World editor.
 
@@ -78,10 +81,13 @@ useful. Disabled validation must never be the route to editable arbitrary types.
 
 ## Figma and verification
 
-Use [UI-kit](../ui/figma.md) composition `108:8790`, search `108:8936`, visibility
-`108:9034` and existing shared dock/action components. The sample Transform/Mesh/
-Material arrangement illustrates component composition; it is not a fixed schema
-or limit on what Inspector discovers.
+Use the current [UI-kit](../ui/figma.md) Flat compact A compositions `131:20213`
+(320px) and `131:20388` (480px), with 40px selection identity, 24px section headers
+and 22px controls. Original composition `108:8790`, search `108:8936` and visibility
+`108:9034` retain their source-reference role for grouping and interaction examples,
+not current compact geometry. The sample Transform/Mesh/Material arrangement is
+not a fixed schema or limit on what Inspector discovers. These are recorded source
+identities, not a claim of live Figma verification.
 
 Review no-selection, locked/unavailable target, unregistered capabilities, pending
 target change, rejected/conflicted input and narrow/floating layouts before the

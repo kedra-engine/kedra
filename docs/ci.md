@@ -3,14 +3,11 @@
 ## Current status
 
 Repository: <https://github.com/kedra-engine/kedra>. The
-[workflow](../.github/workflows/ci.yml) runs PR/main validation on managed
-GitHub-hosted runners. The initial complete hosted run passed on all three OSes;
-fresh line coverage was 85.02%. Same-revision warm-cache acceptance and genuine
-protected-main PR acceptance are verified. The repaired-main baseline at
-`e58d090249e5539408a5019fdd968026de4143be` passed every hosted group in run
-39503345256. New distribution changes still require their own hosted acceptance.
-Changed-path selection and the lean cache layout also require hosted PR/push/
-merge-group acceptance and new measurements; the initial timings do not certify them.
+[workflow](../.github/workflows/ci.yml) configures PR/main validation on managed
+GitHub-hosted runners. Its configuration does not establish current hosted results,
+cache performance or live branch-protection enforcement. These require external
+verification for the source being accepted; native UI and distribution acceptance
+remain separate.
 Local commands remain independent entry points.
 Releases, Kubernetes, private infrastructure and self-hosted runners are outside
 this workflow. The exact Winit fork revision is public on GitHub; see
@@ -34,18 +31,25 @@ main pushes compare against their before SHA, and merge groups against their bas
 | Rust, manifests, locks, assets, native scripts or unknown inputs | Native matrix, fresh coverage and dependency audit |
 | Mixed changes | Union of the corresponding groups |
 
-Known routing limit: JSON/PNG changes to QA policies and reference images do not
-currently select the Python validators. Those files still select Rust work when
-applicable; that is not a substitute for their Python checks. Run the QA suite
-explicitly or use manual full CI for those changes until their routing is added.
+JSON/PNG changes to QA policies and reference images select repository Rust checks
+and informational coverage, not native screenshot acceptance. Run the relevant
+component scenario explicitly on an idle desktop or dispatch the Native UI corpus
+workflow. Ordinary headless
+CI cannot replace its real input/frame evidence or approve a changed profile.
 
 Markdown embedded under crates is a Rust input, not a documentation-only exception.
 Unknown paths conservatively select Rust checks. Native validation runs on
 ubuntu-24.04, windows-2025 and macos-15 with fail-fast disabled. Clippy, workspace
 tests/doctests and default/minimal/isolated-runtime features run on each selected
-OS. Linux workspace unit/integration tests run once in the required coverage job,
+OS. The feature route also checks isolated minimal scene/asset/UI libraries and
+executes shipping diagnostic-absence contracts with debug assertions disabled,
+without an optimized editor release build. Linux workspace unit/integration tests
+run once in the required coverage job,
 not again in native Linux; doctests remain in native Linux because coverage does
-not run them. API documentation runs once on Linux. Rust formatting/architecture
+not run them. Coverage has no minimum percentage; tests and report generation
+must still succeed. Native behavior and screenshot acceptance require separate
+real-input/frame runs. API documentation runs once on Linux.
+Rust formatting/architecture
 run once in policy, and portable-contract tests are included in workspace tests.
 No compilation-only prebuild replaces or precedes the Windows test execution.
 The xtask command-stage regression uses a tiny real Cargo workspace, rather than
@@ -59,29 +63,32 @@ Native and coverage jobs wait for the lightweight policy/workflow checks, avoidi
 expensive compilation for a known policy failure. The matrix platforms remain
 independent of each other's failures.
 
-`CI required` evaluates change selection and all seven job-group results. Selected
+`CI required` invokes `python3 -I tools/ci/required.py` and evaluates eight dependency
+results: `changes` plus seven validation groups (`policy`, `native`, `coverage`,
+`supply-chain`, `repository`, `secrets` and `python-test`). The `python-test` job is
+named `Workflow and distribution tooling contracts`. Selected
 jobs must succeed; unselected jobs must be `skipped`. Failed change detection,
 missing/extra results, malformed selection, failures, cancellations and unexpected
-skips fail closed. The configured entry point tests all selection combinations
-and their failure paths:
+skips fail closed. The `python-test` job tests all selection combinations and
+their failure paths against the configured gate entry point:
 
 ```sh
 python3 -m unittest discover -s tools/ci -p 'test*.py'
 ```
 
-No custom diff walker, glob matcher, YAML snapshot tests or CI executor is added.
-The Python gate enforces Kedra's expected results; GitHub owns scheduling and
+Path discovery and matching use the maintained action, not a custom diff walker
+or glob matcher. The Python gate enforces Kedra's expected results; GitHub owns scheduling and
 execution. actionlint and zizmor validate workflow syntax and security directly.
 
-Native and coverage jobs allow 180 minutes; light jobs allow 30 minutes and the
-final gate five minutes. GitHub documents a six-hour hosted-job execution maximum.
+Native and coverage jobs allow 180 minutes; policy, supply-chain, repository,
+secrets and Python jobs allow 30 minutes. Change selection and the final gate
+allow five minutes. GitHub documents a six-hour hosted-job execution maximum.
 These budgets do not imply measured runtimes. Superseded PR runs are cancelled;
 accepted main runs are not cancelled just because a newer main exists. Compilation
 uses nonincremental, line-table debug profiles and four jobs on Linux/macOS, two
 on Windows to bound simultaneous MSVC linking. Local developer defaults do not change.
-The two-job Windows budget is based on hosted four-CPU/16-GiB samples with at
-least 6.38 GiB free under the previous one-job budget; it still requires hosted
-timing and memory acceptance. Release compilation also uses two Windows jobs,
+Hosted timing and memory acceptance remain unverified. Release compilation also
+uses two Windows jobs,
 without changing its optimization, codegen-unit or Thin LTO settings.
 
 ## Cache and permission boundaries
@@ -96,12 +103,17 @@ the managed image's ImageOS/ImageVersion,
 an explicit OS/architecture and native versus coverage role. Coverage additionally
 pins the llvm-cov tool role and uses a separate `target/llvm-cov-target` cache.
 
+Coverage uses cargo-llvm-cov 0.7.1 to run fresh headless workspace tests and retain
+LCOV under `target/coverage.lcov`. Its percentage is a reference metric, not a merge
+threshold. Test failures, measurement errors and missing/empty LCOV still fail the
+job; a low percentage does not. No source exclusions or ignored failures are added.
+Native scenario code stays in the workspace denominator, but this headless run
+does not execute those binaries. See [measurement scope](testing.md#coverage-and-deeper-analysis).
+
 Only main-push jobs may save shared CI caches; PR jobs restore without saving.
 The policy cache includes only `target/xtask-bootstrap`, not a separate workspace
-test target. Its `policy-bootstrap-v2` key prevents restoring the obsolete wider
-cache. The `native-lean-v2` key avoids restoring the obsolete nested `xtask-cli`
-dependency tree. Both key changes incur one initial rebuild, not migration or
-deletion of remote cache entries. Native/coverage/distribution caches remain
+test target. Policy uses the `policy-bootstrap-v2` key; native uses `native-lean-v2`
+for `target` and `target/xtask-bootstrap`. Native/coverage/distribution caches remain
 separate because their compiler profiles and consumers differ; docs/Python-only
 runs never restore or save them.
 Native jobs enable the action's supported `cache-on-failure` option, retaining
@@ -117,14 +129,14 @@ Native caching does not certify
 the correctness of artifacts. Misses must build normally. Cache restores are
 optional acceleration, never permission to skip a check.
 
-The initial cache budget stays within GitHub's default 10 GB per repository;
+Cache use is subject to GitHub's default 10 GB per-repository allowance;
 eviction can reduce reuse and must be observed before performance claims. No paid
-increase is implicit. Logs/LCOV and bounded Windows diagnostics are retained for
-seven days, including after failure when available. Successful coverage requires
+increase is implicit. Logs/LCOV, public coverage-scenario reports, software-renderer
+diagnostics and bounded Windows diagnostics are retained for seven days, including
+after failure when available. Coverage uploads omit private sessions/credentials.
+Successful coverage requires
 a nonempty LCOV; absence after an earlier failure does not turn the job green.
-Changing `CARGO_BUILD_JOBS` changes the action's environment hash, so the Windows
-two-job configuration initially needs a new cache. Managed-image changes can also
-invalidate reuse; old cold/warm measurements below do not certify this configuration.
+Changing `CARGO_BUILD_JOBS` or the managed image can invalidate cache reuse.
 
 Jobs have `contents: read`, checkout does not persist its token, and no
 corporate secrets or publishing/OIDC permissions are supplied. External actions
@@ -159,48 +171,26 @@ separate checked process; stop on its nonzero status. In PowerShell, check
 | File growth, architecture, fmt, lint, tests/doctests, API docs | `cargo xtask check --non-interactive` |
 | Default/minimal features and independent runtime | `cargo xtask features --non-interactive` |
 | Bootstrap/native dependency contracts | `cargo test -p xtask --test portable_contracts --locked` |
-| Headless native-QA failure paths | `python3 -m unittest discover -s tools/qa -p 'test*.py'` |
+| Native buttons/fields screenshots (idle desktop, reviewed profile) | `cargo xtask test -- components` |
 | Licenses/advisories/sources | `cargo deny --locked check` |
 | Markdown | `rumdl check .` |
 | Local links | `lychee --offline --include-fragments --no-progress './*.md' './docs/**/*.md'` |
 | Secrets | `gitleaks dir . --redact --exit-code 1` on a clean source snapshot |
-| Coverage | `cargo llvm-cov --workspace --all-targets --all-features --locked --fail-under-lines 80 --lcov --output-path target/coverage.lcov` |
+| Coverage | [Fresh informational workspace measurement](testing.md#coverage-and-deeper-analysis), without a percentage threshold |
 
-`features` runs three separate Cargo checks with streamed diagnostics, logs and
+`features` runs four separate Cargo checks with streamed diagnostics, logs and
 fail-closed stage aggregation: workspace default, workspace no-default-features,
-then `kedra_app --lib --no-default-features`. The isolated runtime check catches
+then independent `kedra_app --lib --no-default-features` and
+`kedra_script --lib --no-default-features` checks. The isolated runtime checks catch
 features accidentally supplied by editor/dev dependency unification, including
 production Linux Winit backends. No skipped stage is reported as passed.
 All-features testing alone is not a substitute for these checks.
 
-## Initial hosted measurements
-
-Reference: [CI run 39484899924, attempt 1][initial-ci],
-commit `ecc155809deedf94b6b6c552813ee04aad6ef8cc`. Job durations include setup,
-checks, artifact upload and cache save; they are not compilation-only timings.
-
-| Job | Cold duration | Warm duration (same SHA, attempt 2) |
-| --- | --- | --- |
-| Native Linux x86_64 | 12m 18s | 5m 10s |
-| Native macOS arm64 | 17m 43s | 8m 04s |
-| Native Windows x86_64 | 54m 36s | 18m 19s |
-| Fresh Linux coverage | 10m 03s | 5m 22s |
-
-LCOV contains 23,535 covered lines of 27,683 (85.02%). Eight dependency/tool caches
-occupied 5.22 GiB after the cold run and 5.51 GiB after the warm run, below the
-default allowance. Warm logs show exact Rust dependency cache hits for all native
-and coverage jobs; fresh warm coverage remained 85.02%. Policy's Rust cache safely
-missed due to changed preinstalled secondary compiler identity. Windows cold
-latency remains substantial and must not be described as fast.
-This is headless Rust/QA acceptance, not native UI or packaged-editor acceptance.
-
-[initial-ci]: https://github.com/kedra-engine/kedra/actions/runs/39484899924/attempts/1
-
 ## Windows build diagnostics
 
-`tools/ci/windows-build.ps1` remains a manual diagnostic command with its
-success/failure/sampling regression suite. Normal CI no longer runs its separate
-`--no-run` build before executing the same tests:
+`tools/ci/windows-build.ps1` is an optional manual diagnostic command with a
+success/failure/sampling regression suite. Normal CI runs the regression suite
+and actual tests without a separate compilation-only prebuild:
 
 ```powershell
 $env:CARGO_BUILD_JOBS = '2'
@@ -233,9 +223,9 @@ measured completion guarantees.
 - Validate Rust-affecting changes and their merged state on Linux, Windows and
   macOS. Only the declared changed-path plan may skip work; unexpected skips and
   ignored failures remain errors. One broken platform must not suppress the others.
-- Retain the complete validation map, fresh >=80% Rust line coverage and refreshed
-  dependency advisories for Rust-affecting changes. No previous test/coverage
-  outcomes are cached. Coverage is a floor, not proof of correctness.
+- Retain the complete validation map, a fresh informational Rust line coverage
+  report and refreshed dependency advisories for Rust-affecting changes. No previous
+  test/coverage outcomes are cached. Coverage has no minimum and is not proof of correctness.
 - An aggregate must reject empty/malformed/missing results as well as failures,
   cancellations and unexpected skips. Test the actual configured aggregate's
   negative paths in the configured entry point; an unused helper is not evidence.
@@ -247,12 +237,12 @@ measured completion guarantees.
   cannot seed trusted caches. Verify cold builds and cache isolation before relying
   on them. Do not cache credentials or upload whole Cargo target directories.
 - Define timeouts, storage/concurrency budgets and diagnostic retention only after
-  measuring workers. The initial budgets above remain subject to acceptance.
+  measuring workers. The configured budgets above remain subject to acceptance.
   Preserve logs even on failure where possible;
-  scrub sensitive data before sharing. No former provider quota or timeout is a
-  verified destination guarantee.
+  scrub sensitive data before sharing. Configured budgets are not performance
+  guarantees.
 - Native UI requires real input and rendered frames from controlled graphical
-  environments. Rust/headless QA checks do not certify that workflow or web/mobile.
+  environments. Rust/headless tooling checks do not certify that workflow or web/mobile.
 - Establish human review and branch rules separately; see [hosting](hosting.md).
 
 ## Failure runbook

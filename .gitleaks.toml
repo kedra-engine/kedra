@@ -1,0 +1,166 @@
+title = "Kedra: default detectors with reviewed non-secret Figma provenance"
+
+[extend]
+useDefault = true
+
+# Owner-reviewed design identities, not authentication credentials. See docs/testing.md.
+# Each table requires BOTH its exact repository-relative path AND one exact match.
+# Match targeting binds the field spelling to its own value; line targeting could
+# accidentally suppress a different credential on the same line. No detector changes.
+# Gitleaks does not parse JSON ancestry: these are field matches, not JSON pointers.
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "Figma provenance: button-disabled"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-disabled\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "9709088ed118e80bbf18e7561b188b3ad42d5a29"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-flat-disabled"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-flat-disabled\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "e185e2e74526bbda633aa89414104465bbe8e369"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-flat-focus"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-flat-focus\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "88def740785f814c2e9e8346e9bb81814a7aa0da"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-flat-hover"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-flat-hover\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "384347555cc538d48e004f5f9aa7987d18b5b5cd"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-flat-pressed"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-flat-pressed\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "f048bcf02fd9d50571adcc6075fb268260f0ce64"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-flat"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-flat\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "99fd7fc1cad22ec4574ba76a58db0aed880f4579"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-focus"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-focus\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "bf6e1df1363c29ebdfc4cdb380c903a78aacd922"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-hover"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-hover\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "a7063b39d4c2eabc6947b7603077487ce0957c74"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-pressed"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-pressed\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "321cdc67e8eac877d586fd33d81dc220046a7293"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-primary"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-primary\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "5d8b56441692a8b66f6156242ece6dd438c3ee42"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-quiet-disabled"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-quiet-disabled\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "bc7d504ef55c2663e3d8a9520ef4027577e2b842"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-quiet-focus"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-quiet-focus\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "8824df51a5bb678622bc84d91b0c34539c121c9e"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-quiet-hover"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-quiet-hover\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "f53115100e1caa22ab5b7f28b0de167bd985734a"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-quiet-pressed"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-quiet-pressed\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "27cdaea98ddc985467c29ffe1a3171ad108a60ac"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-quiet"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-quiet\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "cd9426410c07abb7943f3e32b1ae8442fbc0784c"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-secondary-disabled"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-secondary-disabled\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "e05a0c097981233b94b8dd829f0b08e1f4624bb7"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-secondary-focus"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-secondary-focus\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "9ebcee5953a024ec0e1af2f538e9f425873420a9"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-secondary-hover"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-secondary-hover\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "72e75acfca078f393ab8a02e6c40a2b87a821507"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-secondary-pressed"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-secondary-pressed\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "3252c9349af8634573b18315267efa6518f27a33"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: button-secondary"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/button-secondary\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "a0dd2c9c63072ee27828fab5ba26100d3266870d"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: field-default"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/field-default\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "36133ca0e194f5ae50ea46678d3e05191471e8fa"$''']
+
+[[rules.allowlists]]
+description = "Figma provenance: field-focus"
+condition = "AND"
+paths = ['''^docs/ui/corpus/text/field-focus\.json$''']
+regexTarget = "match"
+regexes = ['''^file_key": "2EZlK40cfx2Mub7GmDyI70"$''', '''^key": "14c1e097eb474f8ed0e776aa4f4a6e49785221d8"$''']

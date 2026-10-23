@@ -138,14 +138,16 @@ asset previews. Spatial navigation and scoped opaque-mesh selection are availabl
 Inspector editing, document Save, scene editing and Play are not implemented.
 
 The custom 32px caption is the only painted caption. On macOS the native window
-retains AppKit's titled/resizable structure with hidden native title/buttons and
-full-client content. This avoids Winit frame churn from truly borderless maximize
-queries. Platform windowing still owns move, resize, minimize, maximize and close.
+retains AppKit's titled/resizable structure with a hidden native title, visible
+native buttons and full-client content. This avoids Winit frame churn from truly
+borderless maximize queries. Platform windowing still owns move, resize, minimize,
+maximize and close.
 
 [Startup references](ui/startup-layout-lock.md) pins visual expectations.
 [Automation](automation.md) documents optional native input/capture checks.
-Bevy input injection and renderer captures have macOS evidence, including DPR
-overrides 1/2. This is not physical OS input or cross-platform certification.
+Opt-in native scenarios exercise Bevy input injection and renderer captures,
+including DPR overrides 1/2. Native acceptance of the current startup composition
+is unverified; these scenarios do not certify physical OS input or other platforms.
 
 Remaining acceptance includes deterministic startup fixture data, full control
 states and selected/missing recent-row presentation, physical picker/chrome/IME

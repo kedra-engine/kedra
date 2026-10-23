@@ -55,10 +55,10 @@ pub(super) fn measurement(
         };
         // Authored measurement uses exactly the same skin as the committed row.
         // It is a passive child of the measurement owner and cannot receive input.
-        let view = crate::views::mount(
+        let view = crate::views::mount_asset(
             world,
             *root,
-            crate::views::document(0xc0900000000040008000000000000001),
+            "editor://prefabs/titlebar.prefab.ron",
             "measurement-caption",
         )?;
         let mut classes = bevy_flair::style::components::ClassList::new_with_classes([

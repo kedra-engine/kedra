@@ -31,6 +31,13 @@ the exact source resolved by Cargo; see the external documentation section of th
 - Runtime cannot depend on editor, importer or filesystem authoring writer.
 - Assign each package a `package.metadata.kedra.layer`; obey the checked DAG.
 - Public API must document invariants, errors, ownership and lifecycle semantics.
+- Native code must reference prefab and scene assets by their full, source-qualified
+  logical asset paths (for example `editor://prefabs/button.prefab.ron`), never by
+  hardcoded UUIDs or numeric document-ID constants. Resolve paths through the
+  existing loaded source catalog and verify membership and published revision;
+  do not introduce a parallel lookup registry. Persisted document/node/instance IDs,
+  source references, sidecars and provenance retain their UUID identities. These
+  logical asset paths are not absolute filesystem paths.
 - Authoring sources own Save. Keep gameplay state, drafts and derived outputs distinct.
 - New dependencies and public APIs require justification; prefer existing mechanisms.
 - Search existing project mechanisms and maintained libraries/tools before implementing
@@ -65,6 +72,32 @@ the exact source resolved by Cargo; see the external documentation section of th
 - Do not claim checks passed without running them on the stated revision.
 - Finish with changes, actual checks/results, limitations and remaining risks.
 
+## Test ownership and design
+
+- Follow [the testing guide](docs/testing.md) and
+  [ADR 0031](docs/decisions/0031-contract-owned-testing.md).
+  Before adding a test, identify the Kedra contract, production owner, observable
+  failure and least expensive sufficient environment. Do not add tests for counts
+  or coverage percentages, or merely to re-prove upstream library/tool behavior.
+- Keep private invariant tests under their owning module; public API contracts use
+  `tests/contracts.rs` and behavioral modules in `tests/contracts/`. Keep fixtures
+  in the narrowest `test_support`/`tests/support`, never inside another test suite.
+  Tests must not import helpers from `*_tests` or `tests` modules. Do not widen
+  production visibility or introduce a fixture framework to bypass this boundary.
+- Name suites and tests by behavior, not fix history or generic regression buckets.
+  Editor asset/design assertions belong to the editor; importer assertions own
+  generic processing/publication. Reuse existing mechanisms and fixtures without
+  duplicating the same error matrix at several levels.
+- Verify thin utilities through real invocations. Keep negative tests for substantive
+  Kedra policy and real build/package/run contracts; do not build artificial Cargo
+  projects just to test Clippy/rustdoc. Do not add QA-driver/report self-test suites.
+- Negative cases assert relevant unchanged state and ownership. Use controlled
+  clocks/readiness; potentially blocking probes need an external process deadline.
+  Synthetic layout, RPC state, readbacks and physical OS input prove different things.
+- Refactoring removes superseded paths and updates callers directly, without legacy
+  forwarding modules or duplicate suites. Preserve safety guarantees and required
+  execution routes, and update the guide's ownership map and affected commands.
+
 ## International project
 
 - Use English for code, identifiers, comments, documentation, diagnostics and public PRs.
@@ -78,6 +111,19 @@ the exact source resolved by Cargo; see the external documentation section of th
   Keep session narratives, review transcripts, intermediate attempts and local run
   histories out of repository docs. Put generated evidence and logs under `target/`.
   Preserve source provenance, licensing obligations and unresolved release blockers.
+- Non-plan documentation must describe the current implementation, not its change
+  history. Remove obsolete commands, APIs, targets and behavior when they cease to
+  exist; delete a document if its subject no longer exists and it contains no live
+  contract, plan or required provenance. Check and update incoming links and anchors.
+- Explicit plans, roadmaps and proposed decisions may describe future work, clearly
+  separated from current functionality. Do not relabel obsolete implementation
+  descriptions as plans merely to retain them. Keep applicable architectural
+  decisions and rationale, but remove superseded implementation descriptions.
+- Verify documentation claims against current sources. Do not present earlier test,
+  build, CI or native run results as current acceptance. Retain current verification
+  limits and blockers without narrating previous runs, repairs or migration steps.
+  Provenance, licenses, reviewed reference identities and safety constraints are
+  substantive facts, not change history; never remove them as cosmetic cleanup.
 - AI-assisted contributors remain accountable for correctness, provenance and licensing.
 - Never depend on personal skills, private services or an AI review to pass required CI.
 - Project CLI commands must provide visible progress, live diagnostics and a clear

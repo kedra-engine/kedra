@@ -27,7 +27,8 @@ not require a successful viewport frame or a verified renderer delivery.
 
 The runtime UI kit cannot depend on inspector, authoring or editor crates. The
 inspector is an editor-layer crate depending on Bevy and `kedra_ui`, not authoring,
-desktop or editor. An independent native value fixture exercises the same controls.
+desktop or editor. A non-document value consumer in the ordinary editor executable
+exercises the same controls without passing authoring state to the inspector.
 Shared widgets must not be hidden in the inspector crate or copied into the panel.
 Feature models are ordinary Rust values; entity IDs belong to UI adapters only.
 
@@ -160,7 +161,7 @@ components, missing capabilities, custom-editor failure, limits, no search resul
 and narrow/floating appearances before shipping; the baseline sample is not their
 acceptance evidence. Missing required compositions need owner review in Figma.
 
-Acceptance requires an independent native field/value consumer and the actual
+Acceptance requires the non-document native field/value consumer and the actual
 editor panel, using the same controls. Verify real frames/input, keyboard access,
 copy limitations, scrolling, retention and host movement. Model tests cannot
 certify native interaction. All source/history snapshots must remain unchanged.
@@ -169,19 +170,24 @@ not application captures. See [testing](../testing.md).
 
 ## Local acceptance commands
 
-Build a new verified editor delivery as described in [startup](../startup.md), then:
+The Rust runner builds a verified delivery and launches isolated editor processes:
 
 ```sh
-cargo run -p kedra_inspector --example value_fixture --features native-fixture -- \
-  target/editor-assets target/inspector-credentials.json target/inspector-captures
-python3 tools/qa/inspector.py target/inspector-credentials.json --fixture \
-  --report target/inspector-report.json
+cargo xtask test -- features --only inspector,inspector-fixture --output target/test/inspector
 ```
 
-The actual editor scenario uses a fresh project-manager process with isolated
-`--state-directory`, new remote credentials and the same delivery. Pass its credentials
-to `tools/qa/inspector.py --state-directory PATH --report PATH` (without `--fixture`).
-It creates a disposable source project under that state directory and checks source
-hashes, nested effective values, locking, search and retained dock-host movement.
+The actual editor scenario opens a fresh working copy of the checked
+`tests/fixtures/test_project`, with isolated state and new remote credentials.
+It reads the existing `Inspector/` sources and checks source hashes, nested
+effective values, locking, search and retained dock-host movement. No project or
+prefab data is generated at test startup.
+The `inspector-fixture` scenario selects `editor://fixtures/inspector.scene.ron`
+through the ordinary executable's debug `--scene` argument. Its composition and
+initial native reflected values are authored data. The registered
+`inspector.presentation` Luau program drives refresh/default-view input, with Rust
+retaining independent precision, specialization, fallback and retention assertions.
+Native adapters retain editor registration, read-only refresh and disclosure behavior. This is
+independence from source-document authority, not a runtime-to-editor dependency.
 These scenarios inject Bevy input and capture native frames; they do not certify
-physical OS input or replace visual inspection of the captures.
+physical OS input or provide screenshot coverage. Temporary GPU readbacks are
+discarded after synchronization; behavior reports retain no image goldens or PNGs.

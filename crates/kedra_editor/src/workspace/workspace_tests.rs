@@ -4,7 +4,7 @@ use test_support::{TestResult, sources};
 
 #[test]
 fn authored_bind_mounts_real_panel_records_and_retire_preserves_main_owner() -> TestResult {
-    let (mut app, _, _) = input::regression_tests::setup()?;
+    let (mut app, _, _) = test_support::setup()?;
     let world = app.world_mut();
     sources(world)?;
     let old = world
@@ -12,16 +12,10 @@ fn authored_bind_mounts_real_panel_records_and_retire_preserves_main_owner() -> 
         .ok_or("old workspace")?;
     let (root, window) = (old.root, old.window);
     world.init_resource::<crate::model::ProjectManager>();
-    let source = world
-        .resource::<kedra_scene::assets::PrefabSources>()
-        .snapshot();
-    let compiled = source
-        .compiled
-        .get(&crate::views::document(0xc0600000000040008000000000000001))
-        .ok_or("frame")?;
+    let compiled = crate::views::compiled(world, "editor://prefabs/window-frame.prefab.ron")?;
     let view = UiView::mount(
         world,
-        compiled,
+        &compiled,
         Some(root),
         &BTreeMap::new(),
         "test.editor",
@@ -76,7 +70,7 @@ fn authored_bind_mounts_real_panel_records_and_retire_preserves_main_owner() -> 
 
 #[test]
 fn panel_mount_is_idempotent_reset_retains_content_and_unknown_restore_locator() -> TestResult {
-    let (mut app, a, _) = input::regression_tests::setup()?;
+    let (mut app, a, _) = test_support::setup()?;
     let world = app.world_mut();
     sources(world)?;
     world.init_resource::<crate::model::ProjectManager>();

@@ -115,11 +115,13 @@ renderable bounds; an empty/unbounded scene uses a documented finite default pos
 and reports unavailable bounds. Frame selection includes mapped descendants and
 handles empty or degenerate bounds without nonfinite camera state.
 
-Proposed bindings: RMB hold plus WASD/QE for flight, Shift for faster movement,
+Current bindings: RMB hold plus WASD/QE for flight, Shift for faster movement,
 wheel for flight speed while captured; Alt+LMB for orbit, MMB for pan, wheel for
 dolly/orthographic zoom otherwise. `F` frames selection; explicit toolbar/menu
 actions expose Frame All, standard views and projection without requiring a
-numeric keypad. Final bindings and toolbar composition require design review.
+numeric keypad. The [current control profile](../ui/scene-view-controls-design.md)
+uses compact 22px controls, a tool rail and orientation navigation; native
+input/frame acceptance remains separate from implemented bindings.
 
 Only the focused, visible viewport in the correct native window can acquire
 navigation input. Hover alone must not consume typing or global shortcuts. UI
@@ -162,12 +164,11 @@ light/environment can make unlit prefabs inspectable without altering their sour
 or pretending that helper illumination belongs to the scene. Grid/axes visibility
 and inspection illumination are view options, not document edits.
 
-[ADR 0018](0018-scene-environment-and-preview-stages.md) refines the planned lighting
+[ADR 0018](0018-scene-environment-and-preview-stages.md) defines the shared lighting
 contract: reusable environment assets, ordinary light entities, camera-owned display
-settings and an authored preview stage. Editor lighting will replace, not add to,
-the scene's light/environment contribution for that view. The initial implementation
-now uses an authored studio stage and shared background/ambient hydration rather
-than an additive hardcoded rig. Asset assignment
+settings and an authored preview stage. Editor lighting replaces, rather than adds
+to, the scene's light/environment contribution for that view using an authored
+studio stage and shared background/ambient hydration. Asset assignment
 and environment editing are subsequent source-owned authoring work, not permission
 to bypass this slice's read-only boundary.
 
@@ -206,8 +207,8 @@ request to implement them all without owner inspection:
 3. Viewport selection and highlighting synchronized with composed Hierarchy,
    including nested instances and failure/cleanup coverage.
 
-Then connect the read-only reflected Inspector. Editing/gizmos still require
-validated source transactions, graph revisions, selection remapping and history.
+The read-only reflected Inspector is connected to source selection. Editing/gizmos
+require validated source transactions, graph revisions, selection remapping and history.
 Passive UI preview and explicit own-editor source admission remain separate work;
 this ADR does not make the current fixed `game` scope accept `editor` sources.
 

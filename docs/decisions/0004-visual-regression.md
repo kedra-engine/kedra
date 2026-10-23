@@ -5,7 +5,8 @@ certification are independent.
 
 ## Decision
 
-`xtask visual` owns strict scenario/evidence policy and offline image comparison.
+`kedra_test::visual` owns strict scenario/evidence policy and offline image
+comparison; `xtask visual` is a thin repository CLI/diagnostic adapter.
 Runtime supplies real pixels through `kedra_app`. There is no reverse runtime
 dependency, screen-specific comparator or second native capture implementation.
 
@@ -25,14 +26,17 @@ license, advisory and duplicate-version checks still apply.
 SSIM/aggregate metrics are not the sole gate because they can obscure a missing
 small control. Raw binary snapshots compare bytes rather than rendered pixels.
 Browser automation is not a native Bevy capture backend. No new HTTP service,
-scheduler, image parser or standalone comparison crate is needed.
+scheduler, image parser or separate comparison-only crate is needed.
 
 ## Contract
 
 - Validate profile, viewport/DPR, color contract, hashes and input bounds before
   applying tolerances. Invalid input must not be replaced by a previous capture.
 - Version masks, animation policy, reference provenance and global/critical budgets
-  in configuration. Excluded areas form a union; critical zones cannot be masked.
+  in configuration. Excluded areas form a union. Ordinary masks, including
+  animation interiors, cannot overlap critical regions. Only an explicit
+  `ApprovedVisualVariance` exclusion with a `HumanReviewed` reference can overlap
+  them; this does not authorize adding exclusions or widening accepted budgets.
   Both absolute and integer ratio limits must pass.
 - Preserve raw inputs and readable reports. Do not auto-align, resize, blur,
   suppress AA differences or update baselines during verification.

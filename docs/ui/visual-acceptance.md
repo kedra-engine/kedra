@@ -5,20 +5,23 @@ references. Rust `image`/`png` owns decoding and metadata; `dify` owns perceptua
 comparison. Scenario policy is versioned JSON. Python/Pillow, an AI service and
 Figma access are not required by the offline comparator.
 
-See [ADR 0004](../decisions/0004-visual-regression.md),
-[startup references](startup-layout-lock.md) and [docking tests](docking-tests.md).
+The only active screenshot coverage is [kit buttons and text inputs](ui-corpus.md):
+22 cases. Startup, docking, panels, windows and scenes are not screenshot suites.
+Their native behavior checks do not enroll them in visual coverage.
+See [ADR 0004](../decisions/0004-visual-regression.md).
 
 ## Run a comparison
 
 ```sh
-cargo xtask visual --config docs/ui/references/loading-locked-visual.json \
-  --actual target/qa/loading.evidence.json --output target/qa/loading-review
+cargo xtask test -- components --output target/test/components
+cargo xtask visual --config target/test/components/public/button-quiet/shape/config.json \
+  --actual target/test/components/public/button-quiet/shape/actual.json --output target/test/button-review
 ```
 
 The actual-evidence JSON and its PNG must already exist and match the selected
 policy. This command does not launch an application or create a capture. The
 output directory must be new. Use [application automation](../automation.md) for
-renderer readbacks and the isolated docking runner for a complete native corpus.
+renderer readbacks and the kit component runner for the active screenshot corpus.
 
 Exit 0 means an automated match, not design acceptance. Exit 1 indicates a mismatch
 or blocked comparison. `report.json` distinguishes `matched`, `mismatch`,
@@ -65,11 +68,10 @@ alongside them. Available raw inputs survive validation failures.
 - Transparent client images fail. Uniform images require a specific
   `allow_uniform_reason`. PNG dimensions, bytes and decoder allocations are bounded.
 
-Current startup and docking audit policies use tolerance **0.05**, a **2%**
-perceptual budget for full frame and each critical region, and no exclusions.
-The separate accepted docking mode adds owner-reviewed text-interior exclusions;
-see [docking policy](docking-tests.md). Its tolerance and budgets are unchanged.
-These thresholds are reviewable scenario policy, not a universal quality metric.
+The kit corpus retains its reviewed **0.05** comparator tolerance, **2%** local
+shape budget, strict typography/layout gates and four exact accepted SVG pairs.
+Legacy startup/docking screenshot policies are retired, not additional coverage.
+Generic comparator capabilities below do not authorize expanding the active scope.
 Mutation tests verify rejection of missing local content and translated images.
 
 Only static 8-bit SDR PNG is supported. `srgb_assumed` interprets untagged bytes

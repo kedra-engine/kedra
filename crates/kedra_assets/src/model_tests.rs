@@ -1,20 +1,8 @@
 use super::validate_glb;
+use crate::test_support::glb;
 use serde_json::{Value, json};
 
 type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
-
-pub(crate) fn glb(document: Value) -> TestResult<Vec<u8>> {
-    Ok(gltf::binary::Glb {
-        header: gltf::binary::Header {
-            magic: *b"glTF",
-            version: 2,
-            length: 0,
-        },
-        json: std::borrow::Cow::Owned(serde_json::to_vec(&document)?),
-        bin: None,
-    }
-    .to_vec()?)
-}
 
 fn document(nodes: Value, scenes: Value) -> Value {
     json!({"asset":{"version":"2.0"}, "nodes":nodes, "scenes":scenes})

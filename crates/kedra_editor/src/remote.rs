@@ -59,6 +59,7 @@ pub(crate) fn install(app: &mut App) {
         workspace_state,
     );
     app.register_remote("editor.project","Execute the same validated project requests as UI",json!({"session":"app.describe.session","id":"UUID idempotency key","command":{"kind":["new_form","open_form","cancel","draft","submit","open","create","projects","retry"]}}),command);
+    crate::scripting::install(app);
 }
 pub(crate) fn workspace_state(_: In<Option<Value>>, world: &mut World) -> BrpResult {
     let Some(workspace) = world.get_resource::<crate::workspace::EditorWorkspace>() else {
@@ -91,6 +92,11 @@ fn state(_: In<Option<Value>>, world: &mut World) -> BrpResult {
     )
 }
 fn command(In(value): In<Option<Value>>, world: &mut World) -> BrpResult {
+    if world.resource::<crate::ExplicitScene>().0 {
+        return Err(kedra_app::invalid(
+            "Explicit startup scenes exclude the project lifecycle",
+        ));
+    }
     let original = value.clone().unwrap_or(Value::Null);
     let request: Request = kedra_app::params(value)?;
     if world.resource::<kedra_app::AppSession>().id != request.session {
@@ -127,6 +133,20 @@ fn command(In(value): In<Option<Value>>, world: &mut World) -> BrpResult {
     }
     serde_json::to_value(world.resource::<Operations>().get(request.id))
         .map_err(bevy_remote::BrpError::internal)
+}
+
+#[cfg(test)]
+mod explicit_scene_tests {
+    use super::*;
+    #[test]
+    fn explicit_scene_rejects_project_commands_before_admitting_any_operation() {
+        let mut world = World::new();
+        world.insert_resource(crate::ExplicitScene(true));
+        let result = command(In(None), &mut world);
+        assert!(result.is_err_and(|error| error.message.contains("exclude the project lifecycle")));
+        assert!(!world.contains_resource::<Pending>());
+        assert!(!world.contains_resource::<crate::jobs::PendingJob>());
+    }
 }
 fn execute(world: &mut World, command: Command) -> Result<bool, String> {
     if world
@@ -263,6 +283,7 @@ mod tests {
     #[test]
     fn invalid_draft_is_atomic_and_has_an_idempotent_failure_receipt() {
         let mut world = World::new();
+        world.init_resource::<crate::ExplicitScene>();
         world.init_resource::<ProjectManager>();
         world.init_resource::<EntryForm>();
         world.init_resource::<Pending>();

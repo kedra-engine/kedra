@@ -7,8 +7,11 @@ version = 2
 # version exists. The policy regression pins its existing direct wrapper and
 # enforces review by 2026-12-26; future vulnerability IDs still fail. See
 # docs/decisions/0007-dependency-policy.md for reachability and review/removal.
+# The second reviewed ID is BMS's build-time macro diagnostic dependency; its
+# exact chain and the same review deadline are checked by the policy regression.
 ignore = [
     { id = "RUSTSEC-2026-0192", reason = "Unmaintained-only advisory in Winit's Linux CSD stack; no patched release. Exact reachability and review deadline enforced by xtask policy tests; see ADR 0007." },
+    { id = "RUSTSEC-2026-0173", reason = "Owner-approved unmaintained-only build-time macro dependency in BMS 0.23.0. Only proc-macro-error2 2.0.1 through mlua_derive 0.11.0 and mlua 0.11.6 is admitted until 2026-12-26 UTC; exact registry identities/callers enforced by xtask policy tests. See ADR 0007." },
 ]
 
 [licenses]
@@ -77,6 +80,11 @@ highlight = "all"
 # lower line is exact-pinned here; a new duplicate version still fails. Reasons
 # and immediate upstream consumers: docs/decisions/0007-dependency-policy.md.
 skip = [
+    # BMS 0.23 uses the 1.x procedural macro helper while Bevy 0.20 requires 2.x.
+    # Exact lower identity only; this does not suppress advisories. See ADR 0029.
+    { name = "variadics_please", version = "=1.1.0" },
+    # mlua's serde-value adapter requires 2.x; WGPU requires 5.x. ADR 0029.
+    { name = "ordered-float", version = "=2.10.1" },
     # Packaging needs the newer crypto/OS/XML/ICNS lines while existing callers
     # retain incompatible older APIs. These are exact identities, not subtrees;
     # caller/version rationale is recorded in ADR 0023.

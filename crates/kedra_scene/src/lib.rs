@@ -13,6 +13,7 @@ pub mod reflection;
 #[cfg(feature = "render")]
 pub mod rendering;
 pub mod spatial;
+pub mod startup;
 mod value;
 
 /// Source, composition, binding or instantiation failure with contextual detail.

@@ -1,73 +1,56 @@
-//! Isolated acceptance entry point: installs production dock systems and chrome,
-//! but no EditorPlugin, startup states, project jobs or project panels.
+//! Scene-bound docking diagnostics using the editor's production capabilities.
 use super::*;
 use bevy::text::{EditableText, TextEdit};
 use kedra_app::RemoteAppExt;
-use kedra_docking::{
-    model::{Edge, View},
-    snapshot::Snapshot,
+use kedra_docking::snapshot::Snapshot;
+use kedra_script::{
+    Scope,
+    lua::{self, Lua},
 };
 use serde_json::{Value, json};
-use std::path::PathBuf;
 
+#[path = "fixture/overflow.rs"]
+mod overflow;
 #[path = "fixture_trace.rs"]
 mod trace;
+pub(crate) use overflow::{OverflowSource, validate_source as validate_overflow};
 
 #[derive(Resource)]
 struct Fixture {
+    root: Entity,
     original: Snapshot,
     views: [ViewId; 4],
     fields: Vec<Entity>,
     generation: u64,
+    overflow: overflow::Config,
 }
 
-/// Run the native docking acceptance fixture. Requires an explicit delivered skin,
-/// a NEW authenticated credential path and an artifact directory in environment
-/// variables `KEDRA_FIXTURE_ASSETS`, `KEDRA_QA_CREDENTIALS`, `KEDRA_QA_ARTIFACTS`.
-/// Never reads/writes personal preferences or project sources. F6 resets fixture
-/// setup, F7 toggles native draft fields, F12 exits; all docking uses product input.
-pub fn run() -> Result<(), String> {
-    let assets = environment("KEDRA_FIXTURE_ASSETS")?;
-    let credentials = environment("KEDRA_QA_CREDENTIALS")?;
-    let artifacts = environment("KEDRA_QA_ARTIFACTS")?;
-    let (assets, manifest) = kedra_assets::delivery::read_directory(&assets, "editor-desktop")?;
-    let mut app = App::new();
-    kedra_assets::register_source(
-        &mut app,
-        "editor",
-        assets
-            .to_str()
-            .ok_or("Fixture delivery root must be Unicode")?
-            .into(),
-        manifest,
-    );
-    app.add_plugins(
-        DefaultPlugins
-            .set(kedra_desktop::window_plugin())
-            .set(AssetPlugin {
-                use_asset_processor_override: Some(false),
-                watch_for_changes_override: Some(false),
-                ..default()
-            }),
-    )
-    .add_plugins((
-        kedra_app::KedraAppPlugin,
-        kedra_desktop::DesktopPlugin,
-        bevy::input_focus::tab_navigation::TabNavigationPlugin,
-        kedra_ui::authored::AuthoredUiPlugin,
-        kedra_scene::assets::PrefabPlugin {
-            catalog_path: "editor://fixtures/docking.prefabs.ron".into(),
-        },
-    ))
-    .init_resource::<crate::model::ProjectManager>()
-    .add_systems(Startup, create)
-    .add_systems(Update, (ready, keys).chain().before(super::tick));
-    crate::chrome::install(&mut app);
-    super::install(&mut app);
-    trace::install(&mut app);
-    app.world_mut()
-        .resource_mut::<kedra_ui::authored::components::UiMotion>()
-        .reduced = true;
+/// Add diagnostic bindings without constructing an application or selecting a scene.
+pub(crate) fn install(app: &mut App) {
+    trace::install(app);
+    for (name, source) in [
+        ("dock.reset", include_str!("fixture/reset.luau")),
+        ("dock.drafts", include_str!("fixture/drafts.luau")),
+        ("dock.overflow", include_str!("fixture/overflow.luau")),
+    ] {
+        let mut program = kedra_script::Program::sequence(
+            name,
+            format!(
+                "crates/kedra_editor/src/workspace/fixture/{}.luau",
+                name.trim_start_matches("dock.")
+            ),
+            source,
+            script_api,
+        );
+        // Like duplicate native-method registration, invalid embedded constants
+        // are a host programming error, not a recoverable project-source failure.
+        let helper = program.sources.insert(
+            "crates/kedra_editor/src/workspace/fixture/helpers.luau",
+            include_str!("fixture/helpers.luau"),
+        );
+        assert!(helper.is_ok(), "Invalid embedded dock helper: {helper:?}");
+        kedra_app::scripting::register(app, program);
+    }
     app.register_remote(
         "dock.state",
         "Read production docking state",
@@ -80,99 +63,94 @@ pub fn run() -> Result<(), String> {
         json!({}),
         describe,
     );
-    let endpoint = kedra_app::transport::enable(&mut app, 0, &credentials, &artifacts)?;
-    eprintln!(
-        "Dock fixture: {}; credentials: {}",
-        endpoint.url,
-        credentials.display()
-    );
-    eprintln!(
-        "F6 reset · F7 editable contents · F12 exit. No editor startup or project tools installed."
-    );
-    if app.run().is_error() {
-        Err("Dock fixture failed; see live diagnostics".into())
-    } else {
-        eprintln!("SUCCESS: dock fixture closed");
-        Ok(())
-    }
 }
-fn environment(key: &str) -> Result<PathBuf, String> {
-    std::env::var_os(key)
-        .map(PathBuf::from)
-        .ok_or_else(|| format!("Set {key} explicitly for the isolated fixture"))
-}
-fn create(world: &mut World) {
-    let root = kedra_desktop::replace(world, kedra_desktop::SurfaceKind::Editor, "Docking".into());
-    if let Some(window) = world.resource::<kedra_desktop::DesktopSurface>().window
-        && let Some(mut window) = world.get_mut::<Window>(window)
-    {
-        window.resolution.set(1200., 800.);
+
+fn script_api(lua: &Lua, scope: Scope, ctx: &lua::Table) -> lua::Result<()> {
+    kedra_app::scripting::install_app_api(lua, scope.clone(), ctx)?;
+    let dock = lua.create_table()?;
+    dock.set(
+        "state",
+        kedra_app::scripting::bind(lua, scope.clone(), "dock.fixture", false)?,
+    )?;
+    for (name, operation) in [
+        ("reset", reset_setup as fn(&mut World) -> Result<(), String>),
+        ("drafts", toggle_drafts),
+        ("overflow", overflow_setup),
+    ] {
+        let owner = scope.clone();
+        dock.set(
+            name,
+            lua.create_function(move |_, ()| {
+                owner.with_world(|world| operation(world).map_err(lua::Error::runtime))
+            })?,
+        )?;
     }
+    dock.set_readonly(true);
+    ctx.set("dock", dock)
+}
+pub(crate) fn bind(
+    world: &mut World,
+    canvas: &UiView,
+    window: Entity,
+    root: Entity,
+) -> Result<(), String> {
     world
-        .entity_mut(root)
-        .insert(kedra_ui::ScreenId("docking.fixture.v1".into()));
-}
-fn ready(world: &mut World) {
-    if world.contains_resource::<Fixture>() {
-        return;
+        .resource_mut::<kedra_ui::authored::components::UiMotion>()
+        .reduced = true;
+    let layout = world
+        .get::<kedra_ui::docking::scene::InitialLayout>(canvas.root)
+        .ok_or("Docking scene has no initial layout")?
+        .workspace()
+        .map_err(|e| e.to_string())?;
+    let host_id = *layout
+        .snapshot()
+        .hosts
+        .keys()
+        .next()
+        .ok_or("Missing docking host")?;
+    if layout.snapshot().hosts.len() != 1 || layout.snapshot().views.len() != 4 {
+        return Err("Dock acceptance requires one host and four views".into());
     }
-    let sources = world.resource::<kedra_scene::assets::PrefabSources>();
-    if let Some(error) = sources.error.clone() {
-        error!("Fixture sources: {error}");
-        world.write_message(AppExit::error());
-        return;
-    }
-    if !sources.ready() {
-        return;
-    }
-    if let Err(error) = mount(world) {
-        error!("Dock fixture mount: {error}");
-        world.write_message(AppExit::error());
-    }
-}
-fn mount(world: &mut World) -> Result<(), String> {
-    let desktop = world.resource::<kedra_desktop::DesktopSurface>().clone();
-    let window = desktop.window.ok_or("Fixture window missing")?;
-    let root = desktop.root.ok_or("Fixture root missing")?;
-    let frame = crate::views::mount(
+    let overflow = world
+        .get::<OverflowSource>(canvas.root)
+        .ok_or("Dock scene has no overflow specimen")?
+        .config()?;
+    overflow.validate_for(layout.snapshot())?;
+    overflow.check_content(world)?;
+    let descriptors = layout.snapshot().views.clone();
+    let views: [ViewId; 4] = descriptors
+        .keys()
+        .copied()
+        .collect::<Vec<_>>()
+        .try_into()
+        .map_err(|_| "Dock acceptance requires four views")?;
+    let frame = crate::views::mount_asset(
         world,
         root,
-        crate::views::document(0xc0600000000040008000000000000001),
+        "editor://prefabs/window-frame.prefab.ron",
         "fixture-frame",
     )?;
-    let caption = crate::views::mount(
+    let caption = crate::views::mount_asset(
         world,
         frame.root,
-        crate::views::document(0xc0900000000040008000000000000001),
+        "editor://prefabs/titlebar.prefab.ron",
         "window",
     )?;
     crate::chrome::bind_window(world, &caption, window, Some(frame.root))?;
-    let style = world
-        .resource::<AssetServer>()
-        .load("editor://fixtures/docking.css");
-    let host = world
-        .spawn((
-            Node::default(),
-            bevy_flair::style::components::ClassList::new_with_classes([
-                "dock-fixture",
-                "dock-host",
-            ]),
-            bevy_flair::style::components::Styled::new(style),
-            ChildOf(frame.root),
-            kedra_ui::ElementId::new("fixture.host"),
-        ))
-        .id();
+    let host = canvas.root;
+    world.entity_mut(host).insert(ChildOf(frame.root));
     bind_root(world, window, root)?;
-    let views: [ViewId; 4] = serde_json::from_value(json!([
-        "f0000000-0000-4000-8000-000000000001",
-        "f0000000-0000-4000-8000-000000000002",
-        "f0000000-0000-4000-8000-000000000003",
-        "f0000000-0000-4000-8000-000000000004"
-    ]))
-    .map_err(|e| e.to_string())?;
     let mut fields = Vec::new();
     world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
         state.skin = Some(load_skin(world)?);
+        let old_host = state.host;
+        let surface = state
+            .surfaces
+            .remove(&old_host)
+            .ok_or("Fixture host missing")?;
+        state.host = host_id;
+        state.surfaces.insert(host_id, surface);
+        state.layout = layout;
         let id = state.host;
         state
             .surfaces
@@ -186,70 +164,24 @@ fn mount(world: &mut World) -> Result<(), String> {
                 ChildOf(host),
             ))
             .id();
-        for (index, view) in views.iter().copied().enumerate() {
-            let name = ["A", "B", "C", "D"][index];
-            let placement = match index {
-                0 => Destination::EmptyHost(state.host),
-                1 => Destination::Edge {
-                    target: state
-                        .layout
-                        .snapshot()
-                        .location(views[0])
-                        .ok_or("A missing")?
-                        .0,
-                    edge: Edge::Right,
-                    fraction: 894. / 1194.,
-                },
-                2 => Destination::Edge {
-                    target: state
-                        .layout
-                        .snapshot()
-                        .location(views[1])
-                        .ok_or("B missing")?
-                        .0,
-                    edge: Edge::Bottom,
-                    fraction: 296. / 762.,
-                },
-                _ => Destination::Tabs {
-                    group: state
-                        .layout
-                        .snapshot()
-                        .location(views[2])
-                        .ok_or("C missing")?
-                        .0,
-                    index: 1,
-                },
-            };
-            state
-                .layout
-                .execute(Command::Open {
-                    id: view,
-                    view: View {
-                        kind: name.into(),
-                        restore_key: None,
-                    },
-                    destination: placement,
-                })
-                .map_err(|e| e.to_string())?;
-            let content = crate::views::mount(
-                world,
-                state.stash,
-                crate::views::document(0xd0900000000040008000000000000001),
-                &format!("fixture.{name}"),
-            )?;
+        for view in views.iter().copied() {
+            let descriptor = &descriptors[&view];
+            let name = &descriptor.kind;
+            let path = descriptor
+                .restore_key
+                .as_deref()
+                .ok_or("Missing content source path")?;
+            let content =
+                crate::views::mount_asset(world, state.stash, path, &format!("fixture.{name}"))?;
             let text = content.element("identity").map_err(|e| e.to_string())?;
             world
                 .get_mut::<Text>(text)
                 .ok_or("Identity text missing")?
-                .0 = name.into();
+                .0 = name.clone();
             fields.push(content.element("draft").map_err(|e| e.to_string())?);
             state.renderer.register(view, content.root)?;
             state.titles.insert(view, format!("Panel {name}"));
         }
-        state
-            .layout
-            .execute(Command::Activate(views[2]))
-            .map_err(|e| e.to_string())?;
         state.focused_group = state
             .layout
             .snapshot()
@@ -263,95 +195,74 @@ fn mount(world: &mut World) -> Result<(), String> {
         .snapshot()
         .clone();
     world.insert_resource(Fixture {
+        root,
         original,
         views,
         fields,
         generation: 1,
+        overflow,
     });
     eprintln!("READY: dock fixture v1, A/B/C/D, production input/preview/popover/native hosts");
     Ok(())
 }
-fn keys(world: &mut World) {
-    if !world.contains_resource::<Fixture>() {
-        return;
+
+pub(crate) fn retire_binding(world: &mut World, root: Entity) {
+    if world
+        .get_resource::<Fixture>()
+        .is_some_and(|fixture| fixture.root == root)
+    {
+        world.remove_resource::<Fixture>();
     }
-    let keys = world.resource::<ButtonInput<KeyCode>>();
-    let reset = keys.just_pressed(KeyCode::F6);
-    let edit = keys.just_pressed(KeyCode::F7);
-    let overflow = keys.just_pressed(KeyCode::F8);
-    let exit = keys.just_pressed(KeyCode::F12);
-    if exit {
-        world.write_message(AppExit::Success);
-        return;
+    if world
+        .get_resource::<EditorWorkspace>()
+        .is_some_and(|workspace| workspace.root == root)
+    {
+        world.remove_resource::<EditorWorkspace>();
     }
-    if reset && let Err(error) = reset_setup(world) {
-        error!("Fixture reset: {error}");
-        world.write_message(AppExit::error());
+}
+
+#[cfg(test)]
+pub(crate) fn has_binding(world: &World) -> bool {
+    world.contains_resource::<Fixture>()
+}
+#[cfg(test)]
+pub(crate) fn binding_entity(world: &World) -> Option<Entity> {
+    world.resource_entity::<Fixture>()
+}
+fn require_binding(world: &World) -> Result<(), String> {
+    let fixture = world
+        .get_resource::<Fixture>()
+        .ok_or("Dock diagnostic scene is not bound")?;
+    let workspace = world
+        .get_resource::<EditorWorkspace>()
+        .ok_or("Dock workspace is not bound")?;
+    if workspace.root != fixture.root
+        || !world.entities().contains(fixture.root)
+        || world.get::<Window>(workspace.window).is_none()
+    {
+        return Err("Dock diagnostic binding was retired".into());
     }
-    if edit {
-        let fields = world.resource::<Fixture>().fields.clone();
-        for field in fields {
-            if let Some(parent) = world.get::<ChildOf>(field).map(ChildOf::parent) {
-                let hidden = world
-                    .get::<bevy_flair::style::components::ClassList>(parent)
-                    .is_some_and(|c| c.contains("hidden"));
-                kedra_ui::docking::class(world, parent, "hidden", !hidden);
-            }
+    Ok(())
+}
+
+fn toggle_drafts(world: &mut World) -> Result<(), String> {
+    require_binding(world)?;
+    let fields = world.resource::<Fixture>().fields.clone();
+    for field in fields {
+        if let Some(parent) = world.get::<ChildOf>(field).map(ChildOf::parent) {
+            let hidden = world
+                .get::<bevy_flair::style::components::ClassList>(parent)
+                .is_some_and(|c| c.contains("hidden"));
+            kedra_ui::docking::class(world, parent, "hidden", !hidden);
         }
     }
-    if overflow && let Err(error) = overflow_setup(world) {
-        error!("Fixture overflow: {error}");
-        world.write_message(AppExit::error());
-    }
+    Ok(())
 }
 fn overflow_setup(world: &mut World) -> Result<(), String> {
-    let view: ViewId = serde_json::from_value(json!("f0000000-0000-4000-8000-000000000005"))
-        .map_err(|e| e.to_string())?;
-    let b = world.resource::<Fixture>().views[1];
-    world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
-        if state.layout.snapshot().views.contains_key(&view) {
-            return Ok(());
-        }
-        let group = state
-            .layout
-            .snapshot()
-            .location(b)
-            .ok_or("Fixture B missing")?
-            .0;
-        state
-            .layout
-            .execute(Command::Open {
-                id: view,
-                view: View {
-                    kind: "E".into(),
-                    restore_key: None,
-                },
-                destination: Destination::Tabs { group, index: 1 },
-            })
-            .map_err(|e| e.to_string())?;
-        state.titles.insert(
-            view,
-            "Panel with a very long title that does not fit its tab".into(),
-        );
-        if state.renderer.content(view).is_none() {
-            let content = crate::views::mount(
-                world,
-                state.stash,
-                crate::views::document(0xd0900000000040008000000000000001),
-                "fixture.E",
-            )?;
-            let identity = content.element("identity").map_err(|e| e.to_string())?;
-            world
-                .get_mut::<Text>(identity)
-                .ok_or("Fixture E identity missing")?
-                .0 = "E".into();
-            state.renderer.register(view, content.root)?;
-        }
-        state.focused_group = None;
-        redraw(world, &mut state)
-    })
+    overflow::apply(world)
 }
 fn reset_setup(world: &mut World) -> Result<(), String> {
+    require_binding(world)?;
     let original = world.resource::<Fixture>().original.clone();
     let fields = world.resource::<Fixture>().fields.clone();
     world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
@@ -385,6 +296,9 @@ fn reset_setup(world: &mut World) -> Result<(), String> {
     Ok(())
 }
 fn describe(_: In<Option<Value>>, world: &mut World) -> bevy_remote::BrpResult {
+    if let Err(error) = require_binding(world) {
+        return Ok(json!({"ready":false,"error":error}));
+    }
     let Some(fixture) = world.get_resource::<Fixture>() else {
         return Ok(json!({"ready":false}));
     };
@@ -395,4 +309,44 @@ fn describe(_: In<Option<Value>>, world: &mut World) -> bevy_remote::BrpResult {
     Ok(
         json!({"ready":true,"feedback_ready":state.feedback.as_ref().is_none_or(|feedback|feedback.ready(world)),"schema":1,"id":"docking.fixture.v1","generation":fixture.generation,"views":fixture.views,"host":state.surfaces[&state.host].root.to_bits(),"window":state.window.to_bits(),"project_tools":false,"preferences":false,"pending":state.pending.is_some(),"dragging":matches!(state.gesture,Some(input::Gesture::Drag{..})),"fields":fixture.fields.iter().map(|field|field.to_bits()).collect::<Vec<_>>(),"renderer":renderer}),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn diagnostic_capabilities_reject_unbound_and_retired_owners_without_mutation()
+    -> Result<(), String> {
+        let mut world = World::new();
+        assert!(reset_setup(&mut world).is_err());
+        assert!(toggle_drafts(&mut world).is_err());
+        assert!(overflow_setup(&mut world).is_err());
+        let window = world.spawn(Window::default()).id();
+        let root = world.spawn(Node::default()).id();
+        bind_root(&mut world, window, root)?;
+        let original = world
+            .resource::<EditorWorkspace>()
+            .layout
+            .snapshot()
+            .clone();
+        world.insert_resource(Fixture {
+            root,
+            original: original.clone(),
+            views: [ViewId::new(), ViewId::new(), ViewId::new(), ViewId::new()],
+            fields: vec![],
+            generation: 1,
+            overflow: overflow::test_source()?.config()?,
+        });
+        world.despawn(root);
+        assert!(reset_setup(&mut world).is_err());
+        assert!(toggle_drafts(&mut world).is_err());
+        assert!(overflow_setup(&mut world).is_err());
+        assert_eq!(world.resource::<Fixture>().generation, 1);
+        assert!(world.resource::<EditorWorkspace>().layout.snapshot() == &original);
+        retire_binding(&mut world, root);
+        assert!(!has_binding(&world));
+        assert!(!world.contains_resource::<EditorWorkspace>());
+        assert!(world.entities().contains(window));
+        Ok(())
+    }
 }

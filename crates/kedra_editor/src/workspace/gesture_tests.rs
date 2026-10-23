@@ -1,9 +1,6 @@
 //! Deterministic production input tests. Measured rectangles are synthetic, not frames.
-use super::{
-    regression_tests::{box_at, setup},
-    *,
-};
-use crate::workspace::test_support::{sources, step, visible};
+use super::*;
+use crate::workspace::test_support::{box_at, setup, sources, step, visible};
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 fn point(world: &mut World, window: Entity, position: Vec2) {
@@ -337,8 +334,8 @@ fn shift_drag_escape_and_focus_loss_cancel_without_publication() -> TestResult {
     world.get_mut::<Window>(window).ok_or("window")?.focused = false;
     step(world, Vec2::new(50., 16.), None);
     assert!(world.resource::<EditorWorkspace>().gesture.is_none());
-    // The native failure trace loses focus for one frame while the injected
-    // button stays down. Regaining focus must not resurrect that cancelled drag.
+    // Regaining focus while the button remains down must not resurrect a
+    // cancelled drag; another press is required to begin a new gesture.
     assert!(
         world
             .resource::<ButtonInput<MouseButton>>()
@@ -497,6 +494,29 @@ fn resize_pointer_preview_escape_release_keyboard_and_preferred_reset() -> TestR
         .layout
         .snapshot()
         .clone();
+    // A native scrollbar beside the divider owns presses in its visible bounds,
+    // even where the divider's 3px hit slop overlaps it.
+    let scrollbar = world
+        .spawn((
+            bevy::ui::Node::default(),
+            bevy::ui_widgets::Scrollbar::new(
+                root,
+                bevy::ui_widgets::ControlOrientation::Vertical,
+                24.,
+            ),
+            ChildOf(root),
+        ))
+        .id();
+    box_at(world, scrollbar, Vec2::new(396., 300.), Vec2::new(4., 100.));
+    visible(world);
+    step(world, Vec2::new(397., 300.), Some(true));
+    assert!(world.resource::<EditorWorkspace>().gesture.is_none());
+    assert_eq!(
+        world.resource::<EditorWorkspace>().layout.snapshot(),
+        &before
+    );
+    step(world, Vec2::new(397., 300.), Some(false));
+    world.despawn(scrollbar);
     step(world, Vec2::new(400., 300.), Some(true));
     assert!(matches!(
         world.resource::<EditorWorkspace>().gesture,

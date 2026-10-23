@@ -1,0 +1,89 @@
+name: Native UI corpus
+
+on:
+  workflow_dispatch:
+    inputs:
+      policy:
+        description: Checked-in reviewed policy path (the default macOS policy intentionally blocks Linux)
+        type: string
+        default: docs/ui/corpus/text-policy.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-corpus-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: '4'
+  CARGO_INCREMENTAL: '0'
+  CARGO_PROFILE_DEV_DEBUG: line-tables-only
+  CARGO_PROFILE_TEST_DEBUG: line-tables-only
+
+jobs:
+  corpus:
+    name: Linux buttons and fields (profile review pending)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      WGPU_BACKEND: vulkan
+      WGPU_ADAPTER_NAME: llvmpipe
+      WINIT_UNIX_BACKEND: x11
+      UI_POLICY: ${{ inputs.policy }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Native prerequisites and software Vulkan
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev xvfb xauth openbox mesa-vulkan-drivers vulkan-tools fonts-noto-core
+      - name: Resolve pinned Rust toolchain
+        run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: native-ui-v1-${{ runner.os }}-${{ runner.arch }}
+          env-vars: ImageOS ImageVersion
+          workspaces: . -> target
+          cache-workspace-crates: false
+          cache-all-crates: false
+          cache-bin: false
+          cache-on-failure: true
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Record actual software environment
+        run: |
+          mkdir -p target/test/environment
+          dpkg-query -W mesa-vulkan-drivers libvulkan1 fonts-noto-core libfontconfig1 > target/test/environment/packages.txt
+          vulkaninfo --summary > target/test/environment/vulkan.txt
+          fingerprint=$(sha256sum target/test/environment/packages.txt | cut -d ' ' -f 1)
+          echo "KEDRA_TEST_ENVIRONMENT=$fingerprint" >> "$GITHUB_ENV"
+      - name: Compare production buttons and fields in two native sessions
+        run: |
+          xvfb-run -a -s '-screen 0 1920x1200x24 -dpi 96' bash <<'SH'
+          set -euo pipefail
+          openbox > target/test/environment/openbox-corpus.log 2>&1 &
+          wm=$!
+          trap 'kill "$wm" 2>/dev/null || true' EXIT
+          cargo xtask test -- components --policy "$UI_POLICY" --output target/test/ui-ci
+          SH
+      - name: Acceptance boundary
+        if: ${{ always() }}
+        run: |
+          {
+            echo 'Native capture/stability is not design acceptance or physical OS-input certification.'
+            echo 'This runs the same project-owned Rust components scenario as local QA; no QA-driver self-tests.'
+            echo 'Active scope: 22 button/text-field cases. The checked-in macOS policy cannot approve Linux.'
+            echo 'Until a Linux policy is explicitly reviewed, this dispatched workflow must fail closed; it is not a required PR gate.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain public reports (never session credentials or private state)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-ui-linux
+          path: |
+            target/test/ui-ci/public/**
+            target/test/environment/**
+          if-no-files-found: warn
+          retention-days: 7

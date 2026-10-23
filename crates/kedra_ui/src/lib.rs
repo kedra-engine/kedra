@@ -6,6 +6,8 @@ pub mod docking;
 pub mod fields;
 pub mod native_input;
 pub mod styles;
+#[cfg(all(feature = "text-capture", debug_assertions))]
+pub mod text_capture;
 mod text_fit;
 pub mod tooltip;
 pub mod window_chrome;
@@ -24,7 +26,8 @@ impl ElementId {
 
 /// Application-owned screen identity. Removing its root retires its descendants,
 /// including scenes whose assets have not finished loading.
-#[derive(Component, Clone, Debug, PartialEq, Eq)]
+#[derive(Component, Clone, Debug, PartialEq, Eq, Reflect)]
+#[reflect(Component)]
 pub struct ScreenId(pub String);
 
 /// Axis-aligned bounds in Bevy logical UI coordinates, including native UI

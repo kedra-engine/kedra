@@ -51,8 +51,10 @@ The repository currently provides:
 - Asset processing and verified deliveries consumed through shared runtime loaders.
 - Shared CLI tooling to build, verify, package and explicitly launch standalone
   desktop applications without an installed editor; see [distribution](docs/distribution.md).
-- Opt-in remote application observation, input injection and renderer captures.
-- Rust unit/integration tests, headless QA-tool tests and local native UI fixtures.
+- Debug-only, explicitly enabled remote observation, input injection and renderer captures.
+- Shared opt-in Luau behaviors, finite sequences and standard admitted-source modules
+  with host-owned API scopes. Native QA uses sequences under external Rust supervision.
+- Rust unit/integration tests and local native UI scenarios with real frames/input.
 
 **Not yet implemented:** visual scene/document editing, document Save in the
 editor, project code execution or a complete game runtime/Play workflow.
@@ -60,10 +62,23 @@ The next milestone combines scene/prefab editing, an editable component inspecto
 and source-owned Save. In-application Play follows, then project-defined inspectors
 and editor windows. See the [roadmap](docs/roadmap.md) for scope and completion criteria.
 
-Native interaction and capture reliability still have unresolved intermittent
-failures. Initial GitHub Actions validation passed; the full real-window visual/interaction
-corpus requires separate local execution. A passing headless check is not
-native UI acceptance. See [testing](docs/testing.md) and
+The button/text-field screenshot workflow uses shared Rust tooling and ordinary
+project-owned scenarios through `cargo kedra test` / `cargo xtask test -- …`. The reviewed
+component policy pins the explicitly approved dependency graph; changed graphs
+require reviewed lock approval. Feature checks run separately
+through Rust with isolated state and real native input/frames. See the
+[testing guide](docs/testing.md). Screenshot coverage is restricted to 22 kit
+button/input cases; other native scenarios check behavior without image goldens.
+The additional `luau` feature scenario runs an editor-owned script against real
+startup state and UI; see [scripting](crates/kedra_script/README.md). Runtime support
+does not authorize automatic project-code execution or implement Play.
+The independent native application and project-based scenarios share one canonical
+[test project](tests/fixtures/test_project/README.md); its ordinary game executable
+has runtime-only dependencies and debug-only remote diagnostics.
+
+Native interaction and capture reliability have unresolved intermittent
+failures. The kit screenshot corpus and native behavior checks require separate native execution.
+A passing headless check is not native UI acceptance. See [testing](docs/testing.md) and
 [native docking checks](docs/ui/docking-tests.md).
 
 Planned game runtime targets include Linux, Windows and macOS on desktop, web,
@@ -91,9 +106,9 @@ commands.
 ## Contribute
 
 Repository: <https://github.com/kedra-engine/kedra>.
-GitHub Actions runs on Linux, Windows and macOS with fresh coverage. Warm-cache
-measurements and protected-main PR acceptance are verified for the CI baseline;
-see [CI](docs/ci.md). Native distribution remains under
+GitHub Actions is configured for Linux, Windows and macOS validation with fresh
+coverage for Rust-affecting changes. Current hosted results and live branch
+protections require external verification; see [CI](docs/ci.md). Native distribution remains under
 [implementation and acceptance](docs/distribution.md).
 
 To run the repository's Rust checks:
@@ -104,8 +119,9 @@ cargo xtask check
 
 The pinned toolchain installs through rustup. The first run needs network access
 to fetch dependencies. Rust checks require no private infrastructure, credentials,
-Python or AI subscription. Python is used for the separate QA-tool tests and
-opt-in native fixtures. Discuss substantial changes before implementation; see
+Python or AI subscription. Opt-in native QA uses ordinary Rust scenarios, without
+separate QA-driver or report-generator self-tests.
+Discuss substantial changes before implementation; see
 [contributing](CONTRIBUTING.md) and the [architecture contract](docs/architecture.md).
 
 ## Project guides

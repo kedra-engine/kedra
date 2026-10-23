@@ -11,7 +11,7 @@ mod camera_tests;
 #[cfg(test)]
 mod canvas_tests;
 #[cfg(test)]
-pub(crate) mod control_tests;
+mod control_tests;
 mod controls;
 mod gpu;
 mod lifecycle;
@@ -24,6 +24,8 @@ mod selection;
 #[cfg(test)]
 mod selection_tests;
 mod stage;
+#[cfg(test)]
+pub(crate) mod test_support;
 #[cfg(test)]
 mod tests;
 mod ui_marker;
@@ -88,10 +90,10 @@ impl View {
         id: ViewId,
         title: &str,
     ) -> Result<Self, String> {
-        let view = crate::views::mount(
+        let view = crate::views::mount_asset(
             world,
             parent,
-            crate::views::document(0xe5f0af0978be48c88cc1ddd65951350c),
+            "editor://prefabs/source-document.prefab.ron",
             &format!("panel/{id:?}"),
         )?;
         crate::workspace::bind_scene_controls(world, &view, id)?;
@@ -391,6 +393,7 @@ impl View {
             self.message(world, &error, true);
         }
     }
+    #[cfg(any(debug_assertions, test))]
     pub(crate) fn snapshot(&self, world: &World) -> serde_json::Value {
         let Some(camera) = self
             .projection

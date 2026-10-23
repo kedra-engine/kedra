@@ -157,10 +157,10 @@ impl Panel {
             .collect();
         paths.reverse();
         for (index, path) in paths.into_iter().enumerate() {
-            let row = crate::views::mount(
+            let row = crate::views::mount_asset(
                 world,
                 parent,
-                crate::views::document(0xafbe6799efde42319e46e7d3ecfe626b),
+                "editor://prefabs/browser-crumb.prefab.ron",
                 &format!("browser/{id:?}/crumb/{index}"),
             )?;
             world
@@ -192,10 +192,10 @@ impl Panel {
         let mut order = Vec::new();
         for (index, (path, depth)) in desired.iter().enumerate() {
             if !self.folders.iter().any(|(p, _)| p == path) {
-                let row = crate::views::mount(
+                let row = crate::views::mount_asset(
                     world,
                     parent,
-                    crate::views::document(0x36cb6fa882bd4e418ad446972848b7ee),
+                    "editor://prefabs/browser-folder.prefab.ron",
                     &format!("browser/{id:?}/folder/{}", uuid::Uuid::new_v4()),
                 )?;
                 self.folders.push((path.clone(), row));

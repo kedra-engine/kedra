@@ -1,0 +1,26 @@
+(
+ version:1,id:"db100000-0000-4000-8000-000000000001",kind:Scene,title:"Independent docking projection",root:"db110000-0000-4000-8000-000000000001",base:None,
+ nodes:[(id:"db110000-0000-4000-8000-000000000001",name:"Projection host",parent:None,components:{
+  "ui.layout":(version:1,value:(node:(width:Percent(100.0),height:Percent(100.0)))),
+  "ui.screen":(version:1,value:("docking.lab")),
+  "ui.classes":(version:1,value:(names:["theme","dock-host"])),
+  "ui.stylesheet":(version:1,value:(asset:Path("editor://styles/workbench.css"))),
+  "ui.docking":(version:1,value:(snapshot:r#"{
+   "version":1,
+   "hosts":{"fa000000-0000-4000-8000-000000000001":{"root":"fb000000-0000-4000-8000-000000000001","maximized":null}},
+   "nodes":{
+    "fb000000-0000-4000-8000-000000000001":{"Split":{"axis":"Horizontal","fraction":0.25,"first":"fb000000-0000-4000-8000-000000000002","second":"fb000000-0000-4000-8000-000000000003"}},
+    "fb000000-0000-4000-8000-000000000002":{"Group":{"tabs":["f0000000-0000-4000-8000-000000000001"],"active":"f0000000-0000-4000-8000-000000000001"}},
+    "fb000000-0000-4000-8000-000000000003":{"Split":{"axis":"Vertical","fraction":0.6,"first":"fb000000-0000-4000-8000-000000000004","second":"fb000000-0000-4000-8000-000000000005"}},
+    "fb000000-0000-4000-8000-000000000004":{"Group":{"tabs":["f0000000-0000-4000-8000-000000000002"],"active":"f0000000-0000-4000-8000-000000000002"}},
+    "fb000000-0000-4000-8000-000000000005":{"Group":{"tabs":["f0000000-0000-4000-8000-000000000003","f0000000-0000-4000-8000-000000000004"],"active":"f0000000-0000-4000-8000-000000000003"}}
+   },
+   "views":{
+    "f0000000-0000-4000-8000-000000000001":{"kind":"A","restore_key":"editor://fixtures/projection-panel.prefab.ron"},
+    "f0000000-0000-4000-8000-000000000002":{"kind":"B","restore_key":"editor://fixtures/projection-panel.prefab.ron"},
+    "f0000000-0000-4000-8000-000000000003":{"kind":"C","restore_key":"editor://fixtures/projection-panel.prefab.ron"},
+    "f0000000-0000-4000-8000-000000000004":{"kind":"D","restore_key":"editor://fixtures/projection-panel.prefab.ron"}
+   },"hidden":{}
+  }"#)),
+ })],instances:[],overrides:[],ports:{},
+)

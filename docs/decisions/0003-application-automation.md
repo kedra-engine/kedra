@@ -39,6 +39,11 @@ not an unrestricted development/debug API.
 There is no listener by default. Explicit enablement binds IPv4 loopback, requires
 a per-process random bearer capability and rejects browser Origin headers. Tokens
 are published to a new credential file, never command arguments or ordinary logs.
+Enablement returns a pending endpoint. Non-clobber publication follows the first
+main-world BRP request/cleanup cycle and acknowledged HTTP runtime/listener setup;
+setup or publication failure requests an application error exit. This is not native
+frame or feature readiness. Cleanup requires successful publication by this instance
+and matching session/token; a destination that prevented publication is not owned.
 Unix temporary files use owner-only permissions. On Windows the host must provide
 a directory protected by an appropriate ACL; this has not been natively certified.
 The token grants the application's existing user authority, not an OS sandbox.

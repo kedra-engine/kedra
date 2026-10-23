@@ -1,15 +1,15 @@
 # ADR 0026: Development-stage editor self-update and safe restart
 
-- Status: MVP scope and inline implementation approved; native acceptance pending
+- Status: bounded mechanism and editor integration implemented; native acceptance pending
 - Date: 2026-10-21
 - Depends on: [desktop distribution](0023-desktop-distribution.md),
   [document sessions](0012-document-sessions-and-selection.md)
 
 ## Intent and boundaries
 
-Prepare editor self-update for Windows x64, Linux x64 and macOS Apple Silicon
-without changing the active release work. Discovery, download, verification,
-installation and restart are distinct operations. Download requires an explicit
+Editor self-update targets Windows x64, Linux x64 and macOS Apple Silicon.
+Discovery, download, verification, installation and restart are distinct operations.
+Download requires an explicit
 click; installation/restart requires another explicit click. Neither discovery
 nor completed download authorizes installation on exit or automatic restart.
 
@@ -296,7 +296,8 @@ infrastructure. Select automatic or manual capability per primary platform befor
 implementation; manual fallback is an accepted outcome, not a backend-selection
 blocker. Do not resolve poor fit by weakening handled-error safety or claiming
 that a downloaded package was automatically installed.
-The extraction moves existing dependencies rather than admitting another backend.
+`kedra_update` owns these admitted mechanism dependencies; the editor owns host
+configuration and lifecycle authorization, not a second update backend.
 Dependency graph/advisory/license checks remain required on the final revision.
 
 ## Verification and acceptance
@@ -331,10 +332,10 @@ depend on live GitHub, personal keys, Figma, AI services or a public release.
 
 ## Implementation boundary
 
-The owner accepted the restricted MVP, portable exclusion and per-platform manual
-fallback. Backend choices are implementer decisions within that boundary, not
-authorization to expand it. Reconcile release metadata after active CI/CD work
-finishes; report actual tests and native acceptance separately from implementation.
+The restricted MVP excludes portable installations and permits Windows/Linux
+manual installation, but requires explicit automatic macOS replacement/relaunch.
+Backend choices must stay within that boundary. Release metadata must match the
+published protocol; implementation does not establish native acceptance.
 
 [packager-updater]: https://github.com/crabnebula-dev/cargo-packager/blob/5c1824ba8022401e9ef0de36ff1a12c5acf60237/crates/updater/src/lib.rs
 [self-update]: https://github.com/jaemk/self_update

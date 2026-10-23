@@ -1,6 +1,6 @@
 # Desktop application distribution
 
-The public `v0.1.0` prerelease has a known macOS bundle-signature defect; local
+The `v0.1.0` prerelease macOS asset has a known bundle-signature defect; local
 re-signing is required for that asset. New macOS packages default to complete
 ad-hoc bundle signing, not a linker-only executable signature. They are still not
 Developer ID-signed or notarized; Windows packages remain unsigned. Signature
@@ -136,7 +136,7 @@ squashfuse sources, the upstream libfuse patch, full native license notices,
 Alpine static objects/headers and recipient rebuild instructions. These materials
 are embedded in both Linux packages, not just linked from a changing upstream
 branch. Moving upstream downloads that no longer match fail closed. The supplied
-standard Docker/Meson/Make relink path is tested with modified LGPL library code;
+standard Docker/Meson/Make recipient-relink check modifies LGPL library code;
 it does not claim hermetic or bit-identical compilation. This extension remains
 under native acceptance until the actual hosted relink and packaged-input checks
 have passed; no release/license-completeness claim follows from its source alone.
@@ -293,9 +293,9 @@ it is documented for published releases, not draft discovery. Asset transport
 remains the maintained GitHub CLI, with verified server sizes/digests before the
 ID-based update clears `draft`.
 
-The unsigned `v0.1.0` prerelease is publicly available. Its native package matrix
-passed, and publication was completed through an authorized manual recovery.
-The corrected automatic draft-to-published path still needs hosted acceptance;
-manual recovery is not evidence that the automated publisher succeeded.
+Current public availability of `v0.1.0` requires external verification. The
+automatic draft-to-published path and current native package, installed-resource
+and recipient-relink acceptance remain unverified; workflow source alone does
+not establish successful publication or license-completeness acceptance.
 See [ADR 0023](decisions/0023-desktop-distribution.md) for ownership/security and
 license obligations.

@@ -1,0 +1,32 @@
+(
+    version: 1,
+    id: "7e570000-0000-4000-8000-000000000001",
+    kind: Prefab,
+    title: "Textured cuboid",
+    root: "7e570000-0000-4000-8000-00000000000b",
+    base: None,
+    nodes: [
+        (
+            id: "7e570000-0000-4000-8000-00000000000b",
+            name: "Textured cuboid",
+            parent: None,
+            components: {
+                "scene.primitive": (
+                    version: 1,
+                    value: Cuboid(size:(2.0,2.0,2.0)),
+                ),
+                "scene.surface": (
+                    version: 1,
+                    value: (color:Srgba((red:0.25,green:0.55,blue:0.9,alpha:1.0)),texture:Some(Path("game://checker.png")),metallic:0.1,roughness:0.5),
+                ),
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(0.0,1.0,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+    ],
+    instances: [],
+    overrides: [],
+    ports: {},
+)

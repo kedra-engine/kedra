@@ -1,8 +1,10 @@
 # ADR 0011: Universal reflected inspector and specialized editors
 
 Status: proposed for owner review. This refines the inspector boundary in
-[ADR 0009](0009-property-editing-and-inspector.md). No inspector, registration API
-or additional component-authoring support is implemented by this decision.
+[ADR 0009](0009-property-editing-and-inspector.md). The existing `kedra_inspector`
+crate and editor panel provide the [read-only profile](../ui/inspector.md).
+Full editable bindings, source settlement and additional component-authoring
+capabilities remain proposed; read-only implementation does not accept that plan.
 
 ## Context
 
@@ -162,7 +164,7 @@ of whether its generic or specialized editor is already available.
 | Owner | Responsibility |
 | --- | --- |
 | `kedra_ui::fields` | Shared field controls and native interaction; no reflection-based document authority |
-| Planned `kedra_inspector` | Default reflected presentation, editor selection/composition and consumer-neutral proposed edits |
+| Existing `kedra_inspector` | Default reflected presentation and editor selection/composition; consumer-neutral edits remain proposed |
 | Planned `kedra_authoring::properties` | Reflected source bindings, candidates, policy checks and source edit sessions |
 | `kedra_editor` source adapter | Connect inspector bindings to authoring sessions and document/selection lifecycle |
 
@@ -174,15 +176,16 @@ it is initially a coherent editor module, not another speculative crate.
 Keep the consumer boundary small: value/capabilities, stable binding/token and edit
 requests/results. It is not a general object model, command bus, reflection system,
 service locator or plugin runtime. No additional inspector-core/value-schema crate
-is justified by this split. Respect ADR 0009's delayed crate creation requirement.
+is justified by this split. The existing crate has concrete panel/value consumers.
 
 ## Delivery order and verification
 
 The generic editor comes before convenient component specializations:
 
 1. Complete the shared primitive field contracts and native-fit prerequisites.
-2. Introduce the inspector with a default editor for a reflected fixture containing
-   nested strings, numbers and booleans. No Kedra component-specific drawer.
+2. Extend the existing read-only inspector with editable default fields for a
+   reflected fixture containing nested strings, numbers and booleans. No Kedra
+   component-specific drawer.
 3. Bind it to an actual Kedra UI source, proving the same discovery/field path works
    without embedding its schema in the inspector. Add other reflected shapes in
    focused increments, with explicit unsupported states until each is complete.

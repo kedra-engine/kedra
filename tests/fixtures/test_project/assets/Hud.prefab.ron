@@ -1,0 +1,166 @@
+(
+    version: 1,
+    id: "7e570000-0000-4000-8000-000000000004",
+    kind: Prefab,
+    title: "Passive UI fixture",
+    root: "7e570000-0000-4000-8000-00000000000e",
+    base: None,
+    nodes: [
+        (
+            id: "7e570000-0000-4000-8000-00000000000e",
+            name: "Passive UI fixture",
+            parent: None,
+            components: {
+                "ui.classes": (
+                    version: 1,
+                    value: (names:["hud"]),
+                ),
+                "ui.layout": (
+                    version: 1,
+                    value: (node:()),
+                ),
+                "ui.stylesheet": (
+                    version: 1,
+                    value: (asset:Path("game://preview.css")),
+                ),
+            },
+        ),
+        (
+            id: "7e570000-0000-4000-8000-0000000000c8",
+            name: "title",
+            parent: Some((
+                instances: [],
+                node: "7e570000-0000-4000-8000-00000000000e",
+            )),
+            components: {
+                "ui.caption": (
+                    version: 1,
+                    value: (text:"SCENE / SYSTEM CHECK",justify:Left,wrap:false),
+                ),
+                "ui.classes": (
+                    version: 1,
+                    value: (names:["hud-title"]),
+                ),
+                "ui.id": (
+                    version: 1,
+                    value: ("title"),
+                ),
+                "ui.layout": (
+                    version: 1,
+                    value: (node:()),
+                ),
+            },
+        ),
+        (
+            id: "7e570000-0000-4000-8000-0000000000c9",
+            name: "note",
+            parent: Some((
+                instances: [],
+                node: "7e570000-0000-4000-8000-00000000000e",
+            )),
+            components: {
+                "ui.caption": (
+                    version: 1,
+                    value: (text:"Passive UI · no commands or text focus",justify:Left,wrap:false),
+                ),
+                "ui.classes": (
+                    version: 1,
+                    value: (names:["hud-note"]),
+                ),
+                "ui.id": (
+                    version: 1,
+                    value: ("note"),
+                ),
+                "ui.layout": (
+                    version: 1,
+                    value: (node:()),
+                ),
+            },
+        ),
+        (
+            id: "7e570000-0000-4000-8000-0000000000ca",
+            name: "button",
+            parent: Some((
+                instances: [],
+                node: "7e570000-0000-4000-8000-00000000000e",
+            )),
+            components: {
+                "ui.button": (
+                    version: 1,
+                    value: (),
+                ),
+                "ui.caption": (
+                    version: 1,
+                    value: (text:"Launch — inert in preview",justify:Left,wrap:false),
+                ),
+                "ui.classes": (
+                    version: 1,
+                    value: (names:["hud-button"]),
+                ),
+                "ui.id": (
+                    version: 1,
+                    value: ("button"),
+                ),
+                "ui.layout": (
+                    version: 1,
+                    value: (node:()),
+                ),
+            },
+        ),
+        (
+            id: "7e570000-0000-4000-8000-0000000000cb",
+            name: "field",
+            parent: Some((
+                instances: [],
+                node: "7e570000-0000-4000-8000-00000000000e",
+            )),
+            components: {
+                "ui.caption": (
+                    version: 1,
+                    value: (text:"Autofocus must stay in the editor",justify:Left,wrap:false),
+                ),
+                "ui.classes": (
+                    version: 1,
+                    value: (names:["hud-field"]),
+                ),
+                "ui.editable": (
+                    version: 1,
+                    value: (autofocus:true,select_all:true),
+                ),
+                "ui.id": (
+                    version: 1,
+                    value: ("field"),
+                ),
+                "ui.layout": (
+                    version: 1,
+                    value: (node:()),
+                ),
+            },
+        ),
+        (
+            id: "7e570000-0000-4000-8000-0000000000cc",
+            name: "Image inside UI",
+            parent: Some((
+                instances: [],
+                node: "7e570000-0000-4000-8000-00000000000e",
+            )),
+            components: {
+                "ui.classes": (
+                    version: 1,
+                    value: (names:["hud-picture"]),
+                ),
+                "ui.image": (
+                    version: 1,
+                    value: (variants:[(density:1.0,image:Path("game://checker.png"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))),
+                ),
+                "ui.layout": (
+                    version: 1,
+                    value: (node:()),
+                ),
+            },
+        ),
+    ],
+    instances: [],
+    overrides: [],
+    ports: {},
+)

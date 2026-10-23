@@ -60,11 +60,12 @@ including injected input, rather than assuming a changed hardware cursor cache.
 ## Editor compositions
 
 Native rows are 32 logical pixels. Startup/general windows use centered captions;
-Boot and Loading are fixed-size and close-only. Projects remains resizable.
+Loading/failure surfaces are fixed-size and close-only. Projects remains resizable.
+Boot preparation is windowless and creates no splash header.
 The editor embeds project, transport and command areas directly into its row.
 Unsupported Play, Save, Build and global search are disabled. Panel/reopen and
 default-layout commands retain `workspace/panels` and `workspace/reset` observation
-identities after moving out of the demonstration toolbar.
+identities.
 
 A floating host with one root group integrates its existing rail and common menu.
 A split host uses a standalone caption and ordinary group rails. Maximizing one
@@ -86,31 +87,23 @@ shadows/edges are not replaced by a borderless-window workaround.
 ## Verification and limits
 
 ```sh
-cargo test -p kedra_ui --test window_chrome --test docking --locked
+cargo test -p kedra_ui --test contracts --locked
 cargo test -p kedra_desktop --locked
 cargo run -p kedra_desktop --example macos_header_policy --locked # macOS only
-python3 -m unittest discover -s tools/qa -p 'test_window_chrome.py'
-python3 tools/qa/window_chrome.py target/qa/session.json \
-  --state-directory target/qa/state --report target/qa/window-chrome.json
+cargo xtask test -- features --only window-chrome --output target/test/window-chrome
 cargo xtask check --non-interactive
 ```
 
-Launch the editor with dedicated state, credentials and capture paths first.
+The Rust runner launches the editor with dedicated state, credentials and private readback paths.
 The opt-in native command resets only its explicitly isolated layout to the
 four-tool preset, then covers DPR 1/2, commands, disabled actions and retained
-integrated/split/reintegrated floating tabs. Actual frames and injected input are
+integrated/split/reintegrated floating tabs. GPU fences and injected input are
 evidence, not physical native-button/OS-drag or mixed-monitor certification.
 Bevy renderer captures exclude OS-owned button drawing. Platform double-click
 policy and native fullscreen still require separate acceptance; no unsafe shim
 or invented platform double-click policy is supplied.
 
-Old pinned startup/docking references are not blessed or relaxed for the new
-family. New role-specific Figma exports need independent review; old corpus
-differences remain visible rather than becoming application-generated baselines.
-
-```sh
-KEDRA_CHROME_FRAME=<full-frame.png> cargo test -p kedra_editor --test window_chrome_frames --locked -- --ignored
-```
-
-This checks the owner-requested absence of a light client rim on a real capture.
-It is not an assertion about OS-drawn shadows or buttons.
+Window chrome has no active screenshot goldens or pixel tests. Screenshot coverage
+is only kit buttons and text inputs. Current-revision native acceptance remains pending.
+Native observations still check the declared geometry and supported interactions,
+without claiming OS-drawn shadow/button acceptance or complete visual identity.

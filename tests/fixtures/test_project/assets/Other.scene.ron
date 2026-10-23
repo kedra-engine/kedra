@@ -1,0 +1,50 @@
+(
+    version: 1,
+    id: "7e570000-0000-4000-8000-000000000003",
+    kind: Scene,
+    title: "Other scene",
+    root: "7e570000-0000-4000-8000-00000000000d",
+    base: None,
+    nodes: [
+        (
+            id: "7e570000-0000-4000-8000-00000000000d",
+            name: "Other scene",
+            parent: None,
+            components: {
+                "scene.environment": (
+                    version: 1,
+                    value: (asset:Path("game://night.environment.ron")),
+                ),
+                "scene.primitive": (
+                    version: 1,
+                    value: Sphere(radius:2.0),
+                ),
+                "scene.surface": (
+                    version: 1,
+                    value: (color:Srgba((red:0.2,green:0.8,blue:0.3,alpha:1.0)),texture:None,metallic:0.0,roughness:0.8),
+                ),
+            },
+        ),
+        (
+            id: "7e570000-0000-4000-8000-000000000067",
+            name: "Authored sun",
+            parent: Some((
+                instances: [],
+                node: "7e570000-0000-4000-8000-00000000000d",
+            )),
+            components: {
+                "scene.sun": (
+                    version: 1,
+                    value: (color:LinearRgba((red:1.0,green:1.0,blue:1.0,alpha:1.0)),illuminance:15000.0),
+                ),
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(0.0,0.0,0.0),rotation:(-0.37731227,-0.22787414,0.09634364,0.89242744),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+    ],
+    instances: [],
+    overrides: [],
+    ports: {},
+)

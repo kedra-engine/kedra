@@ -95,7 +95,7 @@ document/selection and opening contract, with separate ADRs for each dockable to
 opened scene/prefab, navigate with orbit/pan/zoom and free flight, frame objects,
 use grid/axes and standard views, and select objects in sync with Hierarchy.
 Complete it through separately demonstrated render/resource, navigation/docking
-and selection slices. The [read-only Inspector](ui/inspector.md) now connects to
+and selection slices. The [read-only Inspector](ui/inspector.md) connects to
 the same source selection without requiring renderer readiness. Camera and selection
 state are not document edits. Gizmos, source mutation and Play remain excluded.
 
@@ -174,8 +174,9 @@ and trust boundary for project code is explicit.
 ## Reliability and acceptance throughout
 
 Native interaction and capture reliability have unresolved intermittent failures.
-Local checks exercise Rust and headless QA-tool tests, but not the full real-window
-visual/interaction corpus. Hosted CI acceptance is pending. Native regression
+Local Rust checks do not exercise the full real-window
+visual/interaction corpus. Headless CI and its required aggregate are configured;
+current hosted results and live enforcement require external verification. Native regression
 execution must become automated in a controlled graphical environment, with retained
 failure evidence and no retries
 that turn an unexplained failure into a passing result.
@@ -206,8 +207,10 @@ These directions have no fixed delivery order or dates yet:
   and macOS. Desktop acceptance work starts during the earlier stages.
 - Extend the game runtime to web and mobile platforms (Android and iOS). That
   support is planned, not implemented; the editor remains desktop-only.
-- Evaluate Lua as a research direction. It is not a selected backend or an
-  implemented feature.
+- Extend the initial shared Luau runtime into project-owned script delivery,
+  generated API definitions and debugger tooling. The existing explicit runtime
+  and native QA sequences do not implement automatic project-code execution,
+  Play isolation or a stable scripting SDK.
 
 ## Scope and contribution boundaries
 

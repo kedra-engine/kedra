@@ -122,13 +122,19 @@ review; native captures do not constitute pinned Figma pixel-equivalence evidenc
 
 ## Scene View and planned field editing
 
-[Scene View](scene-view.md) follows the confirmed `108:9202` content shell and
-`108:8644` toolbar: 38px height, projection/lighting selects, selected grid and
-right-aligned settings. Local icons `scene-down.svg`, `scene-grid-selected.svg`
-and `scene-settings.svg` are exact exports of `10:2399`, `10:2488` and `10:2482`.
-Rendered assets are data, not the SVG illustration `108:8635`. The profile records
-the read-only World / 1 unit adaptation. Flat compact A applies to existing
-controls; removed Scene View experiments are not imported or used to add features.
+[Scene View](scene-view.md) uses C-select `186:4545`, C-narrow `186:4949` and
+selected button separation A `192:4579`. The 38px toolbar contains View/Select
+menus and 22px Flat eye/grid/sun controls; canvas controls provide selection,
+orientation and navigation. Select hides below 640px while View retains Clear
+selection. See the [controls contract](scene-view-controls-design.md) for geometry,
+gestures and pending acceptance.
+
+The source identities `108:9202` (content shell), `108:8644` (toolbar) and
+`108:8635` (illustration) retain provenance roles, not authority for the current
+toolbar. Local `scene-down.svg`, `scene-grid-selected.svg` and `scene-settings.svg`
+retain their exact export origins `10:2399`, `10:2488` and `10:2482`; the presence
+of a source icon does not imply a supported settings action. Rendered assets are
+project data, never the illustrative SVG or a scene-render baseline.
 
 [ADR 0009](../decisions/0009-property-editing-and-inspector.md) proposes shared
 property-editing ownership. [ADR 0010](../decisions/0010-text-field-interaction.md)
@@ -136,15 +142,23 @@ specifies proposed single-line text behavior over TextField masters `49:536` and
 state examples `51:1497`. Pending, conflicted and combined error/focus states need
 reviewed compositions; the baseline kit does not certify those interactions.
 
-## Pinned reference exports
+## Independent references and provenance
 
-Library navigation and an exported test revision are separate contracts.
-[Startup](startup-layout-lock.md) policies and the
-[docking manifest](docking/figma/manifest.json) retain the source frame IDs,
-export dimensions, hashes and provenance for their exact offline snapshots.
-Those export-page identifiers do not describe the current library page order.
+Library navigation, active comparison inputs and retained provenance are separate
+contracts:
+
+- The [component corpus](ui-corpus.md) uses 44 independent full/shape images for
+  22 button/input cases, with source metadata, text bindings and reviewed policy.
+  Local comparison reads these checked-in inputs without Figma access.
+- [Startup](startup-layout-lock.md) uses `startup-reference.json` for independent
+  geometry, node identities and tolerances, not PNG hashes or snapshot comparisons.
+- The [docking manifest](docking/figma/manifest.json) retains source frame IDs,
+  dimensions and hashes as provenance only. Its PNG exports are not present and
+  are not active comparison inputs.
+
+Export-page identifiers do not describe the current library page order.
 
 Moving or regrouping library nodes does not authorize changing reference pixels,
 comparison budgets or authored application structure. Reference refreshes require
-inspection of the actual source frames and explicit review. Local Rust checks read the
-checked-in exports without Figma access.
+inspection of the actual source frames and explicit review. Static source mapping
+does not establish live Figma synchronization or native visual acceptance.

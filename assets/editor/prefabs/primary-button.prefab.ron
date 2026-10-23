@@ -1,4 +1,4 @@
 (
  version:1,id:"c0100000-0000-4000-8000-000000000003",kind:Prefab,title:"Primary action",root:"c0110000-0000-4000-8000-000000000001",base:Some("c0100000-0000-4000-8000-000000000002"),nodes:[],instances:[],ports:{},
- overrides:[SetComponent(node:(instances:[],node:"c0110000-0000-4000-8000-000000000001"),component:"ui.classes",data:(version:1,value:(names:["button","primary"])))],
+  overrides:[SetComponent(node:(instances:[],node:"c0110000-0000-4000-8000-000000000001"),component:"ui.classes",data:(version:1,value:(names:["button","primary","authored-focus"])))],
 )

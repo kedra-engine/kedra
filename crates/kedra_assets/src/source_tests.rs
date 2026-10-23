@@ -21,7 +21,7 @@ fn independent_model_selectors_reject_before_exposing_a_reader()
         (
             "renamed.bin",
             "test.DataLoader",
-            crate::model::tests::glb(cycle.clone())?,
+            crate::test_support::glb(cycle.clone())?,
         ),
         (
             "model.bin",
@@ -76,7 +76,7 @@ fn independent_model_selectors_reject_before_exposing_a_reader()
 fn matching_glb_hashes_do_not_bypass_reader_topology_admission()
 -> Result<(), Box<dyn std::error::Error>> {
     let directory = tempfile::tempdir()?;
-    let bad = crate::model::tests::glb(serde_json::json!({
+    let bad = crate::test_support::glb(serde_json::json!({
         "asset":{"version":"2.0"}, "nodes":[{"children":[0]}],
         "scenes":[{"nodes":[0]}]
     }))?;
@@ -114,7 +114,7 @@ fn matching_glb_hashes_do_not_bypass_reader_topology_admission()
             .ok_or("unsafe GLB reached native loader")?;
         assert!(error.to_string().contains("GLB"), "{error}");
     }
-    let valid = crate::model::tests::glb(serde_json::json!({
+    let valid = crate::test_support::glb(serde_json::json!({
         "asset":{"version":"2.0"}, "nodes":[{}], "scenes":[{"nodes":[0]}]
     }))?;
     // Both path and UUID reads still admit a valid, matching model.

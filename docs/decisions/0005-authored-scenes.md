@@ -66,7 +66,7 @@ duplicate those mechanisms or weaken ownership. They are not part of this contra
 
 ## Consumers and verification
 
-Splash, startup forms, rows, captions and dock chrome use the shared source path.
+Startup forms, rows, captions and dock chrome use the shared source path.
 Independent game-style tests load installed catalogs and instantiate components
 without source-tree access. Tests cover composition, source revision pinning,
 references, source transactions, partial failures and retained native UI ownership.

@@ -12,6 +12,28 @@ component policies. Native hosts must also install Bevy UI/text/input-focus,
 widget, picking and tab-navigation plugins as appropriate; this crate does not
 create a window or install a renderer. No default font or editor theme is supplied.
 
+`UiView::mount_scene` is the native UI adapter for an explicitly selected
+`kedra_scene::startup::StartupScenePlugin`. Scene-owned `ui.id` and `ui.screen`
+values remain unchanged for live observation; passive views strip both identities.
+The host still supplies its camera/window and explicitly authorizes scripts.
+
+Authored `ui.pickable` version 1 directly uses Bevy's `Pickable` component. Set
+`should_block_lower:false,is_hoverable:false` on decorative overlays such as focus
+rings: transparent paint alone does not remove a node from native pointer picking.
+The ordinary authored root owns its lifetime; passive projections always ignore
+picking regardless of this source policy.
+
+Optional `text-capture` exposes `text_capture::capture` for explicit native QA
+only with debug assertions; release excludes the module even if the feature is set.
+The host supplies a live authored root and its complete source-address inventory;
+no listener or remote method is installed by this feature. Measurements cover
+Text/EditableText layout, loaded font bytes, effective typography, clipping and
+independent shaping coverage. Full/shape paint state belongs to that root and
+retires with it; restore full paint before releasing a live scope. Caret, selection,
+layout and child icons are not suppressed. Unready assets/layout return `ready:false`;
+unsupported modes or changes to the isolated text inventory/style fail closed.
+This adds no dependency on QA tooling, editor or authoring writers.
+
 Install `tooltip::TooltipPlugin` once and attach `Tooltip("Hint".into())` to any
 native UI node. Shared behavior owns the 350ms dwell, cursor-relative placement,
 window-edge fitting and cleanup on pointer departure, click, hiding or retirement.
@@ -46,6 +68,16 @@ changing published attachments or focus. Failed preparation retires only staged
 mounts; successful sync retains existing content/chrome identities. Consumers own
 the host/stash/content lifetimes and must not retire or reparent projection-owned
 entities from external ECS observers while synchronization is running.
+Live and candidate split projections use Bevy's unrounded flex layout so nested
+odd-width allocations fit their host instead of accumulating physical-pixel
+rounding overflow. Drop-admission bounds and minimum-size checks are unchanged.
+
+Hosts may explicitly call `docking::scene::register` after AuthoredUiPlugin and
+before PrefabPlugin to admit inert `ui.docking` source data. `InitialLayout` wraps
+the existing bounded JSON Snapshot schema and validates it before publication.
+Its `workspace()` creates an independent layout lineage; it never selects native
+controllers, opens windows or mounts content. Hosts own restore-key interpretation,
+source-catalog admission, native resources and cleanup on binding failure.
 
 `UiStylesheet` and `UiClasses` are side-effect-free source data. Live hydration
 installs Flair components. CSS declares styling; native Node data can initialize

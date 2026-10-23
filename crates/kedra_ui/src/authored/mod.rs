@@ -9,6 +9,30 @@ use bevy::{
 use components::*;
 use kedra_scene::reflection::ComponentPolicies;
 
+// One declaration drives source registration and passive-preview admission. New
+// entries must be inert source data with audited passive hydration, not behavior.
+macro_rules! passive_schema {
+    ($policies:ident, $types:ident; $(
+        $component:ty, $key:literal, $validator:expr;
+    )*) => {
+        /// Whether this key belongs to the shared inert UI schema supported by
+        /// [`view::UiView::mount_passive`]. This does not validate values/versions
+        /// or authorize native behavior, host bindings, scripts or diagnostics.
+        /// Host-specific schemas (including docking) are deliberately excluded.
+        pub fn supports_passive_component(key: &str) -> bool {
+            matches!(key, $($key)|*)
+        }
+
+        fn register_schema(
+            $policies: &mut ComponentPolicies,
+            $types: &mut bevy::reflect::TypeRegistry,
+        ) -> kedra_scene::Result<()> {
+            $($policies.register::<$component>($types, $key, 1, $validator)?;)*
+            Ok(())
+        }
+    };
+}
+
 /// Installs authored component policies and retained native styling. The host must
 /// already install Bevy's UI, text, input-focus, picking and widget plugins.
 pub struct AuthoredUiPlugin;
@@ -30,71 +54,7 @@ impl Plugin for AuthoredUiPlugin {
         let registration = {
             let mut policies = app.world_mut().resource_mut::<ComponentPolicies>();
             let mut types = registry.write();
-            (|| -> kedra_scene::Result<()> {
-                policies.register::<UiLayout>(&mut types, "ui.layout", 1, finite)?;
-                policies.register::<UiCaption>(&mut types, "ui.caption", 1, finite)?;
-                policies.register::<UiStylesheet>(&mut types, "ui.stylesheet", 1, finite)?;
-                policies.register::<UiClasses>(&mut types, "ui.classes", 1, |value| {
-                    let classes = UiClasses::from_reflect(value)
-                        .ok_or_else(|| kedra_scene::Error("invalid classes".into()))?;
-                    let mut unique = std::collections::BTreeSet::new();
-                    if classes.names.len() > 64
-                        || classes.names.iter().any(|name| {
-                            name.is_empty()
-                                || name.len() > 256
-                                || name.chars().any(char::is_whitespace)
-                                || !unique.insert(name)
-                        })
-                    {
-                        return Err(kedra_scene::Error(
-                            "CSS classes must be unique, bounded and contain no whitespace".into(),
-                        ));
-                    }
-                    Ok(())
-                })?;
-                policies.register::<UiImage>(&mut types, "ui.image", 1, |value| {
-                    finite(value)?;
-                    let v = UiImage::from_reflect(value)
-                        .ok_or_else(|| kedra_scene::Error("invalid image".into()))?;
-                    if v.variants.is_empty()
-                        || v.variants.len() > 8
-                        || v.variants.windows(2).any(|p| p[0].density >= p[1].density)
-                        || v.variants.iter().any(|p| p.density <= 0.)
-                    {
-                        return Err(kedra_scene::Error(
-                            "image densities must be nonempty, positive and ordered".into(),
-                        ));
-                    }
-                    Ok(())
-                })?;
-                policies.register::<UiButton>(&mut types, "ui.button", 1, finite)?;
-                policies.register::<UiEditable>(&mut types, "ui.editable", 1, finite)?;
-                policies.register::<UiModal>(&mut types, "ui.modal", 1, finite)?;
-                policies.register::<UiSpin>(&mut types, "ui.spin", 1, |value| {
-                    finite(value)?;
-                    if UiSpin::from_reflect(value).is_none_or(|v| v.seconds <= 0.) {
-                        return Err(kedra_scene::Error("spin duration must be positive".into()));
-                    }
-                    Ok(())
-                })?;
-                policies.register::<crate::ElementId>(&mut types, "ui.id", 1, |value| {
-                    let id = crate::ElementId::from_reflect(value)
-                        .ok_or_else(|| kedra_scene::Error("invalid UI identity".into()))?;
-                    if id.0.trim().is_empty() || id.0.len() > 256 {
-                        return Err(kedra_scene::Error(
-                            "UI identity must contain 1..=256 bytes".into(),
-                        ));
-                    }
-                    Ok(())
-                })?;
-                policies.register::<BackgroundColor>(&mut types, "ui.background", 1, finite)?;
-                policies.register::<BorderColor>(&mut types, "ui.border", 1, finite)?;
-                policies.register::<BoxShadow>(&mut types, "ui.shadow", 1, finite)?;
-                policies.register::<ZIndex>(&mut types, "ui.z", 1, finite)?;
-                policies.register::<GlobalZIndex>(&mut types, "ui.global_z", 1, finite)?;
-                policies.register::<Outline>(&mut types, "ui.outline", 1, finite)?;
-                Ok(())
-            })()
+            register_schema(&mut policies, &mut types)
         };
         if let Err(error) = registration {
             app.world_mut().resource_mut::<UiFailure>().0 = Some(error.to_string());
@@ -109,6 +69,83 @@ impl Plugin for AuthoredUiPlugin {
             ),
         );
     }
+}
+
+passive_schema! { policies, types;
+    UiLayout, "ui.layout", finite;
+    UiCaption, "ui.caption", finite;
+    UiStylesheet, "ui.stylesheet", finite;
+    UiClasses, "ui.classes", |value| {
+        let classes = UiClasses::from_reflect(value)
+            .ok_or_else(|| kedra_scene::Error("invalid classes".into()))?;
+        let mut unique = std::collections::BTreeSet::new();
+        if classes.names.len() > 64
+            || classes.names.iter().any(|name| {
+                name.is_empty()
+                    || name.len() > 256
+                    || name.chars().any(char::is_whitespace)
+                    || !unique.insert(name)
+            })
+        {
+            return Err(kedra_scene::Error(
+                "CSS classes must be unique, bounded and contain no whitespace".into(),
+            ));
+        }
+        Ok(())
+    };
+    UiImage, "ui.image", |value| {
+        finite(value)?;
+        let v = UiImage::from_reflect(value)
+            .ok_or_else(|| kedra_scene::Error("invalid image".into()))?;
+        if v.variants.is_empty()
+            || v.variants.len() > 8
+            || v.variants.windows(2).any(|p| p[0].density >= p[1].density)
+            || v.variants.iter().any(|p| p.density <= 0.)
+        {
+            return Err(kedra_scene::Error(
+                "image densities must be nonempty, positive and ordered".into(),
+            ));
+        }
+        Ok(())
+    };
+    UiButton, "ui.button", finite;
+    UiEditable, "ui.editable", finite;
+    UiModal, "ui.modal", finite;
+    UiSpin, "ui.spin", |value| {
+        finite(value)?;
+        if UiSpin::from_reflect(value).is_none_or(|v| v.seconds <= 0.) {
+            return Err(kedra_scene::Error("spin duration must be positive".into()));
+        }
+        Ok(())
+    };
+    crate::ElementId, "ui.id", |value| {
+        let id = crate::ElementId::from_reflect(value)
+            .ok_or_else(|| kedra_scene::Error("invalid UI identity".into()))?;
+        if id.0.trim().is_empty() || id.0.len() > 256 {
+            return Err(kedra_scene::Error(
+                "UI identity must contain 1..=256 bytes".into(),
+            ));
+        }
+        Ok(())
+    };
+    crate::ScreenId, "ui.screen", |value| {
+        let id = crate::ScreenId::from_reflect(value)
+            .ok_or_else(|| kedra_scene::Error("invalid screen identity".into()))?;
+        if id.0.trim().is_empty() || id.0.len() > 256 {
+            return Err(kedra_scene::Error(
+                "Screen identity must contain 1..=256 bytes".into(),
+            ));
+        }
+        Ok(())
+    };
+    BackgroundColor, "ui.background", finite;
+    BorderColor, "ui.border", finite;
+    BoxShadow, "ui.shadow", finite;
+    ZIndex, "ui.z", finite;
+    GlobalZIndex, "ui.global_z", finite;
+    Outline, "ui.outline", finite;
+    // Bevy's existing picking policy, not a parallel interaction/hit-test path.
+    bevy::picking::Pickable, "ui.pickable", finite;
 }
 
 // Native reflected numeric fields are validated through Bevy's data model. This

@@ -11,8 +11,9 @@ Editor resources must use the same asset runtime as non-editor consumers.
 ## Decision
 
 - Use one `kedra` executable and pinned Bevy 0.20.0 with explicit features.
-  Splash, manager, project loading and editor workspace are distinct phases with
-  separately owned native surfaces.
+  Boot verification is windowless; manager, project loading and editor workspace
+  own their native surfaces. [ADR 0021](0021-windowless-startup.md) defines when
+  the first surface appears.
 - `kedra_project` owns project files and validation, `kedra_desktop` owns native
   window/camera/root lifetimes, `kedra_ui` owns shared authored UI projection and
   `kedra_editor` composes startup behavior and feature panels.

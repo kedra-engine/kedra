@@ -1,0 +1,14 @@
+(
+ version:1,id:"732bb045-f703-4e82-87f7-9e98a56bb128",kind:Scene,title:"Reflected value inspection",root:"19a80000-0000-4000-8000-000000000002",base:None,
+ nodes:[(id:"19a80000-0000-4000-8000-000000000002",name:"Inspector canvas",parent:None,components:{
+  "ui.layout":(version:1,value:(node:(width:Percent(100.0),height:Percent(100.0)))),
+  "ui.screen":(version:1,value:("inspector-fixture")),
+  "editor.surface":(version:1,value:(width:420,height:740)),
+  "editor.values":(version:1,value:(
+   name:"Calibration 名称",enabled:true,gain:0.25,threshold:0.33333334,exact:18446744073709551615,
+   level:(current:3,maximum:9),samples:[2,3,5],
+  )),
+ })],
+ instances:[(id:"19a80000-0000-4000-8000-000000000009",asset:"19a80000-0000-4000-8000-000000000001",parent:(instances:[],node:"19a80000-0000-4000-8000-000000000002"),bindings:{},overrides:[])],
+ overrides:[],ports:{},
+)

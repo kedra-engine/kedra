@@ -52,21 +52,16 @@ mod ownership_tests {
     fn escape_and_axis_release_in_one_update_cancel_instead_of_snapping()
     -> Result<(), Box<dyn std::error::Error>> {
         use bevy::ecs::system::RunSystemOnce;
-        let (mut app, _, view_id) = super::super::input::regression_tests::setup()?;
+        let (mut app, _, view_id) = super::super::test_support::setup()?;
         app.add_message::<MouseButtonInput>()
             .add_message::<MouseMotion>()
             .add_message::<KeyboardInput>()
             .add_message::<MouseWheel>()
             .init_resource::<Input>();
         let world = app.world_mut();
-        let view = crate::scene_view::control_tests::ready(world)?;
+        let view = crate::scene_view::test_support::ready(world)?;
         let viewport = view.focus();
-        super::super::input::regression_tests::box_at(
-            world,
-            viewport,
-            Vec2::splat(100.),
-            Vec2::splat(200.),
-        );
+        super::super::test_support::box_at(world, viewport, Vec2::splat(100.), Vec2::splat(200.));
         world
             .entity_mut(viewport)
             .insert((Visibility::Inherited, InheritedVisibility::VISIBLE));
@@ -241,6 +236,7 @@ pub(super) fn install(app: &mut App) {
     app.init_resource::<Input>()
         .add_systems(Update, events.after(tick));
 }
+#[cfg(debug_assertions)]
 pub(super) fn diagnostics(world: &World, state: &EditorWorkspace) -> serde_json::Value {
     serde_json::json!({"gesture":state.gesture.is_some(),"pending_host":state.pending.is_some(),"menu_nodes":state.menu.len(),"measuring":state.measurements.is_some(),"rendered":state.rendered,"revision":state.layout.revision(),"capture":world.get_resource::<Input>().and_then(|input|input.capture.as_ref()).map(|capture|serde_json::json!({"view":capture.view,"window":capture.window.to_bits()})),"viewports":state.panels.scenes.iter().map(|(view,scene)|serde_json::json!({"view":view,"rect":scene.area(world).map(|rect|[rect.min.x,rect.min.y,rect.max.x,rect.max.y]),"eligible_windows":state.surfaces.values().filter_map(|surface|eligible(world,state,*view,surface.window).map(|_|surface.window.to_bits())).collect::<Vec<_>>(),"pointer_windows":state.surfaces.values().filter_map(|surface|under_pointer(world,state,surface.window).filter(|(id,..)|id==view).map(|_|surface.window.to_bits())).collect::<Vec<_>>()})).collect::<Vec<_>>()})
 }
@@ -688,13 +684,13 @@ mod tests {
     #[test]
     fn reduced_motion_axis_alignment_updates_camera_and_gizmo_in_the_same_input_frame()
     -> Result<(), Box<dyn std::error::Error>> {
-        let (mut app, _, _) = super::super::input::regression_tests::setup()?;
+        let (mut app, _, _) = super::super::test_support::setup()?;
         let world = app.world_mut();
         super::super::test_support::sources(world)?;
         let parent = world.resource::<EditorWorkspace>().root;
         let mut view =
             crate::scene_view::View::mount(world, parent, ViewId::new(), "Alignment fixture")?;
-        let camera = crate::scene_view::control_tests::spatial(world, &mut view)?;
+        let camera = crate::scene_view::test_support::spatial(world, &mut view)?;
         world
             .get_mut::<Camera>(camera)
             .ok_or("Camera missing")?
@@ -727,7 +723,7 @@ mod tests {
     #[test]
     fn native_focus_belongs_to_the_viewport_not_its_decorative_render_image()
     -> Result<(), Box<dyn std::error::Error>> {
-        let (mut app, _, _) = super::super::input::regression_tests::setup()?;
+        let (mut app, _, _) = super::super::test_support::setup()?;
         app.add_observer(bevy::input_focus::tab_navigation::acquire_focus_tab_index);
         let world = app.world_mut();
         super::super::test_support::sources(world)?;

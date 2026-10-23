@@ -289,8 +289,8 @@ fn failed_project_never_enters_editor_on_the_fast_path() {
 fn slow_preparation_shows_loading_after_threshold_but_never_delays_success() {
     let directory = tempfile::tempdir().unwrap();
     let project = kedra_project::create(directory.path(), "Threshold").unwrap();
-    let mut app = crate::startup_tests::app();
-    crate::startup_tests::projects(&mut app);
+    let mut app = crate::test_support::app();
+    crate::test_support::projects(&mut app);
     let original = app
         .world()
         .resource::<kedra_desktop::DesktopSurface>()
@@ -334,9 +334,9 @@ fn slow_preparation_shows_loading_after_threshold_but_never_delays_success() {
 
 #[test]
 fn pending_job_disables_real_manager_controls_and_completion_reenables_them() {
-    let mut app = crate::startup_tests::app();
-    crate::startup_tests::projects(&mut app);
-    let new = crate::startup_tests::element(app.world_mut(), "projects.new");
+    let mut app = crate::test_support::app();
+    crate::test_support::projects(&mut app);
+    let new = crate::test_support::element(app.world_mut(), "projects.new");
     app.insert_resource(PendingJob {
         generation: 0,
         task: IoTaskPool::get().spawn(bevy::tasks::futures_lite::future::pending()),

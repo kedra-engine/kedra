@@ -6,7 +6,11 @@
 mod actions;
 mod asset_browser;
 mod boot;
+#[cfg(debug_assertions)]
+mod catalog;
 mod chrome;
+#[cfg(debug_assertions)]
+mod diagnostics;
 mod display_paths;
 mod documents;
 pub mod domain;
@@ -18,25 +22,38 @@ mod jobs;
 mod loading;
 mod model;
 mod recent;
+#[cfg(debug_assertions)]
 mod remote;
 mod scene_view;
 mod screens;
+#[cfg(debug_assertions)]
+mod scripting;
 mod updates;
 mod views;
 mod workspace;
 use bevy::prelude::*;
 pub use model::AppPhase;
 use std::path::PathBuf;
-/// Run the opt-in isolated dock acceptance host, without editor startup/tools.
-/// Only available in builds explicitly enabling the `docking-fixture` feature.
-#[cfg(feature = "docking-fixture")]
-pub use workspace::fixture::run as run_docking_fixture;
 
 /// Startup plugin. Install after Bevy defaults, native widget/navigation plugins,
 /// DesktopPlugin and AuthoredUiPlugin.
 pub struct EditorPlugin;
+
+/// Selects startup authority, not a different set of native editor capabilities.
+#[derive(Resource, Default)]
+struct ExplicitScene(bool);
+
+fn project_lifecycle(scene: Res<ExplicitScene>) -> bool {
+    !scene.0
+}
+
 impl Plugin for EditorPlugin {
     fn build(&self, app: &mut App) {
+        if let Err(error) = kedra_ui::docking::scene::register(app) {
+            app.world_mut()
+                .resource_mut::<kedra_ui::authored::components::UiFailure>()
+                .0 = Some(error.to_string());
+        }
         chrome::install(app);
         updates::install(app);
         asset_browser::install(app);
@@ -44,7 +61,8 @@ impl Plugin for EditorPlugin {
         inspector::install(app);
         scene_view::install(app);
         workspace::install(app);
-        app.init_state::<AppPhase>()
+        app.init_resource::<ExplicitScene>()
+            .init_state::<AppPhase>()
             .init_resource::<actions::native::Pending>()
             .init_resource::<model::ProjectManager>()
             .init_resource::<model::EntryForm>()
@@ -59,12 +77,20 @@ impl Plugin for EditorPlugin {
                 actions::native::apply.after(bevy::text::EditableTextSystems),
             )
             .init_resource::<boot::Boot>()
-            .add_systems(OnEnter(AppPhase::Projects), screens::projects)
+            .add_systems(
+                OnEnter(AppPhase::Projects),
+                screens::projects.run_if(project_lifecycle),
+            )
             .add_systems(
                 OnEnter(AppPhase::Loading),
-                (loading::enter, jobs::prepare).chain(),
+                (loading::enter, jobs::prepare)
+                    .chain()
+                    .run_if(project_lifecycle),
             )
-            .add_systems(OnEnter(AppPhase::Editor), screens::editor)
+            .add_systems(
+                OnEnter(AppPhase::Editor),
+                screens::editor.run_if(project_lifecycle),
+            )
             .add_systems(
                 Update,
                 (
@@ -81,7 +107,8 @@ impl Plugin for EditorPlugin {
                     loading::trace,
                     model::project_phase,
                 )
-                    .chain(),
+                    .chain()
+                    .run_if(project_lifecycle),
             );
     }
 }
@@ -95,10 +122,14 @@ impl Plugin for EditorPlugin {
 pub fn run(
     project: Option<PathBuf>,
     assets: PathBuf,
-    remote: Option<RemoteOptions>,
+    launch: kedra_app::launch::LaunchOptions,
     state_directory: Option<PathBuf>,
     project_assets: Option<PathBuf>,
 ) -> Result<(), String> {
+    #[cfg(debug_assertions)]
+    if launch.scene.is_some() && (project.is_some() || project_assets.is_some()) {
+        return Err("Explicit startup scenes cannot run the project lifecycle concurrently".into());
+    }
     let (assets, manifest) = kedra_assets::delivery::read_manifest(&assets, "editor-desktop")?;
     let mut app = App::new();
     if let Some(delivery) = project_assets {
@@ -142,12 +173,35 @@ pub fn run(
         bevy::input_focus::tab_navigation::TabNavigationPlugin,
         kedra_ui::authored::AuthoredUiPlugin,
         kedra_ui::tooltip::TooltipPlugin,
-        kedra_scene::assets::PrefabPlugin {
-            catalog_path: "editor://scenes/startup.prefabs.ron".into(),
-        },
         EditorPlugin,
     ));
-    remote::install(&mut app);
+    #[cfg(debug_assertions)]
+    {
+        diagnostics::install(&mut app)?;
+        remote::install(&mut app);
+    }
+    #[cfg(debug_assertions)]
+    if launch.scene.is_some() {
+        app.world_mut().resource_mut::<ExplicitScene>().0 = true;
+        app.add_plugins(kedra_scene::assets::PrefabPlugin {
+            catalog_path: "editor://scenes/debug.prefabs.ron".into(),
+        });
+        launch.configure(
+            &mut app,
+            kedra_scene::startup::StartupScenePlugin {
+                path: "editor://scenes/editor.scene.ron".into(),
+                mount: diagnostics::mount,
+            },
+        )?;
+        return if app.run().is_error() {
+            Err("Startup scene stopped with an error; inspect diagnostics".into())
+        } else {
+            Ok(())
+        };
+    }
+    app.add_plugins(kedra_scene::assets::PrefabPlugin {
+        catalog_path: "editor://scenes/startup.prefabs.ron".into(),
+    });
     updates::configure(app.world_mut(), state_directory.as_deref())?;
     app.world_mut().resource_mut::<boot::Boot>().delivery = Some((assets.clone(), manifest));
     if let Some(directory) = state_directory {
@@ -157,19 +211,7 @@ pub fn run(
         manager.history_path = Some(directory.join("recent-projects.toml"));
         manager.history_writable = true;
     }
-    if let Some(options) = remote {
-        let endpoint = kedra_app::transport::enable(
-            &mut app,
-            options.port,
-            &options.credentials,
-            &options.artifacts,
-        )?;
-        eprintln!(
-            "Automation listening at {}; credentials: {}",
-            endpoint.url,
-            options.credentials.display()
-        );
-    }
+    launch.remote.configure(&mut app)?;
     if let Some(path) = project {
         app.world_mut()
             .resource_mut::<model::ProjectManager>()
@@ -203,17 +245,9 @@ pub fn run(
     }
 }
 
-/// Explicit local automation configuration. Disabled when absent.
-pub struct RemoteOptions {
-    /// Loopback TCP port; zero chooses an available port.
-    pub port: u16,
-    /// New credential file; never overwritten or printed as a token.
-    pub credentials: PathBuf,
-    /// Captured artifact directory, separate from project source files.
-    pub artifacts: PathBuf,
-}
-
 #[cfg(test)]
 mod startup_tests;
+#[cfg(test)]
+mod test_support;
 #[cfg(test)]
 mod tests;

@@ -715,7 +715,7 @@ dependencies = [
  "downcast-rs 2.0.2",
  "log",
  "thiserror 2.0.21",
- "variadics_please",
+ "variadics_please 2.0.0",
  "wasm-bindgen",
  "web-sys",
 ]
@@ -919,7 +919,7 @@ dependencies = [
  "itertools 0.14.0",
  "serde",
  "thiserror 2.0.21",
- "variadics_please",
+ "variadics_please 2.0.0",
 ]
 
 [[package]]
@@ -1020,7 +1020,7 @@ dependencies = [
  "slotmap",
  "smallvec",
  "thiserror 2.0.21",
- "variadics_please",
+ "variadics_please 2.0.0",
 ]
 
 [[package]]
@@ -1167,7 +1167,7 @@ dependencies = [
  "smol_str",
  "thiserror 2.0.21",
  "tracing",
- "variadics_please",
+ "variadics_please 2.0.0",
 ]
 
 [[package]]
@@ -1507,7 +1507,7 @@ dependencies = [
  "smallvec",
  "thiserror 2.0.21",
  "tracing",
- "variadics_please",
+ "variadics_please 2.0.0",
  "wgpu-types",
 ]
 
@@ -1536,7 +1536,7 @@ dependencies = [
  "rand 0.10.3",
  "serde",
  "thiserror 2.0.21",
- "variadics_please",
+ "variadics_please 2.0.0",
 ]
 
 [[package]]
@@ -1574,6 +1574,210 @@ name = "bevy_mikktspace"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bff34eb29ff4b8a8688bc7299f14fb6b597461ca80fec03ed7d22939ab33e48f"
+
+[[package]]
+name = "bevy_mod_scripting"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f5e8828182c28128b34120854a82fff8ea22e7e2abc1f9e7e58db076a380c93"
+dependencies = [
+ "bevy_app",
+ "bevy_mod_scripting_asset",
+ "bevy_mod_scripting_bindings",
+ "bevy_mod_scripting_bindings_domain",
+ "bevy_mod_scripting_core",
+ "bevy_mod_scripting_derive",
+ "bevy_mod_scripting_display",
+ "bevy_mod_scripting_functions",
+ "bevy_mod_scripting_lua",
+ "bevy_mod_scripting_script",
+]
+
+[[package]]
+name = "bevy_mod_scripting_asset"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db9231361be87c4a2cd7081dda499ee1e55eae87f9decd73d8f9830cc6c2afc6"
+dependencies = [
+ "bevy_asset",
+ "bevy_log",
+ "bevy_mod_scripting_derive",
+ "bevy_mod_scripting_display",
+ "bevy_reflect",
+ "serde",
+]
+
+[[package]]
+name = "bevy_mod_scripting_bindings"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31b4679cdaf0496a96c38867472e8e7aeaa8e7ffb9a2b62c2fb607b0f437bb6e"
+dependencies = [
+ "bevy_app",
+ "bevy_asset",
+ "bevy_diagnostic",
+ "bevy_ecs",
+ "bevy_log",
+ "bevy_mod_scripting_asset",
+ "bevy_mod_scripting_bindings_domain",
+ "bevy_mod_scripting_derive",
+ "bevy_mod_scripting_display",
+ "bevy_mod_scripting_script",
+ "bevy_mod_scripting_world",
+ "bevy_platform",
+ "bevy_reflect",
+ "bevy_system_reflection",
+ "itertools 0.14.0",
+ "nonmax",
+ "parking_lot",
+ "profiling",
+ "serde",
+ "smallvec",
+ "variadics_please 1.1.0",
+]
+
+[[package]]
+name = "bevy_mod_scripting_bindings_domain"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f47a1e931b0f519d1dc23d81f33ded7f0cbb227a0c1d85a58368e3d27649b3d1"
+dependencies = [
+ "bevy_mod_scripting_derive",
+ "bevy_mod_scripting_display",
+ "serde",
+]
+
+[[package]]
+name = "bevy_mod_scripting_core"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e08d5dab96106e1d8f0b23b26206213c75543c674dbadd8800884a852c774b4b"
+dependencies = [
+ "bevy_app",
+ "bevy_asset",
+ "bevy_diagnostic",
+ "bevy_ecs",
+ "bevy_log",
+ "bevy_mod_scripting_asset",
+ "bevy_mod_scripting_bindings",
+ "bevy_mod_scripting_derive",
+ "bevy_mod_scripting_display",
+ "bevy_mod_scripting_script",
+ "bevy_mod_scripting_world",
+ "bevy_platform",
+ "bevy_reflect",
+ "bevy_system_reflection",
+ "bevy_utils",
+ "fixedbitset",
+ "itertools 0.14.0",
+ "parking_lot",
+ "profiling",
+ "serde",
+ "smallvec",
+ "uuid",
+ "variadics_please 1.1.0",
+]
+
+[[package]]
+name = "bevy_mod_scripting_derive"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0625ad0a5e0e07e84f53d62b9a7e1198a9afe060f3b499deb27d5e0bf62a519"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "bevy_mod_scripting_display"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1fc848449d90dd5176cbae055b78d586e7db58cb6e5765aa45ac9e12152a01a"
+dependencies = [
+ "bevy_asset",
+ "bevy_ecs",
+ "bevy_mod_scripting_world",
+ "bevy_platform",
+ "bevy_reflect",
+ "bevy_utils",
+ "parking_lot",
+]
+
+[[package]]
+name = "bevy_mod_scripting_functions"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6f388fb96de2ab7603c2c5b62b3a1aba0aa922a8b2ee4727648283859d647a6"
+dependencies = [
+ "bevy_app",
+ "bevy_asset",
+ "bevy_ecs",
+ "bevy_log",
+ "bevy_mod_scripting_asset",
+ "bevy_mod_scripting_bindings",
+ "bevy_mod_scripting_core",
+ "bevy_mod_scripting_derive",
+ "bevy_mod_scripting_display",
+ "bevy_mod_scripting_lua",
+ "bevy_mod_scripting_script",
+ "bevy_mod_scripting_world",
+ "bevy_platform",
+ "bevy_reflect",
+ "bevy_system_reflection",
+ "profiling",
+]
+
+[[package]]
+name = "bevy_mod_scripting_lua"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4dee347480a70be950b2c43348e7b84a0b5dc4c5405de7b34b86044311255af"
+dependencies = [
+ "bevy_app",
+ "bevy_asset",
+ "bevy_ecs",
+ "bevy_log",
+ "bevy_mod_scripting_asset",
+ "bevy_mod_scripting_bindings",
+ "bevy_mod_scripting_bindings_domain",
+ "bevy_mod_scripting_core",
+ "bevy_mod_scripting_display",
+ "bevy_mod_scripting_script",
+ "bevy_mod_scripting_world",
+ "bevy_platform",
+ "mlua",
+ "profiling",
+]
+
+[[package]]
+name = "bevy_mod_scripting_script"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b7b6336efd568231835ed054fc861194cc3a42131ab8c2061192e6a31c2e89b"
+dependencies = [
+ "bevy_asset",
+ "bevy_ecs",
+ "bevy_mod_scripting_asset",
+ "bevy_mod_scripting_display",
+ "bevy_reflect",
+]
+
+[[package]]
+name = "bevy_mod_scripting_world"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abf8a90345c4c90bd3f06bb3e8dad51f917dcf9421cdbf0a94a11b9c0d03d77e"
+dependencies = [
+ "bevy_ecs",
+ "bevy_log",
+ "bevy_platform",
+ "bevy_reflect",
+ "fixedbitset",
+ "parking_lot",
+ "profiling",
+ "smallvec",
+]
 
 [[package]]
 name = "bevy_pbr"
@@ -1699,7 +1903,7 @@ dependencies = [
  "smol_str",
  "thiserror 2.0.21",
  "uuid",
- "variadics_please",
+ "variadics_please 2.0.0",
  "wgpu-types",
 ]
 
@@ -1789,7 +1993,7 @@ dependencies = [
  "static_assertions",
  "thiserror 2.0.21",
  "tracing",
- "variadics_please",
+ "variadics_please 2.0.0",
  "wasm-bindgen",
  "weak-table",
  "web-sys",
@@ -1918,7 +2122,7 @@ dependencies = [
  "bevy_state_macros",
  "bevy_utils",
  "log",
- "variadics_please",
+ "variadics_please 2.0.0",
 ]
 
 [[package]]
@@ -1930,6 +2134,19 @@ dependencies = [
  "bevy_macro_utils",
  "quote",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "bevy_system_reflection"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b97a290e149aa9933a3e74ed9ea7386711281abfeabe0a6ba68b467c79bdd3c"
+dependencies = [
+ "bevy_ecs",
+ "bevy_log",
+ "bevy_platform",
+ "bevy_reflect",
+ "dot-writer",
 ]
 
 [[package]]
@@ -2329,6 +2546,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf88ba1141d185c399bee5288d850d63b8369520c1eafc32a0430b5b6c287bf4"
 dependencies = [
  "tinyvec",
+]
+
+[[package]]
+name = "bstr"
+version = "1.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6bb31b46c14244e20ee9984b11bf5c992b91fb6939fea616e3512c8baecdbe5f"
+dependencies = [
+ "memchr",
+ "serde_core",
 ]
 
 [[package]]
@@ -3313,6 +3540,12 @@ checksum = "d4b8a88685455ed29a21542a33abd9cb6510b6b129abadabdcef0f4c55bc8f61"
 dependencies = [
  "litrs",
 ]
+
+[[package]]
+name = "dot-writer"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2f7a508d3f95b7cb559acf2231c7efad02fe04061d3165b12513c2dbcc77af0"
 
 [[package]]
 name = "downcast-rs"
@@ -4586,6 +4819,7 @@ version = "0.1.3"
 dependencies = [
  "bevy",
  "clap",
+ "kedra_app",
  "kedra_assets",
  "kedra_editor",
  "kedra_import",
@@ -4602,18 +4836,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "kedra-test"
+version = "0.1.3"
+dependencies = [
+ "base64",
+ "clap",
+ "kedra_test",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "uuid",
+ "walkdir",
+]
+
+[[package]]
 name = "kedra_app"
 version = "0.1.3"
 dependencies = [
  "async-channel",
  "axum",
  "bevy",
- "bevy_flair",
  "bevy_remote",
+ "clap",
  "image",
  "kedra_assets",
- "kedra_docking",
  "kedra_scene",
+ "kedra_script",
  "kedra_ui",
  "serde",
  "serde_json",
@@ -4665,6 +4913,7 @@ dependencies = [
  "image",
  "kedra_assets",
  "kedra_import",
+ "kedra_test",
  "object",
  "serde",
  "serde_json",
@@ -4713,9 +4962,11 @@ dependencies = [
  "kedra_authoring",
  "kedra_desktop",
  "kedra_docking",
+ "kedra_import",
  "kedra_inspector",
  "kedra_project",
  "kedra_scene",
+ "kedra_script",
  "kedra_ui",
  "kedra_update",
  "rfd",
@@ -4756,11 +5007,8 @@ version = "0.1.3"
 dependencies = [
  "bevy",
  "bevy_flair",
- "kedra_app",
- "kedra_assets",
  "kedra_scene",
  "kedra_ui",
- "ron",
 ]
 
 [[package]]
@@ -4789,6 +5037,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "kedra_script"
+version = "0.1.3"
+dependencies = [
+ "bevy",
+ "bevy_mod_scripting",
+ "parking_lot",
+ "serde_json",
+]
+
+[[package]]
+name = "kedra_script_bevy"
+version = "0.1.3"
+dependencies = [
+ "bevy",
+ "kedra_script",
+ "serde_json",
+]
+
+[[package]]
+name = "kedra_test"
+version = "0.1.3"
+dependencies = [
+ "cargo_metadata",
+ "dify",
+ "image",
+ "plist",
+ "png 0.18.1",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "ureq",
+ "uuid",
+]
+
+[[package]]
 name = "kedra_ui"
 version = "0.1.3"
 dependencies = [
@@ -4799,6 +5083,8 @@ dependencies = [
  "ron",
  "serde",
  "serde_ignored",
+ "serde_json",
+ "sha2 0.10.9",
  "uuid",
 ]
 
@@ -5067,6 +5353,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4050469837a6ff301cd14c1f8f24f88549e6d548f24f64e2148eb0f72cebc51f"
 
 [[package]]
+name = "lua-src"
+version = "550.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e836dc8ae16806c9bdcf42003a88da27d163433e3f9684c52f0301258004a4fb"
+dependencies = [
+ "cc",
+]
+
+[[package]]
+name = "luajit-src"
+version = "210.6.6+707c12b"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a86cc925d4053d0526ae7f5bc765dbd0d7a5d1a63d43974f4966cb349ca63295"
+dependencies = [
+ "cc",
+ "which",
+]
+
+[[package]]
+name = "luau0-src"
+version = "0.18.3+luau709"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e73f7d752fe2ef0a41f132b83d0be154c6ae0ed84967b4df80a16901866be075"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "mach2"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5168,6 +5482,56 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "mlua"
+version = "0.11.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ccd36acfa49ce6ee56d1307a061dd302c564eee757e6e4cd67eb4f7204846fab"
+dependencies = [
+ "bstr",
+ "either",
+ "erased-serde",
+ "libc",
+ "mlua-sys",
+ "mlua_derive",
+ "num-traits",
+ "parking_lot",
+ "rustc-hash 2.1.3",
+ "rustversion",
+ "serde",
+ "serde-value",
+]
+
+[[package]]
+name = "mlua-sys"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f1c3a7fc7580227ece249fd90aa2fa3b39eb2b49d3aec5e103b3e85f2c3dfc8"
+dependencies = [
+ "cc",
+ "cfg-if",
+ "libc",
+ "lua-src",
+ "luajit-src",
+ "luau0-src",
+ "pkg-config",
+]
+
+[[package]]
+name = "mlua_derive"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "465bddde514c4eb3b50b543250e97c1d4b284fa3ef7dc0ba2992c77545dbceb2"
+dependencies = [
+ "itertools 0.14.0",
+ "once_cell",
+ "proc-macro-error2",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -5839,6 +6203,15 @@ dependencies = [
 
 [[package]]
 name = "ordered-float"
+version = "2.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68f19d67e5a2795c94e73e0bb1cc1a7edeb2e28efd39e2e1c9b7a40c1108b11c"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "ordered-float"
 version = "5.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c7c9e0d9b23589f26070720bac724174bfec1083e82f7854cdd0267518343c0"
@@ -6248,6 +6621,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f"
 dependencies = [
  "toml_edit",
+]
+
+[[package]]
+name = "proc-macro-error-attr2"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96de42df36bb9bba5542fe9f1a054b8cc87e172759a1868aa05c1f3acc89dfc5"
+dependencies = [
+ "proc-macro2",
+ "quote",
+]
+
+[[package]]
+name = "proc-macro-error2"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11ec05c52be0a07b08061f7dd003e7d7092e0472bc731b4af7bb1ef876109802"
+dependencies = [
+ "proc-macro-error-attr2",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -7153,6 +7548,16 @@ checksum = "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba"
 dependencies = [
  "serde_core",
  "serde_derive",
+]
+
+[[package]]
+name = "serde-value"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f3a1a3341211875ef120e117ea7fd5228530ae7e7036a779fdc9117be6b3282c"
+dependencies = [
+ "ordered-float 2.10.1",
+ "serde",
 ]
 
 [[package]]
@@ -8257,6 +8662,17 @@ checksum = "ba73ea9cf16a25df0c8caa16c51acb937d5712a8429db78a3ee29d5dcacd3a65"
 
 [[package]]
 name = "variadics_please"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41b6d82be61465f97d42bd1d15bf20f3b0a3a0905018f38f9d6f6962055b0b5c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "variadics_please"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b53d0f7f2d0182759a549f1f313ce16b07d8f9ba93098157b5fa10ee3e61117f"
@@ -8673,7 +9089,7 @@ dependencies = [
  "objc2-metal 0.3.2",
  "objc2-quartz-core 0.3.2",
  "once_cell",
- "ordered-float",
+ "ordered-float 5.5.0",
  "parking_lot",
  "portable-atomic",
  "portable-atomic-util",
@@ -8743,6 +9159,15 @@ dependencies = [
  "half",
  "itertools 0.15.0",
  "num-traits",
+]
+
+[[package]]
+name = "which"
+version = "8.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bae2f2b2b816647a1cab1acc91f5bd20812d53cb344382635ec2181940c8034f"
+dependencies = [
+ "libc",
 ]
 
 [[package]]
@@ -9239,12 +9664,10 @@ dependencies = [
  "clap",
  "console",
  "dialoguer",
- "dify",
  "duct",
  "image",
  "indicatif",
- "png 0.18.1",
- "serde",
+ "kedra_test",
  "serde_json",
  "sha2 0.10.9",
  "tempfile",

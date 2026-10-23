@@ -1,0 +1,13 @@
+{
+  "folders": [{"path": "../.."}],
+  "settings": {
+    "luau-lsp.platform.type": "standard",
+    "luau-lsp.sourcemap.enabled": false,
+    "luau-lsp.fflags.sync": false,
+    "luau-lsp.types.definitionFiles": {
+      "01-kedra-runtime": "crates/kedra_script/types/runtime.d.luau"
+    },
+    "luau-lsp.completion.imports.enabled": true
+  },
+  "extensions": {"recommendations": ["JohnnyMorganz.luau-lsp"]}
+}

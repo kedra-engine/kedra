@@ -1,6 +1,6 @@
 //! Native ownership tests without an OS event loop; readiness stays honestly false.
 use super::*;
-use crate::workspace::{input::regression_tests::setup, test_support::sources};
+use crate::workspace::test_support::{setup, sources};
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 #[test]
@@ -251,16 +251,16 @@ fn floating_close_hides_records_and_retires_after_retained_content_moves() -> Te
             let content = world.spawn(Text::new("retained")).id();
             state.renderer.register(b, content)?;
             let (host, native) = staged(world, &mut state, Selection::View(b))?;
-            let frame = crate::views::mount(
+            let frame = crate::views::mount_asset(
                 world,
                 native.root,
-                crate::views::document(0xc0600000000040008000000000000001),
+                "editor://prefabs/window-frame.prefab.ron",
                 "test-frame",
             )?;
-            let caption = crate::views::mount(
+            let caption = crate::views::mount_asset(
                 world,
                 frame.root,
-                crate::views::document(0xc0900000000040008000000000000001),
+                "editor://prefabs/titlebar.prefab.ron",
                 "test-caption",
             )?;
             crate::chrome::bind_window(world, &caption, native.window, Some(frame.root))?;

@@ -21,7 +21,8 @@ serde_with.workspace = true
 uuid.workspace = true
 bevy_remote.workspace = true
 kedra_app.workspace = true
-kedra_ui = { workspace = true, features = ["system-fonts"] }
+kedra_script.workspace = true
+kedra_ui = { workspace = true, features = ["system-fonts", "text-capture"] }
 kedra_inspector.workspace = true
 kedra_scene = { workspace = true, features = ["render"] }
 kedra_docking.workspace = true
@@ -37,14 +38,7 @@ rfd = { version = "=0.17.2", default-features = false, features = ["xdg-portal",
 
 [dev-dependencies]
 image.workspace = true
-
-[features]
-# Native opt-in acceptance host; does not install EditorPlugin or project startup.
-docking-fixture = []
-
-[[example]]
-name = "docking_fixture"
-required-features = ["docking-fixture"]
+kedra_import.workspace = true
 
 [lints]
 workspace = true

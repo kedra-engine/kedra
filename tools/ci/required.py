@@ -4,7 +4,7 @@ import json
 import os
 
 
-JOBS = frozenset(("changes", "policy", "native", "coverage", "supply-chain", "repository", "secrets", "python-qa"))
+JOBS = frozenset(("changes", "policy", "native", "coverage", "supply-chain", "repository", "secrets", "python-test"))
 
 
 def require_success(results: object) -> None:
@@ -24,7 +24,7 @@ def require_success(results: object) -> None:
         "native": outputs["rust"],
         "coverage": outputs["rust"],
         "supply-chain": outputs["rust"],
-        "python-qa": outputs["python"],
+        "python-test": outputs["python"],
         "repository": outputs["markdown"],
     }
     for job in sorted(JOBS):

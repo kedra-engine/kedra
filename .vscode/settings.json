@@ -1,0 +1,14 @@
+{
+  "files.associations": {"*.luau": "luau"},
+  "luau-lsp.platform.type": "standard",
+  "luau-lsp.sourcemap.enabled": false,
+  "luau-lsp.fflags.sync": false,
+  "luau-lsp.types.definitionFiles": {
+    "01-kedra-runtime": "crates/kedra_script/types/runtime.d.luau",
+    "02-kedra-bevy": "crates/kedra_script_bevy/types/bevy.d.luau",
+    "02-kedra-application": "crates/kedra_app/types/application.d.luau",
+    "03-kedra-editor": "crates/kedra_editor/types/editor.d.luau"
+  },
+  "luau-lsp.ignoreGlobs": ["**/target/**", "**/*.d.luau"],
+  "luau-lsp.completion.imports.enabled": true
+}

@@ -1,0 +1,313 @@
+{
+  "schema": 1,
+  "cases": {
+    "button-quiet-hover": {
+      "metadata": {
+        "file": "button-quiet-hover.json",
+        "sha256": "e802c87d1d0ee38a036374b0caf225fda1b436e7114a63fe2818bbd84bf37079"
+      },
+      "full": {
+        "file": "button-quiet-hover.full.png",
+        "sha256": "fb0e4bf6da073a4bd9801411b6efc62752b19f88ef8bb703010d21c1ecd24253"
+      },
+      "shape": {
+        "file": "button-quiet-hover.shape.png",
+        "sha256": "dede6fc9cdaf86f84ba57c5e125b6a855eefd73e66a4bfa2434e3f024b396e98"
+      }
+    },
+    "button-quiet-pressed": {
+      "metadata": {
+        "file": "button-quiet-pressed.json",
+        "sha256": "a28576b4e1f825aa5f2be02d8870d230e5625e00b0aeeb657bc3657c24e1cc6d"
+      },
+      "full": {
+        "file": "button-quiet-pressed.full.png",
+        "sha256": "2b1f216bdac742e5b0a2f4201b71d61d5c9d47fca336796f44ece86b75197af1"
+      },
+      "shape": {
+        "file": "button-quiet-pressed.shape.png",
+        "sha256": "c75ef51f79da9a1543d5309fdc95a092ce1c396948a30405932b76b5903bb547"
+      }
+    },
+    "button-quiet-focus": {
+      "metadata": {
+        "file": "button-quiet-focus.json",
+        "sha256": "de2db39e92c17d1c1096607f22150001e78f6a94417aa80f07cef99738daef6c"
+      },
+      "full": {
+        "file": "button-quiet-focus.full.png",
+        "sha256": "aeb0e0c911d3495902d3769813758a83169b8b0ea325df3175e0f543dfafcae3"
+      },
+      "shape": {
+        "file": "button-quiet-focus.shape.png",
+        "sha256": "453fe3d1f4cdc439140a38eecac74d2d5f3f02324a1cedc7ec2142878057c4f6"
+      }
+    },
+    "button-quiet-disabled": {
+      "metadata": {
+        "file": "button-quiet-disabled.json",
+        "sha256": "bf6e086ba316e01766bf8b9ea11b37f692ccd4da7abfa7d4dfb02076e5d62b5c"
+      },
+      "full": {
+        "file": "button-quiet-disabled.full.png",
+        "sha256": "cc6b41da70bf0913049ef96951e4adc7ff2817230469daf0e4fda8cbb1bc2f39"
+      },
+      "shape": {
+        "file": "button-quiet-disabled.shape.png",
+        "sha256": "98759dccd02c939d5d700e72728c1c8fa433e22eacb3d5223046806b30929f07"
+      }
+    },
+    "button-secondary-hover": {
+      "metadata": {
+        "file": "button-secondary-hover.json",
+        "sha256": "39653768ab6b3da24f6a2e5e5c5fc55e95292b159c00104e1ef92f2071e4ee7a"
+      },
+      "full": {
+        "file": "button-secondary-hover.full.png",
+        "sha256": "f724a0154b563b1a30bbda939a3b4d93c69fdf7a4b65c4aa26df5a554c3caa68"
+      },
+      "shape": {
+        "file": "button-secondary-hover.shape.png",
+        "sha256": "ec11a6226dbc8ecf1f2824343e59b2f363d48abdb148ef9a44d0439d220afc9a"
+      }
+    },
+    "button-secondary-pressed": {
+      "metadata": {
+        "file": "button-secondary-pressed.json",
+        "sha256": "ee4e921f12bc5ed5e516cbb75ef7e3be5c4e042890a0dd37913c7c4e003a051f"
+      },
+      "full": {
+        "file": "button-secondary-pressed.full.png",
+        "sha256": "488ee682827089e819739b290854ec29c0ccbf4f0396d1b6021bd2f77fa12937"
+      },
+      "shape": {
+        "file": "button-secondary-pressed.shape.png",
+        "sha256": "2d21e6c53d919d540d4e3347309ddf2b37259dfa091fb72edc47c0e0ed95af2f"
+      }
+    },
+    "button-secondary-focus": {
+      "metadata": {
+        "file": "button-secondary-focus.json",
+        "sha256": "b173b4abf283fc8791ec23e88f90a2aafd068d119ef891f9b4b6ad6d6d60b78b"
+      },
+      "full": {
+        "file": "button-secondary-focus.full.png",
+        "sha256": "e34ad871b46a4c44b41892817d316673df4e44e69896d8d8f62a20ab5ced7c73"
+      },
+      "shape": {
+        "file": "button-secondary-focus.shape.png",
+        "sha256": "431f7b511a5d80beaeb1b5ec736f51d30e5380fc28c1ac0e65d03eb3c1dce0fd"
+      }
+    },
+    "button-secondary-disabled": {
+      "metadata": {
+        "file": "button-secondary-disabled.json",
+        "sha256": "4b2ad1c94d8d7afeff4f7fee16eacba931a5f8826be039b3d774e12cd51cfb4e"
+      },
+      "full": {
+        "file": "button-secondary-disabled.full.png",
+        "sha256": "83fb1a9de2181835cf226a523dc72b784fd51565a6628cee68faa26d603f6f58"
+      },
+      "shape": {
+        "file": "button-secondary-disabled.shape.png",
+        "sha256": "d74c87785a4eb7ece2c1e8db2ccd89f723b2da47b48e215a7daf6414cb764bc8"
+      }
+    },
+    "button-flat": {
+      "metadata": {
+        "file": "button-flat.json",
+        "sha256": "ece781627e175155fb99381444e38c0368c0ac3e61b58c95d8d26ff5437aebaf"
+      },
+      "full": {
+        "file": "button-flat.full.png",
+        "sha256": "f96f24e349e74b786a901f99646f277b2f3d5dc993ffdb0b9f01574df4cae4b9"
+      },
+      "shape": {
+        "file": "button-flat.shape.png",
+        "sha256": "f96f24e349e74b786a901f99646f277b2f3d5dc993ffdb0b9f01574df4cae4b9"
+      }
+    },
+    "button-flat-hover": {
+      "metadata": {
+        "file": "button-flat-hover.json",
+        "sha256": "5fbab4e8999812f9ac13e9a1a6e124c1c4da21ef14a01e5e8896241dcb4aa838"
+      },
+      "full": {
+        "file": "button-flat-hover.full.png",
+        "sha256": "d6f43bc01aec843fa57d0375a89860f243236dd504a09b7c9c8722d8df3f16c9"
+      },
+      "shape": {
+        "file": "button-flat-hover.shape.png",
+        "sha256": "d6f43bc01aec843fa57d0375a89860f243236dd504a09b7c9c8722d8df3f16c9"
+      }
+    },
+    "button-flat-pressed": {
+      "metadata": {
+        "file": "button-flat-pressed.json",
+        "sha256": "1c8e14dcc1ef00b6cfbf0b39479cc2816d838651cd3311226c1831e2f37f615d"
+      },
+      "full": {
+        "file": "button-flat-pressed.full.png",
+        "sha256": "f48cf9a0a560fa56e219e684e5c0e36f8dfa99298eb7e3d09e1b570a4f611b82"
+      },
+      "shape": {
+        "file": "button-flat-pressed.shape.png",
+        "sha256": "f48cf9a0a560fa56e219e684e5c0e36f8dfa99298eb7e3d09e1b570a4f611b82"
+      }
+    },
+    "button-flat-focus": {
+      "metadata": {
+        "file": "button-flat-focus.json",
+        "sha256": "0ac7c275f278c6d0c050106719dd39c58b11f18c2caa57e46b36ed40d40e1073"
+      },
+      "full": {
+        "file": "button-flat-focus.full.png",
+        "sha256": "702e936529c6e97d4f8bd21d9fabbc60045bec5d4b430cc9d35f307ec4605618"
+      },
+      "shape": {
+        "file": "button-flat-focus.shape.png",
+        "sha256": "702e936529c6e97d4f8bd21d9fabbc60045bec5d4b430cc9d35f307ec4605618"
+      }
+    },
+    "button-flat-disabled": {
+      "metadata": {
+        "file": "button-flat-disabled.json",
+        "sha256": "7f99e8c5e51ed54304522dff7abd415d46126bc313c48204216922baa393d720"
+      },
+      "full": {
+        "file": "button-flat-disabled.full.png",
+        "sha256": "aedb146befbdd16ecb80c03fa791afd9d58b86d18a57f937a08e06d0b5a91187"
+      },
+      "shape": {
+        "file": "button-flat-disabled.shape.png",
+        "sha256": "aedb146befbdd16ecb80c03fa791afd9d58b86d18a57f937a08e06d0b5a91187"
+      }
+    },
+    "button-quiet": {
+      "metadata": {
+        "file": "button-quiet.json",
+        "sha256": "22a90455414b717884a511c948120828eedcc3d0fc7b73529d04b5d22e89c334"
+      },
+      "full": {
+        "file": "button-quiet.full.png",
+        "sha256": "41516e04f5750feac85ba756869db1ce43139d940c069587f99c982db5ac3dc3"
+      },
+      "shape": {
+        "file": "button-quiet.shape.png",
+        "sha256": "98759dccd02c939d5d700e72728c1c8fa433e22eacb3d5223046806b30929f07"
+      }
+    },
+    "button-secondary": {
+      "metadata": {
+        "file": "button-secondary.json",
+        "sha256": "87bc96e7320326a25cff64a8e040fe71e0b39dd93423d6495876516c84bb2ec9"
+      },
+      "full": {
+        "file": "button-secondary.full.png",
+        "sha256": "99a0d2434180c1b8f8d231a5e75531e4055faa43b40a1e0464c3ca21c00b85bd"
+      },
+      "shape": {
+        "file": "button-secondary.shape.png",
+        "sha256": "beafcb96c534431076a8ad03c50f632cf94041a36aaba7ecf6b3fd0bb7a4ed1a"
+      }
+    },
+    "button-primary": {
+      "metadata": {
+        "file": "button-primary.json",
+        "sha256": "244c7bf4bb2c6814ed13e1cdd4a394a867887543ff5ee24d87043de18cb32dec"
+      },
+      "full": {
+        "file": "button-primary.full.png",
+        "sha256": "412efcbc95c7fbef25a09ccbf26ef7ee8a13019cc42e8fa00320572c913e703a"
+      },
+      "shape": {
+        "file": "button-primary.shape.png",
+        "sha256": "8dceafcd3d86e1b809e87cc7aeb786179e038744ceb05abf639de1059a8181bb"
+      }
+    },
+    "button-hover": {
+      "metadata": {
+        "file": "button-hover.json",
+        "sha256": "c73604a8ed9d197d7ae44caf2ebddc1090d0bebd83df959055f4560eaf9dc649"
+      },
+      "full": {
+        "file": "button-hover.full.png",
+        "sha256": "59a46435d92f849eb29586d86de540e08c7dc1907225a485bbabefdd88a27c7b"
+      },
+      "shape": {
+        "file": "button-hover.shape.png",
+        "sha256": "f7daa658594241e5314be9ce96bad1aa19e0d5c1396351a0dd055387b3dbd6d2"
+      }
+    },
+    "button-pressed": {
+      "metadata": {
+        "file": "button-pressed.json",
+        "sha256": "4b67100e671ff143ed15a3789494e123a706fc3eec75e4c6620f4d38231bd5d1"
+      },
+      "full": {
+        "file": "button-pressed.full.png",
+        "sha256": "f924b8a8c2542f2dff604ab6e9b54c12caa1764e0f1872e7931171dd340f966b"
+      },
+      "shape": {
+        "file": "button-pressed.shape.png",
+        "sha256": "c4c60a1e467ecda71ccdd4fb23e870c9ca9ddee4632a79835827131879e92999"
+      }
+    },
+    "button-focus": {
+      "metadata": {
+        "file": "button-focus.json",
+        "sha256": "79206ba4dbf6e57313d42ada805a7028371c5284e332c81538358d435a343706"
+      },
+      "full": {
+        "file": "button-focus.full.png",
+        "sha256": "7aa49cc80638a2672b6f49e67009d08cebeab470e94435a296039f4f9c13cb08"
+      },
+      "shape": {
+        "file": "button-focus.shape.png",
+        "sha256": "68c3b09af91a10cce4bda6add68297ef8f839681f21102607c6e0e5c3d95b167"
+      }
+    },
+    "button-disabled": {
+      "metadata": {
+        "file": "button-disabled.json",
+        "sha256": "1691a7e0964dc33018b40b1d5622b6c4709637679e373bc119acc0251bc3bb34"
+      },
+      "full": {
+        "file": "button-disabled.full.png",
+        "sha256": "c6aed154554cfefaf4ffefff50caa0f738a146c5fbe77748d544e1b74b768489"
+      },
+      "shape": {
+        "file": "button-disabled.shape.png",
+        "sha256": "e8ac1189a8415eae1eef60a4a0eed390f2f5827e4cee71fa8eed79e7c98d8e41"
+      }
+    },
+    "field-default": {
+      "metadata": {
+        "file": "field-default.json",
+        "sha256": "2095699b1a0df15faafddc26c1e9095cd5b35284f1a6c5cb88d018dfa8bcedc9"
+      },
+      "full": {
+        "file": "field-default.full.png",
+        "sha256": "41945d2198257a5527910c3b21842b08d531285dc551e11c1b1f0fe25e54659e"
+      },
+      "shape": {
+        "file": "field-default.shape.png",
+        "sha256": "910ecf5e2068b0546b98e1ffbdbf541d199c4c1a4ef4f7cf1518b2465a4e98d9"
+      }
+    },
+    "field-focus": {
+      "metadata": {
+        "file": "field-focus.json",
+        "sha256": "a789b7a399b53cca3bd75a6a2520cf3ecd37a1061004e11a3ec48936253a67e4"
+      },
+      "full": {
+        "file": "field-focus.full.png",
+        "sha256": "07fa6c4bcbba6cd4c66dd7c7a451b176eabc87937a7307a934b5942e95442c6d"
+      },
+      "shape": {
+        "file": "field-focus.shape.png",
+        "sha256": "52f07e00435c526f56b7fdd3967dc7df76ab8328218ba62f6b25fe099ecab3fb"
+      }
+    }
+  }
+}

@@ -9,10 +9,9 @@ integration API. Screens must not each implement caption controls, drag regions
 and window-state synchronization. Figma defines three compositions of that
 mechanism, not three separate implementations.
 
-The current editor mounts a generic caption above its workspace toolbar and
-above floating dock rails. Its native-drag handler recognizes a fixed top strip
-and a right control exclusion. Embedded commands and tabs require explicit input
-regions instead. `kedra_ui` is runtime-layer; `kedra_desktop` is editor-layer.
+The editor integrates toolbar and floating dock content through shared header
+slots and explicit input regions. `kedra_ui` is runtime-layer;
+`kedra_desktop` is editor-layer.
 
 ## Decision
 
@@ -31,7 +30,7 @@ regions instead. `kedra_ui` is runtime-layer; `kedra_desktop` is editor-layer.
 - Bevy components/events, authored `UiView`, Flair and Taffy remain the integration
   mechanisms. No new crate, ECS, layout engine or third-party dependency is needed.
 
-The new `kedra_desktop -> kedra_ui` workspace dependency is justified by actual
+The `kedra_desktop -> kedra_ui` workspace dependency is justified by actual
 native consumers of shared renderer geometry and region contracts. It obeys the
 layer DAG. The opposite dependency is forbidden.
 
@@ -69,7 +68,7 @@ operation with full control-region priority and window capability checks.
 ### Compositions
 
 - Startup/general windows: one centered Caption row, with platform controls and
-  symmetric title balance. Implementation choice: Boot and Loading, including
+  symmetric title balance. Implementation choice: Loading, including
   failure/recovery presentation, are fixed-size and close-only; Projects and editor
   hosts remain resizable. Native capabilities and authored controls agree.
 - Main Editor: one Editor toolbar row with project, transport and global command
@@ -94,7 +93,8 @@ tab dragging.
 Figma file `2EZlK40cfx2Mub7GmDyI70`, window family `82:3049`, is authoritative:
 
 - Caption/Editor/Floating rows are 32 logical pixels high.
-- Dock tabs are 28px, bottom-aligned; Flat menu targets are 26px.
+- Dock tabs are 28px, bottom-aligned; Flat menu targets use the current 22px
+  compact token.
 - Right-side native caption actions are 44 by 32px with 16px glyphs.
 - macOS reserves 82px at the left for real system buttons. Do not draw replacement
   traffic lights. Editor toolbar starts after that reserve; floating menu is right.

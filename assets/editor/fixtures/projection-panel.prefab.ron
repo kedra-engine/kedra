@@ -1,0 +1,6 @@
+(
+ version:1,id:"db300000-0000-4000-8000-000000000001",kind:Prefab,title:"Independent projection content",root:"d0410000-0000-4000-8000-000000000001",base:Some("d0400000-0000-4000-8000-000000000001"),
+ nodes:[],instances:[],ports:{},overrides:[
+   SetComponent(node:(instances:[],node:"d0410000-0000-4000-8000-000000000003"),component:"ui.caption",data:(version:1,value:(text:"Independent renderer consumer. Named projection programs exercise reorder, split, activation, maximize, hide/show and restore. Drafts are session-only.",justify:Left,wrap:true))),
+ ],
+)

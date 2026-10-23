@@ -1,0 +1,18 @@
+(
+    version:1, id:"c0e7bd74-8e03-4fa3-a410-bb991392667b", kind:Scene,
+    title:"Native switch", root:"baf590ba-6f34-4b0f-a802-88bbb84e12e1", base:None,
+    nodes:[
+        (id:"baf590ba-6f34-4b0f-a802-88bbb84e12e1", name:"Canvas", parent:None, components:{
+            "ui.layout":(version:1,value:(node:(width:Percent(100.0),height:Percent(100.0)))),
+            "ui.background":(version:1,value:(Srgba((red:0.1254902,green:0.1254902,blue:0.1254902,alpha:1.0)))),
+            "ui.screen":(version:1,value:("independent-game")),
+        }),
+        (id:"c9f0fd9f-edf0-4396-afb2-96d019341aff", name:"Switch",
+         parent:Some((instances:[],node:"baf590ba-6f34-4b0f-a802-88bbb84e12e1")), components:{
+            "ui.layout":(version:1,value:(node:(position_type:Absolute,left:Px(40.0),top:Px(50.0),width:Px(120.0),height:Px(64.0)))),
+            "ui.background":(version:1,value:(Srgba((red:0.7058824,green:0.15686275,blue:0.11764706,alpha:1.0)))),
+            "ui.button":(version:1,value:()),
+            "ui.id":(version:1,value:("game.switch")),
+        }),
+    ], instances:[], overrides:[], ports:{},
+)

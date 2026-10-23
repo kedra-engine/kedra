@@ -121,10 +121,10 @@ pub(super) fn menu(
         }
     }
     for (index, (title, action)) in items.into_iter().enumerate() {
-        let view = crate::views::mount(
+        let view = crate::views::mount_asset(
             world,
             menu,
-            crate::views::document(0xc0100000000040008000000000000001),
+            "editor://prefabs/button.prefab.ron",
             &format!("dock-menu/{index}"),
         )?;
         // The button prefab deliberately exposes its caption via its native graph.

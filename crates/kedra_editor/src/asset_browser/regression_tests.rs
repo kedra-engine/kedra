@@ -9,10 +9,10 @@ fn fixture() -> Result<(App, Panel, ViewId, tempfile::TempDir), Box<dyn std::err
     let directory = tempfile::tempdir()?;
     let world = app.world_mut();
     let host = world.spawn(Node::default()).id();
-    let parent = crate::views::mount(
+    let parent = crate::views::mount_asset(
         world,
         host,
-        crate::views::document(0xc0600000000040008000000000000001),
+        "editor://prefabs/window-frame.prefab.ron",
         "browser-test",
     )?
     .root;
@@ -48,6 +48,51 @@ fn geometry(world: &mut World, entity: Entity, top: f32, height: f32, content: f
             (top + height / 2.) * 2.,
         ))),
     ));
+}
+
+#[test]
+fn tree_completion_before_content_does_not_make_a_source_tile_ready() -> TestResult {
+    let (mut app, mut panel, id, directory) = fixture()?;
+    std::fs::create_dir(directory.path().join("Prefabs"))?;
+    let request = panel.model.request(PathBuf::new(), None)?;
+    let world = app.world_mut();
+
+    // Exercise the independent completion order deterministically: the tree
+    // finishes while the initial content request is still pending.
+    panel.tree.complete(
+        0,
+        PathBuf::new(),
+        model::list(directory.path(), std::path::Path::new("")),
+    );
+    panel.dirty = true;
+    panel.tick(world, id)?;
+    assert!(panel.model.loading);
+    assert!(world.query::<&Text>().iter(world).any(|t| t.0 == "Prefabs"));
+    let item = format!("browser/{id:?}/item/0");
+    assert!(
+        !world
+            .query::<&kedra_ui::ElementId>()
+            .iter(world)
+            .any(|element| element.0 == item)
+    );
+
+    assert!(
+        panel
+            .model
+            .complete(&request, model::list(directory.path(), &request.path))
+    );
+    panel.dirty = true;
+    panel.tick(world, id)?;
+    let entity = world
+        .query::<(Entity, &kedra_ui::ElementId)>()
+        .iter(world)
+        .find_map(|(entity, element)| (element.0 == item).then_some(entity))
+        .ok_or("Source tile must follow content completion, not tree completion")?;
+    let binding = world.get::<Binding>(entity).ok_or("Source tile binding")?;
+    assert_eq!(binding.view, id);
+    assert_eq!(binding.generation, request.generation);
+    assert!(matches!(&binding.action, Action::Select(name) if name == "Prefabs"));
+    Ok(())
 }
 
 #[test]

@@ -49,6 +49,7 @@ enum Step {
     Button(bool),
     Wheel(Vec2),
     Keys(Vec<KeyboardInput>),
+    CloseWindow,
     Resize {
         width: f32,
         height: f32,
@@ -71,6 +72,7 @@ impl InputQueue {
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 enum Input {
+    CloseWindow,
     Modifier {
         modifier: Modifier,
         pressed: bool,
@@ -154,6 +156,7 @@ pub(crate) fn request(In(value): In<Option<Value>>, world: &mut World) -> BrpRes
     }
     let mut steps = VecDeque::new();
     match request.input {
+        Input::CloseWindow => steps.push_back(Step::CloseWindow),
         Input::Modifier { modifier, pressed } => {
             let (key_code, logical_key) = match modifier {
                 Modifier::Shift => (KeyCode::ShiftLeft, Key::Shift),
@@ -435,6 +438,11 @@ fn inject(world: &mut World) {
                         fail(world, &mut queue, error);
                     }
                 }
+                Step::CloseWindow => {
+                    let event = bevy::window::WindowCloseRequested { window };
+                    world.write_message(event.clone());
+                    world.write_message(WindowEvent::WindowCloseRequested(event));
+                }
                 Step::Keys(events) => {
                     if let Err(error) = held.validate_keys(world, &events) {
                         fail(world, &mut queue, error);
@@ -512,11 +520,12 @@ fn fail(world: &mut World, queue: &mut InputQueue, error: String) {
 mod tests {
     use super::*;
     #[test]
-    fn wheel_and_resize_reach_both_native_bevy_message_surfaces() {
+    fn wheel_resize_and_close_reach_both_native_bevy_message_surfaces() {
         let mut app = App::new();
         app.add_message::<WindowEvent>()
             .add_message::<MouseWheel>()
             .add_message::<bevy::window::WindowResized>()
+            .add_message::<bevy::window::WindowCloseRequested>()
             .add_message::<bevy::window::WindowScaleFactorChanged>();
         let window = app.world_mut().spawn(Window::default()).id();
         app.insert_resource(InputQueue {
@@ -527,10 +536,12 @@ mod tests {
                     height: 600.,
                     dpr: Some(2.),
                 },
+                Step::CloseWindow,
             ]),
             window: Some(window),
             operation: None,
         });
+        inject(app.world_mut());
         inject(app.world_mut());
         inject(app.world_mut());
         let world = app.world();
@@ -547,6 +558,15 @@ mod tests {
                 .len(),
             1
         );
-        assert_eq!(world.resource::<Messages<WindowEvent>>().len(), 3);
+        let close = world.resource::<Messages<bevy::window::WindowCloseRequested>>();
+        assert_eq!(close.len(), 1);
+        assert_eq!(
+            close
+                .iter_current_update_messages()
+                .next()
+                .map(|event| event.window),
+            Some(window)
+        );
+        assert_eq!(world.resource::<Messages<WindowEvent>>().len(), 4);
     }
 }

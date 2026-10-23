@@ -436,6 +436,13 @@ impl Projection {
                 Chrome::Split { divider, .. },
             ) => {
                 let divider = *divider;
+                // Independent physical-pixel rounding of nested flex children
+                // can add one pixel to an odd-width split (446 + 4 + 446 > 895).
+                // Let Bevy retain the fitted fractional geometry in both live
+                // and candidate projections; never widen drop-admission bounds.
+                world.entity_mut(root).insert(bevy::ui::LayoutConfig {
+                    use_rounding: false,
+                });
                 if world
                     .get::<bevy::picking::hover::Hovered>(divider)
                     .is_none()

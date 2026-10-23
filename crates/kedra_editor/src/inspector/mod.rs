@@ -41,34 +41,28 @@ pub(crate) fn install(app: &mut App) {
     input::install(app);
 }
 
+pub(crate) fn templates(world: &World, density: f32) -> Result<FieldTemplates, String> {
+    Ok(FieldTemplates {
+        row: crate::views::compiled(world, "editor://prefabs/property-row.prefab.ron")?,
+        value: crate::views::compiled(world, "editor://prefabs/property-value.prefab.ron")?,
+        section: crate::views::compiled(world, "editor://prefabs/property-section.prefab.ron")?,
+        density,
+    })
+}
+
 impl Panel {
     pub fn mount(world: &mut World, parent: Entity, id: ViewId) -> Result<Self, String> {
-        let sources = world
-            .resource::<kedra_scene::assets::PrefabSources>()
-            .snapshot();
-        let template = |id| {
-            sources
-                .compiled
-                .get(&crate::views::document(id))
-                .cloned()
-                .ok_or("Shared property kit template is missing".to_string())
-        };
         let density = world
             .resource::<kedra_desktop::DesktopSurface>()
             .window
             .and_then(|w| world.get::<Window>(w))
             .map_or(1., Window::scale_factor)
             * world.resource::<UiScale>().0;
-        let templates = FieldTemplates {
-            row: template(0x19a00000000040008000000000000001)?,
-            value: template(0x19a10000000040008000000000000001)?,
-            section: template(0x19a20000000040008000000000000001)?,
-            density,
-        };
-        let view = crate::views::mount(
+        let templates = templates(world, density)?;
+        let view = crate::views::mount_asset(
             world,
             parent,
-            crate::views::document(0x19a30000000040008000000000000001),
+            "editor://prefabs/inspector.prefab.ron",
             &format!("inspector/{id:?}"),
         )?;
         for (key, action) in [

@@ -42,11 +42,14 @@ struct Listener(Mutex<Option<TcpListener>>);
 struct Credentials {
     endpoint: Endpoint,
     path: PathBuf,
+    pending: Option<tempfile::NamedTempFile>,
+    published: bool,
 }
 impl Drop for Credentials {
     fn drop(&mut self) {
         // Do not unlink a user replacement or follow a replacement symlink.
-        let owned = std::fs::symlink_metadata(&self.path).is_ok_and(|meta| meta.is_file())
+        let owned = self.published
+            && std::fs::symlink_metadata(&self.path).is_ok_and(|meta| meta.is_file())
             && std::fs::read(&self.path)
                 .ok()
                 .and_then(|bytes| serde_json::from_slice::<Endpoint>(&bytes).ok())
@@ -82,7 +85,10 @@ impl Drop for ServerTask {
 }
 
 /// Enable remote access explicitly. Binds loopback synchronously, publishes an
-/// owner-only Unix credential file without overwriting, and starts at Startup.
+/// owner-only Unix credential file without overwriting after the first main-world
+/// BRP request/cleanup cycle and acknowledged HTTP runtime/listener initialization.
+/// The returned endpoint is pending until publication; neither implies native frame
+/// readiness. Initialization/publication failures request an application error exit.
 /// On Windows the containing directory must already have an appropriate ACL.
 /// The token grants application-user capabilities; this is not an OS sandbox.
 pub fn enable(
@@ -112,22 +118,52 @@ pub fn enable(
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or(Path::new("."));
     std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    if std::fs::symlink_metadata(credential_file).is_ok() {
+        return Err("Automation credential path already exists".into());
+    }
     let mut file = tempfile::NamedTempFile::new_in(parent).map_err(|e| e.to_string())?;
     file.write_all(&serde_json::to_vec(&endpoint).map_err(|e| e.to_string())?)
         .map_err(|e| e.to_string())?;
     file.as_file().sync_all().map_err(|e| e.to_string())?;
-    file.persist_noclobber(credential_file)
-        .map_err(|e| format!("Cannot publish automation credential without overwriting: {e}"))?;
     app.insert_resource(Listener(Mutex::new(Some(listener))))
         .insert_resource(Credentials {
             endpoint: endpoint.clone(),
             path: credential_file.into(),
+            pending: Some(file),
+            published: false,
         })
         .insert_resource(crate::capture::ArtifactRoot(artifact_root.into()))
-        .add_systems(Startup, start);
+        .add_systems(
+            bevy_remote::RemoteLast,
+            start
+                .after(bevy_remote::RemoteSystems::Cleanup)
+                .run_if(bevy::ecs::schedule::common_conditions::run_once),
+        );
     Ok(endpoint)
 }
 fn start(world: &mut World) {
+    start_with(world, prepare_server);
+}
+
+struct PreparedServer {
+    runtime: tokio::runtime::Runtime,
+    listener: tokio::net::TcpListener,
+}
+
+fn prepare_server(listener: TcpListener) -> Result<PreparedServer, String> {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(|error| format!("Cannot start automation runtime: {error}"))?;
+    let listener = {
+        let _guard = runtime.enter();
+        tokio::net::TcpListener::from_std(listener)
+            .map_err(|error| format!("Cannot adopt automation listener: {error}"))?
+    };
+    Ok(PreparedServer { runtime, listener })
+}
+
+fn start_with(world: &mut World, prepare: fn(TcpListener) -> Result<PreparedServer, String>) {
     let result = (|| -> Result<ServerTask, String> {
         let listener = world
             .resource::<Listener>()
@@ -142,10 +178,14 @@ fn start(world: &mut World) {
             slots: Arc::new(tokio::sync::Semaphore::new(16)),
         };
         let (stop, receiver) = tokio::sync::oneshot::channel();
+        let (initialized, acknowledgement) = std::sync::mpsc::sync_channel(1);
         let thread=std::thread::Builder::new().name("kedra-automation-http".into()).spawn(move || {
-            let runtime=match tokio::runtime::Builder::new_current_thread().enable_all().build() {Ok(runtime)=>runtime,Err(error)=>{error!("Cannot start automation runtime: {error}");return;}};
+            let PreparedServer { runtime, listener } = match prepare(listener) {
+                Ok(server) => server,
+                Err(error) => { let _ = initialized.send(Err(error)); return; }
+            };
+            if initialized.send(Ok(())).is_err() { return; }
             runtime.block_on(async move {
-                let listener=match tokio::net::TcpListener::from_std(listener) {Ok(listener)=>listener,Err(error)=>{error!("Cannot adopt automation listener: {error}");return;}};
                 let server=axum::serve(listener,router(state)).into_future();
                 tokio::select! {
                     result=server=>{if let Err(error)=result {error!("Automation transport stopped: {error}");}},
@@ -154,14 +194,36 @@ fn start(world: &mut World) {
             });
             runtime.shutdown_timeout(Duration::from_millis(100));
         }).map_err(|e|e.to_string())?;
-        Ok(ServerTask {
+        let task = ServerTask {
             stop: Some(stop),
             thread: Some(thread),
-        })
+        };
+        // This acknowledges only thread-local OS/runtime setup. It never waits
+        // for a Bevy effect, mailbox response or another main-world update.
+        acknowledgement
+            .recv()
+            .map_err(|_| "Automation initialization thread stopped")??;
+        Ok(task)
     })();
     match result {
         Ok(task) => {
             world.insert_resource(task);
+            let mut credentials = world.resource_mut::<Credentials>();
+            let result = credentials
+                .pending
+                .take()
+                .ok_or("Automation credential already published")
+                .and_then(|file| {
+                    file.persist_noclobber(&credentials.path)
+                        .map(|_| ())
+                        .map_err(|_| "Cannot publish automation credential without overwriting")
+                });
+            credentials.published = result.is_ok();
+            if let Err(error) = result {
+                error!("{error}");
+                world.remove_resource::<ServerTask>();
+                world.write_message(AppExit::error());
+            }
         }
         Err(error) => {
             error!("{error}");
@@ -286,7 +348,17 @@ mod tests {
         {
             use std::os::unix::fs::PermissionsExt;
             assert_eq!(
-                std::fs::metadata(&path).unwrap().permissions().mode() & 0o077,
+                app.world()
+                    .resource::<Credentials>()
+                    .pending
+                    .as_ref()
+                    .unwrap()
+                    .as_file()
+                    .metadata()
+                    .unwrap()
+                    .permissions()
+                    .mode()
+                    & 0o077,
                 0
             );
         }
@@ -306,6 +378,8 @@ mod tests {
         let credentials = Credentials {
             endpoint: endpoint.clone(),
             path: path.clone(),
+            pending: None,
+            published: true,
         };
         std::fs::write(&path, b"user replacement").unwrap();
         drop(credentials);
@@ -314,6 +388,8 @@ mod tests {
         drop(Credentials {
             endpoint,
             path: path.clone(),
+            pending: None,
+            published: true,
         });
         assert!(!path.exists());
     }

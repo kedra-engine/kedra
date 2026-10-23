@@ -87,19 +87,33 @@ fn pending_sources_timeout_is_exact_and_missing_document_is_terminal() {
     assert_failure(app.world(), "within 30 seconds");
 
     let mut app = super::app();
-    app.insert_resource(PrefabSources::default());
-    app.world_mut()
-        .resource_mut::<PrefabSources>()
-        .dependencies_ready = true;
+    let handle = app
+        .world()
+        .resource::<AssetServer>()
+        .get_handle::<PrefabDocument>("editor://scenes/projects.scene.ron")
+        .unwrap();
+    assert!(
+        app.world_mut()
+            .resource_mut::<Assets<PrefabDocument>>()
+            .remove(handle.id())
+            .is_some()
+    );
     let root = app.world_mut().spawn_empty().id();
     views::request(app.world_mut(), root, views::Kind::Projects).unwrap();
     views::hydrate(app.world_mut());
-    assert_failure(app.world(), "document is absent");
+    assert_failure(app.world(), "Authored asset is not materialized");
 }
 
 #[test]
 fn library_run_rejects_missing_delivery_before_native_plugin_initialization() {
     let directory = tempfile::tempdir().unwrap();
-    let error = crate::run(None, directory.path().join("missing"), None, None, None).unwrap_err();
+    let error = crate::run(
+        None,
+        directory.path().join("missing"),
+        Default::default(),
+        None,
+        None,
+    )
+    .unwrap_err();
     assert!(error.contains("Cannot access asset delivery"));
 }

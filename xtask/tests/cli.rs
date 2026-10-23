@@ -14,7 +14,7 @@ fn cli(args: &[&str]) -> std::process::Output {
 
 #[test]
 fn rejects_missing_unknown_and_extra_arguments() {
-    for args in [vec![], vec!["typo"], vec!["fmt", "extra"]] {
+    for args in [vec![], vec!["typo"], vec!["qa"], vec!["fmt", "extra"]] {
         let output = cli(&args);
         assert!(!output.status.success());
         assert!(String::from_utf8_lossy(&output.stderr).contains("error:"));
@@ -151,8 +151,8 @@ fn feature_checks_fail_closed_when_cargo_is_unavailable() -> Result<(), Box<dyn 
     assert!(!output.status.success());
     let stdout = String::from_utf8(output.stdout)?;
     assert!(stdout.contains("FAIL Default features"));
-    assert!(stdout.contains("0 passed, 1 failed, 2 skipped"));
-    assert!(!stdout.contains("[2/3]"));
+    assert!(stdout.contains("0 passed, 1 failed, 7 skipped"));
+    assert!(!stdout.contains("[2/4]"));
     let path = stdout
         .lines()
         .find_map(|line| line.strip_prefix("Log: "))
