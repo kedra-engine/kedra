@@ -91,6 +91,8 @@ pub(crate) enum Action {
     Locate(std::path::PathBuf),
     Back,
     Retry,
+    // Only the debug remote command currently exposes return-to-projects.
+    #[cfg(debug_assertions)]
     Projects,
     Search,
     LoadingLog,

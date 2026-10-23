@@ -1,0 +1,14 @@
+{
+  "hierarchy": {
+    "main": "1a5c5a15-624f-4128-89c0-2385b70a0600",
+    "main_root": "768ce30f-517d-43d8-bca3-0e9230de74f2",
+    "other": "78ab524f-e412-40bd-b4e4-ada37799e719",
+    "other_root": "d8f5a95a-d5f8-48da-bb00-1990f56a47ea",
+    "first_leaf": "777be3ba-f64c-4fe2-a798-b7f454f11f3e",
+    "last_leaf": "868b1af9-a3b8-443d-82ef-142cf7a68715"
+  },
+  "inspector": {
+    "main": "d6a11686-e060-40fa-90a8-cb2372232ee0",
+    "other": "7a432e4c-3a4c-4ba7-ba26-6e3e61506477"
+  }
+}

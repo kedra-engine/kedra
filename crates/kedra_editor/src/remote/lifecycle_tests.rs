@@ -1,7 +1,7 @@
 //! Actual semantic adapter, registered shared services, jobs and retained views.
 #![allow(clippy::unwrap_used, reason = "Remote receipt and state assertions")]
 use super::*;
-use crate::startup_tests::{app, element, projects};
+use crate::test_support::{app, element, projects};
 use std::time::{Duration, Instant};
 
 fn request(world: &mut World, command_value: Value) -> Value {

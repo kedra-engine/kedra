@@ -123,6 +123,32 @@ mod tests {
         assert!(validate("notes.md", "é".repeat(32769).as_bytes()).is_err());
     }
 
+    #[test]
+    fn pngs_have_no_path_or_extension_exemption() {
+        for path in [
+            "docs/ui/corpus/oversized.png",
+            "docs/ui/corpus/text/button.full.png",
+            "asset.png",
+        ] {
+            assert!(validate(path, &vec![255; MAX_BYTES as usize + 1]).is_err());
+            assert!(validate(path, &vec![255; MAX_BYTES as usize]).is_ok());
+        }
+    }
+
+    #[test]
+    fn repository_inventory_applies_the_same_binary_limit_to_images() -> crate::Result<()> {
+        let root = tempfile::tempdir()?;
+        git(root.path(), &["init"])?;
+        let relative = "docs/ui/corpus/oversized.png";
+        let target = root.path().join(relative);
+        fs::create_dir_all(target.parent().ok_or("missing parent")?)?;
+        fs::write(&target, vec![255; MAX_BYTES as usize + 1])?;
+        assert!(check_at(root.path()).is_err());
+        fs::write(&target, vec![255; MAX_BYTES as usize])?;
+        assert!(check_at(root.path()).is_ok());
+        Ok(())
+    }
+
     fn git(root: &Path, args: &[&str]) -> crate::Result<()> {
         let result = Command::new("git").current_dir(root).args(args).output()?;
         assert!(

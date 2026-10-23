@@ -29,6 +29,7 @@ license-config = "../../about.toml"
 [dependencies]
 bevy = { workspace = true, features = ["async_executor", "bevy_log", "bevy_clipboard", "multi_threaded", "custom_cursor", "x11", "wayland"] }
 kedra_editor.workspace = true
+kedra_app.workspace = true
 kedra_import.workspace = true
 kedra_assets.workspace = true
 clap = { version = "4.5", features = ["derive"] }

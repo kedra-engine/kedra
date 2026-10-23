@@ -74,10 +74,10 @@ diagnostic. Whole-scope source admission can fail before any tree is available;
 Hierarchy does not replace unsupported source data with default nodes.
 
 Navigation never changes source bytes, authoring revisions/history or gameplay
-state. Inspector, source editing, drag/reparent, rename, add/delete and Save remain
-unavailable. There is no field settlement contract yet because no editable source
-fields are installed; future Inspector editing must integrate it before selection
-can replace an edited target.
+state. The read-only [Inspector](inspector.md) follows source selection. Source
+editing, drag/reparent, rename, add/delete and Save remain unavailable. Editable
+field settlement is not implemented; Inspector editing must integrate it before
+selection can replace an edited target.
 
 ## Authored UI and verification
 
@@ -97,21 +97,23 @@ cover composed order, variants, duplicate inner IDs, root-only documents, the
 4096-node graph and non-destructive search/reveal. Coordinator/panel tests cover
 active-document selection checks and hidden/stale input without source writes.
 
-For native acceptance, launch a fresh editor at Projects with isolated credentials,
-artifacts and state, then run:
+For native acceptance, run on an idle desktop; the scenario owns isolated
+credentials, artifacts and state:
 
 ```sh
-python3 tools/qa/hierarchy.py target/hierarchy-credentials.json \
-  --state-directory target/hierarchy-state --report target/hierarchy-report.json
-python3 tools/qa/hierarchy_appearance.py target/hierarchy-credentials.json \
-  --state-directory target/hierarchy-state --report target/hierarchy-appearance.json
+cargo xtask test -- features --only hierarchy --output target/test/hierarchy
 ```
 
-The scenario opens a scene with two 181-node nested instances, exercises real
-native controls and captures renderer frames, verifies distinct scoped selection,
+The scenario opens `Hierarchy/Main.scene.ron` from its own copy of the checked
+`tests/fixtures/test_project`, without generating scene or prefab data. The scene
+contains two 181-node nested instances. It exercises real
+native controls and fences renderer completion, verifies distinct scoped selection,
 virtualized tail navigation, search/reveal, tab switching and retained docking.
-The appearance scenario additionally checks default chrome, 22px row/flat-action
+Behavior and appearance run once, sequentially in the same native session, with
+separate phase statuses and renderer-frame receipts. A behavior failure leaves
+appearance explicitly not run. The appearance phase checks default chrome, 22px row/flat-action
 geometry, 4px insets, 12px indentation, selection color, optional search/details,
-and 232/320px hosts, retaining renderer frames for state review.
+and 232/320px hosts, retaining renderer-frame receipts and physical dimensions,
+not viewable images. Validated temporary PNGs are discarded after synchronization.
 It uses injected Bevy input, not physical OS input, and does not certify IME,
 mixed-monitor behavior, independent Figma pixel equivalence or scene rendering.

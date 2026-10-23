@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "exporter": "kedra-text-source-v1",
+  "case": "button-pressed",
+  "node": "352:1554",
+  "file_key": "2EZlK40cfx2Mub7GmDyI70",
+  "size": [
+    640,
+    360
+  ],
+  "region": [
+    32,
+    32,
+    110,
+    22
+  ],
+  "roles": {
+    "Label#27:20": {
+      "node": "I352:1555;27:448",
+      "text": "Save changes",
+      "font_family": "Inter",
+      "font_style": "Medium",
+      "size_px": 12,
+      "weight": 500,
+      "line_height_px": 16,
+      "letter_spacing_px": 0,
+      "color": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "rect": [
+        46.5,
+        35,
+        127.5,
+        51
+      ],
+      "lines": 1
+    }
+  },
+  "instances": [
+    {
+      "node": "352:1555",
+      "component": "27:447",
+      "key": "321cdc67e8eac877d586fd33d81dc220046a7293",
+      "properties": {
+        "Label#27:20": {
+          "type": "TEXT",
+          "value": "Save changes"
+        },
+        "Intent": {
+          "value": "Primary",
+          "type": "VARIANT",
+          "boundVariables": {}
+        },
+        "State": {
+          "value": "Pressed",
+          "type": "VARIANT",
+          "boundVariables": {}
+        }
+      }
+    }
+  ],
+  "shape_derivation": "Figma temporary clone; text opacity zero; layout retained"
+}

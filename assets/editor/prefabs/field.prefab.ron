@@ -1,7 +1,8 @@
 (
  version:1,id:"c0200000-0000-4000-8000-000000000001",kind:Prefab,title:"Recessed editable field",root:"c0210000-0000-4000-8000-000000000001",base:None,
  nodes:[
-  (id:"c0210000-0000-4000-8000-000000000001",name:"Field",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["field"]))}),
+  (id:"c0210000-0000-4000-8000-000000000001",name:"Field",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["field","authored-focus"]))}),
   (id:"c0210000-0000-4000-8000-000000000002",name:"Native text editor",parent:Some((instances:[],node:"c0210000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","input"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:false)),"ui.editable":(version:1,value:(autofocus:false,select_all:true))}),
- ],instances:[],overrides:[],ports:{},
+  (id:"c0210000-0000-4000-8000-000000000003",name:"Keyboard focus / no layout shift",parent:Some((instances:[],node:"c0210000-0000-4000-8000-000000000001")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["control-focus"])),"ui.pickable":(version:1,value:(should_block_lower:false,is_hoverable:false))}),
+  ],instances:[],overrides:[],ports:{},
 )

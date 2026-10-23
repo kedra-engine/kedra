@@ -79,6 +79,7 @@ pub(super) fn cancel(world: &mut World, camera: Entity) {
         camera.remove::<Alignment>();
     }
 }
+#[cfg(any(debug_assertions, test))]
 pub(super) fn active(world: &World, camera: Entity) -> bool {
     world.get::<Alignment>(camera).is_some()
 }

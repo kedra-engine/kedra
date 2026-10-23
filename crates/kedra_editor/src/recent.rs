@@ -129,10 +129,10 @@ pub(crate) fn sync(world: &mut World) {
     let result = (|| -> Result<(), String> {
         for (index, entry) in entries.iter().enumerate() {
             if !rows.contains_key(&entry.root) {
-                let view = crate::views::mount(
+                let view = crate::views::mount_asset(
                     world,
                     host,
-                    crate::views::document(0xc0500000000040008000000000000001),
+                    "editor://prefabs/project-row.prefab.ron",
                     &format!("projects.item.{}", uuid::Uuid::new_v4()),
                 )?;
                 let contract = ["name", "path", "missing", "open", "locate"]
@@ -269,7 +269,9 @@ mod tests {
         };
         use kedra_ui::authored::{AuthoredUiPlugin, components::UiStylesheet};
         let mut app = App::new();
+        crate::views::test_support::install(&mut app);
         app.add_plugins((MinimalPlugins, bevy::asset::AssetPlugin::default()))
+            .add_plugins(kedra_scene::assets::SceneAssetPlugin)
             .init_asset::<Font>()
             .init_asset::<Image>()
             .init_resource::<AppTypeRegistry>()
@@ -288,15 +290,22 @@ mod tests {
             node.components.remove("ui.image");
         }
         let mut catalog = Catalog::default();
+        let button = PrefabDocument::parse(include_str!(
+            "../../../assets/editor/prefabs/button.prefab.ron"
+        ))
+        .unwrap();
+        let native_documents = vec![
+            (
+                "editor://prefabs/project-row.prefab.ron".to_string(),
+                row.clone(),
+            ),
+            (
+                "editor://prefabs/button.prefab.ron".to_string(),
+                button.clone(),
+            ),
+        ];
         catalog.insert(row).unwrap();
-        catalog
-            .insert(
-                PrefabDocument::parse(include_str!(
-                    "../../../assets/editor/prefabs/button.prefab.ron"
-                ))
-                .unwrap(),
-            )
-            .unwrap();
+        catalog.insert(button).unwrap();
         let compiled = {
             let registry = app.world().resource::<AppTypeRegistry>();
             let mut loader = app.world().resource::<AssetServer>();
@@ -309,7 +318,10 @@ mod tests {
             .unwrap()
         };
         let mut sources = PrefabSources::default();
+        sources.handle =
+            crate::views::test_support::materialize(app.world_mut(), native_documents).unwrap();
         sources.publish(catalog, compiled).unwrap();
+        sources.dependencies_ready = true;
         app.insert_resource(sources);
         let window = app.world_mut().spawn(Window::default()).id();
         app.insert_resource(kedra_desktop::DesktopSurface {

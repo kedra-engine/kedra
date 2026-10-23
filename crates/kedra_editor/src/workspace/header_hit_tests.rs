@@ -1,6 +1,6 @@
 //! Integrated rails are client UI above the body, not native-drag background.
 use super::*;
-use crate::workspace::input::regression_tests::{box_at, setup};
+use crate::workspace::test_support::{box_at, setup};
 
 #[test]
 fn external_rail_hit_bounds_exclude_native_drag_spacer() -> Result<(), Box<dyn std::error::Error>> {

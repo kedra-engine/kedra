@@ -48,6 +48,16 @@ impl PassiveView {
     }
 }
 impl UiView {
+    /// Mount a complete authored UI entry scene with source-owned observation IDs.
+    /// The host supplies its window/camera; no scripts or extra plugins are loaded.
+    /// The returned root owns the full hydrated instance and can be despawned to retire it.
+    pub fn mount_scene(
+        world: &mut World,
+        scene: &Arc<CompiledPrefab>,
+    ) -> kedra_scene::Result<Entity> {
+        Ok(Self::mount(world, scene, None, &BTreeMap::new(), "", 1.)?.root)
+    }
+
     /// Materialize a validated source using the shared scene runtime, then install
     /// native UI components. All source/resource failures are checked before allocation.
     /// `scope` explicitly namespaces runtime observation IDs; lookups remain local.
@@ -210,6 +220,7 @@ impl UiView {
         }
         for entity in nodes.values().copied() {
             if passive {
+                world.entity_mut(entity).remove::<crate::ScreenId>();
                 world
                     .entity_mut(entity)
                     .insert((bevy::picking::Pickable::IGNORE, PassiveUi::default()));

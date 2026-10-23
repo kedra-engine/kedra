@@ -17,11 +17,15 @@ serde.workspace = true
 bevy_flair.workspace = true
 # Preserve native Node serde semantics while rejecting ignored/misspelled authored fields.
 serde_ignored = "=0.1.14"
+serde_json = { workspace = true, optional = true }
+sha2 = { workspace = true, optional = true }
 
 [lints]
 workspace = true
 
 [features]
+# Explicit native QA measurement; does not enable a listener or add tooling edges.
+text-capture = ["dep:serde_json", "dep:sha2"]
 # Native hosts opt into maintained OS font fallback; data/minimal consumers do not.
 system-fonts = ["bevy/system_font_discovery"]
 

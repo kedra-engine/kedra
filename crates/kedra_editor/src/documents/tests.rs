@@ -1,5 +1,32 @@
 use super::*;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
+fn document_id(value: u128) -> DocumentId {
+    DocumentId(uuid::Uuid::from_u128(value))
+}
+
+#[test]
+fn admitted_description_distinguishes_read_only_inspection_from_rendering_and_save() -> TestResult {
+    let directory = tempfile::tempdir()?;
+    write(directory.path(), "main.prefab.ron", 42)?;
+    let (scope, _) = source::admit(
+        source::read(directory.path())?,
+        &bevy::reflect::TypeRegistry::default(),
+        &ComponentPolicies::default(),
+    )?;
+    let documents = Documents {
+        scope: Some(scope),
+        ..Default::default()
+    };
+    let (_, description, _) = documents
+        .describe(document_id(42))
+        .ok_or("Missing admitted description")?;
+    assert!(description.contains("Inspector to inspect selected values"));
+    assert!(description.contains("Scene View requires a matching verified delivery"));
+    assert!(description.contains("Save and source edits are unavailable"));
+    assert!(!description.contains("Inspector, rendered preview, Save"));
+    assert!(documents.describe(document_id(43)).is_none());
+    Ok(())
+}
 #[test]
 fn selection_is_scoped_validated_and_independent_of_document_activation() -> TestResult {
     use kedra_scene::{
@@ -56,7 +83,7 @@ fn selection_is_scoped_validated_and_independent_of_document_activation() -> Tes
 }
 fn write(root: &std::path::Path, name: &str, id: u128) -> TestResult {
     let mut doc = kedra_scene::document::PrefabDocument::new(name);
-    doc.id = crate::views::document(id);
+    doc.id = document_id(id);
     std::fs::write(root.join(name), doc.serialize()?)?;
     Ok(())
 }
@@ -130,7 +157,7 @@ fn repeated_open_preserves_selection_and_latest_locator_wins() -> TestResult {
         assert!(std::time::Instant::now() < deadline);
         std::thread::yield_now();
     };
-    assert_eq!(ready.document, crate::views::document(2));
+    assert_eq!(ready.document, document_id(2));
     let (_, _, root) = documents.describe(ready.document).ok_or("root")?;
     let view = ViewId::new();
     documents.published(ready, view, root.clone());
@@ -139,17 +166,14 @@ fn repeated_open_preserves_selection_and_latest_locator_wins() -> TestResult {
     let ready = documents.poll().ok_or("ready")?;
     documents.published(ready, ViewId::new(), root.clone());
     assert_eq!(documents.opened.len(), 1);
-    assert_eq!(documents.opened[&crate::views::document(2)].view, view);
-    assert_eq!(
-        documents.opened[&crate::views::document(2)].selected,
-        Some(root)
-    );
+    assert_eq!(documents.opened[&document_id(2)].view, view);
+    assert_eq!(documents.opened[&document_id(2)].selected, Some(root));
     assert!(
         documents
             .request(&world, dir.path().into(), "new.prefab.ron".into())
             .is_err()
     );
     assert!(documents.pending.is_none());
-    assert_eq!(documents.active, Some(crate::views::document(2)));
+    assert_eq!(documents.active, Some(document_id(2)));
     Ok(())
 }

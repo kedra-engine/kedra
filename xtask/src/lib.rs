@@ -23,6 +23,21 @@ pub fn run() -> Result<()> {
     env::set_current_dir(root)?;
     let interactive = cli::interactive(&options);
     let task = cli::choose_task(options.task, interactive)?;
+    if task == cli::Task::Test && !options.test_arguments.is_empty() {
+        if options.visual.is_present() {
+            return Err("Pass native test options after --".into());
+        }
+        return kedra_test::cargo::run(
+            &root.join("tools/test/Cargo.toml"),
+            "kedra-test",
+            "test",
+            false,
+            &options.test_arguments,
+        );
+    }
+    if !options.test_arguments.is_empty() {
+        return Err("Trailing scenario arguments require test".into());
+    }
     if task == cli::Task::Visual {
         return visual::run(&options.visual, interactive);
     }

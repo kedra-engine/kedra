@@ -1,6 +1,6 @@
 //! Isolated preference lifecycle and async flush tests; never uses personal state.
 use super::*;
-use crate::workspace::input::regression_tests::setup;
+use crate::workspace::test_support::setup;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 #[test]

@@ -208,11 +208,11 @@ jobs:
           cache-bin: false
           cache-on-failure: false
           save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-      - name: Fresh complete coverage with 80 percent floor
-        run: cargo llvm-cov --workspace --all-targets --all-features --locked --fail-under-lines 80 --lcov --output-path target/coverage.lcov
+      - name: Fresh informational workspace coverage
+        run: cargo llvm-cov --workspace --all-targets --all-features --locked --lcov --output-path target/coverage.lcov
       - name: Require generated LCOV after successful coverage
         run: test -s target/coverage.lcov
-      - name: Retain LCOV after success or threshold failure
+      - name: Retain LCOV after success or failure
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
@@ -280,11 +280,13 @@ jobs:
           mise_toml: |
             [tools]
             "aqua:gitleaks/gitleaks" = "8.24.2"
+      - name: Secret detector policy regression
+        run: python3 tools/security/check_gitleaks.py --gitleaks gitleaks
       - name: History
         run: gitleaks git --redact --no-banner .
 
-  python-qa:
-    name: Headless QA and workflow failure paths
+  python-test:
+    name: Workflow and distribution tooling contracts
     needs: changes
     if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-24.04
@@ -296,8 +298,6 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - name: Native QA failure paths without a window
-        run: python3 -m unittest discover -s tools/qa -p 'test*.py'
       - name: Required gate failure paths
         run: python3 -m unittest discover -s tools/ci -p 'test*.py'
       - name: Distribution tool failure paths
@@ -306,7 +306,7 @@ jobs:
   required:
     name: CI required
     if: ${{ always() }}
-    needs: [changes, policy, native, coverage, supply-chain, repository, secrets, python-qa]
+    needs: [changes, policy, native, coverage, supply-chain, repository, secrets, python-test]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

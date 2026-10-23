@@ -1,9 +1,6 @@
 //! Retained browser integration uses the existing Assets feature identity.
 use super::*;
-use crate::workspace::{
-    input::regression_tests::setup,
-    test_support::{TestResult, sources},
-};
+use crate::workspace::test_support::{TestResult, setup, sources};
 
 #[test]
 fn browser_panel_mount_is_retained_and_reset_preserves_its_identity() -> TestResult {
@@ -61,25 +58,6 @@ fn browser_native_actions_navigate_and_ignore_stale_or_hidden_bindings() -> Test
             mount(world, &mut state)
         },
     )?;
-    fn settle(world: &mut World) {
-        let until = std::time::Instant::now() + std::time::Duration::from_secs(5);
-        loop {
-            world.resource_scope(|world, mut state: Mut<EditorWorkspace>| poll(world, &mut state));
-            if world
-                .query::<&Text>()
-                .iter(world)
-                .any(|t| t.0 == "Prefabs" || t.0 == "one.prefab.ron")
-            {
-                break;
-            }
-            assert!(
-                std::time::Instant::now() < until,
-                "Browser listing did not complete"
-            );
-            std::thread::yield_now();
-        }
-    }
-    settle(world);
     let id = world
         .resource::<EditorWorkspace>()
         .layout
@@ -88,11 +66,27 @@ fn browser_native_actions_navigate_and_ignore_stale_or_hidden_bindings() -> Test
         .iter()
         .find_map(|(id, v)| (v.kind == "assets").then_some(*id))
         .ok_or("Assets view")?;
-    let element = world
-        .query::<(Entity, &ElementId)>()
-        .iter(world)
-        .find_map(|(e, id)| id.0.ends_with("/item/0").then_some(e))
-        .ok_or("Folder button")?;
+    fn settle(world: &mut World, item: &str) -> Entity {
+        let until = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        loop {
+            world.resource_scope(|world, mut state: Mut<EditorWorkspace>| poll(world, &mut state));
+            // The independent folder tree can show "Prefabs" before the content
+            // listing finishes. Wait for the control we will actually activate.
+            if let Some(entity) = world
+                .query::<(Entity, &ElementId)>()
+                .iter(world)
+                .find_map(|(entity, id)| (id.0 == item).then_some(entity))
+            {
+                return entity;
+            }
+            assert!(
+                std::time::Instant::now() < until,
+                "Browser listing did not complete"
+            );
+            std::thread::yield_now();
+        }
+    }
+    let element = settle(world, &format!("browser/{id:?}/item/0"));
     world.trigger(Activate { entity: element });
     world.flush();
     super::super::browser_action(

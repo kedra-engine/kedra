@@ -1,0 +1,1 @@
+(version:1,id:"31d58ba9-d1d9-44fb-927c-3b97bde5cc96",kind:Prefab,title:"Repeated name",root:"e5d2452a-3c4c-49a3-8623-1ae42a5cfe69",base:None,nodes:[(id:"e5d2452a-3c4c-49a3-8623-1ae42a5cfe69",name:"Repeated name",parent:None,components:{"ui.caption":(version:1,value:(text:"Inherited 日本語",justify:Left,wrap:false))})],instances:[],overrides:[],ports:{})

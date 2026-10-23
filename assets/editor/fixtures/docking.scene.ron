@@ -1,0 +1,33 @@
+(
+ version:1,id:"da100000-0000-4000-8000-000000000001",kind:Scene,title:"Docking acceptance",root:"da110000-0000-4000-8000-000000000001",base:None,
+ nodes:[(id:"da110000-0000-4000-8000-000000000001",name:"Dock host",parent:None,components:{
+  "ui.layout":(version:1,value:(node:())),
+  "ui.id":(version:1,value:("fixture.host")),
+  "ui.screen":(version:1,value:("docking.fixture.v1")),
+  "ui.classes":(version:1,value:(names:["dock-fixture","dock-host"])),
+  "ui.stylesheet":(version:1,value:(asset:Path("editor://fixtures/docking.css"))),
+  "editor.surface":(version:1,value:(width:1200,height:800)),
+  "editor.dock_overflow":(version:1,value:(
+   view:"f0000000-0000-4000-8000-000000000005",target:"f0000000-0000-4000-8000-000000000002",index:1,
+   kind:"E",restore_key:None,title:"Panel with a very long title that does not fit its tab",
+   content_path:"editor://fixtures/docking.prefab.ron",scope:"fixture.E",identity:"E",
+  )),
+  "ui.docking":(version:1,value:(snapshot:r#"{
+   "version":1,
+   "hosts":{"fa000000-0000-4000-8000-000000000001":{"root":"fb000000-0000-4000-8000-000000000001","maximized":null}},
+   "nodes":{
+    "fb000000-0000-4000-8000-000000000001":{"Split":{"axis":"Horizontal","fraction":0.2512563,"first":"fb000000-0000-4000-8000-000000000002","second":"fb000000-0000-4000-8000-000000000003"}},
+    "fb000000-0000-4000-8000-000000000002":{"Group":{"tabs":["f0000000-0000-4000-8000-000000000001"],"active":"f0000000-0000-4000-8000-000000000001"}},
+    "fb000000-0000-4000-8000-000000000003":{"Split":{"axis":"Vertical","fraction":0.61154854,"first":"fb000000-0000-4000-8000-000000000004","second":"fb000000-0000-4000-8000-000000000005"}},
+    "fb000000-0000-4000-8000-000000000004":{"Group":{"tabs":["f0000000-0000-4000-8000-000000000002"],"active":"f0000000-0000-4000-8000-000000000002"}},
+    "fb000000-0000-4000-8000-000000000005":{"Group":{"tabs":["f0000000-0000-4000-8000-000000000003","f0000000-0000-4000-8000-000000000004"],"active":"f0000000-0000-4000-8000-000000000003"}}
+   },
+   "views":{
+    "f0000000-0000-4000-8000-000000000001":{"kind":"A","restore_key":"editor://fixtures/docking.prefab.ron"},
+    "f0000000-0000-4000-8000-000000000002":{"kind":"B","restore_key":"editor://fixtures/docking.prefab.ron"},
+    "f0000000-0000-4000-8000-000000000003":{"kind":"C","restore_key":"editor://fixtures/docking.prefab.ron"},
+    "f0000000-0000-4000-8000-000000000004":{"kind":"D","restore_key":"editor://fixtures/docking.prefab.ron"}
+   },"hidden":{}
+  }"#)),
+ })],instances:[],overrides:[],ports:{},
+)

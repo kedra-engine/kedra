@@ -2,8 +2,8 @@
 
 Status: proposed for owner review. This specifies independent UI scene/prefab
 preview for own-source authoring, not Play, a 3D viewport or live shell editing.
-The separately planned [read-only Scene View](0017-read-only-scene-view.md) adds
-3D camera navigation and viewport selection before Inspector integration. This
+The implemented [read-only Scene View](0017-read-only-scene-view.md) provides
+3D camera navigation and viewport selection alongside the read-only Inspector. This
 ADR retains the passive UI-preview contract; its no-selection rule is not the
 Scene View input policy.
 

@@ -4,8 +4,8 @@ Status: accepted by owner direction.
 
 ## Decision
 
-Supersede the initial staged splash from ADRs 0002/0006. Verify the immutable
-editor delivery and load the authored editor catalog concurrently, without a
+Verify the immutable editor delivery and load the authored editor catalog
+concurrently, without a
 native startup window, GPU readback barrier or decorative image dependencies.
 Resolve recent-project history and an optional CLI project before choosing the
 first real native surface. Integrity/source errors remain terminal diagnostics;

@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "exporter": "kedra-text-source-v1",
+  "case": "button-flat",
+  "node": "352:1564",
+  "file_key": "2EZlK40cfx2Mub7GmDyI70",
+  "size": [
+    640,
+    360
+  ],
+  "region": [
+    32,
+    32,
+    22,
+    22
+  ],
+  "roles": {},
+  "instances": [
+    {
+      "node": "352:1565",
+      "component": "162:38022",
+      "key": "99fd7fc1cad22ec4574ba76a58db0aed880f4579",
+      "properties": {
+        "Icon#27:31": {
+          "type": "INSTANCE_SWAP",
+          "value": "10:2401",
+          "preferredValues": []
+        },
+        "Appearance": {
+          "value": "Flat",
+          "type": "VARIANT",
+          "boundVariables": {}
+        },
+        "Selected": {
+          "value": "Off",
+          "type": "VARIANT",
+          "boundVariables": {}
+        },
+        "State": {
+          "value": "Default",
+          "type": "VARIANT",
+          "boundVariables": {}
+        }
+      }
+    }
+  ],
+  "shape_derivation": "Figma temporary clone; text opacity zero; layout retained"
+}

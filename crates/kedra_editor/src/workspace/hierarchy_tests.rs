@@ -21,7 +21,7 @@ fn deferred_hierarchy_input_rejects_inactive_documents_and_hidden_tools() -> Tes
         std::fs::write(project.assets.join(name), doc.serialize()?)?;
     }
     let root = project.assets.clone();
-    let (mut app, _, _) = input::regression_tests::setup()?;
+    let (mut app, _, _) = test_support::setup()?;
     let world = app.world_mut();
     test_support::sources(world)?;
     world.insert_resource(test_support::project_manager(project, None)?);

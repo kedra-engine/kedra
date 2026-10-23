@@ -2,7 +2,7 @@
 
 Status: full design proposed for owner review. A first read-only navigation slice
 uses the existing Assets docking identity; [current behavior and limits](../ui/asset-browser.md)
-now include lazy folders, Unicode search, virtualized grid/list and read-only
+include lazy folders, Unicode search, virtualized grid/list and read-only
 source-document Open. Complete visual/platform acceptance remains incomplete.
 This ADR is not a complete asset
 authoring/import toolset.

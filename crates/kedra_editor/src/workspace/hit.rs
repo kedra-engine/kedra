@@ -79,6 +79,25 @@ pub(super) fn divider(
         && visible_at(world, entity, point, 3.)
 }
 
+// Divider hit slop must not capture a visible native scrollbar in this host.
+pub(super) fn scrollbar(
+    world: &mut World,
+    state: &EditorWorkspace,
+    host: HostId,
+    point: Vec2,
+) -> bool {
+    let Some(surface) = state.surfaces.get(&host) else {
+        return false;
+    };
+    world
+        .query_filtered::<Entity, Or<(
+            With<bevy::ui_widgets::Scrollbar>,
+            With<bevy::ui_widgets::ScrollbarThumb>,
+        )>>()
+        .iter(world)
+        .any(|entity| under(world, entity, surface.root) && visible_at(world, entity, point, 0.))
+}
+
 fn under(world: &World, mut entity: Entity, root: Entity) -> bool {
     for _ in 0..128 {
         if entity == root {
@@ -129,4 +148,44 @@ pub(super) fn visible_at(world: &World, mut entity: Entity, point: Vec2, margin:
         entity = parent.parent();
     }
     false
+}
+
+#[cfg(test)]
+mod scrollbar_tests {
+    use super::*;
+    use crate::workspace::test_support::{box_at, setup, visible};
+
+    #[test]
+    fn scrollbar_priority_excludes_hidden_foreign_and_retired_controls()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let (mut app, _, _) = setup()?;
+        app.world_mut()
+            .resource_scope(|world, state: Mut<EditorWorkspace>| {
+                let point = Vec2::splat(40.);
+                let root = state.surfaces[&state.host].root;
+                let track = world
+                    .spawn((
+                        bevy::ui::Node::default(),
+                        bevy::ui_widgets::Scrollbar::new(
+                            root,
+                            bevy::ui_widgets::ControlOrientation::Vertical,
+                            24.,
+                        ),
+                        ChildOf(root),
+                    ))
+                    .id();
+                box_at(world, track, point, Vec2::new(4., 100.));
+                visible(world);
+                assert!(scrollbar(world, &state, state.host, point));
+                world.entity_mut(track).insert(Visibility::Hidden);
+                assert!(!scrollbar(world, &state, state.host, point));
+                world.entity_mut(track).insert(Visibility::Inherited);
+                let foreign_root = world.spawn(bevy::ui::Node::default()).id();
+                world.entity_mut(track).insert(ChildOf(foreign_root));
+                assert!(!scrollbar(world, &state, state.host, point));
+                world.despawn(foreign_root);
+                assert!(!scrollbar(world, &state, state.host, point));
+            });
+        Ok(())
+    }
 }

@@ -42,10 +42,10 @@ pub(super) fn open(
         Kind::Selection => vec![("Clear selection", Action::SceneClear(view))],
     };
     for (index, (title, action)) in items.into_iter().enumerate() {
-        let button = crate::views::mount(
+        let button = crate::views::mount_asset(
             world,
             popup,
-            crate::views::document(0xc0100000000040008000000000000001),
+            "editor://prefabs/button.prefab.ron",
             &format!("scene-menu/{index}"),
         )?;
         let caption = world
@@ -106,7 +106,7 @@ mod tests {
     #[test]
     fn selection_menu_without_document_selection_does_not_advertise_an_active_clear_command()
     -> Result<(), Box<dyn std::error::Error>> {
-        let (mut app, _, _) = super::super::input::regression_tests::setup()?;
+        let (mut app, _, _) = super::super::test_support::setup()?;
         let world = app.world_mut();
         super::super::test_support::sources(world)?;
         let root = world.resource::<EditorWorkspace>().root;
@@ -126,7 +126,7 @@ mod tests {
     #[test]
     fn view_menu_exposes_projection_and_clear_selection_without_a_second_toolbar_select()
     -> Result<(), Box<dyn std::error::Error>> {
-        let (mut app, _, _) = super::super::input::regression_tests::setup()?;
+        let (mut app, _, _) = super::super::test_support::setup()?;
         let world = app.world_mut();
         super::super::test_support::sources(world)?;
         let root = world.resource::<EditorWorkspace>().root;

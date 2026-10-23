@@ -1,12 +1,12 @@
 # ADR 0012: Document sessions, opening and selection
 
 Status: full editing/Save lifecycle proposed for owner review. A narrower
-[read-only source-session profile](../ui/source-documents.md) now supports browser
-Open, retained document views and read-only Hierarchy selection. The initial
+[read-only source-session profile](../ui/source-documents.md) supports browser
+Open, retained document views, Hierarchy selection and the connected read-only
+Inspector. The initial
 [Scene View profile](../ui/scene-view.md) adds supported read-only projection.
-Shared field
-settlement, editable hierarchy,
-inspector and dirty-document close remain unimplemented. Spatial navigation and
+Shared field settlement, editable Hierarchy/Inspector and dirty-document close
+remain unimplemented. Spatial navigation and
 opaque-mesh picking are implemented with separate native acceptance requirements.
 
 ## Decision and ownership
@@ -46,7 +46,7 @@ Each tool is a separately registered feature view in the existing docking system
 - [Hierarchy](0014-hierarchy-panel.md).
 - [Inspector](0015-inspector-panel.md).
 - [Document Preview](0016-document-preview-panel.md), with document-bound views.
-- [Scene View](0017-read-only-scene-view.md), the planned read-only 3D presentation
+- [Scene View](0017-read-only-scene-view.md), the implemented read-only 3D presentation
   of a document view, with editor camera navigation and viewport selection.
 
 All can occupy any tab group, split, float, maximize and redock. There is no fixed
@@ -192,7 +192,7 @@ Initially put the ordinary document-session model, source adapter and request
 coordinator in a coherent `kedra_editor::documents` feature module. Tool models
 remain separate feature modules; Bevy entities remain in presentation adapters.
 The source authoring APIs stay in their existing crate, the universal inspector
-in its planned crate, and docking in its existing crates. Do not create a generic
+in `kedra_inspector`, and docking in its existing crates. Do not create a generic
 event bus, DI container or one crate per tab solely because it has docking chrome.
 Extraction needs an independent responsibility/consumer, not an arbitrary file cap.
 

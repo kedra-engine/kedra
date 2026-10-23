@@ -1,0 +1,18 @@
+(
+    version:1, id:"49cdde0c-5df2-43d1-a949-23953a70da42", kind:Scene,
+    title:"Remote application", root:"096679ab-d593-4d47-a1cf-5145c6122de9", base:None,
+    nodes:[
+        (id:"096679ab-d593-4d47-a1cf-5145c6122de9", name:"Panel", parent:None, components:{
+            "ui.layout":(version:1,value:(node:(width:Percent(100.0),height:Percent(100.0),justify_content:Center,align_items:Center))),
+            "ui.background":(version:1,value:(Srgba((red:0.14117648,green:0.14117648,blue:0.14117648,alpha:1.0)))),
+            "ui.screen":(version:1,value:("game.fixture")),
+            "ui.id":(version:1,value:("game.panel")),
+        }),
+        (id:"a4f0b394-901a-4305-a354-8bedfe521733", name:"Target",
+         parent:Some((instances:[],node:"096679ab-d593-4d47-a1cf-5145c6122de9")), components:{
+            "ui.layout":(version:1,value:(node:(width:Px(120.0),height:Px(64.0)))),
+            "ui.background":(version:1,value:(Srgba((red:0.25490198,green:0.41960785,blue:0.6156863,alpha:1.0)))),
+            "ui.id":(version:1,value:("game.target")),
+        }),
+    ], instances:[], overrides:[], ports:{},
+)

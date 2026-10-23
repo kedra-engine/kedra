@@ -8,10 +8,10 @@ fn compact_viewport_keeps_rows_visible_at_twenty_two_pixel_pitch() -> TestResult
     use bevy::prelude::*;
     let mut app = crate::workspace::browser_test_app()?;
     let host = app.world_mut().spawn(Node::default()).id();
-    let host = crate::views::mount(
+    let host = crate::views::mount_asset(
         app.world_mut(),
         host,
-        crate::views::document(0xc0600000000040008000000000000001),
+        "editor://prefabs/window-frame.prefab.ron",
         "hierarchy-test",
     )?
     .root;

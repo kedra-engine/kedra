@@ -2,43 +2,58 @@
 
 ## Required change validation
 
-Hosted CI acceptance is pending. These are required validation policies with local
-commands, not claims of installed server enforcement or passed coverage thresholds.
+The source workflow configures validation and a fail-closed `CI required` gate.
+These are required policies with local commands, not claims of current hosted
+success or installed server enforcement.
 See [testing](testing.md), [CI requirements](ci.md) and [hosting](hosting.md).
+
+Product contracts stay with their production owners under
+[ADR 0031](decisions/0031-contract-owned-testing.md). Shared fixtures are support,
+not other test suites; repository policy and native acceptance remain separate
+evidence categories. Thin utilities use real invocations, not upstream-tool self-tests.
 
 - Rustfmt, warnings-as-errors Clippy, tests, doctests and rustdoc via `cargo xtask check`.
 - Architecture policy and negative tests, workspace lint inheritance and the
   independent Clippy `-F unsafe_code` guard.
 - Default/minimal workspace and isolated native-runtime builds via `cargo xtask features`.
+  This includes minimal scene/asset/UI libraries and shipping diagnostic-absence
+  tests in the unoptimized, debug-assertions-disabled `release-boundary` profile.
   Each Cargo process is checked separately; a later success cannot hide a failure.
 - File growth: 1000 lines per authored UTF-8 file and 64 KiB per repository file,
   including comments/blank lines. Byte limits also catch compressed one-line code.
+  Images have no path, extension or directory exemption from the byte limit.
 - Dependency license/advisory/source policy via cargo-deny; Gitleaks secret scanning.
 - Markdown lint through rumdl and local links through Lychee.
-- Headless Python QA regressions for orchestration and failure reporting.
-- Fresh workspace Rust line coverage >=80% with a retained report, not a lower
-  threshold to merge. Critical persistence/identity/recovery still need fault tests.
+- QA workflows are verified by real product scenarios, native input and GPU fences.
+  Screenshot coverage is only kit buttons/inputs; other behavior checks publish no PNGs.
+  There is no separate self-test suite for QA drivers/fixture hosts/reports.
+  Product Rust unit, integration and regression checks remain mandatory.
+- Fresh workspace Rust line coverage with a retained informational report. There
+  is no minimum percentage or coverage-based merge threshold. Test and measurement
+  failures still fail validation; critical persistence/identity/recovery need fault tests.
 - Linux, Windows and macOS verification for platform claims, with actual
   target/toolchain recorded. Native UI acceptance requires real input and frames.
 
 Missing, failed, cancelled or unexpectedly skipped required work is not success.
 The local runner stops on failure, reports remaining stages as skipped and keeps
-diagnostics. Future hosted aggregation must preserve fail-closed semantics and
-exercise malformed/missing-result cases against its actual implementation.
-No provider-only aggregate script is retained without a consumer.
+diagnostics. The hosted `CI required` job consumes `tools/ci/required.py`;
+the `python-test` job (`Workflow and distribution tooling contracts`) runs its
+malformed/missing-result and failure-path tests against that implementation.
 
 ## Security and review boundaries
 
 Validation uses no private infrastructure or credentials. Untrusted contributions
 must not execute with secrets or trusted worker/cache write access. Pin external
-tool versions and use their upstream lockfiles. Lychee is built from an exact
-crates.io release, not a mutable release executable. Review future automation,
+tool versions and use their upstream lockfiles. Local Lychee installation builds
+an exact crates.io release; hosted CI uses the pinned Aqua tool through Mise with
+checksum verification. Review future automation,
 worker isolation and permissions before enabling it. Release credentials/signing
 belong in a separately approved protected workflow.
 
 Local checks alone do not protect the hosted default branch. An administrator
 must verify destination review/protection settings and reporting channels.
-No current setting or future worker deployment is asserted by repository docs.
+Configured source workflows and the expected administrative contract do not prove
+current live server settings or hosted results.
 
 ## Progressive guarantees
 

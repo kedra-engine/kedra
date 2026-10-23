@@ -1,0 +1,103 @@
+(
+    version: 1,
+    id: "7e570000-0000-4000-8000-000000000002",
+    kind: Scene,
+    title: "Composed spatial scene",
+    root: "7e570000-0000-4000-8000-00000000000c",
+    base: None,
+    nodes: [
+        (
+            id: "7e570000-0000-4000-8000-00000000000c",
+            name: "Composed spatial scene",
+            parent: None,
+            components: {
+                "scene.environment": (
+                    version: 1,
+                    value: (asset:Path("game://day.environment.ron")),
+                ),
+            },
+        ),
+        (
+            id: "7e570000-0000-4000-8000-000000000065",
+            name: "Warm sphere",
+            parent: Some((
+                instances: [],
+                node: "7e570000-0000-4000-8000-00000000000c",
+            )),
+            components: {
+                "scene.primitive": (
+                    version: 1,
+                    value: Sphere(radius:1.0),
+                ),
+                "scene.surface": (
+                    version: 1,
+                    value: (color:Srgba((red:0.9,green:0.35,blue:0.12,alpha:1.0)),texture:None,metallic:0.0,roughness:0.4),
+                ),
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(3.0,1.0,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+        (
+            id: "7e570000-0000-4000-8000-000000000066",
+            name: "Authored sun",
+            parent: Some((
+                instances: [],
+                node: "7e570000-0000-4000-8000-00000000000c",
+            )),
+            components: {
+                "scene.sun": (
+                    version: 1,
+                    value: (color:LinearRgba((red:1.0,green:1.0,blue:1.0,alpha:1.0)),illuminance:15000.0),
+                ),
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(0.0,0.0,0.0),rotation:(-0.37731227,-0.22787414,0.09634364,0.89242744),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+        (
+            id: "7e570000-0000-4000-8000-00000000012d",
+            name: "Generated two-material model",
+            parent: Some((
+                instances: [],
+                node: "7e570000-0000-4000-8000-00000000000c",
+            )),
+            components: {
+                "scene.model": (
+                    version: 1,
+                    value: (scene:Path("game://ship.glb#Scene0")),
+                ),
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(-3.0,1.0,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+    ],
+    instances: [
+        (
+            id: "7e570000-0000-4000-8000-000000000064",
+            asset: "7e570000-0000-4000-8000-000000000001",
+            parent: (
+                instances: [],
+                node: "7e570000-0000-4000-8000-00000000000c",
+            ),
+            bindings: {},
+            overrides: [],
+        ),
+        (
+            id: "7e570000-0000-4000-8000-00000000012c",
+            asset: "7e570000-0000-4000-8000-000000000004",
+            parent: (
+                instances: [],
+                node: "7e570000-0000-4000-8000-00000000000c",
+            ),
+            bindings: {},
+            overrides: [],
+        ),
+    ],
+    overrides: [],
+    ports: {},
+)

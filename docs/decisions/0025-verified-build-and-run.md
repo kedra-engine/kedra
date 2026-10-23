@@ -9,9 +9,8 @@
 Applications must be buildable through their own pinned `kedra_build` launcher
 without an installed Kedra editor or a copy of the editor repository's scripts.
 The editor, terminal and CI must not have different recipes for producing a
-correct application. Existing `build` prepares a portable staging directory,
-including a bare executable on macOS. Important installed-package checks and
-the audited license-collector installer currently live in repository Python tools.
+correct application. Shared `kedra_build` owns runnable assembly, generic
+installed-package verification and the explicit audited license-collector installer.
 
 The first supported workflow is build and launch of a standalone desktop
 application. It is not in-editor Play, a game runtime or source export. Mobile

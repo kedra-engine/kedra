@@ -15,6 +15,8 @@ pub use source::register_source;
 
 #[cfg(test)]
 mod image_tests;
+#[cfg(all(test, feature = "model-support"))]
+mod test_support;
 #[cfg(test)]
 mod tests;
 

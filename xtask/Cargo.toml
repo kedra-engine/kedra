@@ -19,16 +19,12 @@ duct = { version = "1.1.2", default-features = false }
 indicatif = { version = "0.18.6", default-features = false, features = ["unicode-width"] }
 tempfile = "3"
 toml = { version = "1.1", default-features = false, features = ["std", "parse", "serde"] }
-serde.workspace = true
+kedra_test.workspace = true
+
+[dev-dependencies]
 serde_json.workspace = true
 sha2.workspace = true
 image.workspace = true
-# image's decoder does not expose all PNG color/HDR metadata for policy validation.
-png = "=0.18.1"
-# Reuse the released perceptual comparator; scenario policy stays in xtask.
-dify = { version = "=0.8.0", default-features = false }
-
-[dev-dependencies]
 # Resolve dependency identities from Cargo.lock without downloading foreign-target
 # manifests or parsing Cargo's dependency-string grammar ourselves.
 cargo-lock = { version = "=11.1.0", default-features = false }

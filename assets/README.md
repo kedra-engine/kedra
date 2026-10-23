@@ -21,8 +21,8 @@ source tree and are not checked into Git.
   `icons/startup-error.svg` is the exact error export used by Failed `109:8445`
   (`10:2459`); the spinner retains its identity and follows current focus purple.
   Dock artwork comes from page `92:3713`; the common Flat menu follows
-  `Kedra/DockHeader` `97:3495`. Its independent state references are pinned in
-  `docs/ui/docking/figma/manifest.json`.
+  `Kedra/DockHeader` `97:3495`. Original frame identities are retained as provenance
+  in `docs/ui/docking/figma/manifest.json`, not as active screenshot coverage.
 - Inter: Google Fonts `ofl/inter`, Git blob
   `047c92f6e2212473dc436020afed689527076d44`, upstream source SHA-256
   `29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031`.

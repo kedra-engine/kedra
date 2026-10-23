@@ -68,16 +68,16 @@ fn create(
         if let Some(placement) = placement {
             place(world, native.window, placement)?;
         }
-        let frame = crate::views::mount(
+        let frame = crate::views::mount_asset(
             world,
             native.root,
-            crate::views::document(0xc0600000000040008000000000000001),
+            "editor://prefabs/window-frame.prefab.ron",
             "floating-frame",
         )?;
-        let caption = crate::views::mount(
+        let caption = crate::views::mount_asset(
             world,
             frame.root,
-            crate::views::document(0xc0900000000040008000000000000001),
+            "editor://prefabs/titlebar.prefab.ron",
             "floating-caption",
         )?;
         crate::chrome::bind_window(world, &caption, native.window, Some(frame.root))?;

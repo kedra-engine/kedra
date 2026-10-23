@@ -1,5 +1,6 @@
 //! Native Bevy processing and immutable checked deliveries, shared by game
-//! projects and the editor. No renderer, window, editor or scene dependency.
+//! projects and the editor. Uses shared scene data without a renderer, window or
+//! editor dependency.
 mod build;
 pub mod processors;
 mod verification;

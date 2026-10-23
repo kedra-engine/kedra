@@ -187,6 +187,8 @@ fn duplicate_enablement_and_occupied_ports_leave_credentials_unchanged() {
     let (mut app, _) = host();
     let path = directory.path().join("session.json");
     enable(&mut app, 0, &path, directory.path()).unwrap();
+    assert!(!path.exists());
+    app.update();
     let bytes = std::fs::read(&path).unwrap();
     assert!(
         enable(&mut app, 0, &path, directory.path())
@@ -212,6 +214,7 @@ fn duplicate_enablement_and_occupied_ports_leave_credentials_unchanged() {
 
 #[test]
 fn listener_startup_and_drop_own_the_server_thread_and_credential() {
+    use std::io::{Read, Write};
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("session.json");
     let mut app = App::new();
@@ -220,10 +223,105 @@ fn listener_startup_and_drop_own_the_server_thread_and_credential() {
         bevy::asset::AssetPlugin::default(),
         crate::KedraAppPlugin,
     ));
-    enable(&mut app, 0, &path, directory.path()).unwrap();
+    let endpoint = enable(&mut app, 0, &path, directory.path()).unwrap();
+    // Plugin/GPU initialization and Startup have not run: a bound listener must
+    // not advertise a mailbox that cannot yet execute discovery.
+    assert!(!path.exists());
+    let unpublished = path.clone();
+    app.add_systems(
+        Last,
+        (move || assert!(!unpublished.exists()))
+            .run_if(bevy::ecs::schedule::common_conditions::run_once),
+    );
     app.update();
     assert!(app.world().resource::<ServerTask>().thread.is_some());
     assert!(path.is_file());
+    let published: Endpoint = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+    assert_eq!(published.session, endpoint.session);
+    // Submit discovery exactly once through the actual bound HTTP listener,
+    // immediately after publication, while the host continues its normal ticks.
+    let request = std::thread::spawn(move || {
+        let address = published
+            .url
+            .strip_prefix("http://")
+            .unwrap()
+            .trim_end_matches('/');
+        let mut stream = std::net::TcpStream::connect(address).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(8)))
+            .unwrap();
+        stream
+            .set_write_timeout(Some(Duration::from_secs(8)))
+            .unwrap();
+        let body = json!({"jsonrpc":"2.0","id":1,"method":"app.describe"}).to_string();
+        write!(stream, "POST / HTTP/1.1\r\nHost: {address}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", published.token, body.len()).unwrap();
+        let mut response = String::new();
+        stream.read_to_string(&mut response).unwrap();
+        assert!(response.starts_with("HTTP/1.1 200"));
+        let (_, body) = response.split_once("\r\n\r\n").unwrap();
+        serde_json::from_str::<Value>(body).unwrap()
+    });
+    let deadline = std::time::Instant::now() + Duration::from_secs(8);
+    while !request.is_finished() && std::time::Instant::now() < deadline {
+        app.update();
+        std::thread::yield_now();
+    }
+    assert!(request.is_finished(), "First discovery did not complete");
+    let response = request.join().unwrap();
+    assert_eq!(response["result"]["session"], endpoint.session);
+    assert!(response.get("error").is_none());
+    drop(app);
+    assert!(!path.exists());
+}
+
+#[test]
+fn unpublished_matching_destination_is_preserved_on_drop_and_failed_publication() {
+    for update in [false, true] {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("session.json");
+        let (mut app, _) = host();
+        let endpoint = enable(&mut app, 0, &path, directory.path()).unwrap();
+        let bytes = serde_json::to_vec(&endpoint).unwrap();
+        std::fs::write(&path, &bytes).unwrap();
+        if update {
+            app.update();
+            assert!(!app.world().resource::<Credentials>().published);
+            assert!(!app.world().contains_resource::<ServerTask>());
+            assert_eq!(std::fs::read(&path).unwrap(), bytes);
+        }
+        drop(app);
+        assert_eq!(std::fs::read(&path).unwrap(), bytes);
+    }
+}
+
+#[test]
+fn server_initialization_failure_never_publishes_and_releases_listener() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("session.json");
+    let (mut app, _) = host();
+    let endpoint = enable(&mut app, 0, &path, directory.path()).unwrap();
+    start_with(app.world_mut(), |listener| {
+        // Exercise the initialization helper's real error boundary in its owned
+        // thread; returning an error must close the listener before returning.
+        drop(listener);
+        Err("Deterministic HTTP runtime/listener setup failure".into())
+    });
+    assert!(!path.exists());
+    assert!(!app.world().resource::<Credentials>().published);
+    assert!(!app.world().contains_resource::<ServerTask>());
+    assert!(
+        app.world()
+            .resource::<Messages<AppExit>>()
+            .get_cursor()
+            .read(app.world().resource::<Messages<AppExit>>())
+            .any(AppExit::is_error)
+    );
+    let address = endpoint
+        .url
+        .strip_prefix("http://")
+        .unwrap()
+        .trim_end_matches('/');
+    let _released = TcpListener::bind(address).unwrap();
     drop(app);
     assert!(!path.exists());
 }
@@ -241,6 +339,27 @@ fn missing_startup_listener_reports_application_failure() {
             .read(app.world().resource::<Messages<AppExit>>())
             .any(AppExit::is_error)
     );
+}
+
+#[test]
+fn readiness_publication_rejects_a_path_created_during_startup() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("session.json");
+    let (mut app, _) = host();
+    enable(&mut app, 0, &path, directory.path()).unwrap();
+    std::fs::write(&path, b"user replacement").unwrap();
+    app.update();
+    assert_eq!(std::fs::read(&path).unwrap(), b"user replacement");
+    assert!(!app.world().contains_resource::<ServerTask>());
+    assert!(
+        app.world()
+            .resource::<Messages<AppExit>>()
+            .get_cursor()
+            .read(app.world().resource::<Messages<AppExit>>())
+            .any(AppExit::is_error)
+    );
+    drop(app);
+    assert_eq!(std::fs::read(&path).unwrap(), b"user replacement");
 }
 
 #[test]

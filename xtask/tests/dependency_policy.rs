@@ -6,6 +6,9 @@ use std::{
 
 const REVIEW_DEADLINE: u64 = 1_798_243_200; // 2026-12-26T00:00:00Z
 
+#[path = "dependency_policy/luau.rs"]
+mod luau;
+
 fn parser_exception_valid(now: u64, version: &str, callers: &BTreeSet<String>) -> bool {
     now < REVIEW_DEADLINE
         && version == "0.25.1"
@@ -39,10 +42,22 @@ fn unmaintained_exception_is_time_bounded_and_only_reaches_existing_wrapper()
         .ok_or("advisory ignores missing")?;
     assert_eq!(
         ignored.len(),
-        1,
+        2,
         "new advisory exceptions require explicit review"
     );
-    assert_eq!(ignored[0]["id"].as_str(), Some("RUSTSEC-2026-0192"));
+    let ids: BTreeSet<_> = ignored
+        .iter()
+        .filter_map(|entry| entry["id"].as_str())
+        .collect();
+    assert_eq!(
+        ids,
+        BTreeSet::from(["RUSTSEC-2026-0192", "RUSTSEC-2026-0173"])
+    );
+    assert!(ignored.iter().all(|entry| {
+        entry["reason"]
+            .as_str()
+            .is_some_and(|reason| !reason.is_empty())
+    }));
     // All platforms remain in the audited graph without requiring their source
     // archives in this host's Cargo cache. Cargo owns lock freshness via --locked;
     // cargo-lock owns format and exact dependency identity resolution.
@@ -119,20 +134,22 @@ version = "123.0.0"
 fn policy_runs_without_cargo_or_a_populated_package_cache() -> Result<(), Box<dyn std::error::Error>>
 {
     let cache = tempfile::tempdir()?;
-    let output = std::process::Command::new(std::env::current_exe()?)
-        .args([
-            "--exact",
-            "unmaintained_exception_is_time_bounded_and_only_reaches_existing_wrapper",
-        ])
-        .env("CARGO_HOME", cache.path())
-        .env("CARGO", cache.path().join("cargo-must-not-be-invoked"))
-        .output()?;
-    assert!(
-        output.status.success(),
-        "offline lock policy unexpectedly invoked Cargo or needed cached packages: {}{}",
-        String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
-    );
+    for test in [
+        "unmaintained_exception_is_time_bounded_and_only_reaches_existing_wrapper",
+        "luau::reviewed_macro_exception_checks_main_and_explicit_consumer_lock",
+    ] {
+        let output = std::process::Command::new(std::env::current_exe()?)
+            .args(["--exact", test])
+            .env("CARGO_HOME", cache.path())
+            .env("CARGO", cache.path().join("cargo-must-not-be-invoked"))
+            .output()?;
+        assert!(
+            output.status.success(),
+            "offline lock policy unexpectedly invoked Cargo or needed cached packages: {}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
     assert!(std::fs::read_dir(cache.path())?.next().is_none());
     Ok(())
 }

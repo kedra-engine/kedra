@@ -23,7 +23,8 @@ sudo apt-get install pkg-config libasound2-dev libudev-dev libwayland-dev libxkb
 
 Headless Rust checks do not require a GPU. Native UI acceptance requires real
 rendering and input; see [automation](docs/automation.md). GitHub-hosted CI uses
-the same public platform packages. Hosted acceptance is pending.
+the same public platform packages. The [CI workflow](docs/ci.md) defines headless
+validation; current hosted results do not follow from local source alone.
 
 ## Workflow
 
@@ -53,8 +54,9 @@ the same public platform packages. Hosted acceptance is pending.
 
 See [testing](docs/testing.md) for commands and [quality](docs/quality.md) for merge policy.
 Passing local checks is necessary, not sufficient: maintainers review behavior and design.
-GitHub CI acceptance, branch protections and private reporting channels still
-require administrator verification; see [hosting](docs/hosting.md).
+The configured `CI required` gate aggregates selected checks. Current hosted
+results, live branch protections and private reporting channels require external
+verification; see [hosting](docs/hosting.md).
 
 ## AI-assisted work
 

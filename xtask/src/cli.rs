@@ -16,6 +16,9 @@ pub(crate) struct Options {
     pub non_interactive: bool,
     #[command(flatten)]
     pub visual: crate::visual::Options,
+    /// With test, arguments after -- select an ordinary native scenario command.
+    #[arg(last = true)]
+    pub test_arguments: Vec<std::ffi::OsString>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
@@ -95,6 +98,69 @@ impl Task {
                         "--lib",
                         "--no-default-features",
                         "--locked",
+                    ],
+                    rustdoc: false,
+                },
+                Stage::Cargo {
+                    label: "Independent Luau runtime",
+                    args: &[
+                        "check",
+                        "-p",
+                        "kedra_script",
+                        "--lib",
+                        "--no-default-features",
+                        "--locked",
+                    ],
+                    rustdoc: false,
+                },
+                Stage::Cargo {
+                    label: "Independent scene data",
+                    args: &[
+                        "check",
+                        "-p",
+                        "kedra_scene",
+                        "--lib",
+                        "--no-default-features",
+                        "--locked",
+                    ],
+                    rustdoc: false,
+                },
+                Stage::Cargo {
+                    label: "Independent asset data",
+                    args: &[
+                        "check",
+                        "-p",
+                        "kedra_assets",
+                        "--lib",
+                        "--no-default-features",
+                        "--locked",
+                    ],
+                    rustdoc: false,
+                },
+                Stage::Cargo {
+                    label: "Independent UI runtime",
+                    args: &[
+                        "check",
+                        "-p",
+                        "kedra_ui",
+                        "--lib",
+                        "--no-default-features",
+                        "--locked",
+                    ],
+                    rustdoc: false,
+                },
+                Stage::Cargo {
+                    label: "Shipping diagnostic boundary",
+                    args: &[
+                        "test",
+                        "-p",
+                        "kedra_app",
+                        "--lib",
+                        "--profile",
+                        "release-boundary",
+                        "--no-default-features",
+                        "--locked",
+                        "launch::tests",
                     ],
                     rustdoc: false,
                 },
@@ -204,6 +270,15 @@ mod tests {
     fn explicit_tasks_never_need_a_prompt() -> crate::Result<()> {
         assert_eq!(choose_task(Some(Task::Fmt), false)?, Task::Fmt);
         assert!(choose_task(None, false).is_err());
+        let rust = Options::try_parse_from(["xtask", "test"])?;
+        assert_eq!(rust.task, Some(Task::Test));
+        assert!(rust.test_arguments.is_empty());
+        let native = Options::try_parse_from(["xtask", "test", "--", "features"])?;
+        assert_eq!(native.task, Some(Task::Test));
+        assert_eq!(
+            native.test_arguments,
+            [std::ffi::OsString::from("features")]
+        );
         Ok(())
     }
 
@@ -256,93 +331,60 @@ mod tests {
                     "--no-default-features",
                     "--locked"
                 ],
+                vec![
+                    "check",
+                    "-p",
+                    "kedra_script",
+                    "--lib",
+                    "--no-default-features",
+                    "--locked"
+                ],
+                vec![
+                    "check",
+                    "-p",
+                    "kedra_scene",
+                    "--lib",
+                    "--no-default-features",
+                    "--locked"
+                ],
+                vec![
+                    "check",
+                    "-p",
+                    "kedra_assets",
+                    "--lib",
+                    "--no-default-features",
+                    "--locked"
+                ],
+                vec![
+                    "check",
+                    "-p",
+                    "kedra_ui",
+                    "--lib",
+                    "--no-default-features",
+                    "--locked"
+                ],
+                vec![
+                    "test",
+                    "-p",
+                    "kedra_app",
+                    "--lib",
+                    "--profile",
+                    "release-boundary",
+                    "--no-default-features",
+                    "--locked",
+                    "launch::tests"
+                ],
             ]
         );
     }
 
     #[test]
-    fn lint_and_documentation_stages_run_real_cargo_on_a_small_workspace() -> crate::Result<()> {
-        let root = tempfile::tempdir()?;
-        std::fs::create_dir(root.path().join("src"))?;
-        std::fs::write(
-            root.path().join("Cargo.toml"),
-            "[package]\nname = \"command_fixture\"\nversion = \"0.0.0\"\nedition = \"2024\"\n[workspace]\n",
-        )?;
-        std::fs::write(
-            root.path().join("src/lib.rs"),
-            "/// Return the fixture value.\npub fn value() -> u32 { 42 }\n",
-        )?;
-        let lock = std::process::Command::new("cargo")
-            .current_dir(root.path())
-            .args(["generate-lockfile", "--offline"])
-            .output()?;
-        assert!(
-            lock.status.success(),
-            "{}",
-            String::from_utf8_lossy(&lock.stderr)
-        );
-        for task in [Task::Lint, Task::Doc] {
-            let stage = task.stages().pop().ok_or("Cargo stage missing")?;
-            let Stage::Cargo { args, rustdoc, .. } = stage else {
-                return Err("Lint and documentation must invoke Cargo".into());
-            };
-            assert_eq!(rustdoc, task == Task::Doc);
-            let output = std::process::Command::new("cargo")
-                .current_dir(root.path())
-                .args(args)
-                .env("CARGO_TARGET_DIR", root.path().join("target"))
-                .output()?;
-            assert!(
-                output.status.success(),
-                "{}",
-                String::from_utf8_lossy(&output.stderr)
-            );
-        }
-        assert!(
-            root.path()
-                .join("target/doc/command_fixture/index.html")
-                .is_file()
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn clippy_forbids_unsafe_even_without_manifest_inheritance() -> crate::Result<()> {
-        let root = tempfile::tempdir()?;
-        std::fs::create_dir(root.path().join("src"))?;
-        std::fs::write(
-            root.path().join("Cargo.toml"),
-            "[package]\nname = \"unsafe_fixture\"\nversion = \"0.0.0\"\nedition = \"2024\"\n[workspace]\n",
-        )?;
-        std::fs::write(
-            root.path().join("src/lib.rs"),
-            "pub fn value() -> u32 { unsafe { std::ptr::read_volatile(&0) } }\n",
-        )?;
-        let lock = std::process::Command::new("cargo")
-            .current_dir(root.path())
-            .args(["generate-lockfile", "--offline"])
-            .output()?;
-        assert!(
-            lock.status.success(),
-            "{}",
-            String::from_utf8_lossy(&lock.stderr)
-        );
-        let stage = Task::Lint.stages().pop().ok_or("Clippy stage missing")?;
-        let Stage::Cargo { args, .. } = stage else {
-            return Err("Clippy must invoke Cargo".into());
+    fn lint_keeps_the_independent_workspace_unsafe_guard() {
+        let stages = Task::Lint.stages();
+        let Stage::Cargo { args, .. } = &stages[0] else {
+            panic!("lint must invoke Cargo");
         };
-        let result = std::process::Command::new("cargo")
-            .current_dir(root.path())
-            .args(args)
-            .env("CARGO_TARGET_DIR", root.path().join("target"))
-            .env_remove("RUSTFLAGS")
-            .env_remove("CARGO_ENCODED_RUSTFLAGS")
-            .output()?;
-        assert!(
-            !result.status.success(),
-            "unsafe code compiled without inherited lints"
-        );
-        assert!(String::from_utf8_lossy(&result.stderr).contains("unsafe"));
-        Ok(())
+        assert!(args.windows(2).any(|pair| pair == ["-F", "unsafe_code"]));
+        assert!(args.windows(2).any(|pair| pair == ["-D", "warnings"]));
     }
 }

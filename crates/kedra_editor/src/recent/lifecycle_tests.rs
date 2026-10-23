@@ -1,7 +1,7 @@
 //! Actual availability task plus retained production rows, not an alternate list.
 #![allow(clippy::unwrap_used, reason = "Recent-project binding assertions")]
 use super::*;
-use crate::startup_tests::{app, projects};
+use crate::test_support::{app, projects};
 use bevy::ecs::system::RunSystemOnce;
 use std::time::{Duration, Instant};
 

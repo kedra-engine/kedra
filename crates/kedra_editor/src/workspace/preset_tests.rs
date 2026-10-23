@@ -22,7 +22,7 @@ fn group(layout: &Workspace, kind: &str) -> Result<NodeId, String> {
 
 #[test]
 fn preset_places_four_independent_visible_tools_around_preview() -> TestResult {
-    let (mut app, _, _) = input::regression_tests::setup()?;
+    let (mut app, _, _) = test_support::setup()?;
     let mut state = app.world_mut().resource_mut::<EditorWorkspace>();
     panels::preset(&mut state)?;
     let snapshot = state.layout.snapshot();
@@ -104,7 +104,11 @@ fn retired_demo_layout_is_replaced_but_assets_and_unknown_descriptors_survive() 
         })?;
     }
     old.execute(Command::Hide(assets))?;
-    let candidate = panels::restore(host, old.snapshot().clone())?;
+    let candidate = panels::restore(
+        host,
+        old.snapshot().clone(),
+        &preset::Preset::test_source()?,
+    )?;
     assert_eq!(candidate.snapshot().views.len(), 5);
     for id in [assets, unknown] {
         assert_eq!(candidate.snapshot().views[&id], old.snapshot().views[&id]);
@@ -127,7 +131,7 @@ fn retired_demo_layout_is_replaced_but_assets_and_unknown_descriptors_survive() 
 
 #[test]
 fn current_custom_layout_is_restored_without_rearranging_or_reopening_tools() -> TestResult {
-    let (mut app, _, _) = input::regression_tests::setup()?;
+    let (mut app, _, _) = test_support::setup()?;
     let mut state = app.world_mut().resource_mut::<EditorWorkspace>();
     panels::preset(&mut state)?;
     let snapshot = state.layout.snapshot();
@@ -147,7 +151,7 @@ fn current_custom_layout_is_restored_without_rearranging_or_reopening_tools() ->
     })?;
     state.layout.execute(Command::Hide(preview))?;
     let before = state.layout.snapshot().clone();
-    let restored = panels::restore(state.host, before.clone())?;
+    let restored = panels::restore(state.host, before.clone(), &preset::Preset::test_source()?)?;
     assert_eq!(restored.snapshot(), &before);
     Ok(())
 }

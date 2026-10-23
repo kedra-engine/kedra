@@ -1,0 +1,19 @@
+[package]
+name = "kedra_script"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Shared opt-in Luau execution, scoped host bindings and Bevy lifecycle"
+
+[package.metadata.kedra]
+layer = "runtime"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_asset"] }
+bevy_mod_scripting = { version = "=0.23.0", default-features = false, features = ["luau", "mlua_serialize"] }
+parking_lot = "0.12"
+serde_json.workspace = true
+
+[lints]
+workspace = true

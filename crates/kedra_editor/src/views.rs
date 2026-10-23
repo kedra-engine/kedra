@@ -1,9 +1,13 @@
 //! Pending authored views are owned by their native parent and retire with it.
 use crate::model::*;
 use bevy::prelude::*;
-use kedra_scene::{assets::PrefabSources, document::DocumentId};
+use kedra_scene::{
+    assets::{PrefabCatalogAsset, PrefabSources},
+    document::PrefabDocument,
+    instance::CompiledPrefab,
+};
 use kedra_ui::authored::{components::UiFailure, view::UiView};
-use std::{collections::BTreeMap, time::Duration};
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 #[derive(Clone, Copy)]
 pub(crate) enum Kind {
@@ -23,8 +27,67 @@ struct Pending {
 #[derive(Resource, Default)]
 pub(crate) struct ViewClock(u64);
 
-pub(crate) fn document(value: u128) -> DocumentId {
-    DocumentId(uuid::Uuid::from_u128(value))
+#[cfg(test)]
+pub(crate) mod test_support;
+
+/// Resolve an already loaded native asset, never initiate a load or invent identity.
+/// Both native catalog membership/materialization and published compilation are required.
+pub(crate) fn compiled(world: &World, path: &str) -> Result<Arc<CompiledPrefab>, String> {
+    let asset_path = bevy::asset::AssetPath::try_parse(path)
+        .map_err(|error| format!("Invalid authored asset path: {error}"))?;
+    if !matches!(asset_path.source(), bevy::asset::io::AssetSourceId::Name(_))
+        || asset_path.label().is_some()
+    {
+        return Err(
+            "Authored documents require a full source-qualified asset path without a label".into(),
+        );
+    }
+    let sources = world.resource::<PrefabSources>();
+    if !sources.ready() {
+        return Err("Authored sources are not ready".into());
+    }
+    let handle = world
+        .resource::<AssetServer>()
+        .get_handle::<PrefabDocument>(asset_path)
+        .ok_or_else(|| format!("Authored asset is not loaded: {path}"))?;
+    let catalog = world
+        .resource::<Assets<PrefabCatalogAsset>>()
+        .get(&sources.handle)
+        .ok_or("Authored native catalog is not materialized")?;
+    if !catalog
+        .documents
+        .iter()
+        .any(|member| member.id() == handle.id())
+    {
+        return Err(format!(
+            "Authored asset is not a native catalog member: {path}"
+        ));
+    }
+    let document = world
+        .resource::<Assets<PrefabDocument>>()
+        .get(&handle)
+        .ok_or_else(|| format!("Authored asset is not materialized: {path}"))?;
+    let snapshot = sources.snapshot();
+    if snapshot.catalog.documents.get(&document.id) != Some(document) {
+        return Err(format!(
+            "Authored asset differs from the published source revision: {path}"
+        ));
+    }
+    snapshot
+        .compiled
+        .get(&document.id)
+        .cloned()
+        .ok_or_else(|| format!("Authored asset has no published compilation: {path}"))
+}
+
+pub(crate) fn mount_asset(
+    world: &mut World,
+    parent: Entity,
+    path: &str,
+    scope: &str,
+) -> Result<UiView, String> {
+    let compiled = compiled(world, path)?;
+    mount_compiled(world, parent, &compiled, scope)
 }
 
 pub(crate) fn request(world: &mut World, parent: Entity, kind: Kind) -> Result<Entity, String> {
@@ -48,31 +111,34 @@ pub(crate) fn request(world: &mut World, parent: Entity, kind: Kind) -> Result<E
         .id())
 }
 
-pub(crate) fn mount(
+fn mount_compiled(
     world: &mut World,
     parent: Entity,
-    id: DocumentId,
+    compiled: &Arc<CompiledPrefab>,
     scope: &str,
 ) -> Result<UiView, String> {
-    let sources = world.resource::<PrefabSources>();
-    if !sources.ready() {
-        return Err("Authored startup sources are not ready".into());
+    let mut ancestor = Some(parent);
+    let mut target = None;
+    while let Some(entity) = ancestor {
+        if let Some(camera) = world.get::<UiTargetCamera>(entity) {
+            if let Some(bevy::camera::RenderTarget::Window(bevy::window::WindowRef::Entity(
+                window,
+            ))) = world.get::<bevy::camera::RenderTarget>(camera.0)
+            {
+                target = Some(*window);
+            }
+            break;
+        }
+        ancestor = world.get::<ChildOf>(entity).map(ChildOf::parent);
     }
-    let source = sources.snapshot();
-    let compiled = source
-        .compiled
-        .get(&id)
-        .ok_or_else(|| format!("Required authored startup document is absent: {id}"))?
-        .clone();
-    let window = world
-        .resource::<kedra_desktop::DesktopSurface>()
-        .window
+    let window = target
+        .or_else(|| world.resource::<kedra_desktop::DesktopSurface>().window)
         .and_then(|entity| world.get::<Window>(entity))
         .ok_or("Authored view has no owned native window")?;
     let density = window.scale_factor() * world.resource::<UiScale>().0;
     UiView::mount(
         world,
-        &compiled,
+        compiled,
         Some(parent),
         &BTreeMap::new(),
         scope,
@@ -122,22 +188,22 @@ pub(crate) fn hydrate(world: &mut World) {
         if !sources.ready() {
             continue;
         }
-        let id = match kind {
-            Kind::Frame(_) => document(0xc0600000000040008000000000000001),
+        let path = match kind {
+            Kind::Frame(_) => "editor://prefabs/window-frame.prefab.ron",
             Kind::Caption(
                 kedra_desktop::SurfaceKind::Boot | kedra_desktop::SurfaceKind::Loading,
-            ) => document(0xc0900000000040008000000000000002),
+            ) => "editor://prefabs/loading-titlebar.prefab.ron",
             Kind::Caption(kedra_desktop::SurfaceKind::Editor) => {
-                document(0xc0900000000040008000000000000003)
+                "editor://prefabs/editor-titlebar.prefab.ron"
             }
-            Kind::Caption(_) => document(0xc0900000000040008000000000000001),
-            Kind::Projects => document(0xc0300000000040008000000000000001),
-            Kind::Loading => document(0xb20d50db11804528b8a75ffb53ad9b35),
-            Kind::Editor => document(0xc0700000000040008000000000000001),
-            Kind::Entry(EntryMode::Create) => document(0xc0400000000040008000000000000001),
-            Kind::Entry(EntryMode::Open) => document(0xc0400000000040008000000000000002),
+            Kind::Caption(_) => "editor://prefabs/titlebar.prefab.ron",
+            Kind::Projects => "editor://scenes/projects.scene.ron",
+            Kind::Loading => "editor://scenes/loading.scene.ron",
+            Kind::Editor => "editor://scenes/editor.scene.ron",
+            Kind::Entry(EntryMode::Create) => "editor://scenes/create-project.scene.ron",
+            Kind::Entry(EntryMode::Open) => "editor://scenes/open-project.scene.ron",
         };
-        let result = mount(world, parent, id, "").and_then(|view| {
+        let result = mount_asset(world, parent, path, "").and_then(|view| {
             let result = match kind {
                 Kind::Frame(surface) => {
                     world.resource_mut::<kedra_desktop::DesktopSurface>().frame = Some(view.root);
@@ -182,6 +248,10 @@ pub(crate) fn fail(world: &mut World, error: String) {
     world.resource_mut::<UiFailure>().0 = Some(error);
     world.write_message(AppExit::error());
 }
+
+#[cfg(test)]
+#[path = "views/path_tests.rs"]
+mod path_tests;
 
 #[cfg(test)]
 mod tests {

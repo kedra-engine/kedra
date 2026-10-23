@@ -1,0 +1,16 @@
+{
+  "folders": [{"path": "scripts/Native"}],
+  "settings": {
+    "luau-lsp.platform.type": "standard",
+    "luau-lsp.sourcemap.enabled": false,
+    "luau-lsp.fflags.sync": false,
+    "luau-lsp.types.definitionFiles": {
+      "01-kedra-runtime": "../../../../../crates/kedra_script/types/runtime.d.luau",
+      "02-kedra-bevy": "../../../../../crates/kedra_script_bevy/types/bevy.d.luau",
+      "02-kedra-application": "../../../../../crates/kedra_app/types/application.d.luau",
+      "03-native-projection": "../../types/projection.d.luau"
+    },
+    "luau-lsp.completion.imports.enabled": true
+  },
+  "extensions": {"recommendations": ["JohnnyMorganz.luau-lsp"]}
+}

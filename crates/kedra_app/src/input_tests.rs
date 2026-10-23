@@ -2,6 +2,9 @@
 use super::*;
 use crate::operations::{OperationState, Operations};
 
+#[derive(Resource, Default)]
+struct RecordedKeyboard(Vec<KeyboardInput>);
+
 fn host() -> (App, Entity, Entity) {
     let mut app = App::new();
     app.add_plugins((
@@ -680,6 +683,16 @@ fn cleanup_noops_still_validate_sessions_targets_and_operation_ids() {
 #[test]
 fn real_input_pipeline_delivers_moves_drag_text_chords_and_idempotent_receipts() {
     let (mut app, a, _) = host();
+    // Exercise normal message expiry deterministically, regardless of CPU load.
+    // A reader must observe delivery each frame, not after the receipt: the
+    // press can age out while release and completion traverse later frames.
+    app.insert_resource(bevy::time::TimeUpdateStrategy::FixedTimesteps(1));
+    app.init_resource::<RecordedKeyboard>().add_systems(
+        Update,
+        |mut events: MessageReader<KeyboardInput>, mut recorded: ResMut<RecordedKeyboard>| {
+            recorded.0.extend(events.read().cloned());
+        },
+    );
     command(&mut app, a, json!({"kind":"move","position":[4,5]}));
     assert_eq!(
         app.world().get::<Window>(a).unwrap().cursor_position(),
@@ -695,16 +708,22 @@ fn real_input_pipeline_delivers_moves_drag_text_chords_and_idempotent_receipts()
         Some(Vec2::new(40., 50.))
     );
     assert!(!held(app.world()).0);
-    let mut events = app
-        .world()
-        .resource::<Messages<KeyboardInput>>()
-        .get_cursor_current();
     let (id, value) = command(&mut app, a, json!({"kind":"text","text":"Кедра 日本語"}));
-    assert!(
-        events
-            .read(app.world().resource::<Messages<KeyboardInput>>())
-            .any(|event| event.text.as_deref() == Some("Кедра 日本語"))
-    );
+    let events = &app.world().resource::<RecordedKeyboard>().0;
+    assert_eq!(events.len(), 2);
+    for event in events {
+        assert_eq!(event.window, a);
+        assert_eq!(event.logical_key, Key::Character("Кедра 日本語".into()));
+        assert_eq!(
+            event.key_code,
+            KeyCode::Unidentified(NativeKeyCode::Unidentified)
+        );
+        assert!(!event.repeat);
+    }
+    assert_eq!(events[0].state, ButtonState::Pressed);
+    assert_eq!(events[0].text.as_deref(), Some("Кедра 日本語"));
+    assert_eq!(events[1].state, ButtonState::Released);
+    assert_eq!(events[1].text, None);
     assert_eq!(
         request(In(Some(value.clone())), app.world_mut()).unwrap()["state"],
         "succeeded"
@@ -716,6 +735,10 @@ fn real_input_pipeline_delivers_moves_drag_text_chords_and_idempotent_receipts()
         app.world().resource::<Operations>().get(id).unwrap().state,
         OperationState::Succeeded
     );
+    for _ in 0..3 {
+        app.update();
+    }
+    assert_eq!(app.world().resource::<RecordedKeyboard>().0.len(), 2);
     for chord in [
         "enter",
         "escape",

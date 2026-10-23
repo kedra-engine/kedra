@@ -4,6 +4,7 @@ import itertools
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import unittest
@@ -11,7 +12,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "tools/ci/required.py"
-JOBS = ("changes", "policy", "native", "coverage", "supply-chain", "repository", "secrets", "python-qa")
+JOBS = ("changes", "policy", "native", "coverage", "supply-chain", "repository", "secrets", "python-test")
 FILTERS = ("rust", "python", "markdown", "workflows", "distribution")
 
 
@@ -37,6 +38,26 @@ class RequiredCheckTests(unittest.TestCase):
         result = self.run_gate(json.dumps(successful_results()))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_gate_accepts_actual_workflow_jobs_and_rejects_obsolete_identity(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        # Check the configured boundary, not just a fixture shared with the gate.
+        # This is the workflow's explicit single-line needs contract, not a YAML parser.
+        needs = re.search(
+            r"^  required:\n(?:(?!  \S)[^\n]*\n)*?    needs: \[([^\]\n]+)\]$",
+            workflow, re.MULTILINE,
+        )
+        self.assertIsNotNone(needs, "CI required must declare its explicit job needs")
+        jobs = [job.strip() for job in needs.group(1).split(",")]
+        self.assertCountEqual(jobs, JOBS)
+        for job in jobs:
+            self.assertRegex(workflow, rf"(?m)^  {re.escape(job)}:$")
+        results = {job: {"result": "success", "outputs": {}} for job in jobs}
+        results["changes"]["outputs"] = {key: "true" for key in FILTERS}
+        result = self.run_gate(json.dumps(results))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        results["python-qa"] = results.pop("python-test")
+        self.assertNotEqual(self.run_gate(json.dumps(results)).returncode, 0)
+
     def test_only_jobs_not_selected_by_changed_paths_may_be_skipped(self):
         for rust, python, markdown in itertools.product((True, False), repeat=3):
             with self.subTest(rust=rust, python=python, markdown=markdown):
@@ -46,7 +67,7 @@ class RequiredCheckTests(unittest.TestCase):
                     key: str(value).lower() for key, value in selected.items()
                 })
                 for job, wanted in (("native", rust), ("coverage", rust),
-                                    ("supply-chain", rust), ("python-qa", python),
+                                    ("supply-chain", rust), ("python-test", python),
                                     ("repository", markdown)):
                     results[job]["result"] = "success" if wanted else "skipped"
                 result = self.run_gate(json.dumps(results))

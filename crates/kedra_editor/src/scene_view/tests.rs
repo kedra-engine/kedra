@@ -1,16 +1,9 @@
+use super::test_support::compiled;
 use super::*;
-use bevy::{
-    asset::{AssetPath, LoadFromPath, UntypedHandle},
-    camera::visibility::RenderLayers,
-};
+use bevy::camera::visibility::RenderLayers;
 use kedra_assets::delivery::{AssetRecord, FileDigest, Manifest, digest};
 use kedra_authoring::persistence::{SourceFile, SourceSnapshot};
-use kedra_scene::{
-    composition::Catalog,
-    document::PrefabDocument,
-    reflection::ComponentPolicies,
-    spatial::{Primitive, Surface},
-};
+use kedra_scene::{composition::Catalog, document::PrefabDocument, reflection::ComponentPolicies};
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 #[test]
@@ -216,16 +209,6 @@ fn native_bounds_do_not_bypass_presentation_node_budget() {
     assert!(bounds::measure(&world, root).is_err_and(|error| error.contains("4096-node budget")));
 }
 
-struct NoLoad;
-impl LoadFromPath for NoLoad {
-    fn load_from_path_erased(
-        &mut self,
-        _: std::any::TypeId,
-        _: AssetPath<'static>,
-    ) -> UntypedHandle {
-        panic!("Fixture must not load assets")
-    }
-}
 fn source() -> (SourceSnapshot, binding::Delivery) {
     let document = PrefabDocument::new("Source");
     let text = document.serialize().unwrap_or_else(|e| panic!("{e}"));
@@ -281,67 +264,6 @@ fn delivery_binding_rejects_foreign_missing_and_stale_sources_without_mutation()
     assert!(delivery.matches(&delivery.source, &source).is_err());
     assert_eq!(source.documents[0].source, before);
     Ok(())
-}
-pub(super) fn compiled(
-    world: &mut World,
-) -> Result<Arc<CompiledPrefab>, Box<dyn std::error::Error>> {
-    let registry = AppTypeRegistry::default();
-    let mut policies = ComponentPolicies::default();
-    kedra_scene::spatial::register(&mut registry.write(), &mut policies)?;
-    let mut document = PrefabDocument::new("Primitive");
-    for (key, value) in [
-        (
-            "scene.primitive",
-            &Primitive::Cuboid {
-                size: Vec3::splat(2.),
-            } as &dyn PartialReflect,
-        ),
-        (
-            "scene.surface",
-            &Surface {
-                color: Color::WHITE,
-                texture: None,
-                metallic: 0.,
-                roughness: 0.5,
-            },
-        ),
-    ] {
-        document.nodes[0].components.insert(
-            key.into(),
-            policies.encode(key, value, &registry.read(), &BTreeMap::new())?,
-        );
-    }
-    document.nodes.push(kedra_scene::document::Node {
-        id: kedra_scene::document::NodeId::new(),
-        name: "Authored light".into(),
-        parent: Some(document.root.into()),
-        components: BTreeMap::from([(
-            "scene.sun".into(),
-            policies.encode(
-                "scene.sun",
-                &kedra_scene::spatial::Sun {
-                    color: Color::WHITE,
-                    illuminance: 25.,
-                },
-                &registry.read(),
-                &BTreeMap::new(),
-            )?,
-        )]),
-    });
-    let mut catalog = Catalog::default();
-    catalog.insert(document.clone())?;
-    let compiled = CompiledPrefab::compile(
-        catalog.resolve(document.id)?,
-        &registry.read(),
-        &policies,
-        &mut NoLoad,
-        &BTreeMap::new(),
-    )?;
-    world.insert_resource(registry);
-    world.init_resource::<Assets<Mesh>>();
-    world.init_resource::<Assets<StandardMaterial>>();
-    world.init_resource::<Assets<Image>>();
-    Ok(Arc::new(compiled))
 }
 #[test]
 fn unchanged_selection_after_delayed_mount_publishes_marker_and_frame_selection_bounds()

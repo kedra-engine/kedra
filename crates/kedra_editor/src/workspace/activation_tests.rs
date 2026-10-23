@@ -22,7 +22,7 @@ impl Fixture {
             std::fs::write(project.assets.join(path), source.serialize()?)?;
         }
         let root = project.assets.clone();
-        let (mut app, _, _) = input::regression_tests::setup()?;
+        let (mut app, _, _) = test_support::setup()?;
         let world = app.world_mut();
         test_support::sources(world)?;
         world.insert_resource(test_support::project_manager(project, None)?);

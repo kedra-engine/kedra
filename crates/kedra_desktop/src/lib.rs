@@ -110,10 +110,6 @@ pub fn replace(world: &mut World, kind: SurfaceKind, title: String) -> Entity {
         SurfaceKind::Boot | SurfaceKind::Loading => (640, 360, 560., 320.),
         SurfaceKind::Editor => (1440, 900, 760., 560.),
     };
-    let previous = world.resource::<DesktopSurface>().clone();
-    if let Some(window) = previous.window {
-        world.entity_mut(window).remove::<PrimaryWindow>();
-    }
     let surface = auxiliary::allocate(
         world,
         kind,
@@ -122,6 +118,57 @@ pub fn replace(world: &mut World, kind: SurfaceKind, title: String) -> Entity {
         Vec2::new(min_width, min_height),
         true,
     );
+    publish(world, surface);
+    surface.root
+}
+
+/// Mount content into a new primary surface before retiring the active surface.
+///
+/// Requires DesktopPlugin and runs on the main Bevy thread. Size must be
+/// 64..=8192 logical pixels per axis. Callbacks must preserve the previous surface
+/// and focus; they may mutate only candidate-owned presentation and bindings.
+/// The mount callback owns descendants of the candidate root. If mount returns an
+/// error or validation/visibility fails, `rollback` runs exactly once before candidate
+/// retirement, including when mount returned success. It must remove its candidate's
+/// non-entity bindings without touching the previous surface or unrelated state.
+/// Invalid size rejects before either callback runs. Failure retires the candidate
+/// tree/camera/window, leaving the previous primary surface and focus unchanged.
+/// Success publishes the candidate and clears focus. Native acknowledgment/frame
+/// readiness is separate. This error rollback contract does not cover panics.
+pub fn replace_mounted(
+    world: &mut World,
+    kind: SurfaceKind,
+    title: String,
+    size: UVec2,
+    mount: impl FnOnce(&mut World, auxiliary::Surface) -> Result<(), String>,
+    rollback: impl FnOnce(&mut World, auxiliary::Surface),
+) -> Result<Entity, String> {
+    if !(64..=8192).contains(&size.x) || !(64..=8192).contains(&size.y) {
+        return Err("Primary surface size must be 64..=8192".into());
+    }
+    let surface = auxiliary::allocate(world, kind, title, size, Vec2::splat(64.), false);
+    let result = mount(world, surface).and_then(|()| {
+        if world.get::<Node>(surface.root).is_none()
+            || world.get::<Camera>(surface.camera).is_none()
+        {
+            return Err("Mounted primary surface was retired before publication".into());
+        }
+        auxiliary::show(world, surface)
+    });
+    if let Err(error) = result {
+        rollback(world, surface);
+        auxiliary::retire(world, surface);
+        return Err(error);
+    }
+    publish(world, surface);
+    Ok(surface.root)
+}
+
+fn publish(world: &mut World, surface: auxiliary::Surface) {
+    let previous = world.resource::<DesktopSurface>().clone();
+    if let Some(window) = previous.window {
+        world.entity_mut(window).remove::<PrimaryWindow>();
+    }
     let (window, camera, root) = (surface.window, surface.camera, surface.root);
     world.entity_mut(window).insert(PrimaryWindow);
     if let Some(mut focus) = world.get_resource_mut::<InputFocus>() {
@@ -139,7 +186,6 @@ pub fn replace(world: &mut World, kind: SurfaceKind, title: String) -> Entity {
         root: Some(root),
         frame: None,
     };
-    root
 }
 
 fn close_requested(
@@ -160,6 +206,155 @@ mod tests {
     #![allow(clippy::unwrap_used, reason = "Isolated Bevy world assertions")]
     use super::*;
     use bevy::window::WindowResolution;
+
+    fn live_entities(world: &mut World) -> std::collections::BTreeSet<Entity> {
+        world.query::<Entity>().iter(world).collect()
+    }
+
+    fn assert_rollback_preserved(
+        world: &mut World,
+        before: &std::collections::BTreeSet<Entity>,
+        previous: &DesktopSurface,
+        focus: &InputFocus,
+    ) {
+        // Bevy 0.20 Entities::len counts retained allocator metadata, not live entities.
+        // Check immediately as well as after flushing: cleanup must not need a later frame.
+        for flush in [false, true] {
+            if flush {
+                world.flush();
+            }
+            assert_eq!(world.entities().count_spawned() as usize, before.len());
+            assert_eq!(&live_entities(world), before);
+            let current = world.resource::<DesktopSurface>();
+            assert_eq!(current.window, previous.window);
+            assert_eq!(current.camera, previous.camera);
+            assert_eq!(current.root, previous.root);
+            assert_eq!(current.frame, previous.frame);
+            assert_eq!(world.resource::<InputFocus>(), focus);
+            assert!(
+                world
+                    .get::<PrimaryWindow>(previous.window.unwrap())
+                    .is_some()
+            );
+        }
+    }
+
+    #[test]
+    fn mounted_replacement_failure_preserves_previous_primary_and_focus() {
+        let mut world = World::new();
+        world.init_resource::<DesktopSurface>();
+        world.init_resource::<InputFocus>();
+        let previous = replace(&mut world, SurfaceKind::Projects, "Previous".into());
+        let focus = world.spawn(ChildOf(previous)).id();
+        world
+            .resource_mut::<InputFocus>()
+            .set(focus, bevy::input_focus::FocusCause::Navigated);
+        let previous_surface = world.resource::<DesktopSurface>().clone();
+        let previous_focus = world.resource::<InputFocus>().clone();
+        let before = live_entities(&mut world);
+        let mut candidate = None;
+        let mut child_and_observer = None;
+        let mut rollbacks = 0;
+        let result = replace_mounted(
+            &mut world,
+            SurfaceKind::Editor,
+            "Candidate".into(),
+            UVec2::new(420, 740),
+            |world, surface| {
+                candidate = Some(surface);
+                let child = world.spawn(ChildOf(surface.root)).id();
+                let observer = world
+                    .spawn(Observer::new(|_: On<Despawn<ChildOf>>| {}).with_entity(child))
+                    .id();
+                child_and_observer = Some((child, observer));
+                assert_eq!(world.resource::<DesktopSurface>().root, Some(previous));
+                Err("Rejected content".into())
+            },
+            |_, _| rollbacks += 1,
+        );
+        assert_eq!(result, Err("Rejected content".into()));
+        assert_eq!(rollbacks, 1);
+        assert_rollback_preserved(&mut world, &before, &previous_surface, &previous_focus);
+        let candidate = candidate.unwrap();
+        let (child, observer) = child_and_observer.unwrap();
+        for entity in [
+            candidate.root,
+            candidate.window,
+            candidate.camera,
+            child,
+            observer,
+        ] {
+            assert!(!world.entities().contains(entity));
+        }
+        assert!(
+            replace_mounted(
+                &mut world,
+                SurfaceKind::Editor,
+                "Invalid".into(),
+                UVec2::ZERO,
+                |_, _| panic!("Invalid size ran mount"),
+                |_, _| panic!("Invalid size ran rollback")
+            )
+            .is_err()
+        );
+        assert_rollback_preserved(&mut world, &before, &previous_surface, &previous_focus);
+        let result = replace_mounted(
+            &mut world,
+            SurfaceKind::Editor,
+            "Retired candidate".into(),
+            UVec2::new(420, 740),
+            |world, surface| {
+                world.despawn(surface.root);
+                Ok(())
+            },
+            |_, _| rollbacks += 1,
+        );
+        assert!(result.is_err());
+        assert_eq!(rollbacks, 2);
+        assert_rollback_preserved(&mut world, &before, &previous_surface, &previous_focus);
+    }
+
+    #[test]
+    fn mounted_replacement_publishes_complete_tree_and_retires_only_previous() {
+        let mut world = World::new();
+        world.init_resource::<DesktopSurface>();
+        world.init_resource::<InputFocus>();
+        let previous = replace(&mut world, SurfaceKind::Projects, "Previous".into());
+        let unrelated = world.spawn_empty().id();
+        let root = replace_mounted(
+            &mut world,
+            SurfaceKind::Editor,
+            "Content".into(),
+            UVec2::new(420, 740),
+            |world, surface| {
+                assert!(!world.get::<Window>(surface.window).unwrap().visible);
+                world.spawn((Name::new("Mounted child"), ChildOf(surface.root)));
+                Ok(())
+            },
+            |_, _| panic!("Successful mount ran rollback"),
+        )
+        .unwrap();
+        let surface = world.resource::<DesktopSurface>();
+        assert_eq!(surface.root, Some(root));
+        assert_eq!(
+            world.get::<Window>(surface.window.unwrap()).unwrap().size(),
+            Vec2::new(420., 740.)
+        );
+        assert!(
+            world
+                .get::<Window>(surface.window.unwrap())
+                .unwrap()
+                .visible
+        );
+        assert!(
+            world
+                .get::<PrimaryWindow>(surface.window.unwrap())
+                .is_some()
+        );
+        assert!(!world.entities().contains(previous));
+        assert!(world.entities().contains(unrelated));
+        assert_eq!(world.get::<Children>(root).unwrap().len(), 1);
+    }
     #[test]
     fn replacement_owns_only_its_window_camera_and_tree() {
         let mut app = App::new();

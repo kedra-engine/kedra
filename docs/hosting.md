@@ -1,14 +1,13 @@
 # Repository administration
 
-Repository: <https://github.com/kedra-engine/kedra>, public, default branch `main`.
-The initial complete GitHub Actions run passed; comparable warm acceptance is
-verified. Active ruleset `Protected main` (25504920) requires PRs, resolved review
-threads, an up-to-date base and `CI required` from GitHub Actions (app 15368).
-It denies force pushes and branch deletion and has no bypass actors. Required
-human approvals are zero for the single-maintainer model. Server rules were read
-back; real PRs were blocked before checks and accepted normally after green CI.
-Confidential contacts remain
-unverified. Local source files alone do not apply or prove server settings.
+Repository: <https://github.com/kedra-engine/kedra>; the administrative contract is
+a public repository with default branch `main`. The expected `Protected main`
+ruleset (25504920) requires PRs, resolved review threads, an up-to-date base and
+`CI required` from GitHub Actions (app 15368). It must deny force pushes and branch
+deletion and have no bypass actors. Required human approvals are zero for the
+single-maintainer model. Live settings, rule identities, current hosted results
+and confidential contacts require owner confirmation. Local source files alone
+do not apply or prove server settings.
 
 ## Before wider public contributions
 
@@ -21,7 +20,7 @@ unverified. Local source files alone do not apply or prove server settings.
 - Require an independent approval when another maintainer is available; document
   solo-maintainer limitations rather than claiming independent review is enforced.
 - Establish real maintainer ownership for policy, automation and public APIs.
-- After CI exists, verify exact required result identities on the destination.
+- Verify exact configured required result identities on the destination.
   Missing, failed, cancelled or skipped required checks must prevent acceptance.
 - Review outside-contributor execution before approval; untrusted code must not
   receive secrets, privileged tokens or access to trusted worker state/caches.
@@ -32,14 +31,18 @@ unverified. Local source files alone do not apply or prove server settings.
 
 The [GitHub workflow](../.github/workflows/ci.yml) uses managed runners with
 read-only repository permissions, dependency-only caching and no private
-infrastructure credentials. No release workflow, Kubernetes cluster or self-hosted
-runner is installed by it; see [CI boundaries and acceptance](ci.md).
+infrastructure credentials. It validates changes, separately from the manually
+dispatched [Desktop distribution workflow](../.github/workflows/release.yml).
+Neither workflow configures Kubernetes or self-hosted runners;
+see [CI boundaries and acceptance](ci.md).
 
-Preserve the active ruleset and verify legitimate PR acceptance after checks pass;
+Preserve the required safeguards and verify legitimate PR acceptance after checks pass;
 never bypass it to make automation convenient. The single-maintainer model must
 not demand a second unavailable human reviewer. A YAML job name alone is not
-server-side enforcement; see [actual CI status and measurements](ci.md).
+server-side enforcement; see [configured CI checks and acceptance requirements](ci.md).
 
-Before publishing, define protected tags, explicit approval, least-privilege tokens,
-artifact provenance, license notices, clean-machine verification and rollback.
+Release preflight checks exact source identity, main ancestry, successful push CI
+and unused release identity; see [distribution](distribution.md#github-release-boundary).
+Before publishing, confirm live protected tags and explicit approval, least-privilege
+tokens, artifact provenance, license notices, clean-machine verification and rollback.
 Never promote untrusted contribution artifacts directly into releases.

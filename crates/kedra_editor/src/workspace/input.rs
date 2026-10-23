@@ -435,7 +435,7 @@ pub(super) fn tick(world: &mut World, state: &mut EditorWorkspace) -> Result<(),
                     host,
                     start: point,
                 });
-            } else {
+            } else if !super::hit::scrollbar(world, state, host, point) {
                 let divider = world.query::<(Entity, &Divider)>().iter(world).find_map(
                     |(entity, divider)| {
                         (divider.host == host
@@ -975,7 +975,7 @@ fn clear_measurement(world: &mut World, state: &mut EditorWorkspace) {
 
 #[cfg(test)]
 #[path = "input_tests.rs"]
-pub(super) mod regression_tests;
+mod admission_tests;
 
 #[cfg(test)]
 #[path = "gesture_tests.rs"]

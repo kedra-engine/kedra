@@ -74,10 +74,10 @@ impl Panel {
         id: ViewId,
         root: PathBuf,
     ) -> Result<Self, String> {
-        let view = crate::views::mount(
+        let view = crate::views::mount_asset(
             world,
             parent,
-            crate::views::document(0xe7b184e5b0914db1ae27374ff6cec785),
+            "editor://prefabs/asset-browser.prefab.ron",
             &format!("browser/{id:?}"),
         )?;
         for (key, action) in [

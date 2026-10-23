@@ -1,4 +1,25 @@
 (
  version:1,id:"c0700000-0000-4000-8000-000000000001",kind:Scene,title:"Empty editor host",root:"c0710000-0000-4000-8000-000000000001",base:None,
- nodes:[(id:"c0710000-0000-4000-8000-000000000001",name:"Empty editor canvas",parent:None,components:{"ui.id":(version:1,value:("editor.canvas")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["editor-canvas"]))})],instances:[],overrides:[],ports:{},
+ nodes:[(id:"c0710000-0000-4000-8000-000000000001",name:"Empty editor canvas",parent:None,components:{
+  "ui.id":(version:1,value:("editor.canvas")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["editor-canvas"])),
+  "ui.docking":(version:1,value:(snapshot:r#"{
+   "version":1,
+   "hosts":{"ed000000-0000-4000-8000-000000000001":{"root":"ed200000-0000-4000-8000-000000000001","maximized":null}},
+   "nodes":{
+    "ed200000-0000-4000-8000-000000000001":{"Split":{"axis":"Horizontal","fraction":0.20,"first":"ed200000-0000-4000-8000-000000000002","second":"ed200000-0000-4000-8000-000000000003"}},
+    "ed200000-0000-4000-8000-000000000002":{"Group":{"tabs":["ed100000-0000-4000-8000-000000000002"],"active":"ed100000-0000-4000-8000-000000000002"}},
+    "ed200000-0000-4000-8000-000000000003":{"Split":{"axis":"Horizontal","fraction":0.75,"first":"ed200000-0000-4000-8000-000000000004","second":"ed200000-0000-4000-8000-000000000007"}},
+    "ed200000-0000-4000-8000-000000000004":{"Split":{"axis":"Vertical","fraction":0.68,"first":"ed200000-0000-4000-8000-000000000005","second":"ed200000-0000-4000-8000-000000000006"}},
+    "ed200000-0000-4000-8000-000000000005":{"Group":{"tabs":["ed100000-0000-4000-8000-000000000001"],"active":"ed100000-0000-4000-8000-000000000001"}},
+    "ed200000-0000-4000-8000-000000000006":{"Group":{"tabs":["ed100000-0000-4000-8000-000000000004"],"active":"ed100000-0000-4000-8000-000000000004"}},
+    "ed200000-0000-4000-8000-000000000007":{"Group":{"tabs":["ed100000-0000-4000-8000-000000000003"],"active":"ed100000-0000-4000-8000-000000000003"}}
+   },
+   "views":{
+    "ed100000-0000-4000-8000-000000000001":{"kind":"preview","restore_key":null},
+    "ed100000-0000-4000-8000-000000000002":{"kind":"hierarchy","restore_key":null},
+    "ed100000-0000-4000-8000-000000000003":{"kind":"inspector","restore_key":null},
+    "ed100000-0000-4000-8000-000000000004":{"kind":"assets","restore_key":null}
+   },"hidden":{}
+  }"#)),
+ })],instances:[],overrides:[],ports:{},
 )

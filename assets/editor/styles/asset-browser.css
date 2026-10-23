@@ -4,7 +4,7 @@
 .browser-tools { display:flex; height:var(--control-height); flex-shrink:0; }
 .browser-toolbar .button { min-width:0px; padding:0 6px; height:var(--control-height); }
 .browser-toolbar .button.browser-icon { width:var(--control-height); min-width:var(--control-height); padding:3px; }
-.browser-toolbar .button:disabled .text { color:var(--muted); }
+.browser-toolbar .button:disabled .text { color:var(--disabled-text); }
 .browser-icon:disabled { background-color:var(--panel); }
 .browser-toolbar .button.selected { background-color:var(--selected); }
 .browser-breadcrumbs { display:flex; flex-grow:1; flex-basis:176px; min-width:80px; height:var(--control-height); overflow-x:scroll; }

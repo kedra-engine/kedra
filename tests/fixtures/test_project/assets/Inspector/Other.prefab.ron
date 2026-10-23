@@ -1,0 +1,1 @@
+(version:1,id:"7a432e4c-3a4c-4ba7-ba26-6e3e61506477",kind:Prefab,title:"Repeated name",root:"9864a331-bc7f-4c03-923b-da1f7b2898b7",base:None,nodes:[(id:"9864a331-bc7f-4c03-923b-da1f7b2898b7",name:"Repeated name",parent:None,components:{"ui.caption":(version:1,value:(text:"Other source",justify:Left,wrap:false))})],instances:[],overrides:[],ports:{})

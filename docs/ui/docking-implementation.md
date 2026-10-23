@@ -83,9 +83,13 @@ Hierarchy on the left, Document Preview above Assets in the middle, and Inspecto
 on the right. The preset allocates roughly 20% / 60% / 20% of the width and 68% /
 32% of the middle column's height, subject to native layout minima. No position
 is reserved: every panel can move, tab, float, hide and reopen through docking.
+The preset comes from `editor://scenes/editor.scene.ron`'s `ui.docking` Snapshot.
+The editor adapter maps template aliases onto the live host and retained view
+identities; the source does not replace persisted preference identities.
 
-The [source Asset Browser](asset-browser.md) remains read-only. Inspector and the
-initial Document Preview are empty authored panel roots.
+The [source Asset Browser](asset-browser.md) remains read-only. The read-only
+[Inspector](inspector.md) follows source selection; only the initial Document
+Preview is an empty authored panel root.
 [Read-only source Open](source-documents.md) creates ordinary document tabs and
 hides the empty Preview slot. Tabs host [Scene View](scene-view.md), rendering
 supported spatial/UI documents with an explicit matching verified delivery;
@@ -124,24 +128,26 @@ not hostile filesystem writers. Layout preferences are not authoring Save.
 The Figma reference is UI-KIT `2EZlK40cfx2Mub7GmDyI70`, page `92:3713`.
 The [source map](figma.md) lists current component-library navigation separately
 from pinned export provenance.
-Its independent exported state family is pinned in
+Its source state family is recorded for provenance only in
 [`docking/figma/manifest.json`](docking/figma/manifest.json).
 
 ```sh
 cargo test -p kedra_docking --locked
-cargo test -p kedra_ui --test docking --locked
+cargo test -p kedra_ui --test contracts --locked docking::
 cargo xtask check --non-interactive
 ```
 
 [Docking tests](docking-tests.md) covers the isolated production-mechanics host,
-native screenshots, project preference restart checks and acceptance boundaries.
+GPU fences, project preference restart checks and acceptance boundaries. There
+are no docking screenshot goldens; only kit buttons/inputs have screenshot coverage.
 `editor.workspace` is read-only diagnostics, not a second mutation path.
 
 ## Limitations
 
-- Native input injection and renderer readbacks are verified on macOS/Metal.
-  Physical OS capture/release, mixed-DPI monitor movement and Windows/Linux/Wayland
-  interaction are not certified.
+- Native behavior acceptance requires the separate desktop scenarios in
+  [docking tests](docking-tests.md), using injected input and renderer readbacks.
+  These checks do not certify physical OS capture/release, mixed-DPI monitor
+  movement or Windows/Linux/Wayland interaction.
 - Cross-host coordinate conversion checks backend support. Without global
   positions or destination-local events, transfer is visibly rejected without
   publication. Explicit Float/Redock menu actions remain available.

@@ -92,26 +92,25 @@ Rendered tile thumbnails, recursive search, reference picking, rename/move/delet
 creation, import and source Save are not implemented. Open displays supported
 spatial/UI documents in [Scene View](scene-view.md) with an explicit matching
 verified project delivery; PNG/static-GLB Open uses separate raw-asset previews.
-Inspector is not connected; [Hierarchy](hierarchy.md) displays the active
-document's composed nodes and shares scoped selection with Scene View. No independent Figma pixel
+[Inspector](inspector.md) follows source selection read-only; [Hierarchy](hierarchy.md)
+displays the active document's composed nodes and shares scoped selection with Scene View.
+Inspector editing, field settlement and Save remain unimplemented. No independent Figma pixel
 equivalence, physical OS input, IME or mixed-monitor certification is claimed.
 
 ## Verification
 
 ```sh
 cargo test -p kedra_editor --lib --locked
-cargo test -p kedra_import --test browser_icons --locked
+cargo test -p kedra_editor --test contracts --locked icons::
 cargo xtask check --non-interactive
 ```
 
-Launch a fresh delivered editor at Projects with `--remote-port 0`, a new
-`--remote-credentials` path and isolated `--state-directory`, then run:
+Run on an idle native desktop; the Rust runner creates a delivery and isolated session:
 
 ```sh
-python3 tools/qa/asset_browser.py target/browser-credentials.json \
-  --state-directory target/browser-state --report target/browser-report.json
+cargo xtask test -- features --only browser --output target/test/browser
 ```
 
-The opt-in scenario creates only isolated QA sources and verifies actual native
+The opt-in scenario opens an isolated copy of the shared test project and verifies native
 widgets, source admission, failures, identity retention and renderer frames.
 Generated evidence belongs under `target/`, never design-reference directories.

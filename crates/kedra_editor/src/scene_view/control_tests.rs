@@ -1,4 +1,5 @@
 //! Controls must never advertise commands without a usable spatial camera.
+use super::test_support::{empty, spatial};
 use super::*;
 use bevy::asset::AssetApp;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -12,35 +13,6 @@ fn fixture() -> (App, View) {
     (app, view)
 }
 
-fn empty(world: &mut World) -> View {
-    let element = world.spawn(Text::default()).id();
-    let controls = (0..4).map(|_| world.spawn_empty().id()).collect();
-    View {
-        root: element,
-        viewport: element,
-        render: element,
-        information: element,
-        heading: element,
-        controls: {
-            let mut handles = controls::Controls::default();
-            handles.buttons = controls;
-            handles
-        },
-        marker: default(),
-        compiled: None,
-        projection: None,
-        lifecycle: default(),
-        elapsed: 0.,
-        raw_model: false,
-    }
-}
-
-pub(crate) fn ready(world: &mut World) -> Result<View, String> {
-    let mut view = empty(world);
-    spatial(world, &mut view)?;
-    Ok(view)
-}
-
 fn disabled(world: &World, view: &View) {
     for button in &view.controls.buttons {
         assert!(
@@ -49,19 +21,6 @@ fn disabled(world: &World, view: &View) {
                 .is_some()
         );
     }
-}
-
-pub(crate) fn spatial(world: &mut World, view: &mut View) -> Result<Entity, String> {
-    let compiled = tests::compiled(world).map_err(|e| e.to_string())?;
-    let mut projection = projection::Projection::pending(1);
-    projection.mount(world, compiled.clone())?;
-    let camera = projection.camera().ok_or("Camera missing")?;
-    view.compiled = Some(compiled);
-    view.projection = Some(projection);
-    view.lifecycle.begin()?;
-    view.lifecycle.instantiated();
-    view.lifecycle.frame();
-    Ok(camera)
 }
 
 #[test]

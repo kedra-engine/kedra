@@ -22,8 +22,8 @@ continues to check their resolved versions and license/security constraints.
 Disk encoding is not GPU texture compression. PNG remains lossless and Bevy
 still decodes a loaded package's authored variants into native images. Unused
 variants are not yet streamed independently; Base64 does not claim to reduce
-their decoded RGBA memory. Large decorative artwork is removed from startup
-dependencies instead of being uploaded to justify a splash.
+their decoded RGBA memory. Startup does not depend on large decorative artwork
+or a splash renderer fence.
 
 Bevy KTX2/Basis support is an alternative for texture-heavy content, but requires
 an evaluated offline encoder, alpha/color quality and target/GPU-format support.

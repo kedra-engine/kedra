@@ -2,9 +2,11 @@
 
 ## Target and scope
 
-Planned replacement for the initial toolbar described in [Scene View](scene-view.md),
-within [ADR 0017](../decisions/0017-read-only-scene-view.md)'s read-only boundary.
-This document specifies intended behavior, not verified implementation.
+The C-select/C-narrow controls are implemented in the read-only
+[Scene View](scene-view.md) profile within
+[ADR 0017](../decisions/0017-read-only-scene-view.md)'s boundary. This document records
+the control contract and remaining gesture, accessibility and native acceptance
+requirements; implementation alone does not establish their verification.
 
 The visual reference is the owner's selected Blender direction on
 [Scene View studies](https://www.figma.com/design/2EZlK40cfx2Mub7GmDyI70/Kedra?node-id=182-1454):
@@ -23,16 +25,17 @@ The implementation must continue rendering actual admitted project contents.
 
 Reuse the existing dock header and its single group ellipsis; do not create a
 second header or change other panels. Keep the source title in the document tab.
-Remove Perspective/Lit selects, World/1 unit and settings from the old toolbar.
+Projection and lighting use scoped commands, without permanent World/units labels
+or a settings action.
 
 The content toolbar is 38 logical pixels high, with 6px padding. Quiet View and
-Select menus occupy its left side. The right side contains 26px Flat eye/grid
-targets at 2px spacing, then a 10px separator and a 26px sun target. Use existing
+Select menus occupy its left side. The right side contains 22px Flat eye/grid
+targets at 2px spacing, then a 10px separator and a 22px sun target. Use existing
 Inter typography, semantic colors, focus treatment and control radii.
 
 The canvas contains a 38px-wide panel at left 8px/top 12px, with 6px padding and
-one selected 26px selection-tool target. At right 12px/top 8px, a 96px orientation
-control sits above a right-aligned 26px-wide navigation strip, separated by 4px.
+one selected 22px selection-tool target. At right 12px/top 8px, a 96px orientation
+control sits above a right-aligned 22px-wide navigation strip, separated by 4px.
 The strip contains Zoom, Pan, a 4px separator, Frame selection, another 4px
 separator and Projection; adjacent controls have 2px gaps (separation A).
 
@@ -104,9 +107,10 @@ navigation remains available without dragging small controls.
 
 ## Acceptance
 
-Run focused Rust regression tests, icon/density tests, Python QA-tool tests and
-`cargo xtask check`. Validate real renderer frames and input on the generated
-Scene View fixture: spatial, mixed/UI and raw PNG/GLB targets, wide and 480 × 360
+Run focused Rust regression tests, icon/density tests, real native QA scenarios and
+`cargo xtask check`. Validate real renderer frames and input on a fresh working copy
+of `tests/fixtures/test_project`, using the [Scene View native commands](scene-view.md):
+spatial, mixed/UI and raw PNG/GLB targets, wide and 480 × 360
 layouts, narrower docks, standard views, all new gestures, cancellation, tab
 switching, Float/Redock and unchanged project source bytes.
 

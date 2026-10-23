@@ -86,10 +86,10 @@ impl Panel {
         class(world, canvas, "list", self.model.mode == model::Mode::List);
         for (index, entry) in desired {
             if !self.rows.iter().any(|(name, _)| name == &entry.name) {
-                let row = crate::views::mount(
+                let row = crate::views::mount_asset(
                     world,
                     canvas,
-                    crate::views::document(0xd0a00000000040008000000000000001),
+                    "editor://prefabs/asset-source.prefab.ron",
                     &format!("browser/{id:?}/row/{}", uuid::Uuid::new_v4()),
                 )?;
                 self.rows.push((entry.name.clone(), row));

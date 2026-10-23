@@ -21,16 +21,10 @@ struct Cli {
     /// No assets are built and no project code runs.
     #[arg(long, requires = "project")]
     project_assets: Option<PathBuf>,
-    /// Enable authenticated engine automation on loopback (zero selects a port).
-    #[arg(long, requires = "remote_credentials")]
-    remote_port: Option<u16>,
-    /// NEW local credential file; the token is never placed in command arguments.
-    #[arg(long, requires = "remote_port")]
-    remote_credentials: Option<PathBuf>,
-    /// Directory for remote renderer captures.
-    #[arg(long, default_value = "target/qa/captures")]
-    remote_artifacts: PathBuf,
-    /// Override local preference storage, e.g. to isolate a native QA session.
+    /// Shared debug-only application diagnostics; absent from release CLI schemas.
+    #[command(flatten)]
+    launch: kedra_app::launch::LaunchOptions,
+    /// Override local preference storage, e.g. to isolate a native test session.
     #[arg(long)]
     state_directory: Option<PathBuf>,
     #[command(subcommand)]
@@ -61,6 +55,7 @@ mod tests {
     fn automation_requires_explicit_credentials_for_every_port() {
         assert!(Cli::try_parse_from(["kedra", "--project-assets", "delivery"]).is_err());
         assert!(Cli::try_parse_from(["kedra", "project", "--project-assets", "delivery"]).is_ok());
+        #[cfg(debug_assertions)]
         for port in ["0", "12345"] {
             assert!(Cli::try_parse_from(["kedra", "--remote-port", port]).is_err());
             assert!(
@@ -241,20 +236,10 @@ fn run(cli: Cli) -> Result<(), String> {
                 std::env::var_os("KEDRA_ASSETS"),
                 std::env::current_exe(),
             )?;
-            let remote = match cli.remote_port {
-                Some(port) => Some(kedra_editor::RemoteOptions {
-                    port,
-                    credentials: cli
-                        .remote_credentials
-                        .ok_or("--remote-credentials PATH is required with --remote-port")?,
-                    artifacts: cli.remote_artifacts,
-                }),
-                None => None,
-            };
             kedra_editor::run(
                 cli.project,
                 root,
-                remote,
+                cli.launch,
                 cli.state_directory,
                 cli.project_assets,
             )

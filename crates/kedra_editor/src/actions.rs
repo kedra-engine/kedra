@@ -214,13 +214,14 @@ pub(crate) fn dispatch(world: &mut World, action: Action, source: Option<Entity>
                 world.resource_mut::<ProjectManager>().back_to_projects();
             }
         }
-        Action::Retry if phase == AppPhase::Loading => {
-            if !world.contains_resource::<jobs::PendingJob>()
-                && world.resource_mut::<ProjectManager>().retry()
-            {
-                jobs::prepare(world);
-            }
+        Action::Retry
+            if phase == AppPhase::Loading
+                && !world.contains_resource::<jobs::PendingJob>()
+                && world.resource_mut::<ProjectManager>().retry() =>
+        {
+            jobs::prepare(world);
         }
+        #[cfg(debug_assertions)]
         Action::Projects if phase == AppPhase::Editor => {
             world.resource_mut::<ProjectManager>().back_to_projects();
         }

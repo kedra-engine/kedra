@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "scope": "catalog-component-buttons-and-fields",
+  "review": "human_reviewed",
+  "rasterization": "accepted_as_rendered",
+  "rationale": "Owner approved shared comparison for all current production buttons and the text field. Native font rasterization is accepted; size, RGBA, content, font, layout, clipping, shape and stability remain independently checked.",
+  "caption_tolerance_px": 0.5,
+  "dependency_lock_sha256": "d410a9a12a59fc84a5407938485c36c87e429ae16755da763200f1ef57023b33",
+  "source_contract_sha256": "862fd2a4624d9c88c075a6233e77e2b006e408d01b0dcf1658dc9ab7d24bcad5",
+  "accepted_shape_variance": {
+    "review": "human_reviewed",
+    "rationale": "Owner accepts the current native SVG quality and explicitly declines an sRGB compositing change. Accept only these four reviewed shape image pairs under the pinned profile, dependency lock and complete source contract. Preserve pixel mismatches; future changed images require review. Typography, layout, capture stability and restoration remain strict.",
+    "pairs": {
+      "button-flat": {"figma_sha256":"f96f24e349e74b786a901f99646f277b2f3d5dc993ffdb0b9f01574df4cae4b9","native_sha256":"eef77d02b031bbe57f2ccfec3d156e593b3d10fcab228f124ddea5680b692d16"},
+      "button-flat-hover": {"figma_sha256":"d6f43bc01aec843fa57d0375a89860f243236dd504a09b7c9c8722d8df3f16c9","native_sha256":"d777f272563058c1bde88222d791a0e8e69cb93e820004c294222059c2365bc0"},
+      "button-flat-pressed": {"figma_sha256":"f48cf9a0a560fa56e219e684e5c0e36f8dfa99298eb7e3d09e1b570a4f611b82","native_sha256":"00082515277fe492e6aa529df4729ed22f988e0eccba5e96f862b82232384ec3"},
+      "button-flat-focus": {"figma_sha256":"702e936529c6e97d4f8bd21d9fabbc60045bec5d4b430cc9d35f307ec4605618","native_sha256":"1ebf7f15668b11bb537c55c8919341cef29ed83636738ab6d12259b6d39c6703"}
+    }
+  },
+  "profile": {
+    "id": "local-native-text-v1",
+    "platform": "darwin",
+    "renderer": "{\"backend\": \"Metal\", \"driver\": \"\", \"driver_info\": \"\", \"name\": \"Apple M3 Pro\"}",
+    "environment": "macOS-27.0-arm64-arm-64bit-Mach-O/local/uncontrolled-packages",
+    "logical_size": [640,360],
+    "dpr": 1,
+    "color_space": "srgb_assumed",
+    "motion": "reduced"
+  },
+  "fonts": {
+    "Inter": {
+      "Regular": {"path": "editor://fonts/Inter-Regular.ttf", "sha256": "6a974fecb20c21cd2c2ec3af4ee2bd6a96ae449f250c9990b84199e7d1288d50"},
+      "Medium": {"path": "editor://fonts/Inter-Medium.ttf", "sha256": "7304ac6809616f3d0c7a9969593b50ca4d61e1ce3e268c9b1e819cd09ea7ecad"}
+    }
+  }
+}

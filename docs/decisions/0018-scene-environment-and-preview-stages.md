@@ -8,11 +8,13 @@ Native rendering parity and platform isolation acceptance are separate gates.
 
 ## Context
 
-Scene View currently materializes spatial data inside the editor, disables shadows,
-sets camera-local ambient illumination to zero and selects Reinhard tonemapping.
-Direct model inspection creates its lighting in code. These explicit initial
-limitations are documented in the [current profile](../ui/scene-view.md); they are
-not the intended shared game/editor rendering contract.
+Scene View consumes shared native spatial/environment hydration, disables shadows
+and selects Reinhard tonemapping. Unassigned Scene lighting has zero camera-local
+ambient illumination; an assigned environment supplies its authored values.
+Direct model inspection loads and compiles
+`editor://scenes/model-preview.scene.ron`, whose environment reference and light
+nodes own the inspection lighting. Supported rendering and remaining limitations
+are documented in the [current profile](../ui/scene-view.md).
 
 A project needs reusable environment settings, editable scene assignments and a
 predictable model-preview stage without losing ordinary Bevy components, systems,
@@ -62,9 +64,9 @@ work. Do not silently substitute the editor's studio environment. A declared but
 missing/invalid reference is a dependency failure, not an unassigned environment.
 
 Shared runtime materialization resolves the environment, lights and supported
-camera settings into ordinary Bevy components/assets. Scene View and an independent
-game-style host must consume that same implementation. Move the relevant existing
-editor hydration into runtime modules rather than maintaining matching copies.
+camera settings into ordinary Bevy components/assets. Scene View consumes
+`kedra_scene::rendering`; independent game-style acceptance must exercise that
+same implementation, not a matching editor/game copy.
 Use existing packages where responsibilities fit; do not introduce a speculative
 renderer crate or generic projection framework.
 
@@ -86,7 +88,8 @@ allowed, but they invalidate a claim of matching the game's camera output.
 Ship an editor-owned, ordinary authored preview scene. It references a delivered
 studio environment asset and contains its light entities. Camera-rendering defaults
 must also be authored/explicit, not private constants scattered through the viewer.
-The exact asset paths are selected during implementation, not a new source format.
+The current stage is `editor://scenes/model-preview.scene.ron`; it uses the existing
+scene format, not a separate stage schema.
 
 Direct model Open instantiates this stage, attaches the model to a view-owned
 presentation slot and frames its bounds. The attachment does not edit the stage

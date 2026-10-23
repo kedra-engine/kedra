@@ -5,7 +5,7 @@ mod activation_tests;
 mod asset_views;
 mod document_views;
 mod feedback;
-#[cfg(feature = "docking-fixture")]
+#[cfg(debug_assertions)]
 pub(crate) mod fixture;
 mod headers;
 #[cfg(test)]
@@ -15,6 +15,7 @@ mod hosts;
 mod input;
 mod panels;
 mod popup;
+mod preset;
 #[cfg(test)]
 mod preset_tests;
 mod scene_input;
@@ -71,9 +72,11 @@ impl EditorWorkspace {
     pub(crate) fn update_ready(&self) -> bool {
         self.pending.is_none() && self.gesture.is_none() && self.documents.update_clean()
     }
+    #[cfg(debug_assertions)]
     pub(crate) fn navigation_input(&self, world: &World) -> serde_json::Value {
         scene_input::diagnostics(world, self)
     }
+    #[cfg(debug_assertions)]
     pub(crate) fn scene_state(&self, world: &World) -> serde_json::Value {
         serde_json::json!(
             self.panels
@@ -98,7 +101,7 @@ mod test_support;
 
 #[cfg(test)]
 pub(crate) fn browser_test_app() -> Result<App, Box<dyn std::error::Error>> {
-    let (mut app, _, _) = input::regression_tests::setup()?;
+    let (mut app, _, _) = test_support::setup()?;
     test_support::sources(app.world_mut())?;
     Ok(app)
 }
@@ -127,6 +130,8 @@ pub(crate) struct EditorWorkspace {
     pub(crate) layout: Workspace,
     pub(crate) host: HostId,
     pub(crate) window: Entity,
+    // Diagnostic fixture identity and regression parent, not a surface owner.
+    #[cfg(any(debug_assertions, test))]
     pub(crate) root: Entity,
     surfaces: BTreeMap<HostId, Surface>,
     renderer: Projection,
@@ -170,6 +175,7 @@ pub(crate) fn install(app: &mut App) {
 }
 
 pub(crate) fn bind(world: &mut World, view: &UiView) -> Result<(), String> {
+    let preset = preset::Preset::load(world)?;
     let window = world
         .resource::<kedra_desktop::DesktopSurface>()
         .window
@@ -177,10 +183,11 @@ pub(crate) fn bind(world: &mut World, view: &UiView) -> Result<(), String> {
         .ok_or("Docking workspace has no live editor window")?;
     bind_root(world, window, view.root)?;
     world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
-        let shell = crate::views::mount(
+        state.panels.preset = Some(preset);
+        let shell = crate::views::mount_asset(
             world,
             view.root,
-            crate::views::document(0xd0500000000040008000000000000001),
+            "editor://prefabs/dock-workspace.prefab.ron",
             "workspace",
         )?;
         state.stash = shell.element("stash").map_err(|e| e.to_string())?;
@@ -213,7 +220,15 @@ pub(crate) fn bind(world: &mut World, view: &UiView) -> Result<(), String> {
             state.surfaces.clear();
             let host = state.host;
             state.surfaces.insert(host, surface);
-            state.layout = panels::restore(state.host, restored.layout)?;
+            state.layout = panels::restore(
+                state.host,
+                restored.layout,
+                state
+                    .panels
+                    .preset
+                    .as_ref()
+                    .ok_or("Editor preset missing")?,
+            )?;
             hosts::restore(world, &mut state, &restored.placements)?;
         } else if state.preferences.error.is_none() {
             panels::preset(&mut state)?;
@@ -251,20 +266,10 @@ pub(crate) fn bind_header(world: &mut World, view: &UiView) {
     }
 }
 fn load_skin(world: &World) -> Result<Arc<Skin>, String> {
-    let sources = world
-        .resource::<kedra_scene::assets::PrefabSources>()
-        .snapshot();
-    let compiled = |id| {
-        sources
-            .compiled
-            .get(&crate::views::document(id))
-            .cloned()
-            .ok_or_else(|| "Required docking prefab is absent".to_string())
-    };
     Ok(Arc::new(Skin {
-        group: compiled(0xd0100000000040008000000000000001)?,
-        tab: compiled(0xd0200000000040008000000000000001)?,
-        split: compiled(0xd0300000000040008000000000000001)?,
+        group: crate::views::compiled(world, "editor://prefabs/dock-group.prefab.ron")?,
+        tab: crate::views::compiled(world, "editor://prefabs/dock-tab.prefab.ron")?,
+        split: crate::views::compiled(world, "editor://prefabs/dock-split.prefab.ron")?,
     }))
 }
 
@@ -280,6 +285,7 @@ fn bind_root(world: &mut World, window: Entity, root: Entity) -> Result<(), Stri
         layout: Workspace::new(host),
         host,
         window,
+        #[cfg(any(debug_assertions, test))]
         root,
         surfaces: BTreeMap::from([(
             host,

@@ -1,5 +1,7 @@
 //! Small authored catalog for headless production-path tests, without native windows.
 use super::*;
+mod host;
+pub(super) use host::{box_at, setup};
 use kedra_scene::{
     composition::Catalog,
     document::{ComponentData, Node as SourceNode, PrefabDocument},
@@ -26,18 +28,18 @@ pub(super) fn project_manager(
 }
 
 pub(super) fn sources(world: &mut World) -> TestResult {
-    let documents: &[(u128, &[&str])] = &[
+    let documents: &[(&str, &[&str])] = &[
         (
-            0x19a00000000040008000000000000001,
+            "editor://prefabs/property-row.prefab.ron",
             &["label", "editor", "diagnostic"],
         ),
-        (0x19a10000000040008000000000000001, &["value"]),
+        ("editor://prefabs/property-value.prefab.ron", &["value"]),
         (
-            0x19a20000000040008000000000000001,
+            "editor://prefabs/property-section.prefab.ron",
             &["title", "toggle", "body"],
         ),
         (
-            0x19a30000000040008000000000000001,
+            "editor://prefabs/inspector.prefab.ron",
             &[
                 "name",
                 "identity",
@@ -53,7 +55,7 @@ pub(super) fn sources(world: &mut World) -> TestResult {
             ],
         ),
         (
-            0x11e00000000040008000000000000001,
+            "editor://prefabs/hierarchy.prefab.ron",
             &[
                 "search",
                 "toolbar",
@@ -72,7 +74,7 @@ pub(super) fn sources(world: &mut World) -> TestResult {
             ],
         ),
         (
-            0x11e10000000040008000000000000001,
+            "editor://prefabs/hierarchy-row.prefab.ron",
             &[
                 "select",
                 "toggle",
@@ -86,10 +88,10 @@ pub(super) fn sources(world: &mut World) -> TestResult {
                 "prefab",
             ],
         ),
-        (0xc0100000000040008000000000000001, &["caption"]),
-        (0xafbe6799efde42319e46e7d3ecfe626b, &["name"]),
+        ("editor://prefabs/button.prefab.ron", &["caption"]),
+        ("editor://prefabs/browser-crumb.prefab.ron", &["name"]),
         (
-            0xe5f0af0978be48c88cc1ddd65951350c,
+            "editor://prefabs/source-document.prefab.ron",
             &[
                 "heading",
                 "information",
@@ -116,9 +118,9 @@ pub(super) fn sources(world: &mut World) -> TestResult {
                 "axis-neg-z",
             ],
         ),
-        (0xc0600000000040008000000000000001, &[]),
+        ("editor://prefabs/window-frame.prefab.ron", &[]),
         (
-            0xc0900000000040008000000000000001,
+            "editor://prefabs/titlebar.prefab.ron",
             &[
                 "window.title",
                 "window.minimize",
@@ -130,10 +132,10 @@ pub(super) fn sources(world: &mut World) -> TestResult {
                 "window.menu",
             ],
         ),
-        (0xd0700000000040008000000000000001, &["glyph"]),
-        (0x1a95bec32a484041a1ee60754f991938, &["empty"]),
+        ("editor://prefabs/dock-guide.prefab.ron", &["glyph"]),
+        ("editor://prefabs/empty-panel.prefab.ron", &["empty"]),
         (
-            0xe7b184e5b0914db1ae27374ff6cec785,
+            "editor://prefabs/asset-browser.prefab.ron",
             &[
                 "toolbar",
                 "back",
@@ -170,11 +172,11 @@ pub(super) fn sources(world: &mut World) -> TestResult {
             ],
         ),
         (
-            0xd0a00000000040008000000000000001,
+            "editor://prefabs/asset-source.prefab.ron",
             &["entry", "name", "kind", "folder", "badge"],
         ),
         (
-            0x36cb6fa882bd4e418ad446972848b7ee,
+            "editor://prefabs/browser-folder.prefab.ron",
             &[
                 "toggle",
                 "navigate",
@@ -185,29 +187,32 @@ pub(super) fn sources(world: &mut World) -> TestResult {
                 "selected-folder",
             ],
         ),
-        (0xd0800000000040008000000000000001, &["title", "glyph"]),
         (
-            0xd0400000000040008000000000000001,
+            "editor://prefabs/dock-ghost.prefab.ron",
+            &["title", "glyph"],
+        ),
+        (
+            "editor://prefabs/dock-content.prefab.ron",
             &["heading", "information", "draft"],
         ),
         (
-            0xd0100000000040008000000000000001,
+            "editor://prefabs/dock-group.prefab.ron",
             &["tabs", "body", "menu"],
         ),
         (
-            0xd0200000000040008000000000000001,
+            "editor://prefabs/dock-tab.prefab.ron",
             &["label", "title", "close"],
         ),
-        (0xd0300000000040008000000000000001, &["divider"]),
+        ("editor://prefabs/dock-split.prefab.ron", &["divider"]),
         (
-            0xd0500000000040008000000000000001,
+            "editor://prefabs/dock-workspace.prefab.ron",
             &["stash", "host", "status", "panels", "reset"],
         ),
     ];
     let mut catalog = Catalog::default();
-    for (id, keys) in documents {
+    let mut native_documents = Vec::new();
+    for (path, keys) in documents {
         let mut doc = PrefabDocument::new("Headless workspace test");
-        doc.id = crate::views::document(*id);
         let root = doc.root;
         doc.nodes[0]
             .components
@@ -215,7 +220,7 @@ pub(super) fn sources(world: &mut World) -> TestResult {
         doc.nodes[0]
             .components
             .insert("ui.classes".into(), ComponentData::ron(1, "(names:[])")?);
-        if *id == 0xc0600000000040008000000000000001 {
+        if *path == "editor://prefabs/window-frame.prefab.ron" {
             let sheet = kedra_ui::authored::components::UiStylesheet {
                 asset: Handle::default(),
             };
@@ -235,7 +240,7 @@ pub(super) fn sources(world: &mut World) -> TestResult {
                     ComponentData::ron(1, &format!("(\"{key}\")"))?,
                 ),
             ]);
-            if *id == 0x11e00000000040008000000000000001 {
+            if *path == "editor://prefabs/hierarchy.prefab.ron" {
                 components.insert("ui.classes".into(), ComponentData::ron(1, "(names:[])")?);
             }
             if [
@@ -279,8 +284,14 @@ pub(super) fn sources(world: &mut World) -> TestResult {
                 components,
             });
         }
+        native_documents.push(((*path).to_string(), doc.clone()));
         catalog.insert(doc)?;
     }
+    let editor = PrefabDocument::parse(include_str!(
+        "../../../../assets/editor/scenes/editor.scene.ron"
+    ))?;
+    native_documents.push(("editor://scenes/editor.scene.ron".into(), editor.clone()));
+    catalog.insert(editor)?;
     let registry = world.resource::<AppTypeRegistry>().clone();
     let compiled = catalog
         .documents
@@ -308,6 +319,7 @@ pub(super) fn sources(world: &mut World) -> TestResult {
         }
     }
     let mut sources = kedra_scene::assets::PrefabSources::default();
+    sources.handle = crate::views::test_support::materialize(world, native_documents)?;
     sources.publish(catalog, compiled)?;
     sources.dependencies_ready = true;
     world.insert_resource(sources);

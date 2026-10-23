@@ -18,15 +18,17 @@ Run formatting/architecture once, native lint/features per OS, and API docs once
 on Linux. The required Linux coverage job already executes all workspace targets
 with all features, so it also owns Linux unit/integration test execution. Native
 Linux runs doctests separately; Windows/macOS retain their native tests/doctests.
-Remove the Windows diagnostic prebuild before those same tests;
-retain the diagnostic tool for manual use. Portable contract tests remain in the
+Coverage is informational, without a minimum percentage. Workspace tests and
+report generation must still succeed. Native behavior acceptance remains separate;
+headless coverage does not measure execution of the native scenario binaries.
+Windows runs those tests without a diagnostic prebuild; the diagnostic tool is
+available for manual use. Portable contract tests remain in the
 native suite, rather than also executing in policy. Exercise xtask lint/doc stages
 on a small real Cargo fixture using the same configured arguments; do not compile
 the entire repository recursively during its own tests. Actual native CI commands
 still validate full-workspace CLI execution. The policy cache needs only
-the xtask bootstrap target; native caches no longer need `target/xtask-cli`.
-Use new narrow cache keys rather than restoring obsolete wider trees; accept a
-one-time cold build. Keep separate dependency-only native/coverage/release
+the xtask bootstrap target; native caches exclude `target/xtask-cli`.
+Use role-specific narrow cache keys. Keep separate dependency-only native/coverage/release
 caches and fresh instrumented coverage; do not cache successful check outcomes.
 
 CD audits the all-target application dependency graph once. Retain cargo-deny on
@@ -46,5 +48,5 @@ point for selected/unselected groups, malformed selection, failure, cancellation
 and accidental skips. Use actionlint/zizmor for workflow correctness and security.
 Local validation does not establish hosted event behavior or measured cache/time
 savings; PR, push and merge-group acceptance remain necessary before claiming them.
-Do not delete remote caches or change storage allowance implicitly. Old policy
-entries can expire normally; their removal requires separate operational scope.
+Do not delete remote caches or change storage allowance implicitly. Cache expiry
+uses normal retention; manual removal requires separate operational scope.

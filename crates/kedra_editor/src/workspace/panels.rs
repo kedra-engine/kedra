@@ -1,18 +1,19 @@
 //! Authoring workspace preset, empty tool slots and the read-only Asset Browser.
 use super::*;
-use kedra_docking::model::{Edge, Node, View};
+#[cfg(test)]
+use kedra_docking::model::Edge;
+use kedra_docking::model::{Node, View};
 use kedra_ui::docking::class;
 
 #[derive(Default)]
 pub(super) struct State {
+    pub(super) preset: Option<super::preset::Preset>,
     pub(super) browsers: BTreeMap<ViewId, crate::asset_browser::Panel>,
     pub(super) hierarchies: BTreeMap<ViewId, crate::hierarchy::Panel>,
     pub(super) inspectors: BTreeMap<ViewId, crate::inspector::Panel>,
     pub(super) scenes: BTreeMap<ViewId, crate::scene_view::View>,
     pub(super) scene_layer: usize,
 }
-
-const TOOLS: [&str; 4] = ["preview", "hierarchy", "inspector", "assets"];
 
 /// The 232px Figma specimen must not weaken the minima of a mixed tool group.
 pub(super) fn hierarchy_only(snapshot: &kedra_docking::snapshot::Snapshot, group: NodeId) -> bool {
@@ -24,20 +25,22 @@ pub(super) fn hierarchy_only(snapshot: &kedra_docking::snapshot::Snapshot, group
 pub(super) fn restore(
     host: HostId,
     snapshot: kedra_docking::snapshot::Snapshot,
+    preset: &super::preset::Preset,
 ) -> Result<Workspace, String> {
+    snapshot.validate().map_err(|e| e.to_string())?;
     if snapshot.views.values().any(|view| retired(&view.kind)) {
         let records = snapshot
             .views
             .into_iter()
             .filter(|(_, view)| !retired(&view.kind))
             .collect();
-        arranged(host, records).map(|(layout, _)| layout)
+        preset.arrange(host, records).map(|(layout, _)| layout)
     } else {
         snapshot.into_workspace().map_err(|e| e.to_string())
     }
 }
 
-fn retired(kind: &str) -> bool {
+pub(super) fn retired(kind: &str) -> bool {
     matches!(kind, "project" | "notes" | "activity")
 }
 
@@ -45,125 +48,20 @@ pub(super) fn preset(state: &mut EditorWorkspace) -> Result<(), String> {
     arrange(state, BTreeMap::new())
 }
 fn arrange(state: &mut EditorWorkspace, records: BTreeMap<ViewId, View>) -> Result<(), String> {
-    let (layout, focused_group) = arranged(state.host, records)?;
+    let (layout, focused_group) = state
+        .panels
+        .preset
+        .as_ref()
+        .ok_or("Editor preset is not configured")?
+        .arrange(state.host, records)?;
     state.layout = layout;
     state.focused_group = Some(focused_group);
     Ok(())
 }
 
-// Build away from live authority: limits or invalid restore records cannot publish
-// a prefix of the reset or authorize replacement of existing preference bytes.
-fn arranged(
-    host: HostId,
-    mut records: BTreeMap<ViewId, View>,
-) -> Result<(Workspace, NodeId), String> {
-    let missing = TOOLS
-        .iter()
-        .filter(|kind| !records.values().any(|view| view.kind == **kind))
-        .count();
-    if records.len().saturating_add(missing) > kedra_docking::snapshot::MAX_VIEWS {
-        return Err("Reset layout would exceed the view limit; existing layout was kept".into());
-    }
-    let mut layout = Workspace::new(host);
-    let mut ordered = Vec::new();
-    for kind in TOOLS {
-        let existing = records
-            .iter()
-            .find_map(|(id, view)| (view.kind == kind).then_some(*id));
-        let pair = if let Some(id) = existing {
-            (
-                id,
-                records
-                    .remove(&id)
-                    .ok_or("Panel restore record disappeared")?,
-            )
-        } else {
-            (
-                ViewId::new(),
-                View {
-                    kind: kind.into(),
-                    restore_key: None,
-                },
-            )
-        };
-        ordered.push(pair);
-    }
-    let ids: Vec<_> = ordered.iter().map(|(id, _)| *id).collect();
-    for (index, (id, view)) in ordered.into_iter().enumerate() {
-        let placement = if index == 0 {
-            Destination::EmptyHost(host)
-        } else {
-            let group = layout
-                .snapshot()
-                .location(ids[0])
-                .ok_or("Preset source group is absent")?
-                .0;
-            match index {
-                1 => Destination::Edge {
-                    target: group,
-                    edge: Edge::Left,
-                    fraction: 0.20,
-                },
-                2 => Destination::Edge {
-                    target: group,
-                    edge: Edge::Right,
-                    fraction: 0.25,
-                },
-                _ => Destination::Edge {
-                    target: group,
-                    edge: Edge::Bottom,
-                    fraction: 0.32,
-                },
-            }
-        };
-        layout
-            .execute(Command::Open {
-                id,
-                view,
-                destination: placement,
-            })
-            .map_err(|e| e.to_string())?;
-    }
-    let group = layout
-        .snapshot()
-        .location(ids[3])
-        .ok_or("Assets group disappeared")?
-        .0;
-    for (id, view) in records {
-        let group = if matches!(view.kind.as_str(), "document" | "asset-preview") {
-            layout
-                .snapshot()
-                .location(ids[0])
-                .ok_or("Preview group disappeared")?
-                .0
-        } else {
-            group
-        };
-        let index = match &layout.snapshot().nodes[&group] {
-            Node::Group { tabs, .. } => tabs.len(),
-            _ => return Err("Assets group is not a tab group".into()),
-        };
-        layout
-            .execute(Command::Open {
-                id,
-                view,
-                destination: Destination::Tabs { group, index },
-            })
-            .map_err(|e| e.to_string())?;
-    }
-    layout
-        .execute(Command::Activate(ids[3]))
-        .map_err(|e| e.to_string())?;
-    layout
-        .execute(Command::Activate(ids[0]))
-        .map_err(|e| e.to_string())?;
-    let focused = layout
-        .snapshot()
-        .location(ids[0])
-        .ok_or("Preview group disappeared")?
-        .0;
-    layout.snapshot().encode().map_err(|e| e.to_string())?;
-    Ok((layout, focused))
+#[cfg(test)]
+fn arranged(host: HostId, records: BTreeMap<ViewId, View>) -> Result<(Workspace, NodeId), String> {
+    super::preset::Preset::test_source()?.arrange(host, records)
 }
 pub(super) fn mount(world: &mut World, state: &mut EditorWorkspace) -> Result<(), String> {
     let records = state.layout.snapshot().views.clone();
@@ -209,21 +107,13 @@ pub(super) fn mount(world: &mut World, state: &mut EditorWorkspace) -> Result<()
             continue;
         }
         if record.kind == "preview" {
-            let view = crate::views::mount(
+            let view = crate::views::mount_asset(
                 world,
                 state.stash,
-                crate::views::document(0x1a95bec32a484041a1ee60754f991938),
+                "editor://prefabs/empty-panel.prefab.ron",
                 &format!("panel/{id:?}"),
             )?;
-            state.titles.insert(
-                id,
-                match record.kind.as_str() {
-                    "hierarchy" => "Hierarchy",
-                    "inspector" => "Inspector",
-                    _ => "Document Preview",
-                }
-                .into(),
-            );
+            state.titles.insert(id, "Document Preview".into());
             state.renderer.register(id, view.root)?;
             continue;
         }
@@ -241,10 +131,10 @@ pub(super) fn mount(world: &mut World, state: &mut EditorWorkspace) -> Result<()
             continue;
         }
         let (title, information) = information(&record.kind);
-        let view = crate::views::mount(
+        let view = crate::views::mount_asset(
             world,
             state.stash,
-            crate::views::document(0xd0400000000040008000000000000001),
+            "editor://prefabs/dock-content.prefab.ron",
             &format!("panel/{id:?}"),
         )?;
         let heading = view.element("heading").map_err(|e| e.to_string())?;
@@ -320,7 +210,6 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
 }
 fn information(kind: &str) -> (String, String) {
     match kind {
-        "document" => ("Source document".into(), "Reopen this source from Assets to validate its current project scope. No source has been loaded from layout preferences.".into()),
         "assets" => ("Assets".into(),"No project is open. Source browsing requires a validated project.".into()),
         other => (format!("Unavailable: {other}"),"This panel's extension is not installed. Its layout record is retained. Close hides it; reopening does not discard its restore key.".into()),
     }
@@ -330,8 +219,12 @@ pub(super) fn reset(world: &mut World, state: &mut EditorWorkspace) -> Result<()
     if state.pending.is_some() {
         return Err("Wait for floating window creation to complete".into());
     }
-    let (mut layout, mut focused_group) =
-        arranged(state.host, state.layout.snapshot().views.clone())?;
+    let (mut layout, mut focused_group) = state
+        .panels
+        .preset
+        .as_ref()
+        .ok_or("Editor preset is not configured")?
+        .arrange(state.host, state.layout.snapshot().views.clone())?;
     if let Some(opened) = state
         .documents
         .active
@@ -466,6 +359,8 @@ mod tests {
         let root = world.spawn_empty().id();
         super::super::bind_root(&mut world, window, root).unwrap_or_else(|e| panic!("{e}"));
         world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
+            state.panels.preset =
+                Some(super::super::preset::Preset::test_source().unwrap_or_else(|e| panic!("{e}")));
             let group = NodeId::new();
             let tabs: Vec<_> = (0..MAX_VIEWS).map(|_| ViewId::new()).collect();
             let snapshot = Snapshot {
@@ -570,6 +465,8 @@ mod tests {
         let root = world.spawn_empty().id();
         super::super::bind_root(&mut world, window, root).unwrap_or_else(|e| panic!("{e}"));
         let mut state = world.resource_mut::<EditorWorkspace>();
+        state.panels.preset =
+            Some(super::super::preset::Preset::test_source().unwrap_or_else(|e| panic!("{e}")));
         preset(&mut state).unwrap_or_else(|e| panic!("{e}"));
         let id = ViewId::new();
         let destination = super::super::destination(&state);

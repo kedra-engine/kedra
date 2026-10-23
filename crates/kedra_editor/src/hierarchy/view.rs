@@ -142,10 +142,10 @@ impl Panel {
             let tree = self.tree.as_ref().ok_or("Hierarchy graph missing")?;
             let row = &tree.rows[index];
             if !self.rows.contains_key(&row.address) {
-                let view = crate::views::mount(
+                let view = crate::views::mount_asset(
                     world,
                     canvas,
-                    crate::views::document(0x11e10000000040008000000000000001),
+                    "editor://prefabs/hierarchy-row.prefab.ron",
                     &format!("hierarchy/{id:?}/row/{}", uuid::Uuid::new_v4()),
                 )?;
                 self.rows.insert(row.address.clone(), view);

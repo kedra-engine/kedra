@@ -1,9 +1,6 @@
 //! Production feedback targets, asset readiness and blocked-state behavior.
 use super::*;
-use crate::workspace::{
-    input::regression_tests::{box_at, setup},
-    test_support::{TestResult, sources, visible},
-};
+use crate::workspace::test_support::{TestResult, box_at, setup, sources, visible};
 
 #[test]
 fn compass_readiness_all_directions_and_blocked_selection_use_real_feedback() -> TestResult {

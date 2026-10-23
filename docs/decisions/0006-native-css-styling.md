@@ -1,6 +1,6 @@
-# ADR 0006: Native CSS styling and staged splash
+# ADR 0006: Native CSS styling
 
-Status: styling and boot contract in use; native platform acceptance is separate.
+Status: styling contract in use; native platform acceptance is separate.
 
 ## Decision
 
@@ -33,18 +33,11 @@ bound. Parse, import and dependency failures reject publication rather than ship
 partial valid rules. Dynamic variables need tests in the states that use them.
 Flair supports a CSS subset, not every browser property or shorthand.
 
-## Boot readiness
+## Startup lifecycle
 
-Engine boot uses a small explicit catalog and a normal 640×360 native surface.
-Only the bounded manifest is read up front; bootstrap reads still verify hashes.
-Complete delivery verification starts on the I/O pool after native creation,
-hydration and a nonblank splash renderer readback. The full catalog and successful
-verification are prerequisites for project workflow.
-
-A single native readback fences splash readiness; it does not compare with Figma
-or retry blank pixels until matching. Opt-in automation uses the shared capture
-writer. Bootstrap failures report diagnostics and exit, without an embedded
-replacement UI. No fake percentage or artificial boot minimum is used.
+[ADR 0021](0021-windowless-startup.md) defines windowless boot verification and
+catalog loading. Styling readiness does not imply a native surface or rendered
+frame. Startup failures report diagnostics without an embedded replacement UI.
 
 ## Alternatives and cost
 
@@ -59,10 +52,11 @@ duplicates and the bounded parser advisory exception remain governed by
 
 Headless tests cover imported variables, native geometry, interaction states,
 nested themes, retained text/editor state, strict dependency failures and installed
-source-free loading. Bootstrap tests distinguish manifest-only reading from full
-verification and reject blank readbacks.
+source-free loading. Boot lifecycle tests cover delivery/catalog readiness and
+failure separately from renderer readiness.
 
 Physical input, CSS performance under representative HUD/editor load, cold
 first-visible-frame latency, Retina/mixed-DPI behavior and platform-specific pixel
-fidelity require native evidence. Bevy initialization precedes the splash;
-readback does not certify OS presentation time. See [startup](../startup.md).
+fidelity require native evidence. Bevy initialization precedes the first useful
+window; renderer readback does not certify OS presentation time.
+See [startup](../startup.md).
