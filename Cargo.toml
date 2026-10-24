@@ -9,6 +9,7 @@ edition = "2024"
 rust-version = "1.98"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/kedra-engine/kedra"
+homepage = "https://kedra.tech/"
 
 [workspace.dependencies]
 cargo-packager = { version = "=0.11.8", git = "https://github.com/crabnebula-dev/cargo-packager.git", rev = "5c1824ba8022401e9ef0de36ff1a12c5acf60237", default-features = false, features = ["rustls-tls", "platform-certs"] }

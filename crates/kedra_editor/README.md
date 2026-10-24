@@ -19,6 +19,12 @@ Spatial camera navigation, grid/inspection controls and scoped opaque-mesh picki
 are implemented. Their native input acceptance remains separate from compilation.
 Scene editing, project execution and document Save are not implemented.
 
+The registry crate supplies this library, not the editor executable or the external
+`assets/editor` source/delivery. Assemble those through the source repository's
+[startup workflow](../../docs/site/en/contributing/contracts/startup.md). Registry
+consumers on macOS must also apply the consuming-root Winit patch documented by
+[`kedra_desktop`](../kedra_desktop/README.md#registry-consumers-on-macos).
+
 Debug `--scene` uses the same `EditorPlugin` native capabilities, but selects an
 explicit scene lifecycle instead of project startup. Project operations are rejected
 while that lifecycle owns startup. Authored components bind catalog, docking and
