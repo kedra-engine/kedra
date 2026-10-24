@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
 description = "Consumer-neutral retained inspection of native Bevy reflected values"
 
 [package.metadata.kedra]

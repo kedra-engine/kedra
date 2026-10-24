@@ -161,6 +161,11 @@ or logs. Retain and review tool/license/security pins when updating actions.
 
 ## Local validation map
 
+Crates.io library publication is a separate, manually dispatched
+[workflow](../.github/workflows/crates.yml), with credentialless archive verification
+on all three desktop runners and a main-only upload job. It defaults to dry-run;
+see [publication admission, credentials and recovery](crates-publication.md).
+
 Install the public native prerequisites in [contributing](../CONTRIBUTING.md)
 and the pinned repository tools in [testing](site/en/contributing/contracts/testing.md).
 Run each command as a separate checked process; stop on its nonzero status. In PowerShell, check
