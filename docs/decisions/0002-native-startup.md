@@ -70,4 +70,4 @@ Project failure-path tests, generation/cancellation tests, native ownership test
 and independent source-free installed consumers are required. Run repository gates
 and relevant feature/target checks. Physical keyboard, picker, chrome, DPI and
 monitor behavior require native input and frames on the claimed platform.
-See [startup](../startup.md) for commands and current limitations.
+See [startup](../site/en/contributing/contracts/startup.md) for commands and current limitations.

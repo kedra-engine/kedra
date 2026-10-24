@@ -2,9 +2,10 @@
 
 Status: full editing contract proposed for owner review. Shared `kedra_ui::fields`,
 `kedra_inspector` and the source-bound read-only Inspector exist; see the
-[current profile](../ui/inspector.md). Interactive source-edit sessions, cancellable
-candidate previews, settlement and filesystem Save remain unimplemented. Semantic
-editing names below specify future requirements, not the current read-only API.
+[current profile](../site/en/contributing/contracts/editor/inspector.md).
+Interactive source-edit sessions, cancellable candidate previews, settlement and
+filesystem Save remain unimplemented. Semantic editing names below specify future
+requirements, not the current read-only API.
 
 ## Context and scope
 
@@ -41,8 +42,8 @@ Kedra's property editing contract must provide:
 - Reusable controls with subfield editing, read-only state and focus recovery.
 - Cancellable isolated previews without provisional source or history mutation.
 
-These are Kedra requirements. The decisions below specify their ownership and
-verification; no external editor behavior is required to interpret the contract.
+The decisions below assign these responsibilities and specify how to verify them;
+the contract does not depend on another editor's behavior.
 
 ## Decision
 
@@ -248,9 +249,9 @@ not a global editor service locator. Headless domain models remain ordinary Rust
 values; Bevy entities live in presentation adapters.
 
 The inspector crate has real panel/value consumers and inherits the checked
-layer/lint/license rules. Keep the kit in the existing UI
-crate, rather than creating a crate per control or a forwarding facade. A later
-extraction needs a demonstrated independent responsibility; do not scaffold it now.
+layer/lint/license rules. Keep the kit in the existing UI crate, rather than
+creating a crate per control or a forwarding facade. A later extraction needs a
+demonstrated independent responsibility; do not scaffold it now.
 Do not add a generic inspector-core crate, second reflection registry, scheduler,
 DI container or proprietary UI description language.
 
@@ -327,7 +328,8 @@ custom because generic widgets do not own these project contracts.
 
 ## Figma contract
 
-Use the [current UI-kit source map](../ui/figma.md), not a new parallel widget style:
+Use the [current UI-kit source map](../site/en/contributing/contracts/ui/design-provenance.md),
+not a new parallel widget style:
 
 - `49:536`: TextField masters; `51:1497`: state examples.
 - `27:560`: NumberField masters; `51:1557`: state examples.

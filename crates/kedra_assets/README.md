@@ -1,8 +1,9 @@
 # kedra_assets
 
-Runtime-layer verified delivery, stable Bevy named asset sources, generic image
-variants and opaque data loaders. No editor, filesystem authoring writer, importer
-or window dependency. Hosts own source registration, delivery trust and ordinary
+This runtime-layer crate provides verified deliveries, stable Bevy named asset
+sources, generic image variants and opaque data loaders. It has no editor,
+filesystem authoring writer, importer or window dependency. Hosts own source
+registration, delivery trust and ordinary
 Bevy asset/image plugins; `KedraAssetsPlugin` registers Kedra asset types/loaders.
 
 `Manifest::verify` accepts a reader and does not require filesystem access.
@@ -44,7 +45,7 @@ Iterative forest accounting avoids recursive traversal and saturates expansion
 arithmetic. Schema/index validation precedes accessing graph references. Geometry,
 buffers, textures and settings still require normal native-loader validation.
 
-The optional MIT/Apache-2.0 `gltf` 1.4.1 dependency is already locked through Bevy
+The optional MIT/Apache-2.0 `gltf` 1.4.1 dependency is locked through Bevy
 0.20.0 and uses its maintained binary/schema API rather than a custom parser.
 Default import/image features are disabled; only punctual-light schema support is
 requested, avoiding filesystem/image decoding in this runtime policy API. It shares
@@ -54,4 +55,5 @@ The API is shared because raw importer sources bypass verified delivery readers;
 both trust boundaries need the same admission rules without runtime-to-import edges.
 
 The importer integration test is an independent game-style host that loads after
-authoring sources are unavailable. See [startup](../../docs/startup.md).
+authoring sources are unavailable. See
+[startup](../../docs/site/en/contributing/contracts/startup.md).

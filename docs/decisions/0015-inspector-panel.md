@@ -1,10 +1,10 @@
 # ADR 0015: Inspector tool panel and target binding
 
 Status: full editing/settlement contract proposed for owner review. The connected
-[read-only panel](../ui/inspector.md) implements source following, lock, search and
-shared reflected presentations, not editable sessions or Save. This is the
-dockable panel contract, distinct
-from the universal reflected editor in
+[read-only panel](../site/en/contributing/contracts/editor/inspector.md)
+implements source following, lock, search and
+shared reflected presentations, not editable sessions or Save. The dockable panel
+contract is distinct from the universal reflected editor in
 [ADR 0011](0011-universal-reflected-inspector.md) and field interaction in
 [ADR 0009](0009-property-editing-and-inspector.md).
 
@@ -81,7 +81,8 @@ useful. Disabled validation must never be the route to editable arbitrary types.
 
 ## Figma and verification
 
-Use the current [UI-kit](../ui/figma.md) Flat compact A compositions `131:20213`
+Use the current [UI-kit](../site/en/contributing/contracts/ui/design-provenance.md)
+Flat compact A compositions `131:20213`
 (320px) and `131:20388` (480px), with 40px selection identity, 24px section headers
 and 22px controls. Original composition `108:8790`, search `108:8936` and visibility
 `108:9034` retain their source-reference role for grouping and interaction examples,

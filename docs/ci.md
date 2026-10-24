@@ -25,7 +25,7 @@ main pushes compare against their before SHA, and merge groups against their bas
 
 | Change | Selected work, in addition to file policy and history secret scan |
 | --- | --- |
-| Root/docs Markdown only | Markdown and links; no Rust matrix, coverage or native cache transfer |
+| Root/docs Markdown and known documentation-site inputs | Site build/audit, Markdown and links; no Rust matrix, coverage or native cache transfer |
 | Python tools only | Python suites; no Rust matrix, coverage or native cache transfer |
 | `.github/` only | Workflow syntax/security and Python gate/tool tests |
 | Rust, manifests, locks, assets, native scripts or unknown inputs | Native matrix, fresh coverage and dependency audit |
@@ -34,8 +34,8 @@ main pushes compare against their before SHA, and merge groups against their bas
 JSON/PNG changes to QA policies and reference images select repository Rust checks
 and informational coverage, not native screenshot acceptance. Run the relevant
 component scenario explicitly on an idle desktop or dispatch the Native UI corpus
-workflow. Ordinary headless
-CI cannot replace its real input/frame evidence or approve a changed profile.
+workflow. Ordinary headless CI cannot replace its real input/frame evidence or
+approve a changed profile.
 
 Markdown embedded under crates is a Rust input, not a documentation-only exception.
 Unknown paths conservatively select Rust checks. Native validation runs on
@@ -49,8 +49,8 @@ not again in native Linux; doctests remain in native Linux because coverage does
 not run them. Coverage has no minimum percentage; tests and report generation
 must still succeed. Native behavior and screenshot acceptance require separate
 real-input/frame runs. API documentation runs once on Linux.
-Rust formatting/architecture
-run once in policy, and portable-contract tests are included in workspace tests.
+Rust formatting/architecture run once in policy, and portable-contract tests are
+included in workspace tests.
 No compilation-only prebuild replaces or precedes the Windows test execution.
 The xtask command-stage regression uses a tiny real Cargo workspace, rather than
 running full-workspace lint/docs recursively into a second `target/xtask-cli`.
@@ -88,8 +88,7 @@ accepted main runs are not cancelled just because a newer main exists. Compilati
 uses nonincremental, line-table debug profiles and four jobs on Linux/macOS, two
 on Windows to bound simultaneous MSVC linking. Local developer defaults do not change.
 Hosted timing and memory acceptance remain unverified. Release compilation also
-uses two Windows jobs,
-without changing its optimization, codegen-unit or Thin LTO settings.
+uses two Windows jobs without changing its optimization, codegen-unit or Thin LTO settings.
 
 ## Cache and permission boundaries
 
@@ -108,7 +107,8 @@ LCOV under `target/coverage.lcov`. Its percentage is a reference metric, not a m
 threshold. Test failures, measurement errors and missing/empty LCOV still fail the
 job; a low percentage does not. No source exclusions or ignored failures are added.
 Native scenario code stays in the workspace denominator, but this headless run
-does not execute those binaries. See [measurement scope](testing.md#coverage-and-deeper-analysis).
+does not execute those binaries. See
+[measurement scope](site/en/contributing/contracts/testing.md#coverage-and-future-analysis).
 
 Only main-push jobs may save shared CI caches; PR jobs restore without saving.
 The policy cache includes only `target/xtask-bootstrap`, not a separate workspace
@@ -125,8 +125,7 @@ cancellation or runner termination can still prevent saving. Failed checks remai
 failed, and restoring dependencies never reuses their previous test outcomes.
 GitHub's branch scope keeps PR-created caches out of main. Selected tests, coverage
 profiles and advisory checks run anew, as does the always-on history secret scan.
-Native caching does not certify
-the correctness of artifacts. Misses must build normally. Cache restores are
+Native caching does not certify artifact correctness. Misses must build normally. Cache restores are
 optional acceleration, never permission to skip a check.
 
 Cache use is subject to GitHub's default 10 GB per-repository allowance;
@@ -134,8 +133,8 @@ eviction can reduce reuse and must be observed before performance claims. No pai
 increase is implicit. Logs/LCOV, public coverage-scenario reports, software-renderer
 diagnostics and bounded Windows diagnostics are retained for seven days, including
 after failure when available. Coverage uploads omit private sessions/credentials.
-Successful coverage requires
-a nonempty LCOV; absence after an earlier failure does not turn the job green.
+Successful coverage requires a nonempty LCOV; absence after an earlier failure does
+not turn the job green.
 Changing `CARGO_BUILD_JOBS` or the managed image can invalidate cache reuse.
 
 Jobs have `contents: read`, checkout does not persist its token, and no
@@ -148,22 +147,23 @@ The narrow zizmor ref policy covers only these reviewed
 actions; all other security audits remain enabled. Tool installs use pinned
 versions and checksum verification without an automatic source-build fallback.
 Mise 2026.10.15 uses explicit Aqua backends for actionlint, zizmor, rumdl, lychee
-and gitleaks; its signed binary checksums and upstream tool checksum definitions
+and gitleaks, plus pinned Node 24.22.1 and Bun 1.3.13 for documentation;
+its signed binary checksums and upstream tool checksum definitions
 are checked by maintained installers. Rust Cargo tools use install-action.
 Path selection uses Git without pull-request API permissions. The history secret
 scan covers the clean checkout's tracked source as well, without repeating a
 directory scan.
 Mise tool caches save only on main pushes and do not persist GitHub credentials.
-Untrusted PR execution uses
-`pull_request`, never a privileged `pull_request_target` checkout. Compilation and
+Untrusted PR execution uses `pull_request`, never a privileged `pull_request_target`
+checkout. Compilation and
 release/publishing remain separate. Do not put confidential data into public caches
 or logs. Retain and review tool/license/security pins when updating actions.
 
 ## Local validation map
 
 Install the public native prerequisites in [contributing](../CONTRIBUTING.md)
-and the pinned repository tools in [testing](testing.md). Run each command as a
-separate checked process; stop on its nonzero status. In PowerShell, check
+and the pinned repository tools in [testing](site/en/contributing/contracts/testing.md).
+Run each command as a separate checked process; stop on its nonzero status. In PowerShell, check
 `$LASTEXITCODE` after every native command rather than returning only the last one.
 
 | Check | Local command |
@@ -174,17 +174,33 @@ separate checked process; stop on its nonzero status. In PowerShell, check
 | Native buttons/fields screenshots (idle desktop, reviewed profile) | `cargo xtask test -- components` |
 | Licenses/advisories/sources | `cargo deny --locked check` |
 | Markdown | `rumdl check .` |
-| Local links | `lychee --offline --include-fragments --no-progress './*.md' './docs/**/*.md'` |
+| Local links | `lychee --offline --include-fragments --no-progress --root-dir "$PWD/docs/site" './*.md' docs` |
+| Documentation site, EN/RU pairs, bundled licenses and generated links | [Documentation infrastructure](documentation-infrastructure.md#local-validation) |
 | Secrets | `gitleaks dir . --redact --exit-code 1` on a clean source snapshot |
-| Coverage | [Fresh informational workspace measurement](testing.md#coverage-and-deeper-analysis), without a percentage threshold |
+| Coverage | [Fresh informational workspace measurement](site/en/contributing/contracts/testing.md#coverage-and-future-analysis), without a percentage threshold |
 
-`features` runs four separate Cargo checks with streamed diagnostics, logs and
-fail-closed stage aggregation: workspace default, workspace no-default-features,
-then independent `kedra_app --lib --no-default-features` and
-`kedra_script --lib --no-default-features` checks. The isolated runtime checks catch
-features accidentally supplied by editor/dev dependency unification, including
-production Linux Winit backends. No skipped stage is reported as passed.
-All-features testing alone is not a substitute for these checks.
+The `repository` job also audits the frozen documentation dependency graph, builds
+the bilingual site and checks generated HTML links/fragments. It retains a
+seven-day preview artifact, without deployment or publishing permissions. Known
+site inputs select this job through the Markdown output; the required gate uses
+the job identities and skip policy described above. See
+[documentation infrastructure](documentation-infrastructure.md).
+
+The same repository job validates the separate landing, its frozen dependency graph,
+build contracts and generated links. After `CI required` succeeds, official main CI
+runs the [site publication jobs](../.github/workflows/ci.yml). The build job has
+no cloud credentials; only the environment-scoped upload step receives the two Object
+Storage secrets. Fork/PR checks and the required gate do not depend on those secrets.
+See [hosting](../tools/hosting/README.md) for source freshness, domain and permission rules.
+
+`features` runs eight separate Cargo invocations with streamed diagnostics, logs and
+fail-closed stage aggregation: workspace default and no-default-feature all-target checks;
+isolated no-default-feature library checks for `kedra_app`, `kedra_script`, `kedra_scene`,
+`kedra_assets` and `kedra_ui`; and `kedra_app`'s `launch::tests` under the
+debug-assertions-disabled `release-boundary` profile. The isolated checks detect capabilities
+accidentally supplied by workspace feature unification, including production Linux Winit
+backends. No skipped stage is reported as passed. All-features testing alone does not
+replace this route.
 
 ## Windows build diagnostics
 

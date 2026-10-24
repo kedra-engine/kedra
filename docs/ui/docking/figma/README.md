@@ -6,5 +6,6 @@ its pixel policies are retired. This metadata is not active screenshot coverage
 and does not enroll docking, panels or window chrome in visual regression.
 
 Only kit buttons and text inputs have screenshot coverage; see
-[the active corpus](../../ui-corpus.md). Docking uses
-[native behavior checks](../../docking-tests.md), without image goldens.
+[the active corpus](../../../site/en/contributing/contracts/ui/ui-corpus.md). Docking uses
+[native behavior checks](../../../site/en/contributing/contracts/ui/native-docking-tests.md),
+without image goldens.

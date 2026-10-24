@@ -2,8 +2,8 @@
 
 `editor/` contains source assets and stable native Bevy `.meta` sidecars. They are
 not included in Rust executables. Use the shared engine importer described in
-[native startup](../docs/startup.md). Generated deliveries belong outside this
-source tree and are not checked into Git.
+[native startup](../docs/site/en/contributing/contracts/startup.md).
+Generated deliveries belong outside this source tree and are not checked into Git.
 
 ## Provenance
 
@@ -67,7 +67,7 @@ The 46,196-byte output SHA-256 is
 `7304ac6809616f3d0c7a9969593b50ca4d61e1ce3e268c9b1e819cd09ea7ecad`.
 Subsets do not guarantee every Unicode script or native IME behavior.
 
-The repository's binary-size policy still applies. Wider font coverage needs an
-explicitly reviewed asset policy; no exception or threshold was silently added.
+The repository's binary-size policy applies to these fonts. Wider font coverage
+needs an explicitly reviewed asset policy; there is no size exemption or higher threshold.
 Font outlines are resolution-independent. SVG variants are processed at their
 native physical density, not obtained by enlarging an existing low-resolution PNG.

@@ -1,6 +1,6 @@
 --!nolint FunctionUnused
 -- Native input drives Bevy Activate and the game-owned switch Behavior/Sequence.
-function run(ctx: KedraAppContext, args)
+function run(ctx: AppContext, args)
     local app = ctx.app
     local window = app.window()
     app.resize(window, 320, 320, 1)

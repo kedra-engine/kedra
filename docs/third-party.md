@@ -28,13 +28,12 @@ and make that source available. Any modifications to covered files must also be
 provided under MPL. Do not impose terms that restrict recipients' MPL rights.
 
 The source links above identify upstream archives. Configured native packaging
-now bundles full cargo-about copyright/license notices and original MPL-covered
+bundles full cargo-about copyright/license notices and original MPL-covered
 crates.io archives verified against Cargo.lock under `licenses/covered-sources`.
 Non-registry covered sources fail pending explicit support; do not omit local
 modifications from their required source distribution. Before publication, verify
 recipient access to the installed notices and archives. Other dependency-license
-failures remain subject to
-separate review, not automatic approval by these exceptions.
+failures require separate review; these exceptions do not automatically approve them.
 
 ## Permissive dependency licenses
 
@@ -51,7 +50,7 @@ duplicate-version exceptions and the time-bounded unmaintained-parser exception.
 Cargo license collection covers Rust crates only. Linux packages additionally
 preserve full distro-native copyright records and referenced common-license
 texts, and include an AppImage runtime source/relink kit. See
-[distribution](distribution.md) for locations and acceptance limits.
+[distribution](site/en/contributing/contracts/distribution.md) for locations and acceptance limits.
 
 The reviewed bundled ELF source families are Brotli (MIT), bzip2 (its BSD-style
 license), libffi (MIT/Expat runtime implementation), libpng (libpng license) and

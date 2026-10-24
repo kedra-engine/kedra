@@ -2,7 +2,7 @@
 --!nolint BuiltinGlobalWrite
 -- Rust invokes this global entrypoint after the chunk has loaded.
 -- The declared marker is intentionally written to probe per-VM global isolation.
-function run(ctx: KedraTestGameContext)
+function run(ctx: TestGameContext)
     assert(game == nil and editor == nil, "Host capabilities belong only to ctx")
     assert(ctx.editor == nil, "Game scripts must not receive the tool API")
     assert(world == nil, "Generic reflected World access must not be exposed")

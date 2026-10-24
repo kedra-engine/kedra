@@ -25,12 +25,14 @@ new features are complete. Web and mobile runtime support remain later direction
 
 The workspace provides native project startup, verified asset deliveries, shared
 authored scenes/UI, source-editing APIs, application automation and retained native
-docking. The editor exposes a [read-only Asset Browser](ui/asset-browser.md) and
-[source document sessions](ui/source-documents.md), with a read-only
-[Hierarchy](ui/hierarchy.md), initial read-only [Scene View](ui/scene-view.md)
+docking. The editor exposes a
+[read-only Asset Browser](site/en/contributing/contracts/editor/asset-browser.md) and
+[source document sessions](site/en/contributing/contracts/editor/source-documents.md),
+with a read-only [Hierarchy](site/en/contributing/contracts/editor/hierarchy.md),
+initial read-only [Scene View](site/en/contributing/contracts/editor/scene-view.md)
 projection and a source-bound read-only Inspector. There is no stable game
-SDK, scene editor, document Save or project
-execution. See [architecture](architecture.md) for ownership boundaries.
+SDK, scene editor, document Save or project execution. See
+[architecture](architecture.md) for ownership boundaries.
 
 Existing source-editing APIs are foundations for stage 1, not an already usable
 scene editor. Remote observation, injected input and renderer captures support
@@ -62,7 +64,7 @@ The editing path is **inspector → validated authoring document → live projec
 Changing only a live Bevy component is not a persistent authoring edit. The host
 filesystem writer must honor the existing save protocol's revision, conflict and
 durability contracts; runtime crates do not acquire an authoring-writer dependency.
-See [scenes and authoring](scenes.md).
+See the [source-authoring contract](site/en/contributing/contracts/source-authoring.md).
 
 ### Completion criteria
 
@@ -95,7 +97,8 @@ document/selection and opening contract, with separate ADRs for each dockable to
 opened scene/prefab, navigate with orbit/pan/zoom and free flight, frame objects,
 use grid/axes and standard views, and select objects in sync with Hierarchy.
 Complete it through separately demonstrated render/resource, navigation/docking
-and selection slices. The [read-only Inspector](ui/inspector.md) connects to
+and selection slices. The
+[read-only Inspector](site/en/contributing/contracts/editor/inspector.md) connects to
 the same source selection without requiring renderer readiness. Camera and selection
 state are not document edits. Gizmos, source mutation and Play remain excluded.
 
@@ -176,10 +179,10 @@ and trust boundary for project code is explicit.
 Native interaction and capture reliability have unresolved intermittent failures.
 Local Rust checks do not exercise the full real-window
 visual/interaction corpus. Headless CI and its required aggregate are configured;
-current hosted results and live enforcement require external verification. Native regression
-execution must become automated in a controlled graphical environment, with retained
-failure evidence and no retries
-that turn an unexplained failure into a passing result.
+current hosted results and live enforcement require external verification. Native
+regression execution must become automated in a controlled graphical environment,
+with retained failure evidence and no retries that turn an unexplained failure into
+a passing result.
 
 Every claimed milestone needs verification of its actual user workflow, including
 failure paths. Compilation, model tests, remote receipts and passing headless CI

@@ -27,8 +27,8 @@ intended to work with the same project data and lifecycle.
 - **Automation alongside interactive tools.** Make application observation,
   control and verification accessible beyond manual editor interaction.
 
-These are product goals, not a claim that every workflow is already implemented
-or that every third-party Bevy plugin automatically integrates with Kedra's tools.
+Work toward these goals is incomplete. Not every third-party Bevy plugin
+automatically integrates with Kedra's tools.
 
 ## Current status
 
@@ -50,7 +50,8 @@ The repository currently provides:
   source-editing APIs. The editor's own UI uses authored sources.
 - Asset processing and verified deliveries consumed through shared runtime loaders.
 - Shared CLI tooling to build, verify, package and explicitly launch standalone
-  desktop applications without an installed editor; see [distribution](docs/distribution.md).
+  desktop applications without an installed editor; see
+  [distribution](docs/site/en/manual/build-and-distribution/index.md).
 - Debug-only, explicitly enabled remote observation, input injection and renderer captures.
 - Shared opt-in Luau behaviors, finite sequences and standard admitted-source modules
   with host-owned API scopes. Native QA uses sequences under external Rust supervision.
@@ -62,13 +63,13 @@ The next milestone combines scene/prefab editing, an editable component inspecto
 and source-owned Save. In-application Play follows, then project-defined inspectors
 and editor windows. See the [roadmap](docs/roadmap.md) for scope and completion criteria.
 
-The button/text-field screenshot workflow uses shared Rust tooling and ordinary
-project-owned scenarios through `cargo kedra test` / `cargo xtask test -- …`. The reviewed
-component policy pins the explicitly approved dependency graph; changed graphs
-require reviewed lock approval. Feature checks run separately
-through Rust with isolated state and real native input/frames. See the
-[testing guide](docs/testing.md). Screenshot coverage is restricted to 22 kit
-button/input cases; other native scenarios check behavior without image goldens.
+Button/text-field screenshot checks use shared Rust tooling and project-owned
+scenarios through `cargo kedra test` / `cargo xtask test -- …`. The component policy
+pins the explicitly approved dependency graph; changed graphs require reviewed lock
+approval. Feature checks run separately through Rust with isolated state and real
+native input/frames. See the [testing guide](docs/site/en/contributing/contracts/testing.md).
+Screenshot coverage is restricted to 22 kit button/input cases; other native scenarios
+check behavior without image goldens.
 The additional `luau` feature scenario runs an editor-owned script against real
 startup state and UI; see [scripting](crates/kedra_script/README.md). Runtime support
 does not authorize automatic project-code execution or implement Play.
@@ -78,8 +79,9 @@ has runtime-only dependencies and debug-only remote diagnostics.
 
 Native interaction and capture reliability have unresolved intermittent
 failures. The kit screenshot corpus and native behavior checks require separate native execution.
-A passing headless check is not native UI acceptance. See [testing](docs/testing.md) and
-[native docking checks](docs/ui/docking-tests.md).
+A passing headless check is not native UI acceptance. See
+[testing](docs/site/en/contributing/contracts/testing.md) and
+[native docking checks](docs/site/en/contributing/contracts/ui/native-docking-tests.md).
 
 Planned game runtime targets include Linux, Windows and macOS on desktop, web,
 and Android and iOS on mobile. Web and mobile runtime support is future work;
@@ -100,16 +102,17 @@ cargo run -p kedra -- --assets target/editor-assets
 
 The delivery output directory must not already exist; choose a new path for a
 subsequent build. This opens the current project manager/editor shell, not a
-runnable game template. See [startup](docs/startup.md) for project paths and asset
-commands.
+runnable game template. See [startup](docs/site/en/manual/getting-started/launch-editor.md)
+for project paths and asset commands.
 
 ## Contribute
 
 Repository: <https://github.com/kedra-engine/kedra>.
 GitHub Actions is configured for Linux, Windows and macOS validation with fresh
 coverage for Rust-affecting changes. Current hosted results and live branch
-protections require external verification; see [CI](docs/ci.md). Native distribution remains under
-[implementation and acceptance](docs/distribution.md).
+protections require external verification; see [CI](docs/ci.md). Native distribution is still
+being implemented and requires acceptance testing; see the implementation and acceptance
+[limits](docs/site/en/contributing/contracts/distribution.md#signing-updates-and-acceptance-limits).
 
 To run the repository's Rust checks:
 
@@ -126,15 +129,39 @@ Discuss substantial changes before implementation; see
 
 ## Project guides
 
-- [Contributing](CONTRIBUTING.md) and [testing](docs/testing.md)
+The [project landing site](website/README.md) is a separate English/Russian static build.
+It links to the documentation without changing the manual's routes or appearance.
+
+### Read by task
+
+- Learn existing workflows: [Manual (English)](docs/site/en/index.md) /
+  [Руководство (Русский)](docs/site/ru/index.md).
+- Change Kedra: [Contributor guide (English)](docs/site/en/contributing/index.md) /
+  [Участие в разработке (Русский)](docs/site/ru/contributing/index.md).
+- Look up interfaces: [API guide (English)](docs/site/en/api/index.md) /
+  [Справочник API (Русский)](docs/site/ru/api/index.md).
+  Generated Rust reference requires the opt-in local API build.
+- Evaluate planned scope: [Roadmap and acceptance prerequisites](docs/roadmap.md).
+
+Build and read the site locally using the
+[documentation infrastructure guide](docs/documentation-infrastructure.md).
+Publication targets are [kedra.tech](https://kedra.tech/) and
+[docs.kedra.tech](https://docs.kedra.tech/); the [hosting guide](tools/hosting/README.md)
+defines CI publication and its verification. Documentation maintainers should also read the
+[contents and migration plan](docs/documentation-plan.md).
+
+### Engineering contracts and repository policy
+
+- [Contributing](CONTRIBUTING.md) and [testing](docs/site/en/contributing/contracts/testing.md)
 - [Architecture](docs/architecture.md) and [decisions](docs/decisions/0001-foundation.md)
-- [Native startup and shared asset pipeline](docs/startup.md)
-- [Authored scenes and source editing](docs/scenes.md)
-- [Docking controls, architecture and acceptance limits](docs/ui/docking-implementation.md)
-- [Shared application automation and native UI checks](docs/automation.md)
+- [Engineering contract directory](docs/site/en/contributing/contracts/index.md)
+- [Native startup and shared asset pipeline](docs/site/en/contributing/contracts/startup.md)
+- [Authored scene runtime](docs/site/en/contributing/contracts/scene-runtime.md) and
+  [source editing](docs/site/en/contributing/contracts/source-authoring.md)
+- [Docking controls and acceptance limits](docs/site/en/contributing/contracts/ui/docking.md)
+- [Application automation and native UI checks](docs/site/en/contributing/contracts/automation.md)
 - [Quality gates](docs/quality.md) and [repository administration](docs/hosting.md)
 - [Local validation and GitHub CI](docs/ci.md)
-- [Roadmap and acceptance prerequisites](docs/roadmap.md)
 - [AI contributor instructions](AGENTS.md)
 - [Security](SECURITY.md), [governance](GOVERNANCE.md), [conduct](CODE_OF_CONDUCT.md)
 

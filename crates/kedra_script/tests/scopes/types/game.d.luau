@@ -1,5 +1,5 @@
 -- Test-owned capability, not a production game SDK or Roblox API.
-export type KedraTestGameContext = KedraRuntimeContext & {
+export type TestGameContext = RuntimeContext & {
     game: {count: () -> number, increment: () -> ()},
     editor: nil,
 }

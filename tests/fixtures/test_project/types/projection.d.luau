@@ -4,9 +4,9 @@ export type NativeProjectionAction = "reorder" | "split" | "activate"
     | "maximize" | "visibility" | "restore"
 export type NativeProjectionView = {
     id: string,
-    content: KedraEntityId,
-    tab: KedraNullable<string>,
-    group: KedraNullable<string>,
+    content: EntityId,
+    tab: Nullable<string>,
+    group: Nullable<string>,
     hidden: boolean,
 }
 export type NativeProjectionGroup = {Group: {tabs: {string}, active: string}}
@@ -15,9 +15,9 @@ export type NativeProjectionSplit = {Split: {
 }}
 export type NativeProjectionSnapshot = {
     version: number,
-    hosts: {[string]: {root: KedraNullable<string>, maximized: KedraNullable<string>}},
+    hosts: {[string]: {root: Nullable<string>, maximized: Nullable<string>}},
     nodes: {[string]: NativeProjectionGroup | NativeProjectionSplit},
-    views: {[string]: {kind: string, restore_key: KedraNullable<string>}},
+    views: {[string]: {kind: string, restore_key: Nullable<string>}},
     hidden: {[string]: {host: string, group: string, index: number}},
 }
 export type NativeProjectionMounted = {
@@ -41,4 +41,4 @@ export type NativeProjectionApi = {
     -- Restores authored topology while retaining registered content/drafts.
     restore: () -> (),
 }
-export type NativeProjectionContext = KedraAppContext & {projection: NativeProjectionApi}
+export type NativeProjectionContext = AppContext & {projection: NativeProjectionApi}

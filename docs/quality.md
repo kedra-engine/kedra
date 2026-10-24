@@ -2,10 +2,10 @@
 
 ## Required change validation
 
-The source workflow configures validation and a fail-closed `CI required` gate.
-These are required policies with local commands, not claims of current hosted
-success or installed server enforcement.
-See [testing](testing.md), [CI requirements](ci.md) and [hosting](hosting.md).
+The workflow configures validation and a fail-closed `CI required` gate. Run the
+local commands below and verify hosted results and branch protection on GitHub.
+See [testing](site/en/contributing/contracts/testing.md),
+[CI requirements](ci.md) and [hosting](hosting.md).
 
 Product contracts stay with their production owners under
 [ADR 0031](decisions/0031-contract-owned-testing.md). Shared fixtures are support,
@@ -24,6 +24,9 @@ evidence categories. Thin utilities use real invocations, not upstream-tool self
   Images have no path, extension or directory exemption from the byte limit.
 - Dependency license/advisory/source policy via cargo-deny; Gitleaks secret scanning.
 - Markdown lint through rumdl and local links through Lychee.
+- Documentation-site frozen install/audit, EN/RU page pairs, VitePress build,
+  bundled-license validation and generated links/fragments; see
+  [documentation infrastructure](documentation-infrastructure.md).
 - QA workflows are verified by real product scenarios, native input and GPU fences.
   Screenshot coverage is only kit buttons/inputs; other behavior checks publish no PNGs.
   There is no separate self-test suite for QA drivers/fixture hosts/reports.
@@ -57,7 +60,7 @@ current live server settings or hosted results.
 
 ## Progressive guarantees
 
-Checks establish harness properties, not future engine behavior. New subsystems
+Checks verify the existing harness, not future engine behavior. New subsystems
 extend tests, supported feature combinations and acceptance evidence. Neither
 arbitrary complexity ceilings nor a 100% coverage badge replaces maintainable
 modules and reviewed behavior.

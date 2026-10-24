@@ -25,7 +25,8 @@ do not apply or prove server settings.
 - Review outside-contributor execution before approval; untrusted code must not
   receive secrets, privileged tokens or access to trusted worker state/caches.
 - Verify available dependency alerts, secret detection and push protection rather
-  than claiming they are enabled. Keep the local audits in [testing](testing.md).
+  than claiming they are enabled. Keep the local audits in
+  [testing](site/en/contributing/contracts/testing.md).
 
 ## Automation and releases
 
@@ -42,7 +43,8 @@ not demand a second unavailable human reviewer. A YAML job name alone is not
 server-side enforcement; see [configured CI checks and acceptance requirements](ci.md).
 
 Release preflight checks exact source identity, main ancestry, successful push CI
-and unused release identity; see [distribution](distribution.md#github-release-boundary).
+and unused release identity; see
+[distribution](site/en/contributing/contracts/distribution.md#release-orchestration-boundary).
 Before publishing, confirm live protected tags and explicit approval, least-privilege
 tokens, artifact provenance, license notices, clean-machine verification and rollback.
 Never promote untrusted contribution artifacts directly into releases.

@@ -1,6 +1,6 @@
 # kedra_test
 
-Tooling-side native application tests for ordinary project-owned Rust scenarios.
+This tooling crate supports native application tests in project-owned Rust scenarios.
 Runtime applications opt into `kedra_app`; they do not depend on this crate.
 No editor, Figma connection, Python, scenario DSL or test registry is required.
 `Client::input`, `resize` and `capture` execute finite host-registered Luau
@@ -37,7 +37,7 @@ assertions, wall-clock/process supervision and independent evidence validation.
 
 The small custom code expresses Kedra session/evidence policy, not HTTP, PNG,
 Cargo, rendering or perceptual comparison. Those remain maintained libraries.
-No QA-driver/report mocks or self-test framework is introduced. Verification uses
+There are no QA-driver/report mocks and no self-test framework. Verification uses
 real native consumers plus the retained comparator/product Rust regressions.
 
 The project-local launcher exposes:

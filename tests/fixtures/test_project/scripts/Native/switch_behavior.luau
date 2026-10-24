@@ -1,6 +1,7 @@
 --!nolint FunctionUnused
-type Context = KedraBehaviorContext & {params: {color: {number}}}
-type State = {activation: KedraSequenceHandle?}
+-- The native switch host authorizes this Behavior only through attach.
+type Context = BehaviorContext & {entity: EntityHandle, params: {color: {number}}}
+type State = {activation: SequenceHandle?}
 
 function start(self: State, ctx: Context)
     ctx.events.on(ctx.entity, "activate", function(_payload)

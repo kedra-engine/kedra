@@ -1,7 +1,8 @@
 # ADR 0014: Document Hierarchy panel
 
 Status: read-only navigation/selection implemented; broader editing lifecycle and
-platform acceptance remain proposed. See [current contracts](../ui/hierarchy.md).
+platform acceptance remain proposed. See
+[current contracts](../site/en/contributing/contracts/editor/hierarchy.md).
 This ADR covers document navigation and selection before structural editing.
 
 ## Purpose and authority
@@ -96,7 +97,8 @@ unavailable with reasons. No inert menu action or drag affordance implies suppor
 
 ## Figma and acceptance
 
-Use [UI-kit](../ui/figma.md) Hierarchy state library `125:17354`, masters
+Use [UI-kit](../site/en/contributing/contracts/ui/design-provenance.md)
+Hierarchy state library `125:17354`, masters
 `120:15066`, rows `120:12800` and shared content `128:31375`. Search ancestors,
 focused/inactive selection, collapsed rows and read-only navigation are intentional
 contracts. Loading, admission failures, pending selection settlement and stale trees

@@ -307,13 +307,131 @@ fn describe(_: In<Option<Value>>, world: &mut World) -> bevy_remote::BrpResult {
         .get_resource::<bevy::render::renderer::RenderAdapterInfo>()
         .map(|adapter| json!({"name":adapter.name,"backend":format!("{:?}",adapter.backend)}));
     Ok(
-        json!({"ready":true,"feedback_ready":state.feedback.as_ref().is_none_or(|feedback|feedback.ready(world)),"schema":1,"id":"docking.fixture.v1","generation":fixture.generation,"views":fixture.views,"host":state.surfaces[&state.host].root.to_bits(),"window":state.window.to_bits(),"project_tools":false,"preferences":false,"pending":state.pending.is_some(),"dragging":matches!(state.gesture,Some(input::Gesture::Drag{..})),"fields":fixture.fields.iter().map(|field|field.to_bits()).collect::<Vec<_>>(),"renderer":renderer}),
+        json!({"ready":true,"feedback_ready":state.feedback.as_ref().is_none_or(|feedback|feedback.ready(world)),"schema":1,"id":"docking.fixture.v1","generation":fixture.generation,"views":fixture.views,"host":state.surfaces[&state.host].root.to_bits().to_string(),"window":state.window.to_bits(),"project_tools":false,"preferences":false,"pending":state.pending.is_some(),"dragging":matches!(state.gesture,Some(input::Gesture::Drag{..})),"fields":fixture.fields.iter().map(|field|field.to_bits().to_string()).collect::<Vec<_>>(),"renderer":renderer}),
     )
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn diagnostic_identity_observation_crosses_luau_losslessly_without_mutating_drafts()
+    -> Result<(), Box<dyn std::error::Error>> {
+        // This owner stores entity references, not a second entity registry.
+        // Large generations need not be live for describe; the binding root and
+        // window remain live so the real authorization/producer path is exercised.
+        let (mut app, _, _) = super::super::test_support::setup()?;
+        app.add_plugins(kedra_script::LuauPlugin)
+            .init_resource::<kedra_app::CommandCatalog>()
+            .insert_resource(bevy_remote::RemoteMethods::new());
+        app.register_remote("dock.fixture", "Fixture observation", json!({}), describe);
+        app.finish();
+        app.cleanup();
+        let world = app.world_mut();
+        let (root, window, host, original) = {
+            let state = world.resource::<EditorWorkspace>();
+            (
+                state.root,
+                state.window,
+                state.host,
+                state.layout.snapshot().clone(),
+            )
+        };
+        let draft = world.spawn(EditableText::new("Кедра draft")).id();
+        world
+            .resource_mut::<bevy::input_focus::InputFocus>()
+            .set(draft, bevy::input_focus::FocusCause::Pressed);
+        let high_host = Entity::from_index_and_generation(
+            root.index(),
+            root.generation().after_versions(1 << 22),
+        );
+        let high_field = Entity::from_index_and_generation(
+            draft.index(),
+            draft.generation().after_versions(1 << 22),
+        );
+        assert!(high_host.to_bits() > 9_007_199_254_740_991);
+        assert!(high_field.to_bits() > 9_007_199_254_740_991);
+        world
+            .resource_mut::<EditorWorkspace>()
+            .surfaces
+            .get_mut(&host)
+            .ok_or("Missing host")?
+            .root = high_host;
+        world.insert_resource(Fixture {
+            root,
+            original: original.clone(),
+            views: [ViewId::new(), ViewId::new(), ViewId::new(), ViewId::new()],
+            fields: vec![high_field, draft],
+            generation: 1,
+            overflow: overflow::test_source()?.config()?,
+        });
+        let source = "function run(ctx) return ctx.dock.state() end";
+        let run = kedra_script::start(
+            world,
+            kedra_script::Program::sequence("dock observation", "observe.luau", source, script_api),
+            Value::Null,
+        )?;
+        app.update();
+        let Some(kedra_script::Status::Completed(value)) = kedra_script::status(app.world(), run)
+        else {
+            return Err(format!(
+                "Expected lossless observation, got {:?}",
+                kedra_script::status(app.world(), run)
+            )
+            .into());
+        };
+        assert_eq!(value["host"], high_host.to_bits().to_string());
+        assert_eq!(
+            value["fields"],
+            json!([
+                high_field.to_bits().to_string(),
+                draft.to_bits().to_string()
+            ])
+        );
+        assert_eq!(value["window"], window.to_bits().to_string());
+        assert_eq!(value["generation"], 1);
+        assert_eq!(value["schema"], 1);
+        let raw = describe(In(None), app.world_mut()).map_err(|e| e.message)?;
+        assert_eq!(raw["host"], high_host.to_bits().to_string());
+        assert_eq!(raw["fields"][0], high_field.to_bits().to_string());
+        app.world_mut().despawn(root);
+        let denied = kedra_script::start(
+            app.world_mut(),
+            kedra_script::Program::sequence(
+                "retired diagnostic",
+                "retired.luau",
+                "function run(ctx) assert(not ctx.dock.state().ready); ctx.dock.drafts() end",
+                script_api,
+            ),
+            Value::Null,
+        )?;
+        app.update();
+        assert!(matches!(
+            kedra_script::status(app.world(), denied),
+            Some(kedra_script::Status::Failed(error))
+                if error.kind == kedra_script::ErrorKind::Runtime
+                    && error.message.contains("Dock diagnostic binding was retired")
+        ));
+        assert_eq!(app.world().resource::<Fixture>().generation, 1);
+        assert!(app.world().resource::<EditorWorkspace>().layout.snapshot() == &original);
+        assert_eq!(
+            app.world()
+                .resource::<bevy::input_focus::InputFocus>()
+                .get(),
+            Some(draft)
+        );
+        assert_eq!(
+            app.world()
+                .get::<EditableText>(draft)
+                .ok_or("Draft missing")?
+                .value(),
+            "Кедра draft"
+        );
+        assert!(app.world().get::<Window>(window).is_some());
+        Ok(())
+    }
+
     #[test]
     fn diagnostic_capabilities_reject_unbound_and_retired_owners_without_mutation()
     -> Result<(), String> {

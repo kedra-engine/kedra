@@ -234,3 +234,73 @@ fn cancellation_is_scoped_idempotent_and_never_rolls_back_prior_effects() {
     assert_eq!(app.world().resource::<Counter>().0, 1);
     assert!(app.world().resource::<Active>().0.is_none());
 }
+
+#[test]
+fn remote_scene_diagnostic_checks_logical_axes_before_requesting_capture() {
+    // The checked-in diagnostic owns the authored 120 x 64 expectation. Real
+    // observation/bindings/VM run here with synthetic geometry, not native layout.
+    // Capture has no artifact authority, so reaching its refusal proves the
+    // geometry checks passed without inventing a renderer or writing any files.
+    for (size, expected) in [
+        (
+            Vec2::new(120., 64.),
+            "Capture artifact directory is not configured",
+        ),
+        (Vec2::new(121., 64.), "Scene target width changed"),
+        (Vec2::new(120., 65.), "Scene target height changed"),
+    ] {
+        let (mut app, session, window) = host();
+        let camera = app
+            .world_mut()
+            .spawn((
+                Camera::default(),
+                bevy::camera::RenderTarget::Window(bevy::window::WindowRef::Entity(window)),
+            ))
+            .id();
+        let mut target_camera = ComputedUiTargetCamera::default();
+        let mut reflected = bevy::reflect::structs::DynamicStruct::default();
+        reflected.insert("camera", Some(camera));
+        target_camera.apply(&reflected);
+        for id in ["game.panel", "game.target"] {
+            app.world_mut().spawn((
+                kedra_ui::ElementId::new(id),
+                ComputedNode { size, ..default() },
+                UiGlobalTransform::from(bevy::math::Affine2::from_translation(Vec2::new(
+                    210., 180.,
+                ))),
+                InheritedVisibility::VISIBLE,
+                target_camera,
+            ));
+        }
+        let before = crate::observe::snapshot(app.world_mut()).unwrap()["elements"].clone();
+        register(
+            &mut app,
+            Program::sequence(
+                "scene.remote",
+                "scripts/Native/remote.luau",
+                include_str!("../../../../tests/fixtures/test_project/scripts/Native/remote.luau"),
+                install_app_api,
+            ),
+        );
+        let id = Uuid::new_v4();
+        rpc(
+            &mut app,
+            "app.scenario",
+            json!({"session":session,"id":id,"scenario":"scene.remote","arguments":{}}),
+        )
+        .unwrap();
+        let result = receipt(&mut app, id);
+        assert_eq!(result["state"], "failed");
+        assert!(result["detail"].to_string().contains(expected), "{result}");
+        assert_eq!(
+            crate::observe::snapshot(app.world_mut()).unwrap()["elements"],
+            before
+        );
+        assert_eq!(
+            app.world().get::<Window>(window).unwrap().title,
+            Window::default().title
+        );
+        assert!(!app.world().resource::<crate::input::InputQueue>().busy());
+        assert!(app.world().resource::<Active>().0.is_none());
+    }
+}

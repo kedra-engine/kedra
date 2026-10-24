@@ -1,6 +1,6 @@
 # kedra_desktop
 
-Editor-layer native window/camera/UI-root ownership. Install after Bevy's window
+This editor-layer crate owns native windows, cameras and UI roots. Install it after Bevy's window
 and input plugins, using `window_plugin()` to avoid implicit windows and last-window
 exit races. `replace` runs on the main Bevy thread and retires only its former
 surface. Client-drawn captions issue native window operations; on macOS the hidden
@@ -12,4 +12,4 @@ docking topology or feature content.
 
 Ownership and stale-close behavior have headless ECS tests. They do not verify
 real native event delivery, multi-monitor placement or input quality. See
-[startup acceptance](../../docs/startup.md).
+[startup acceptance](../../docs/site/en/contributing/contracts/startup.md).

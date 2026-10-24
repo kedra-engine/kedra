@@ -9,30 +9,31 @@
 
 Editor self-update targets Windows x64, Linux x64 and macOS Apple Silicon.
 Discovery, download, verification, installation and restart are distinct operations.
-Download requires an explicit
-click; installation/restart requires another explicit click. Neither discovery
-nor completed download authorizes installation on exit or automatic restart.
+Download requires an explicit click; installation/restart requires another
+explicit click. Neither discovery nor completed download authorizes installation on
+exit or automatic restart.
 
-The bounded mechanism and editor integration are implemented for review; native
+The bounded mechanism and editor integration are implemented; native
 acceptance is incomplete. Isolated macOS DMG staging/replacement/relaunch is covered
 with ordinary third-party executables, not copied Apple platform binaries. Actual
 released-artifact updates, Windows/Linux manual workflows and real UI input/frames
-remain unverified. Current release behavior is described in [distribution](../distribution.md).
+remain unverified. Current release behavior is described in
+[distribution](../site/en/contributing/contracts/distribution.md).
 No cryptographic signing, publication or production-readiness claim follows.
 
 ### Accepted MVP scope
 
 Primary installation kinds are Windows NSIS, Linux AppImage and macOS installed
 app. Portable ZIP/TAR distributions and development/source runs have no self-update
-in this iteration; hide the control rather than converting their installation kind.
+under this decision; hide the control rather than converting their installation kind.
 Use the official early-access prerelease channel and check once during startup.
 No periodic scheduler, channel settings or new update hosting service is needed.
 
 macOS must install and restart automatically after explicit Update activation;
 manual DMG installation is not an accepted macOS fallback. Windows/Linux may use
-manual installation where a
-maintained backend cannot meet the narrow safety contract without substantial
-additional infrastructure. Download and verify the existing release package, show
+manual installation where a maintained backend cannot meet the narrow safety
+contract without substantial additional infrastructure. Download and verify the
+existing release package, show
 that manual installation is required, and let Update reveal the package in the OS
 file manager. Do not exit, execute the package silently or claim it was installed.
 Keep a revealed package in the user's update cache across normal editor exit so
@@ -244,7 +245,7 @@ On Update activation:
    values; do not replay asset subcommands, automation credentials or arbitrary
    old CLI/environment overrides. Project data is not migrated by the updater.
 
-For today's read-only editor, the exit gate can approve only a provably clean
+For the read-only editor, the exit gate can approve only a provably clean
 session with no unsettled entry/input/job state. It must fail closed when editing
 capabilities appear without an installed settlement participant. Do not implement
 the next authoring/Save milestone implicitly as part of self-update.

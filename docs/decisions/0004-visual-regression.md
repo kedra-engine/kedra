@@ -56,5 +56,5 @@ properties separately.
 
 The comparator does not authenticate capture declarations, certify color or OS
 presentation timing, launch applications or implement temporal sequence comparison.
-See [usage and policy](../ui/visual-acceptance.md) and
-[docking fixtures](../ui/docking-tests.md).
+See [usage and policy](../site/en/contributing/contracts/ui/visual-verification.md) and
+[docking fixtures](../site/en/contributing/contracts/ui/native-docking-tests.md).

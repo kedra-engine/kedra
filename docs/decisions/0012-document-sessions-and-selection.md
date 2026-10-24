@@ -1,13 +1,14 @@
 # ADR 0012: Document sessions, opening and selection
 
 Status: full editing/Save lifecycle proposed for owner review. A narrower
-[read-only source-session profile](../ui/source-documents.md) supports browser
-Open, retained document views, Hierarchy selection and the connected read-only
-Inspector. The initial
-[Scene View profile](../ui/scene-view.md) adds supported read-only projection.
+[read-only source-session profile](../site/en/contributing/contracts/editor/source-documents.md)
+supports browser Open, retained document views, Hierarchy selection and the
+connected read-only Inspector. The initial
+[Scene View profile](../site/en/contributing/contracts/editor/scene-view.md)
+adds supported read-only projection.
 Shared field settlement, editable Hierarchy/Inspector and dirty-document close
-remain unimplemented. Spatial navigation and
-opaque-mesh picking are implemented with separate native acceptance requirements.
+remain unimplemented. Spatial navigation and opaque-mesh picking are implemented
+with separate native acceptance requirements.
 
 ## Decision and ownership
 

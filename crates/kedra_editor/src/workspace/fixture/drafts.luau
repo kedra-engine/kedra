@@ -2,7 +2,7 @@
 -- The host invokes the global run entrypoint.
 local helpers = require("./helpers")
 
-function run(ctx: KedraDockContext, _args)
+function run(ctx: DockContext, _args)
     helpers.state(ctx)
     ctx.dock.drafts()
     wait.updates(1)

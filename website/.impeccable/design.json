@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-24T00:00:00Z",
+  "title": "Design System: Kedra project landing",
+  "extensions": {
+    "colorMeta": {
+      "paper": { "role": "neutral", "displayName": "Charcoal paper", "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(38% 0 0)", "oklch(49% 0 0)", "oklch(61% 0 0)", "oklch(72% 0 0)", "oklch(84% 0 0)", "oklch(95% 0 0)"] },
+      "ink": { "role": "neutral", "displayName": "Near-white ink", "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(38% 0 0)", "oklch(49% 0 0)", "oklch(61% 0 0)", "oklch(72% 0 0)", "oklch(84% 0 0)", "oklch(95% 0 0)"] },
+      "muted": { "role": "neutral", "displayName": "Muted gray", "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(38% 0 0)", "oklch(49% 0 0)", "oklch(61% 0 0)", "oklch(72% 0 0)", "oklch(84% 0 0)", "oklch(95% 0 0)"] },
+      "violet": { "role": "primary", "displayName": "Violet", "tonalRamp": ["oklch(15% 0.16 300)", "oklch(26% 0.16 300)", "oklch(38% 0.16 300)", "oklch(49% 0.16 300)", "oklch(61% 0.16 300)", "oklch(72% 0.16 300)", "oklch(84% 0.16 300)", "oklch(95% 0.16 300)"] },
+      "panel": { "role": "neutral", "displayName": "Panel gray", "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(38% 0 0)", "oklch(49% 0 0)", "oklch(61% 0 0)", "oklch(72% 0 0)", "oklch(84% 0 0)", "oklch(95% 0 0)"] },
+      "line": { "role": "neutral", "displayName": "Dark line", "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(38% 0 0)", "oklch(49% 0 0)", "oklch(61% 0 0)", "oklch(72% 0 0)", "oklch(84% 0 0)", "oklch(95% 0 0)"] },
+      "focus": { "role": "primary", "displayName": "Focus violet", "tonalRamp": ["oklch(15% 0.13 305)", "oklch(26% 0.13 305)", "oklch(38% 0.13 305)", "oklch(49% 0.13 305)", "oklch(61% 0.13 305)", "oklch(72% 0.13 305)", "oklch(84% 0.13 305)", "oklch(95% 0.13 305)"] },
+      "white": { "role": "neutral", "displayName": "White", "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(38% 0 0)", "oklch(49% 0 0)", "oklch(61% 0 0)", "oklch(72% 0 0)", "oklch(84% 0 0)", "oklch(95% 0 0)"] },
+      "primary-hover": { "role": "primary", "displayName": "Primary hover", "tonalRamp": ["oklch(15% 0.17 300)", "oklch(26% 0.17 300)", "oklch(38% 0.17 300)", "oklch(49% 0.17 300)", "oklch(61% 0.17 300)", "oklch(72% 0.17 300)", "oklch(84% 0.17 300)", "oklch(95% 0.17 300)"] },
+      "secondary-hover": { "role": "neutral", "displayName": "Secondary hover", "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(38% 0 0)", "oklch(49% 0 0)", "oklch(61% 0 0)", "oklch(72% 0 0)", "oklch(84% 0 0)", "oklch(95% 0 0)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Single page heading; mobile clamp and line-height are documented in DESIGN.md." },
+      "headline": { "displayName": "Purpose", "purpose": "Two-line project purpose, with narrower-screen metrics in DESIGN.md." },
+      "body": { "displayName": "Description", "purpose": "Muted project description." },
+      "label": { "displayName": "Control label", "purpose": "Actions, navigation, roadmap and contribution." },
+      "wordmark": { "displayName": "Wordmark", "purpose": "Text home link." },
+      "status": { "displayName": "Development status", "purpose": "Quiet development disclaimer." },
+      "license": { "displayName": "License", "purpose": "Footer license links." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "action-background", "value": "background-color 120ms ease-out", "purpose": "Action hover fills only under prefers-reduced-motion: no-preference. No transition otherwise." },
+      { "name": "action-press", "value": "brightness(0.9)", "purpose": "Immediate active-state filter; not an animated transform." }
+    ],
+    "breakpoints": [
+      { "name": "narrow-desktop-max", "value": "1000px" },
+      { "name": "stacked-max", "value": "700px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary destination",
+      "kind": "button",
+      "refersTo": "action-primary",
+      "description": "GitHub anchor, not a form button. Production tokens inherit with literal preview fallbacks.",
+      "html": "<a class=\"ds-primary\" href=\"https://github.com/kedra-engine/kedra\">GitHub</a>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border-radius:var(--corner,6px);background:var(--violet,#7950bc);color:white;font:500 15px/22px Inter,ui-sans-serif,system-ui,sans-serif;text-decoration:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.ds-primary:focus-visible{outline:2px solid var(--focus,#d1a4ff);outline-offset:4px}.ds-primary:active{filter:brightness(0.9)}@media(hover:hover){.ds-primary:hover{background:#895dcd}}@media(prefers-reduced-motion:no-preference){.ds-primary{transition:background-color 120ms ease-out}}"
+    },
+    {
+      "name": "Secondary destination",
+      "kind": "button",
+      "refersTo": "action-secondary",
+      "description": "Documentation anchor. The example destination is illustrative; production resolves the documentation root at build time.",
+      "html": "<a class=\"ds-secondary\" href=\"https://docs.example.org/en/\">Documentation</a>",
+      "css": ".ds-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border:1px solid var(--line,#1b1b1b);border-radius:var(--corner,6px);background:var(--panel,#303030);color:var(--ink,#eeeeee);font:500 15px/22px Inter,ui-sans-serif,system-ui,sans-serif;text-decoration:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.ds-secondary:focus-visible{outline:2px solid var(--focus,#d1a4ff);outline-offset:4px}.ds-secondary:active{filter:brightness(0.9)}@media(hover:hover){.ds-secondary:hover{background:#3b3b3b}}@media(prefers-reduced-motion:no-preference){.ds-secondary{transition:background-color 120ms ease-out}}"
+    },
+    {
+      "name": "Text destination",
+      "kind": "nav",
+      "refersTo": "text-link",
+      "description": "Unfilled navigation or roadmap destination; no invented active or disabled state.",
+      "html": "<a class=\"ds-text\" href=\"https://github.com/kedra-engine/kedra/blob/main/docs/roadmap.md\">Roadmap</a>",
+      "css": ".ds-text{display:inline-flex;align-items:center;justify-content:center;min-height:48px;border-radius:var(--corner,6px);color:var(--ink,#eeeeee);font:500 15px/22px Inter,ui-sans-serif,system-ui,sans-serif;text-decoration:none;text-underline-offset:4px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.ds-text:focus-visible{outline:2px solid var(--focus,#d1a4ff);outline-offset:4px}@media(hover:hover){.ds-text:hover{color:white;text-decoration:underline}}"
+    },
+    {
+      "name": "Static locale selector",
+      "kind": "nav",
+      "refersTo": "locale-link",
+      "description": "Full-page locale links, English current. No runtime toggle or stored preference.",
+      "html": "<div class=\"ds-locales\" role=\"group\" aria-label=\"Language\"><a class=\"ds-locale\" href=\"/ru/\" lang=\"ru\" hreflang=\"ru\" aria-label=\"RU — Русский\">RU</a><a class=\"ds-locale\" href=\"/\" lang=\"en\" hreflang=\"en\" aria-label=\"EN — English\" aria-current=\"page\">EN</a></div>",
+      "css": ".ds-locales{display:flex;align-items:center}.ds-locale{display:inline-flex;align-items:center;justify-content:center;min-height:48px;width:44px;border-radius:var(--corner,6px);color:var(--muted,#afafaf);font:500 15px/22px Inter,ui-sans-serif,system-ui,sans-serif;text-decoration:none;text-underline-offset:4px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.ds-locale[aria-current=page]{color:var(--ink,#eeeeee);text-decoration:underline}.ds-locale:focus-visible{outline:2px solid var(--focus,#d1a4ff);outline-offset:4px}@media(hover:hover){.ds-locale:hover{color:white;text-decoration:underline}}"
+    },
+    {
+      "name": "Keyboard skip link",
+      "kind": "custom",
+      "refersTo": "skip-link",
+      "description": "Focus reveals the link immediately. Preview wrapper substitutes for the production page positioning context; no minimum height is added.",
+      "html": "<div class=\"ds-skip-frame\"><a class=\"ds-skip\" href=\"#ds-main\">Skip to content</a><main class=\"ds-main\" id=\"ds-main\" tabindex=\"-1\">Keyboard entry target</main></div>",
+      "css": ".ds-skip-frame{position:relative;min-height:100px;overflow:hidden;background:var(--paper,#242424);color:var(--muted,#afafaf);font:400 16px Inter,ui-sans-serif,system-ui,sans-serif}.ds-main{padding:64px 24px 16px}.ds-skip{position:absolute;z-index:1;top:8px;left:24px;padding:12px 16px;background:var(--ink,#eeeeee);color:var(--paper,#242424);border-radius:var(--corner,6px);text-decoration:none;transform:translateY(-200%);touch-action:manipulation;-webkit-tap-highlight-color:transparent}.ds-skip:focus{transform:translateY(0)}.ds-skip:focus-visible{outline:2px solid var(--focus,#d1a4ff);outline-offset:4px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Charcoal, Inter and the T3 bird",
+    "overview": "This system covers only `website/`, not the native Kedra editor or the separate documentation site. The owner-pinned Figma file `2EZlK40cfx2Mub7GmDyI70`, frame `384:1497`, supplies its identity: quiet charcoal, direct typography and a faceted bird. The implemented rules are grounded in `src/style.css`, both static HTML pages and `vite.config.mjs`; the tokens above describe that implementation.\n\nThe flat ground and generous empty space leave the artwork as the expressive material. Violet marks the primary destination; restrained secondary controls keep the hierarchy clear without introducing decorative containers.",
+    "keyCharacteristics": [
+      "Charcoal ground, near-white hierarchy and muted supporting copy.",
+      "Local Inter in three real weights, without synthetic faces.",
+      "Flat controls and the unchanged, full-color T3 bird.",
+      "Static English and Russian pages with the same visual system."
+    ],
+    "rules": [{ "name": "The Flat Interface Rule", "body": "Keep interface controls flat; preserve dimensional facets inside the original bird artwork.", "section": "elevation" }],
+    "dos": [
+      "**Do** keep these rules scoped to the standalone landing, not native UI or the manual.",
+      "**Do** preserve the original bird export, font sources and their provenance/notices.",
+      "**Do** keep every destination reachable in both static locales and narrow layouts.",
+      "**Do** retain visible keyboard focus and immediate reduced-motion state changes."
+    ],
+    "donts": [
+      "**Don't** replace the pinned Inter face or redraw the bird as a generic icon.",
+      "**Don't** add runtime JavaScript or merge the documentation build into this landing.",
+      "**Don't** add unsupported download claims, statistics or extra marketing sections.",
+      "**Don't** treat project licenses or owner selection as independent artwork clearance."
+    ]
+  }
+}

@@ -1,11 +1,11 @@
 # ADR 0013: Asset Browser panel
 
 Status: full design proposed for owner review. A first read-only navigation slice
-uses the existing Assets docking identity; [current behavior and limits](../ui/asset-browser.md)
+uses the existing Assets docking identity;
+[current behavior and limits](../site/en/contributing/contracts/editor/asset-browser.md)
 include lazy folders, Unicode search, virtualized grid/list and read-only
-source-document Open. Complete visual/platform acceptance remains incomplete.
-This ADR is not a complete asset
-authoring/import toolset.
+source-document Open. Visual and platform acceptance remain incomplete.
+The proposed design does not cover a complete asset authoring/import toolset.
 
 ## Purpose and module ownership
 
@@ -91,7 +91,8 @@ recursive search or exhaustive results from a bounded directory sample.
 
 ## Figma and scope
 
-Use the [UI-kit](../ui/figma.md) Asset Explorer composition `163:37852` within flat
+Use the [UI-kit](../site/en/contributing/contracts/ui/design-provenance.md)
+Asset Explorer composition `163:37852` within flat
 toolbar guidance `163:37771`: folder tree, independent scroll regions, breadcrumb,
 folder-scoped search and source-location status. Retain common dock headers and
 flat contiguous toolbar controls. Grid/list presentation shares one browser model.
@@ -118,4 +119,4 @@ and Open. No browse/open failure may write sources or start project code.
 Native tests exercise keyboard/double-click, scroll/filter retention, dock move,
 float/redock/hide/reopen and focus ownership. Verify real source identity reaches
 the document coordinator exactly once per activation. Run repository checks and
-retain native evidence under `target/`; full asset management is not this slice.
+retain native evidence under `target/`; full asset management is outside this panel's scope.

@@ -14,7 +14,8 @@ ambient illumination; an assigned environment supplies its authored values.
 Direct model inspection loads and compiles
 `editor://scenes/model-preview.scene.ron`, whose environment reference and light
 nodes own the inspection lighting. Supported rendering and remaining limitations
-are documented in the [current profile](../ui/scene-view.md).
+are documented in the
+[current profile](../site/en/contributing/contracts/editor/scene-view.md).
 
 A project needs reusable environment settings, editable scene assignments and a
 predictable model-preview stage without losing ordinary Bevy components, systems,
