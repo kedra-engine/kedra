@@ -162,6 +162,7 @@ defines CI publication and its verification. Documentation maintainers should al
 - [Application automation and native UI checks](docs/site/en/contributing/contracts/automation.md)
 - [Quality gates](docs/quality.md) and [repository administration](docs/hosting.md)
 - [Local validation and GitHub CI](docs/ci.md)
+- [Crates.io library publication](docs/crates-publication.md)
 - [AI contributor instructions](AGENTS.md)
 - [Security](SECURITY.md), [governance](GOVERNANCE.md), [conduct](CODE_OF_CONDUCT.md)
 
