@@ -87,7 +87,8 @@ hot application to the running shell is promised.
 
 ## Design and verification
 
-The [UI-kit](../ui/figma.md) has document docking and a 3D viewport illustration;
+The [UI-kit](../site/en/contributing/contracts/ui/design-provenance.md)
+has document docking and a 3D viewport illustration;
 that illustration is not a specification for this UI-document preview. Review an
 actual own-source preview composition, revision/readiness indicators, passive input
 boundary and narrow/floating behavior before implementing its presentation.

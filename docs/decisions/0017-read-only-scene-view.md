@@ -1,7 +1,8 @@
 # ADR 0017: Read-only Scene View and editor camera navigation
 
 Status: direction agreed with the owner; the initial
-[read-only projection profile](../ui/scene-view.md) implements resource binding,
+[read-only projection profile](../site/en/contributing/contracts/editor/scene-view.md)
+implements resource binding,
 supported spatial/UI rendering and PNG/static-GLB inspection. Spatial camera
 navigation and scoped opaque-mesh selection are implemented; full native input
 acceptance remains a gate before declaring the complete read-only slice accepted.
@@ -55,8 +56,8 @@ is not required for this slice.
 Use existing composition, compilation, component policies and instance mappings.
 Admission validates source graphs, not runtime resource readiness. The initial
 profile registers the concrete spatial/UI schemas documented in the projection
-profile. Register only the concrete,
-side-effect-free render data needed by supported fixtures through existing policies.
+profile. Register only the concrete, side-effect-free render data needed by supported
+fixtures through existing policies.
 Native renderer components with hooks/required components must use reviewed
 presentation hydration, not bypass source component policy. Unknown types remain
 explicit admission failures; no silent component dropping or name-based inference.
@@ -119,7 +120,8 @@ Current bindings: RMB hold plus WASD/QE for flight, Shift for faster movement,
 wheel for flight speed while captured; Alt+LMB for orbit, MMB for pan, wheel for
 dolly/orthographic zoom otherwise. `F` frames selection; explicit toolbar/menu
 actions expose Frame All, standard views and projection without requiring a
-numeric keypad. The [current control profile](../ui/scene-view-controls-design.md)
+numeric keypad. The
+[current control profile](../site/en/contributing/contracts/editor/scene-view-controls.md)
 uses compact 22px controls, a tool rail and orientation navigation; native
 input/frame acceptance remains separate from implemented bindings.
 
@@ -191,9 +193,9 @@ mesh casting, retained gizmos and infinite grid. Stock FreeCamera's global input
 cursor ownership is unsuitable for retained multi-window views; a small leased
 flight adapter uses native Transform operations instead, with explicit per-view/
 window input ownership. See the
-[projection profile](../ui/scene-view.md#reuse-decisions) for reuse decisions
-and supported limits. This avoids a second editor/input dependency stack and
-adds no custom mesh-intersection implementation or grid shader.
+[projection profile](../site/en/contributing/contracts/editor/scene-view.md#lighting-navigation-and-input-geometry)
+for reuse decisions and supported limits. This avoids a second editor/input
+dependency stack and adds no custom mesh-intersection implementation or grid shader.
 
 ## Delivery and acceptance
 

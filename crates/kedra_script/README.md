@@ -1,7 +1,7 @@
 # kedra_script
 
-Shared runtime-layer **interpreted Luau** over BMS 0.23.0 and the workspace's pinned
-Bevy. Games and tools install the same `LuauPlugin` and provide their own narrow
+This runtime-layer crate runs **interpreted Luau** using BMS 0.23.0 and the workspace's
+pinned Bevy. Games and tools install the same `LuauPlugin` and provide their own narrow
 capabilities. The crate has no editor, authoring, importer or QA dependency.
 The API is unstable. Project-code discovery and automatic loading are not implemented.
 
@@ -254,10 +254,11 @@ and panics are not preempted. A hung process needs an external watchdog. Play
 isolation, browser/mobile certification, debugging, generated bindings and broad
 gameplay subsystem APIs remain outside this API.
 
-Contracts live in `tests/contracts/` and use
-real Bevy schedules/VMs; dangerous probes have an external process deadline. Scoped
+Contracts live in `tests/contracts/` and use real Bevy schedules/VMs; dangerous probes
+have an external process deadline. Scoped
 game/tool probes are test-owned, not the editor's document authority. Native input
-and renderer acceptance remain separate; see [testing](../../docs/testing.md),
+and renderer acceptance remain separate; see
+[testing](../../docs/site/en/contributing/contracts/testing.md),
 [ADR 0029](../../docs/decisions/0029-luau-runtime-evaluation.md),
 [ADR 0032](../../docs/decisions/0032-script-entrypoints-and-modules.md) and
-[automation](../../docs/automation.md).
+[automation](../../docs/site/en/contributing/contracts/automation.md).

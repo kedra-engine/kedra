@@ -59,4 +59,4 @@ Physical input, CSS performance under representative HUD/editor load, cold
 first-visible-frame latency, Retina/mixed-DPI behavior and platform-specific pixel
 fidelity require native evidence. Bevy initialization precedes the first useful
 window; renderer readback does not certify OS presentation time.
-See [startup](../startup.md).
+See [startup](../site/en/contributing/contracts/startup.md).

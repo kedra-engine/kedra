@@ -1,6 +1,6 @@
 --!nolint FunctionUnused
 -- The host invokes run; native controllers own refresh and retained presentation.
-function run(ctx: KedraAppContext, args)
+function run(ctx: AppContext, args)
     local app = ctx.app
     for _, id in ipairs({args.boolean, args.gain}) do
         assert(type(id) == "string" and string.sub(id, 1, 17) == "fixture/settings/",

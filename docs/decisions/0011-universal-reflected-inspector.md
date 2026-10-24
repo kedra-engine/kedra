@@ -2,7 +2,8 @@
 
 Status: proposed for owner review. This refines the inspector boundary in
 [ADR 0009](0009-property-editing-and-inspector.md). The existing `kedra_inspector`
-crate and editor panel provide the [read-only profile](../ui/inspector.md).
+crate and editor panel provide the
+[read-only profile](../site/en/contributing/contracts/editor/inspector.md).
 Full editable bindings, source settlement and additional component-authoring
 capabilities remain proposed; read-only implementation does not accept that plan.
 

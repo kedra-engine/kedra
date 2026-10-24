@@ -5,8 +5,8 @@ Status: accepted by owner direction.
 ## Decision
 
 Verify the immutable editor delivery and load the authored editor catalog
-concurrently, without a
-native startup window, GPU readback barrier or decorative image dependencies.
+concurrently, without a native startup window, GPU readback barrier or decorative
+image dependencies.
 Resolve recent-project history and an optional CLI project before choosing the
 first real native surface. Integrity/source errors remain terminal diagnostics;
 there is no fallback UI or embedded substitute asset set.

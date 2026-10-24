@@ -1,9 +1,9 @@
 -- Host binding factory keeps the private native adapter out of the public context.
 -- This code executes in the application, not in the external QA process.
-return function(native: KedraNativeApp)
+return function(native: NativeApp)
 local api = {window = native.window, node = native.node}
 
-local function await_receipt(receipt: KedraReceipt)
+local function await_receipt(receipt: Receipt)
     local current = receipt
     wait.until_true("operation " .. receipt.id, function()
         current = native.receipt({id = receipt.id})
@@ -14,14 +14,14 @@ local function await_receipt(receipt: KedraReceipt)
     return current.detail
 end
 
-function api.input(window: string, input: KedraInput): KedraDelivered
-    return await_receipt(native.submit("app.input", {window = window, input = input})) :: KedraDelivered
+function api.input(window: string, input: Input): Delivered
+    return await_receipt(native.submit("app.input", {window = window, input = input})) :: Delivered
 end
 function api.resize(window: string, width: number, height: number, dpr)
-    return await_receipt(native.submit("app.resize", {window = window, width = width, height = height, dpr = dpr})) :: KedraDelivered
+    return await_receipt(native.submit("app.resize", {window = window, width = width, height = height, dpr = dpr})) :: Delivered
 end
 function api.capture(window: string)
-    return await_receipt(native.submit("app.capture", {window = window})) :: KedraFrame
+    return await_receipt(native.submit("app.capture", {window = window})) :: Frame
 end
 function api.wait_node(id: string)
     local node

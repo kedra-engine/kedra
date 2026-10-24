@@ -1,6 +1,6 @@
 # kedra_editor
 
-Editor-layer project startup feature and composition. `domain` contains ordinary
+This editor-layer crate composes project startup and editor features. `domain` contains ordinary
 Rust models, drafts and validated lifecycle transitions without ECS handles.
 `model` is the thin Bevy resource/state adapter; `actions`, `jobs` and `screens`
 own semantic input, effects and retained views respectively.
@@ -56,10 +56,11 @@ clears only candidate catalog/workspace/value bindings and restores motion
 configuration; the prior primary surface and focus remain owned by desktop.
 Native acknowledgment, rendered frames and interaction acceptance remain separate.
 
-See [startup](../../docs/startup.md), [docking](../../docs/ui/docking-implementation.md)
-and [native tests](../../docs/ui/docking-tests.md).
-See [Scene View](../../docs/ui/scene-view.md) for ownership, supported data,
-limits, explicit asset binding and native acceptance commands.
+See [startup](../../docs/site/en/contributing/contracts/startup.md),
+[docking](../../docs/site/en/contributing/contracts/ui/docking.md)
+and [native tests](../../docs/site/en/contributing/contracts/ui/native-docking-tests.md).
+See [Scene View](../../docs/site/en/contributing/contracts/editor/scene-view.md)
+for ownership, supported data, limits, explicit asset binding and native acceptance commands.
 
 ## Contract tests
 
@@ -67,4 +68,5 @@ limits, explicit asset binding and native acceptance commands.
 sources, CSS/design rules, icon density metadata and reference integrity. These
 are source/CPU contracts, not screenshot or physical-input acceptance. Private
 feature tests use local support fixtures rather than other suites; the
-[testing guide](../../docs/testing.md) maps owners, placement and native routes.
+[testing guide](../../docs/site/en/contributing/contracts/testing.md)
+maps owners, placement and native routes.

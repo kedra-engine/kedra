@@ -1,8 +1,9 @@
 # kedra_ui
 
-Runtime-layer authored UI hydration, native CSS styling, stable observation IDs
-and renderer-derived geometry. Shared by editor and independent game-style hosts;
-no dependency on editor, importer or authoring writer. Bevy owns layout, widgets,
+This runtime-layer crate provides authored UI hydration, native CSS styling, stable
+observation IDs and renderer-derived geometry. The editor and independent game-style
+hosts share it; it has no dependency on editor, importer or authoring writer.
+Bevy owns layout, widgets,
 text editing and rendering; pinned Bevy Flair owns CSS parsing and cascade.
 
 Install `styles::StyleAssetsPlugin` after AssetPlugin for headless CSS assets and
@@ -92,5 +93,5 @@ delivery publication. Dynamic variable evaluation, native input, performance and
 frame fidelity require state-specific verification. No filesystem hot-reload or
 transactional live stylesheet replacement protocol is claimed by this integration.
 
-See [authored scenes](../../docs/scenes.md) and
+See [authored scenes](../../docs/site/en/contributing/contracts/scene-runtime.md) and
 [ADR 0006](../../docs/decisions/0006-native-css-styling.md).

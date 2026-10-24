@@ -76,7 +76,8 @@ being tested, read personal preferences or write canonical project sources.
 
 ## Maintenance and verification
 
-The [testing guide](../testing.md) is the single navigation entry point: ownership,
+The [testing guide](../site/en/contributing/contracts/testing.md)
+is the single navigation entry point: ownership,
 placement, execution routes and evidence limits. It maps capabilities to suites,
 not every individual test. AI contributors follow the same contract in `AGENTS.md`.
 

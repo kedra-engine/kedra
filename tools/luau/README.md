@@ -17,11 +17,11 @@ or installed extensions are changed automatically.
 | --- | --- |
 | `crates/kedra_script/types/runtime.d.luau` | `runtime`, `json`, `wait`, JSON-domain types |
 | `crates/kedra_script_bevy/types/bevy.d.luau` | Opt-in owned-object Transform/UI contexts |
-| `crates/kedra_app/types/application.d.luau` | `KedraAppContext`, `ctx.app`, input variants/keys, nodes, renderer frames |
-| `crates/kedra_editor/types/editor.d.luau` | `KedraEditorContext` / `KedraDockContext`, editor/workspace observations |
-| `crates/kedra_script/tests/scopes/types/game.d.luau` | Scope regression's test-owned `KedraTestGameContext` and global markers |
+| `crates/kedra_app/types/application.d.luau` | `AppContext`, `ctx.app`, input variants/keys, nodes, renderer frames |
+| `crates/kedra_editor/types/editor.d.luau` | `EditorContext` / `DockContext`, editor/workspace observations |
+| `crates/kedra_script/tests/scopes/types/game.d.luau` | Scope regression's test-owned `TestGameContext` and global markers |
 | `crates/kedra_script/tests/scopes/types/game-only.d.luau` | Game-only API absence probes |
-| `crates/kedra_script/tests/scopes/types/tool.d.luau` | Scope regression's test-owned `KedraTestToolContext` |
+| `crates/kedra_script/tests/scopes/types/tool.d.luau` | Scope regression's test-owned `TestToolContext` |
 
 Default repository editing uses the production editor API superset. Types do not
 grant runtime permissions. For a narrower authoring scope, open
@@ -37,10 +37,10 @@ enforce array lengths, positive durations, lossless integer bounds or lifecycle
 readiness; runtime checks remain authoritative.
 
 Serialized null is `json.null`, not nil. Missing `ctx.app.node` targets return nil, while
-nullable record fields use `KedraNullable<T>`. Narrow a nullable record before access:
+nullable record fields use `Nullable<T>`. Narrow a nullable record before access:
 
 ```luau
-function run(ctx: KedraEditorContext, args)
+function run(ctx: EditorContext, args)
     local entry = ctx.editor.state().entry
     if type(entry) == "table" then
         print(entry.name)
@@ -48,7 +48,7 @@ function run(ctx: KedraEditorContext, args)
 end
 ```
 
-Bootstrap-only `KedraNativeApp` describes the internal adapter captured by
+Bootstrap-only `NativeApp` describes the internal adapter captured by
 `native.luau`; submit/receipt are not public ctx.app methods. The
 definitions describe current bindings, not an SDK for arbitrary reflected Bevy
 operations, filesystem access, Save or script evaluation. Keep declaration changes

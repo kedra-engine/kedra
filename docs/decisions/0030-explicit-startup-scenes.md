@@ -103,12 +103,11 @@ prefab resolution checks loaded-catalogue membership and equality with the publi
 source revision before retrieving compiled content. Asset paths are source-qualified
 logical locators, not hardcoded document UUID lookup or absolute filesystem paths.
 
-The common runner's explicitly concrete `native-switch` and `native-projection`
-scenarios supervise that executable. Their
-`--manifest-path` locates a complete per-scenario project copy and its
-`kedra-test-project` ordinary package/bin, not an
-arbitrary application contract. Generic Cargo discovery, authenticated named-program
-transport, process supervision and evidence validation remain in `kedra_test`.
+The common runner's application-specific `native-switch` and `native-projection`
+scenarios supervise that executable. Their `--manifest-path` locates a complete
+per-scenario project copy and its ordinary `kedra-test-project` package/bin; it does
+not define an arbitrary application contract. Generic Cargo discovery, authenticated
+named-program transport, process supervision and evidence validation remain in `kedra_test`.
 Other consumers supply ordinary Rust verification, not a universal scenario DSL.
 The switch scenario executes ordinary Luau, while Rust validates its observations,
 renderer receipts and two independent process lifecycles. Neither host imports editor,

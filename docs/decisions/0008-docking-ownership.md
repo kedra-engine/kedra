@@ -68,4 +68,5 @@ Current Winit Wayland support lacks portable global desktop coordinates. Without
 global positions or destination-local events, cross-host dragging must report its
 limitation instead of silently changing the operation. Injected pointer tests do
 not establish physical OS capture, mixed-DPI behavior or platform certification.
-See [docking](../ui/docking-implementation.md) and [tests](../ui/docking-tests.md).
+See [docking](../site/en/contributing/contracts/ui/docking.md) and
+[tests](../site/en/contributing/contracts/ui/native-docking-tests.md).

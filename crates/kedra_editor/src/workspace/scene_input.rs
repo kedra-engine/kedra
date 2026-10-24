@@ -48,6 +48,107 @@ struct Click {
 #[cfg(test)]
 mod ownership_tests {
     use super::*;
+    #[cfg(debug_assertions)]
+    #[test]
+    fn eligible_viewport_window_identities_remain_strings_through_workspace_luau()
+    -> Result<(), Box<dyn std::error::Error>> {
+        use kedra_app::RemoteAppExt;
+        let (mut app, _, view_id) = super::super::test_support::setup()?;
+        app.add_plugins(kedra_script::LuauPlugin)
+            .init_resource::<kedra_app::CommandCatalog>()
+            .insert_resource(bevy_remote::RemoteMethods::new());
+        app.register_remote(
+            "editor.workspace",
+            "Workspace observation",
+            serde_json::json!({}),
+            crate::remote::workspace_state,
+        );
+        app.finish();
+        app.cleanup();
+        let world = app.world_mut();
+        let view = crate::scene_view::test_support::ready(world)?;
+        let viewport = view.focus();
+        super::super::test_support::box_at(world, viewport, Vec2::splat(100.), Vec2::splat(200.));
+        world
+            .entity_mut(viewport)
+            .insert((Visibility::Inherited, InheritedVisibility::VISIBLE));
+        let camera = view.navigation(world).ok_or("Camera missing")?;
+        world
+            .get_mut::<Camera>(camera)
+            .ok_or("Camera missing")?
+            .is_active = true;
+        let window = world.resource::<EditorWorkspace>().window;
+        world
+            .get_mut::<Window>(window)
+            .ok_or("Window missing")?
+            .focused = true;
+        let original = {
+            let mut state = world.resource_mut::<EditorWorkspace>();
+            state.rendered = Some(state.layout.revision());
+            state.panels.scenes.insert(view_id, view);
+            state.layout.snapshot().clone()
+        };
+        *world.resource_mut::<input::CursorSample>() = input::CursorSample {
+            window: Some(window),
+            position: Vec2::splat(100.),
+        };
+        world
+            .resource_mut::<InputFocus>()
+            .set(viewport, FocusCause::Pressed);
+        // Eligibility and pointer-hit are real owner predicates over synthetic
+        // geometry. No live entity generation is forged to bypass those checks.
+        assert!(under_pointer(world, world.resource::<EditorWorkspace>(), window).is_some());
+        let raw = crate::remote::workspace_state(In(None), world).map_err(|e| e.message)?;
+        assert_eq!(
+            raw["navigation_input"]["viewports"][0]["eligible_windows"],
+            serde_json::json!([window.to_bits().to_string()])
+        );
+        let run = kedra_script::start(
+            world,
+            kedra_script::Program::sequence(
+                "workspace observation",
+                "workspace.luau",
+                "function run(ctx) return ctx.workspace() end",
+                |lua, scope, ctx| {
+                    ctx.set(
+                        "workspace",
+                        kedra_app::scripting::bind(lua, scope, "editor.workspace", false)?,
+                    )
+                },
+            ),
+            serde_json::Value::Null,
+        )?;
+        app.update();
+        let Some(kedra_script::Status::Completed(value)) = kedra_script::status(app.world(), run)
+        else {
+            return Err(format!(
+                "Expected workspace observation, got {:?}",
+                kedra_script::status(app.world(), run)
+            )
+            .into());
+        };
+        let navigation = &value["navigation_input"];
+        let expected = serde_json::json!([window.to_bits().to_string()]);
+        assert_eq!(navigation["viewports"][0]["eligible_windows"], expected);
+        assert_eq!(navigation["viewports"][0]["pointer_windows"], expected);
+        assert_eq!(
+            serde_json::from_value::<[f64; 4]>(navigation["viewports"][0]["rect"].clone())?,
+            [0., 0., 200., 200.]
+        );
+        assert!(navigation["revision"].is_number());
+        assert!(navigation["menu_nodes"].is_number());
+        assert_eq!(value["layout"], serde_json::to_value(&original)?);
+        assert!(app.world().resource::<EditorWorkspace>().layout.snapshot() == &original);
+        assert_eq!(app.world().resource::<InputFocus>().get(), Some(viewport));
+        assert!(
+            app.world()
+                .get::<Window>(window)
+                .ok_or("Window missing")?
+                .focused
+        );
+        Ok(())
+    }
+
     #[test]
     fn escape_and_axis_release_in_one_update_cancel_instead_of_snapping()
     -> Result<(), Box<dyn std::error::Error>> {
@@ -238,7 +339,7 @@ pub(super) fn install(app: &mut App) {
 }
 #[cfg(debug_assertions)]
 pub(super) fn diagnostics(world: &World, state: &EditorWorkspace) -> serde_json::Value {
-    serde_json::json!({"gesture":state.gesture.is_some(),"pending_host":state.pending.is_some(),"menu_nodes":state.menu.len(),"measuring":state.measurements.is_some(),"rendered":state.rendered,"revision":state.layout.revision(),"capture":world.get_resource::<Input>().and_then(|input|input.capture.as_ref()).map(|capture|serde_json::json!({"view":capture.view,"window":capture.window.to_bits()})),"viewports":state.panels.scenes.iter().map(|(view,scene)|serde_json::json!({"view":view,"rect":scene.area(world).map(|rect|[rect.min.x,rect.min.y,rect.max.x,rect.max.y]),"eligible_windows":state.surfaces.values().filter_map(|surface|eligible(world,state,*view,surface.window).map(|_|surface.window.to_bits())).collect::<Vec<_>>(),"pointer_windows":state.surfaces.values().filter_map(|surface|under_pointer(world,state,surface.window).filter(|(id,..)|id==view).map(|_|surface.window.to_bits())).collect::<Vec<_>>()})).collect::<Vec<_>>()})
+    serde_json::json!({"gesture":state.gesture.is_some(),"pending_host":state.pending.is_some(),"menu_nodes":state.menu.len(),"measuring":state.measurements.is_some(),"rendered":state.rendered,"revision":state.layout.revision(),"capture":world.get_resource::<Input>().and_then(|input|input.capture.as_ref()).map(|capture|serde_json::json!({"view":capture.view,"window":capture.window.to_bits()})),"viewports":state.panels.scenes.iter().map(|(view,scene)|serde_json::json!({"view":view,"rect":scene.area(world).map(|rect|[rect.min.x,rect.min.y,rect.max.x,rect.max.y]),"eligible_windows":state.surfaces.values().filter_map(|surface|eligible(world,state,*view,surface.window).map(|_|surface.window.to_bits().to_string())).collect::<Vec<_>>(),"pointer_windows":state.surfaces.values().filter_map(|surface|under_pointer(world,state,surface.window).filter(|(id,..)|id==view).map(|_|surface.window.to_bits().to_string())).collect::<Vec<_>>()})).collect::<Vec<_>>()})
 }
 fn eligible(
     world: &World,

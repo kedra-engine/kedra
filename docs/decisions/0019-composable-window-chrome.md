@@ -4,9 +4,9 @@ Status: architecture in use; native platform acceptance remains bounded separate
 
 ## Context
 
-The accepted direction requires one reusable window-header mechanism with an
-integration API. Screens must not each implement caption controls, drag regions
-and window-state synchronization. Figma defines three compositions of that
+Window headers need one reusable mechanism with an integration API. Screens must
+not each implement caption controls, drag regions and window-state synchronization.
+Figma defines three compositions of that
 mechanism, not three separate implementations.
 
 The editor integrates toolbar and floating dock content through shared header
@@ -68,9 +68,9 @@ operation with full control-region priority and window capability checks.
 ### Compositions
 
 - Startup/general windows: one centered Caption row, with platform controls and
-  symmetric title balance. Implementation choice: Loading, including
-  failure/recovery presentation, are fixed-size and close-only; Projects and editor
-  hosts remain resizable. Native capabilities and authored controls agree.
+  symmetric title balance. Loading windows, including failure/recovery presentation,
+  are fixed-size and close-only; Projects and editor hosts remain resizable.
+  Native capabilities and authored controls agree.
 - Main Editor: one Editor toolbar row with project, transport and global command
   slots; no additional generic title row or demonstration workspace toolbar.
 - Floating host whose topology root is one tab group: one Floating row containing
@@ -121,7 +121,7 @@ sources are `222:51320` and `222:51364`. Caption references are `83:5309` and
 
 ### Scope limits
 
-This work does not implement gameplay Play, source Save, project Build, global
+Window chrome does not implement gameplay Play, source Save, project Build, global
 search or editable Inspector. Their toolbar slots may appear disabled with honest
 unavailable descriptions. Existing panel/reopen and reset-layout operations remain
 reachable through the toolbar menus. No inert control appears enabled.

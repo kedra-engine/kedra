@@ -37,7 +37,8 @@ credential file and grants application-user capabilities, not OS isolation.
 Keep credentials out of reports and shared artifacts; on Windows the containing
 directory needs an appropriate ACL. Release excludes the transport and diagnostic
 input/capture API. Expanded parser, scripting or network authority requires an
-explicit threat model and tests. See [automation](docs/automation.md) and the
+explicit threat model and tests. See
+[automation](docs/site/en/contributing/contracts/automation.md) and the
 [Luau runtime contract](crates/kedra_script/README.md).
 
 Dependency advisories and secret scanning are useful detection tools, not a

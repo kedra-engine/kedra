@@ -1,47 +1,48 @@
 -- Kedra runtime globals. Editor/application capabilities are separate definitions.
 -- JSON null is a light-userdata sentinel, NOT Lua nil or an absent table field.
-declare extern type KedraJsonNull with end
-export type KedraJsonValue = boolean | number | string | KedraJsonNull
-    | {KedraJsonValue} | {[string]: KedraJsonValue}
-export type KedraNullable<T> = T | KedraJsonNull
-declare extern type KedraEntityHandle with end
-export type KedraErrorKind = "invalid_input" | "capacity" | "load" | "runtime"
+declare extern type JsonNull with end
+export type JsonValue = boolean | number | string | JsonNull
+    | {JsonValue} | {[string]: JsonValue}
+export type Nullable<T> = T | JsonNull
+declare extern type EntityHandle with end
+export type ErrorKind = "invalid_input" | "capacity" | "load" | "runtime"
     | "budget" | "permission" | "stale"
-export type KedraScriptError = {kind: KedraErrorKind, message: string,
-    path: KedraNullable<string>, phase: KedraNullable<string>}
-export type KedraLog = {
-    info: (message: string, fields: KedraJsonValue?) -> (),
-    warn: (message: string, fields: KedraJsonValue?) -> (),
-    error: (message: string, fields: KedraJsonValue?) -> (),
+export type ScriptError = {kind: ErrorKind, message: string,
+    path: Nullable<string>, phase: Nullable<string>}
+export type Log = {
+    info: (message: string, fields: JsonValue?) -> (),
+    warn: (message: string, fields: JsonValue?) -> (),
+    error: (message: string, fields: JsonValue?) -> (),
 }
-export type KedraRuntimeContext = {
-    entity: KedraEntityHandle?, params: {[string]: KedraJsonValue}, log: KedraLog,
+export type RuntimeContext = {
+    entity: EntityHandle?, params: {[string]: JsonValue}, log: Log,
 }
-declare extern type KedraSequenceHandle with end
-export type KedraSequenceOutcome = {state: "queued" | "running" | "cancelled"}
-    | {state: "completed", result: KedraJsonValue}
-    | {state: "failed", error: KedraScriptError}
-export type KedraConnection = {disconnect: (self: KedraConnection) -> ()}
-export type KedraBehaviorContext = {
-    entity: KedraEntityHandle, params: {[string]: KedraJsonValue}, log: KedraLog,
+declare extern type SequenceHandle with end
+export type SequenceOutcome = {state: "queued" | "running" | "cancelled"}
+    | {state: "completed", result: JsonValue}
+    | {state: "failed", error: ScriptError}
+export type Connection = {disconnect: (self: Connection) -> ()}
+export type BehaviorContext = {
+    -- Only attach supplies an entity; start also supports unattached Behaviors.
+    entity: EntityHandle?, params: {[string]: JsonValue}, log: Log,
     sequences: {
-        start: (path: string, args: KedraJsonValue?) -> KedraSequenceHandle,
-        status: (handle: KedraSequenceHandle) -> KedraSequenceOutcome,
-        cancel: (handle: KedraSequenceHandle) -> (),
+        start: (path: string, args: JsonValue?) -> SequenceHandle,
+        status: (handle: SequenceHandle) -> SequenceOutcome,
+        cancel: (handle: SequenceHandle) -> (),
     },
     events: {
-        on: (target: KedraEntityHandle, name: string,
-            callback: (payload: KedraJsonValue) -> ()) -> KedraConnection,
+        on: (target: EntityHandle, name: string,
+            callback: (payload: JsonValue) -> ()) -> Connection,
     },
 }
-export type KedraStopReason = "cancelled" | "retired" | "replaced"
+export type StopReason = "cancelled" | "retired" | "replaced"
     | "despawned" | "failed" | "budget_exhausted"
 
 declare runtime: {
     -- Monotonic milliseconds since this run was admitted, including suspension.
     elapsed_ms: () -> number,
 }
-declare json: {null: KedraJsonNull}
+declare json: {null: JsonNull}
 declare wait: {
     -- Positive integral future application updates, not rendered frames.
     updates: (count: number) -> (),

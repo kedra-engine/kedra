@@ -2,7 +2,8 @@
 
 Status: full editable interaction proposed for owner review under
 [ADR 0009](0009-property-editing-and-inspector.md). The shared field module already
-supplies retained read-only presentations for the [Inspector](../ui/inspector.md);
+supplies retained read-only presentations for the
+[Inspector](../site/en/contributing/contracts/editor/inspector.md);
 that subset does not implement this editable acceptance/history protocol.
 Native text history, rejection feedback and accessibility have unresolved upstream
 or integration requirements. Do not claim the field ready by omitting them.
@@ -12,8 +13,8 @@ or integration requirements. Do not claim the field ready by omitting them.
 Build the editable single-line string contract in the existing `kedra_ui::fields`
 module, with an independent native field consumer before editable source binding.
 The source-bound read-only Inspector already consumes its presentation controls.
-Do not create a text-field crate, inspector framework
-or runtime-to-authoring dependency for this slice.
+Do not create a text-field crate, inspector framework or runtime-to-authoring
+dependency for the editable field.
 
 The native widget owns Unicode editing, caret/selection, composition and scrolling.
 An ordinary Rust interaction model owns acceptance state, interaction generation
@@ -25,7 +26,7 @@ or prefab policy belong to the reusable field.
 This field is not a code editor, multiline editor, password input, search control
 or renaming workflow. Those may compose the same native input and shared protocol,
 but their acceptance, normalization and command policies need separate decisions.
-Do not automatically change existing startup-form acceptance policy in this slice.
+Do not automatically change existing startup-form acceptance policy when adding this field.
 
 ## Pinned native capabilities and gaps
 
@@ -240,7 +241,8 @@ or a narrowly scoped native-fit fixture.
 ### 7. Visual and accessible presentation
 
 Use existing TextField masters `49:536` and examples `51:1497` from the
-[UI-kit source map](../ui/figma.md). The original example is 172 by 26 logical units;
+[UI-kit source map](../site/en/contributing/contracts/ui/design-provenance.md).
+The original example is 172 by 26 logical units;
 current compact presentation uses the shared 22px control-height token. Width
 participates in native layout rather than being fixed in all uses.
 Use CSS tokens for typography, surfaces, borders and state styling. Do not bake

@@ -98,4 +98,5 @@ Budget/cycle probes use an external killable process deadline. luau-lsp is check
 through real invocations, not a mandatory private CI service or parallel QA framework.
 
 See the [runtime contract](../../crates/kedra_script/README.md),
-[editing guide](../../tools/luau/README.md) and [testing guide](../testing.md).
+[editing guide](../../tools/luau/README.md) and
+[testing guide](../site/en/contributing/contracts/testing.md).

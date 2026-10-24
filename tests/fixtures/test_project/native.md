@@ -46,11 +46,11 @@ not process-local entity handles.
 
 ## Concrete external verification
 
-`native-switch` and `native-projection` are explicitly concrete `kedra-test-project`
+`native-switch` and `native-projection` are concrete `kedra-test-project`
 package/bin contracts, not arbitrary-manifest runners. The manifest locates the
 ordinary game executable in a complete project copy; other applications use reusable
-`kedra_test` Cargo/process,
-authenticated named-program transport and evidence APIs with their own Rust verifier.
+`kedra_test` Cargo/process, authenticated named-program transport and evidence APIs
+with their own Rust verifier.
 There is no universal scenario DSL or automatic trust in script-reported success.
 
 Each verifier owns exactly two independent processes and independently requires
@@ -134,8 +134,8 @@ CARGO_TARGET_DIR="$PWD/target" cargo test --locked \
 ```
 
 This is a separate host regression check, not input/frame acceptance or a replacement
-for the externally supervised native scenarios. Its execution must be reported
-separately; documenting the command is not evidence that it passed.
+for the externally supervised native scenarios. Report its execution and result
+separately from those scenarios.
 
 Open `tests/fixtures/test_project/native.code-workspace` for canonical Luau sources
 with shared runtime/application definitions and this project's

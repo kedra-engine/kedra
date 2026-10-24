@@ -8,6 +8,13 @@ rust:
   - '!.github/**'
   - '!.rumdl.toml'
   - '!lychee.toml'
+  - '!docs/.vitepress/**'
+  - '!docs/site/**'
+  - '!docs/scripts/**'
+  - '!docs/package.json'
+  - '!docs/bun.lock'
+  - '!docs/bunfig.toml'
+  - '!docs/.node-version'
 python:
   - 'tools/**/*.py'
   - '.github/**'
@@ -16,6 +23,11 @@ markdown:
   - 'docs/**'
   - '.rumdl.toml'
   - 'lychee.toml'
+  - '.github/**'
+  - 'website/**'
+  - 'assets/editor/fonts/**'
+  - 'LICENSE-MIT'
+  - 'LICENSE-APACHE'
 workflows:
   - '.github/**'
 distribution:

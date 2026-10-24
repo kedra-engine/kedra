@@ -1,7 +1,8 @@
 # kedra_script_bevy
 
-Opt-in runtime-layer Bevy adapters over `kedra_script`; no editor, importer, source
-writer or generic reflected World API. Hosts install only the bindings they authorize.
+This runtime-layer crate provides opt-in Bevy adapters for `kedra_script`, with no
+editor, importer, source writer or generic reflected World API. Hosts install only
+the bindings they authorize.
 This separate crate keeps component/widget integration out of the VM execution owner.
 
 - `install_transform` adds `ctx.transform.get_position/set_position(target, …)` for

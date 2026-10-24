@@ -63,5 +63,5 @@ compile, JSON-RPC response or synthetic-input receipt alone proves no visual fid
 OS picker, IME, native chrome interaction and other platforms require real hardware.
 
 The startup window uses custom client chrome. Bevy owns native move, resize,
-minimize, maximize and close
-requests; the editor kit only renders the title strip and controls.
+minimize, maximize and close requests; the editor kit only renders the title strip
+and controls.

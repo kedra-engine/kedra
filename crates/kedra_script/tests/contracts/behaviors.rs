@@ -212,6 +212,59 @@ fn entity_context_rejects_foreign_worlds_and_despawned_targets() {
 }
 
 #[test]
+fn unattached_behavior_has_no_entity_and_only_attached_behavior_receives_target_events() {
+    // The runtime owns attachment and event authority; the typed source is also
+    // checked by the optional Luau CLI. This headless host proves neither native input nor UI.
+    let mut app = host();
+    let target = app.world_mut().spawn(Name::new("Untouched")).id();
+    let mut program = Program::behavior(
+        "attachment",
+        "behavior.luau",
+        include_str!("../scopes/behavior.luau"),
+        bindings,
+    );
+    program.events = &["activate"];
+    let unattached = kedra_script::start(app.world_mut(), program.clone(), Value::Null).unwrap();
+    let attached = kedra_script::attach(app.world_mut(), target, program, Value::Null).unwrap();
+    app.update();
+    let records = app.world().resource::<kedra_script::Diagnostics>().drain();
+    for (run, expected) in [(unattached, false), (attached, true)] {
+        let record = records.iter().find(|record| record.run == run).unwrap();
+        assert_eq!(record.message, "behavior attachment");
+        assert_eq!(record.fields["attached"], expected);
+        assert_eq!(record.target.is_some(), expected);
+        assert_eq!(
+            kedra_script::status(app.world(), run),
+            Some(&Status::Running)
+        );
+    }
+    kedra_script::events::notify(app.world_mut(), target, "activate", Value::Null).unwrap();
+    app.update();
+    let records = app.world().resource::<kedra_script::Diagnostics>().drain();
+    assert_eq!(records.len(), 1);
+    assert_eq!(records[0].run, attached);
+    assert_eq!(records[0].message, "attached activation");
+    kedra_script::cancel(app.world_mut(), attached).unwrap();
+    kedra_script::events::notify(app.world_mut(), target, "activate", Value::Null).unwrap();
+    app.update();
+    assert!(
+        app.world()
+            .resource::<kedra_script::Diagnostics>()
+            .drain()
+            .is_empty()
+    );
+    assert_eq!(
+        kedra_script::status(app.world(), unattached),
+        Some(&Status::Running)
+    );
+    assert_eq!(
+        app.world().get::<Name>(target).unwrap().as_str(),
+        "Untouched"
+    );
+    assert_eq!(app.world().resource::<Counter>().0, 0);
+}
+
+#[test]
 fn yielding_or_failing_callbacks_are_terminal_and_stop_failure_cannot_prevent_cleanup() {
     for callback in [
         "wait.updates(1)",

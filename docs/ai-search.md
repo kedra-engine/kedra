@@ -5,7 +5,7 @@ CLI and MCP server to search Rust sources, Markdown documentation and TOML manif
 The shared [configuration](../.codebase-index/config.json) combines semantic and
 keyword retrieval. This is contributor tooling, not an engine/editor dependency.
 
-**Nothing is required for ordinary development:** Rust builds, tests and CI do not
+**Search tooling is optional:** Rust builds, tests and CI do not
 install Node packages, call AI providers or require an API key. No MCP server is
 enabled by cloning the repository. Each contributor opts in and owns their usage.
 
@@ -127,7 +127,7 @@ embeddings do not require a heavy local model, and source freshness takes priori
 Disconnecting the MCP stops that process's watcher; after offline edits, check
 readiness and run `index` if necessary.
 
-The permanent-use policy also enables weekly cleanup of orphaned index data,
+The shared configuration enables weekly cleanup of orphaned index data,
 unlimited source nesting, and at most 1,000 files per directory. Files larger than
 64 KiB are not indexed, matching Kedra's authored-file byte limit rather than
 admitting large generated files. Retrieval combines lexical and vector candidates
@@ -218,8 +218,8 @@ The shared OpenCode example includes both servers; install `docs-mcp` before usi
 that entry, or omit it if you only want repository search. Other MCP clients can
 launch `docs-mcp` directly over stdio. Ensure Cargo's bin directory is on the client's
 PATH, or use the installed executable's absolute path in your personal config.
-The repository search command continues to use `npx`; this Rust tool has no verified
-equivalent npm launcher. No Kedra wrapper, custom server or CI dependency is added.
+Repository search uses `npx`; this Rust tool has no verified equivalent npm launcher.
+Neither tool requires a Kedra wrapper, custom server or CI dependency.
 The published tool lockfile currently emits a yanked `yoke-derive 0.8.3` warning
 during installation. Installation succeeds, but the pin is not a dependency security
 audit; review upstream's resolution before upgrading rather than silently dropping
@@ -319,6 +319,7 @@ entry from your personal MCP config; the repository index remains independent.
   successful macOS setup is not cross-platform certification.
 
 See [upstream configuration][upstream-config] for additional knowledge bases and
-provider options, and [testing](testing.md) for Kedra's independent required checks.
+provider options, and [testing](site/en/contributing/contracts/testing.md)
+for Kedra's independent required checks.
 
 [upstream-config]: https://github.com/Helweg/open-codebase-index/blob/main/docs/configuration.md

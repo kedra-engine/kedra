@@ -1,7 +1,7 @@
 # Independent distribution acceptance fixture
 
-This is an ordinary separate Cargo workspace, not an engine/game implementation.
-The application consumes only existing runtime asset APIs. Its tiny build launcher
+This separate Cargo workspace tests distribution, not an engine/game implementation.
+The application consumes only existing runtime asset APIs. Its small build launcher
 depends on tooling separately; the player dependency graph must not include it.
 
 `tools/distribution/validate_fixture.py` copies these inputs outside the source

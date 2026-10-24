@@ -3,7 +3,7 @@ title = "Kedra: default detectors with reviewed non-secret Figma provenance"
 [extend]
 useDefault = true
 
-# Owner-reviewed design identities, not authentication credentials. See docs/testing.md.
+# Owner-reviewed design identities, not authentication credentials. See docs/site/en/contributing/contracts/testing.md.
 # Each table requires BOTH its exact repository-relative path AND one exact match.
 # Match targeting binds the field spelling to its own value; line targeting could
 # accidentally suppress a different credential on the same line. No detector changes.

@@ -1,6 +1,6 @@
 --!nolint FunctionUnused
 -- The host invokes run; fixture mounting remains a host-owned precondition.
-function run(ctx: KedraAppContext, args)
+function run(ctx: AppContext, args)
     local app = ctx.app
     local window = args.window
     app.resize(window, 640, 360, 1)

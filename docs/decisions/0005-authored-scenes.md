@@ -70,7 +70,8 @@ Startup forms, rows, captions and dock chrome use the shared source path.
 Independent game-style tests load installed catalogs and instantiate components
 without source-tree access. Tests cover composition, source revision pinning,
 references, source transactions, partial failures and retained native UI ownership.
-Required commands and exact limits are in [authored scenes](../scenes.md).
+Required commands and exact limits are in
+[authored scenes](../site/en/contributing/contracts/scene-runtime.md).
 
 Native input/frame checks, source-free installed consumers, dependency policy and
 [third-party license obligations](../third-party.md) are separate requirements.

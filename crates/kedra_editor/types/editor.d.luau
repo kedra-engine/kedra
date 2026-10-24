@@ -1,64 +1,63 @@
 -- Requires runtime/application definitions. Editor observations never grant Save.
-export type KedraEntry = {mode: "create" | "open", name: string, directory: string, error: string}
-export type KedraProject = {name: string, root: string, format: number}
-export type KedraEditorState = {
+export type Entry = {mode: "create" | "open", name: string, directory: string, error: string}
+export type Project = {name: string, root: string, format: number}
+export type EditorState = {
     phase: "boot" | "projects" | "loading" | "editor",
-    generation: number, preferences: KedraNullable<string>, busy: boolean, ready: boolean,
-    error: KedraNullable<string>, notice: string,
-    project: KedraNullable<KedraProject>, entry: KedraNullable<KedraEntry>,
+    generation: number, preferences: Nullable<string>, busy: boolean, ready: boolean,
+    error: Nullable<string>, notice: string,
+    project: Nullable<Project>, entry: Nullable<Entry>,
 }
-export type KedraDockGroup = {Group: {tabs: {string}, active: string}}
-export type KedraDockSplit = {
+export type DockGroup = {Group: {tabs: {string}, active: string}}
+export type DockSplit = {
     Split: {axis: "Horizontal" | "Vertical", fraction: number, first: string, second: string},
 }
-export type KedraDockLayout = {
+export type DockLayout = {
     version: number,
-    hosts: {[string]: {root: KedraNullable<string>, maximized: KedraNullable<string>}},
-    nodes: {[string]: KedraDockGroup | KedraDockSplit},
-    views: {[string]: {kind: string, restore_key: KedraNullable<string>}},
+    hosts: {[string]: {root: Nullable<string>, maximized: Nullable<string>}},
+    nodes: {[string]: DockGroup | DockSplit},
+    views: {[string]: {kind: string, restore_key: Nullable<string>}},
     hidden: {[string]: {host: string, group: string, index: number}},
 }
-export type KedraNodeAddress = {instances: {string}, node: string}
-export type KedraDocuments = {
-    active: KedraNullable<string>, pending: KedraNullable<string>, read_only: boolean,
-    documents: {{document: string, path: string, view: string, selection: KedraNullable<KedraNodeAddress>}},
+export type NodeAddress = {instances: {string}, node: string}
+export type Documents = {
+    active: Nullable<string>, pending: Nullable<string>, read_only: boolean,
+    documents: {{document: string, path: string, view: string, selection: Nullable<NodeAddress>}},
 }
-export type KedraSceneView = {ready: false}
+export type SceneView = {ready: false}
     | {
         ready: boolean, spatial: boolean,
-        translation: KedraNullable<{number}>, rotation: KedraNullable<{number}>,
-        pivot: KedraNullable<{number}>, speed: KedraNullable<number>,
+        translation: Nullable<{number}>, rotation: Nullable<{number}>,
+        pivot: Nullable<{number}>, speed: Nullable<number>,
         orthographic: boolean, overlays: boolean, editor_lighting: boolean, aligning: boolean,
     }
-export type KedraNavigationInput = {
+export type NavigationInput = {
     gesture: boolean, pending_host: boolean, menu_nodes: number, measuring: boolean,
-    rendered: KedraNullable<number>, revision: number,
-    capture: KedraNullable<{view: string, window: KedraWindowId}>,
+    rendered: Nullable<number>, revision: number,
+    capture: Nullable<{view: string, window: WindowId}>,
     viewports: {{
-        view: string, rect: KedraNullable<KedraRect>,
-        -- These arrays retain JSON numeric identities in the current adapter.
-        -- Out-of-range values are rejected by the lossless value boundary.
-        eligible_windows: {number}, pointer_windows: {number},
+        view: string, rect: Nullable<Rect>,
+        -- Full-width native window identities, not Luau numbers.
+        eligible_windows: {WindowId}, pointer_windows: {WindowId},
     }},
 }
-export type KedraWorkspace = {bound: false}
+export type Workspace = {bound: false}
     | {
         bound: true, native_alive: boolean, main_host: string, revision: number,
-        layout: KedraDockLayout, documents: KedraDocuments,
-        scene_views: {[string]: KedraSceneView}, navigation_input: KedraNavigationInput,
+        layout: DockLayout, documents: Documents,
+        scene_views: {[string]: SceneView}, navigation_input: NavigationInput,
     }
-export type KedraEditorApi = {
-    state: () -> KedraEditorState,
-    workspace: () -> KedraWorkspace,
+export type EditorApi = {
+    state: () -> EditorState,
+    workspace: () -> Workspace,
 }
-export type KedraEditorContext = KedraAppContext & {editor: KedraEditorApi}
+export type EditorContext = AppContext & {editor: EditorApi}
 
 -- Present only in named docking diagnostic programs, not the editor/project API.
-export type KedraDockDiagnostic = {ready: false} | {ready: true, generation: number}
-export type KedraDockApi = {
-    state: () -> KedraDockDiagnostic,
+export type DockDiagnostic = {ready: false} | {ready: true, generation: number}
+export type DockApi = {
+    state: () -> DockDiagnostic,
     reset: () -> (),
     drafts: () -> (),
     overflow: () -> (),
 }
-export type KedraDockContext = KedraAppContext & {dock: KedraDockApi}
+export type DockContext = AppContext & {dock: DockApi}

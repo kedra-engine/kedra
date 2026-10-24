@@ -7,10 +7,10 @@ Active visual references obey the ordinary file-size gate without storage except
 Adding an oversized reference requires explicit policy review; storage approval is
 not design acceptance.
 
-The active deliverable is strict buttons/text-fields comparison and implementation
-alignment with the existing design. The active catalog contains only those two
+The active corpus strictly compares buttons/text fields against the existing design
+and requires the implementation to match it. The active catalog contains only those two
 families and their 22 scenarios. Other product prefabs remain in the product;
-their screenshot scenarios are not part of this rollout and must be added explicitly
+their screenshot scenarios are outside this corpus and must be added explicitly
 when ready. Independent original exports retain their source provenance; generated
 capture/discrepancy evidence belongs under `target/`.
 Pending Figma exports may be compared diagnostically without approving them.
@@ -23,7 +23,7 @@ fixed local regions prevent canvas padding from diluting the error budget.
 The specimen host exposes technical slot geometry, content and native pseudo-state
 so stale/wrong fixture setups are rejected before styling comparisons. Reference
 origins come from the independent contract, never observed widget positions.
-Partial evidence cannot establish complete current native acceptance. Product
+Partial evidence cannot establish complete native acceptance. Product
 changes and reference promotion require owner decisions.
 
 ## Decision
@@ -60,7 +60,7 @@ The shared Rust tooling crate does not add runtime-to-tooling/editor edges.
   error budget, and failures are difficult to localize. Add component/panel states
   and fixed independently reviewed critical regions instead.
 - Only isolated component fixtures: cannot certify panel integration or full-window
-  layout. Those are explicitly outside this rollout; retain separate real-input
+  layout. Those are explicitly outside this corpus; retain separate real-input
   feature drivers and the richer independent docking gesture corpus.
 - Live Figma access in CI: introduces private authentication and mutable external
   state. Pin exports/hashes offline and review their changes explicitly.
@@ -99,8 +99,7 @@ This limited decision does not accept SVG rasterization generally or other profi
 The complete sequence runs in two independent processes with fixed logical size,
 DPR, UI-motion policy, content and bounded expected-state/readback readiness.
 Unexpected uniform full frames, partial, unstable or wrong-profile evidence cannot
-pass. Verification
-rechecks both runs and never chooses another baseline after a mismatch.
+pass. Verification rechecks both runs and never chooses another baseline after a mismatch.
 
 The standalone component host owns static presentation without modifying normal
 editor behavior or clocks. It is not proof of physical OS input. Native window
@@ -112,5 +111,6 @@ policy and useful failure reports are prerequisites to promotion. Unknown profil
 fail closed without a capture-only fallback. OS-owned chrome, normal animation and
 additional platforms retain separate acceptance obligations.
 
-See [the corpus contract](../ui/ui-corpus.md) for commands, coverage, reference
+See [the corpus contract](../site/en/contributing/contracts/ui/ui-corpus.md)
+for commands, coverage, reference
 schema, provenance, review procedure and current limitations.

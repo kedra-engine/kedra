@@ -74,7 +74,7 @@ the exact source resolved by Cargo; see the external documentation section of th
 
 ## Test ownership and design
 
-- Follow [the testing guide](docs/testing.md) and
+- Follow [the testing guide](docs/site/en/contributing/contracts/testing.md) and
   [ADR 0031](docs/decisions/0031-contract-owned-testing.md).
   Before adding a test, identify the Kedra contract, production owner, observable
   failure and least expensive sufficient environment. Do not add tests for counts
@@ -101,6 +101,14 @@ the exact source resolved by Cargo; see the external documentation section of th
 ## International project
 
 - Use English for code, identifiers, comments, documentation, diagnostics and public PRs.
+  English remains the canonical documentation language; Russian is supported as
+  a second documentation language. Russian translations supplement, rather than
+  replace, English documentation. Keep code, identifiers, commands and API names
+  unchanged in translations.
+- Migrate documentation incrementally. Keep existing documents available until
+  their current contracts, limitations and required provenance are covered by the
+  replacement documentation. Remove superseded documents only after updating
+  incoming links and anchors; do not maintain duplicate authoritative descriptions.
 - Preserve Unicode data. Avoid assumptions about locale, path encoding, timezone,
   path separators or case-sensitive filesystems.
 - In-project editor UI shows asset names or project-relative paths (for example

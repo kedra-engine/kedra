@@ -110,4 +110,5 @@ visual policy. Reconcile the component policy explicitly against the new graph a
 retain its original independent images and acceptance boundaries.
 
 See [runtime contracts](../../crates/kedra_script/README.md) and
-[automation](../automation.md) for executable API and current verification limits.
+[automation](../site/en/contributing/contracts/automation.md)
+for executable API and current verification limits.

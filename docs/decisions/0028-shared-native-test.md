@@ -1,7 +1,7 @@
 # ADR 0028: Shared native test tooling and project-owned Rust scenarios
 
-Status: shared tooling and project adapters implemented in source; compilation
-and native acceptance of the current composition remain unverified.
+Status: shared tooling and project adapters implemented in source; their
+compilation and native acceptance remain unverified.
 
 ## Decision
 
@@ -75,4 +75,5 @@ references automatically.
 Screenshot coverage is restricted to kit buttons and text inputs: 22 cases.
 Other editor scenarios and the independent consumer verify behavior through real
 input and transient GPU fences, without PNG galleries, image references or pixel
-comparisons. See [testing](../testing.md) for the current commands and boundaries.
+comparisons. See [testing](../site/en/contributing/contracts/testing.md)
+for the current commands and boundaries.

@@ -10,3 +10,5 @@
 *.profdata
 __pycache__/
 *.py[cod]
+/docs/node_modules/
+/website/node_modules/

@@ -63,7 +63,7 @@ application resource lookup must remain executable-relative on every platform.
 Report launch-request acceptance separately from build success. Acceptance is
 not evidence of rendered frames, physical interaction, eventual exit success or
 OS trust. Spawn/dispatch failure returns failure without discarding the verified
-build. This slice is not a debugger, process supervisor or crash monitor.
+build. The launcher is not a debugger, process supervisor or crash monitor.
 
 ### Verification boundary
 
@@ -117,7 +117,7 @@ Keeping generic checks in CI makes local success weaker than CI success and
 forces other applications to copy repository scripts. Embedding the builder in
 the editor duplicates process ownership and introduces heavy tooling dependencies.
 Instead, future editor integration invokes the project-local CLI as a child.
-No editor UI is added by this slice.
+This build-and-launch workflow adds no editor UI.
 
 No new public Rust API, crate, generic hook/plugin system or runtime dependency is
 needed. Reuse the locked object/archive/network dependencies; any feature changes

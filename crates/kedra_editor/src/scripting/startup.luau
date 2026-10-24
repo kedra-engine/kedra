@@ -1,7 +1,7 @@
 --!nolint FunctionUnused
 -- The Rust host calls the global run entrypoint; there is no Luau caller in this file.
 -- An ordinary Luau program using the editor's real state API and normal Bevy input.
-function run(ctx: KedraEditorContext, args)
+function run(ctx: EditorContext, args)
     local app = ctx.app
     local editor = ctx.editor
     local frames = {}
@@ -11,7 +11,7 @@ function run(ctx: KedraEditorContext, args)
     local function entry_open()
         return editor.state().entry ~= json.null
     end
-    local function entry(): KedraEntry
+    local function entry(): Entry
         local current = editor.state().entry
         assert(type(current) == "table", "Startup form is not open")
         return current

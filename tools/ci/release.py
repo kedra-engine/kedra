@@ -91,7 +91,7 @@ Source: `{source}`. All native packages passed exact-revision CI and package che
 - Packages include dependency license notices and checksum-verified MPL sources.
   Checksums establish integrity, not trusted publisher authentication.
 
-Install and limitation details: https://github.com/{repository}/blob/{source}/docs/distribution.md
+Install and limitation details: https://github.com/{repository}/blob/{source}/docs/site/en/contributing/contracts/distribution.md
 """, encoding="utf-8")
     def gh(*arguments: str) -> None:
         subprocess.run(["gh", "release", *arguments, "--repo", repository], check=True)

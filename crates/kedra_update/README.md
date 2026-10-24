@@ -53,9 +53,8 @@ default and require an actual macOS host; core policy tests use local fixtures.
 
 ## Dependencies and limits
 
-The crate uses the admitted maintained HTTPS/TLS,
-SHA-256, plist/Mach-O, filesystem traversal, temporary-directory and replacement
-libraries. It owns only the
+The crate uses approved, maintained HTTPS/TLS, SHA-256, plist/Mach-O, filesystem
+traversal, temporary-directory and replacement libraries. It owns only the
 application-specific release/installation policy, not alternative parsers or a
 replacement framework. Public errors are diagnostic strings; callers must preserve
 failure semantics rather than treating a failed check as permission to install.

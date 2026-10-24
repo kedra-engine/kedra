@@ -2,7 +2,7 @@
 -- The host invokes run; diagnostic settlement/reset remains host-owned.
 local helpers = require("./helpers")
 
-function run(ctx: KedraDockContext, args)
+function run(ctx: DockContext, args)
     local app = ctx.app
     local dock = ctx.dock
     local function state()
