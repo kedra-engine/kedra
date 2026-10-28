@@ -2,6 +2,9 @@ use super::*;
 use crate::documents::Documents;
 use kedra_docking::model::ViewId;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
+mod collection_settlement;
+mod layout_settlement;
+mod live_editing;
 
 #[test]
 fn source_panel_retains_controls_and_locked_identity_without_viewport_or_source_writes()
@@ -16,7 +19,7 @@ fn source_panel_retains_controls_and_locked_identity_without_viewport_or_source_
     let mut panel = Panel::mount(app.world_mut(), parent, id)?;
     let root = panel.root();
     let mut documents = Documents::default();
-    panel.tick(app.world_mut(), id, &documents)?;
+    panel.tick(app.world_mut(), id, &mut documents)?;
     let dir = tempfile::tempdir()?;
     let mut document = kedra_scene::document::PrefabDocument::new("Inspector source");
     document.nodes[0].components.insert(
@@ -38,25 +41,25 @@ fn source_panel_retains_controls_and_locked_identity_without_viewport_or_source_
         std::thread::yield_now();
     };
     documents.published(ready, ViewId::new(), document.root.into());
-    panel.tick(app.world_mut(), id, &documents)?;
+    panel.tick(app.world_mut(), id, &mut documents)?;
     let inputs = |world: &mut World| {
         world
-            .query::<(Entity, &bevy::text::EditableText)>()
+            .query_filtered::<(Entity, Has<bevy::ui::Checked>), With<bevy::ui_widgets::Checkbox>>()
             .iter(world)
-            .map(|(e, t)| (e, t.value().to_string()))
             .collect::<Vec<_>>()
     };
     let initial = inputs(app.world_mut());
-    assert!(initial.iter().any(|(_, t)| t == "true"));
-    panel.tick(app.world_mut(), id, &documents)?;
+    assert!(initial.iter().any(|(_, checked)| *checked));
+    panel.tick(app.world_mut(), id, &mut documents)?;
     assert_eq!(inputs(app.world_mut()), initial);
     panel.action(app.world_mut(), Action::Lock)?;
     documents.active = None;
-    panel.tick(app.world_mut(), id, &documents)?;
+    documents.selection.clear();
+    panel.tick(app.world_mut(), id, &mut documents)?;
     assert_eq!(inputs(app.world_mut()), initial);
     panel.action(app.world_mut(), Action::Lock)?;
-    panel.tick(app.world_mut(), id, &documents)?;
-    assert!(!inputs(app.world_mut()).iter().any(|(_, t)| t == "true"));
+    panel.tick(app.world_mut(), id, &mut documents)?;
+    assert!(inputs(app.world_mut()).is_empty());
     assert_eq!(root, panel.root());
     assert_eq!(
         std::fs::read_to_string(dir.path().join("source.prefab.ron"))?,

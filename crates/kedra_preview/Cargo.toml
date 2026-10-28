@@ -1,0 +1,18 @@
+[package]
+name = "kedra_preview"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Owned passive static model preview and native bounds"
+
+[package.metadata.kedra]
+layer = "editor"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_gltf", "bevy_pbr", "bevy_world_serialization"] }
+
+[lints]
+workspace = true

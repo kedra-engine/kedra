@@ -1,0 +1,23 @@
+[package]
+name = "kedra_text_input"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Ordered native text operations and local history over Bevy and Parley"
+
+[package.metadata.kedra]
+layer = "runtime"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_ui", "bevy_input_focus", "bevy_ui_widgets"] }
+bevy_clipboard = { version = "=0.20.0", default-features = false }
+parley = { version = "=0.11.1", default-features = false }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+bevy = { workspace = true, features = ["bevy_picking"] }

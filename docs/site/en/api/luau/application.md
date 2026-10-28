@@ -104,7 +104,7 @@ Snapshots are owned data; table edits do not update UI or prove a frame was pres
 
 `Key` values are `enter`, `escape`, `tab`, `shift_tab`, `space`, `backspace`,
 `delete`, `left`, `right`, `up`, `down`, `home`, `end`, `f1`, `f2`, `f3`, `f4`, `f5`,
-`f6`, `f7`, `f8`, `f12`, `select_all`, `copy`, `paste`, `cut`.
+`f6`, `f7`, `f8`, `f12`, `select_all`, `copy`, `paste`, `cut`, `undo`, `redo`.
 This is not arbitrary keyboard/OS automation. Native input validation and receipt
 settlement remain authoritative; see
 [input/captures](../../manual/automation/input-and-captures.md).

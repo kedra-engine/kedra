@@ -162,12 +162,36 @@ fn script_errors_scope_denial_and_load_failure_leave_application_usable() {
 #[test]
 fn native_handles_are_strings_and_unsupported_stale_windows_fail_without_rounding() {
     let (mut app, session, window) = host();
+    let camera = app
+        .world_mut()
+        .spawn((
+            Camera::default(),
+            bevy::camera::RenderTarget::Window(bevy::window::WindowRef::Entity(window)),
+        ))
+        .id();
+    let mut target = ComputedUiTargetCamera::default();
+    let mut reflected = bevy::reflect::structs::DynamicStruct::default();
+    reflected.insert("camera", Some(camera));
+    target.apply(&reflected);
+    let node = app
+        .world_mut()
+        .spawn((
+            kedra_ui::ElementId::new("identity"),
+            ComputedNode {
+                size: Vec2::splat(20.),
+                ..default()
+            },
+            UiGlobalTransform::default(),
+            InheritedVisibility::VISIBLE,
+            target,
+        ))
+        .id();
     register(
         &mut app,
         Program::sequence(
             "identity",
             "entry.luau",
-            "function run(ctx) local id = ctx.app.window(); assert(type(id) == 'string'); return {window = id} end",
+            "function run(ctx) local id = ctx.app.window(); assert(type(id) == 'string'); local node = ctx.app.node('identity'); assert(type(node.entity) == 'string' and node.window == id); assert(ctx.app.node('missing') == nil); return {window = id, entity = node.entity} end",
             install_app_api,
         ),
     );
@@ -182,6 +206,36 @@ fn native_handles_are_strings_and_unsupported_stale_windows_fail_without_roundin
         receipt(&mut app, id)["detail"]["window"],
         window.to_bits().to_string()
     );
+    assert_eq!(
+        receipt(&mut app, id)["detail"]["entity"],
+        node.to_bits().to_string()
+    );
+    app.world_mut().spawn((
+        kedra_ui::ElementId::new("identity"),
+        ComputedNode {
+            size: Vec2::splat(20.),
+            ..default()
+        },
+        UiGlobalTransform::default(),
+        InheritedVisibility::VISIBLE,
+        target,
+    ));
+    let ambiguous = Uuid::new_v4();
+    rpc(
+        &mut app,
+        "app.scenario",
+        json!({"session":session,"id":ambiguous,"scenario":"identity","arguments":{}}),
+    )
+    .unwrap();
+    let rejected = receipt(&mut app, ambiguous);
+    assert_eq!(rejected["state"], "failed");
+    assert!(
+        rejected["detail"]
+            .to_string()
+            .contains("Duplicate visible UI ID: identity")
+    );
+    assert!(app.world().get_entity(node).is_ok());
+    assert!(!app.world().resource::<crate::input::InputQueue>().busy());
     let bad = Uuid::new_v4();
     rpc(
         &mut app,

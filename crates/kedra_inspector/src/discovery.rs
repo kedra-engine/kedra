@@ -1,5 +1,6 @@
 //! Budgeted presentation traversal over Bevy reflection, not a second type schema.
 use bevy::reflect::{Access, ParsedPath, PartialReflect, ReflectRef, TypeRegistry};
+use std::collections::BTreeSet;
 
 /// Tightenable presentation limits. Larger values are clamped to the profile ceiling.
 #[derive(Clone, Copy)]
@@ -49,6 +50,26 @@ pub fn inspect<'a>(
     registry: &TypeRegistry,
     limits: Limits,
 ) -> Vec<Row<'a>> {
+    inspect_selected(value, registry, limits, None)
+}
+
+/// Discover selected root-native named fields without traversing excluded subtrees.
+/// Native values, original structural keys and complete reflected paths are retained;
+/// this is presentation grouping, not a reflected copy or a source schema.
+pub fn inspect_fields<'a>(
+    value: &'a dyn PartialReflect,
+    registry: &TypeRegistry,
+    limits: Limits,
+    fields: &BTreeSet<String>,
+) -> Vec<Row<'a>> {
+    inspect_selected(value, registry, limits, Some(fields))
+}
+fn inspect_selected<'a>(
+    value: &'a dyn PartialReflect,
+    registry: &TypeRegistry,
+    limits: Limits,
+    fields: Option<&BTreeSet<String>>,
+) -> Vec<Row<'a>> {
     let limits = Limits {
         depth: limits.depth.min(32),
         collection: limits.collection.clamp(1, 128),
@@ -64,6 +85,7 @@ pub fn inspect<'a>(
         registry,
         limits,
         &mut rows,
+        fields,
     );
     rows
 }
@@ -81,6 +103,7 @@ fn visit<'a>(
     registry: &TypeRegistry,
     limits: Limits,
     rows: &mut Vec<Row<'a>>,
+    fields: Option<&BTreeSet<String>>,
 ) {
     if rows.len() >= limits.rows {
         if let Some(last) = rows.last_mut() {
@@ -129,6 +152,7 @@ fn visit<'a>(
         let mut child_key = key.clone();
         child_key.push(position);
         position += 1;
+        if key.is_empty() && fields.is_some_and(|fields| !matches!(access.as_ref(), Some(Access::Field(name)) if fields.contains::<str>(name.as_ref()))) { return; }
         let path = accesses.clone().and_then(|mut path| {
             path.push(access?);
             Some(path)
@@ -142,11 +166,13 @@ fn visit<'a>(
             registry,
             limits,
             rows,
+            None,
         );
     };
     match value.reflect_ref() {
         ReflectRef::Struct(value) => {
-            for i in 0..value.field_len().min(limits.rows) {
+            let scan = if fields.is_some() { 2048 } else { limits.rows };
+            for i in 0..value.field_len().min(scan) {
                 if let (Some(name), Some(value)) = (value.name_at(i), value.field_at(i)) {
                     child(
                         value,

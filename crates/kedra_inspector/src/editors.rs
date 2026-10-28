@@ -9,6 +9,19 @@ use std::{any::TypeId, collections::BTreeMap, sync::Arc};
 
 /// A trusted built-in custom value presentation. It never receives mutable source data.
 pub trait ValueEditor: Send + Sync {
+    /// Whether the presentation occupies a normal field slot or a full-width block.
+    fn layout(&self) -> EditorLayout {
+        EditorLayout::Field
+    }
+    /// Optional built-in title for a root component; source binding identity is unchanged.
+    fn title(&self) -> Option<&'static str> {
+        None
+    }
+    /// Displayed labels not present in the native field names. Search remains
+    /// bounded to the existing discovery pass and does not execute UI callbacks.
+    fn search_terms(&self) -> &'static [&'static str] {
+        &[]
+    }
     /// Mount an owned presentation subtree using shared kit controls.
     /// Errors must clean up allocations made by the callback before returning.
     fn mount(
@@ -20,8 +33,35 @@ pub trait ValueEditor: Send + Sync {
     ) -> Result<Box<dyn ValueEditorView>, String>;
 }
 
+/// Shared row composition requested by a specialized value presentation.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum EditorLayout {
+    /// Label and inline control in the ordinary property row.
+    Field,
+    /// Full-width body in a base-owned section. The Inspector owns the header,
+    /// disclosure state and diagnostics, sharing collapse state with default view.
+    /// A root reuses its existing component header instead of duplicating it.
+    Block,
+}
+
 /// Lifecycle of a mounted custom presentation. Native entities are UI handles only.
 pub trait ValueEditorView: Send + Sync {
+    /// Optional collection count appended by the base-owned header after update.
+    /// Presentation only: the count never identifies an item or grants editing.
+    fn item_count(&self) -> Option<usize> {
+        None
+    }
+    /// Forward the host's bounded presentation query to composed native subviews.
+    /// Filtering must not change source values or consume source history.
+    fn filter(&mut self, _filter: &str) {}
+    /// Ownership of nested base-native sections composed by this custom view.
+    fn owns_disclosure(&self, _action: &crate::view::Disclosure) -> bool {
+        false
+    }
+    /// Delegate a current nested disclosure without replacing component headers.
+    fn disclose(&mut self, _action: &crate::view::Disclosure) -> bool {
+        false
+    }
     /// Owned subtree root, attached underneath the supplied presentation parent.
     fn root(&self) -> Entity;
     /// Refresh against the same binding without reconstructing native controls.
@@ -53,6 +93,13 @@ impl Default for RenderBudget {
     }
 }
 impl RenderBudget {
+    /// Reserve native controls for asynchronous composition. The caller may mount
+    /// at most the returned count and cannot replenish the shared rebuild budget.
+    pub fn reserve(&mut self, maximum: usize) -> usize {
+        let admitted = maximum.min(self.remaining);
+        self.remaining -= admitted;
+        admitted
+    }
     /// Whether the shared reflected-discovery allowance has been consumed.
     /// Hosts show a limit indication rather than mounting further sibling trees.
     pub fn exhausted(&self) -> bool {
@@ -93,8 +140,44 @@ pub struct EditorRegistry {
     types: BTreeMap<TypeId, (EditorId, Arc<dyn ValueEditor>)>,
     fields: BTreeMap<(TypeId, ParsedPath), (EditorId, Arc<dyn ValueEditor>)>,
     next: usize,
+    variants: BTreeMap<TypeId, Arc<VariantConstructor>>,
 }
+/// Complete native proposals for a finite value menu; hosts still validate sources.
+pub type VariantChoices = Vec<(String, Arc<dyn PartialReflect>)>;
+/// Trusted presentation-only constructor for constrained native enum payloads.
+pub type VariantConstructor =
+    dyn Fn(&dyn PartialReflect) -> Result<VariantChoices, String> + Send + Sync;
 impl EditorRegistry {
+    /// Register constructors where native field defaults are not valid domain values.
+    /// Duplicate registrations reject; this grants no source publication authority.
+    pub fn register_variants(
+        &mut self,
+        ty: TypeId,
+        constructor: Arc<VariantConstructor>,
+    ) -> Result<(), String> {
+        if self.variants.contains_key(&ty) {
+            return Err("Duplicate native variant constructor".into());
+        }
+        self.variants.insert(ty, constructor);
+        Ok(())
+    }
+    /// Construct typed menu values through the explicit owner or native registry defaults.
+    /// Missing constructors return None, retaining inspection without guessed payloads.
+    pub fn variant_choices(
+        &self,
+        value: &dyn PartialReflect,
+        types: &TypeRegistry,
+    ) -> Option<VariantChoices> {
+        if let Some(constructor) = value
+            .get_represented_type_info()
+            .and_then(|info| self.variants.get(&info.type_id()))
+        {
+            return constructor(value)
+                .ok()
+                .filter(|choices| choices.len() <= 128);
+        }
+        crate::controls::enum_choices(value, types)
+    }
     /// Register one exact native type. Duplicate registration leaves the registry unchanged.
     pub fn register_type(
         &mut self,

@@ -94,6 +94,7 @@ pub(super) fn empty(world: &mut World) -> View {
         controls,
         marker: default(),
         compiled: None,
+        pending_source: None,
         projection: None,
         lifecycle: default(),
         elapsed: 0.,

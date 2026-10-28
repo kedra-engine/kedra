@@ -1,0 +1,28 @@
+[package]
+name = "kedra_authoring_fs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Guarded atomic existing-source replacement for Kedra authoring Save"
+
+[package.metadata.kedra]
+layer = "authoring"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_asset", "bevy_image"] }
+kedra_assets.workspace = true
+serde.workspace = true
+uuid.workspace = true
+kedra_authoring.workspace = true
+kedra_scene.workspace = true
+tempfile.workspace = true
+walkdir = "2"
+sha2.workspace = true
+fs-transaction = "=0.4.0"
+ron.workspace = true
+
+[lints]
+workspace = true

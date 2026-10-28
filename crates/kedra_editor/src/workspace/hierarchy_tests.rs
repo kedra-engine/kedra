@@ -71,6 +71,74 @@ fn deferred_hierarchy_input_rejects_inactive_documents_and_hidden_tools() -> Tes
         world.resource::<EditorWorkspace>().documents.opened[&first.id].selected,
         Some(leaf.into())
     );
+    world
+        .resource_mut::<ButtonInput<KeyCode>>()
+        .press(KeyCode::ShiftLeft);
+    hierarchy_action(
+        world,
+        Binding {
+            action: Action::Select(first.root.into()),
+            ..binding.clone()
+        },
+    );
+    assert_eq!(
+        world
+            .resource::<EditorWorkspace>()
+            .documents
+            .selected_nodes(first.id),
+        vec![leaf.into(), first.root.into()]
+    );
+    assert_eq!(
+        world.resource::<EditorWorkspace>().documents.opened[&first.id].selected,
+        Some(first.root.into())
+    );
+    hierarchy_action(world, binding.clone());
+    assert_eq!(
+        world
+            .resource::<EditorWorkspace>()
+            .documents
+            .selected_nodes(first.id),
+        vec![leaf.into()],
+        "Repeated Shift selection must retain its anchor"
+    );
+    world
+        .resource_mut::<ButtonInput<KeyCode>>()
+        .release(KeyCode::ShiftLeft);
+    world
+        .resource_mut::<ButtonInput<KeyCode>>()
+        .press(KeyCode::SuperLeft);
+    hierarchy_action(
+        world,
+        Binding {
+            action: Action::Select(first.root.into()),
+            ..binding.clone()
+        },
+    );
+    assert_eq!(
+        world
+            .resource::<EditorWorkspace>()
+            .documents
+            .selected_nodes(first.id),
+        vec![leaf.into(), first.root.into()]
+    );
+    hierarchy_action(
+        world,
+        Binding {
+            action: Action::Select(first.root.into()),
+            ..binding.clone()
+        },
+    );
+    assert_eq!(
+        world
+            .resource::<EditorWorkspace>()
+            .documents
+            .selected_nodes(first.id),
+        vec![leaf.into()]
+    );
+    world
+        .resource_mut::<ButtonInput<KeyCode>>()
+        .release(KeyCode::SuperLeft);
+    hierarchy_action(world, binding.clone());
     let element = |world: &mut World, key: &str| {
         world
             .query::<(Entity, &kedra_ui::ElementId)>()

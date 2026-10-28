@@ -72,7 +72,8 @@ selected source/type/tracking status remains separate from the always-visible co
 
 Type badges are truthful placeholders, not rendered thumbnails. New/Import are disabled
 with explanations. Rendered thumbnails, recursive search, reference picking, rename/move/
-delete, creation/import and source Save remain unimplemented. Supported Scene View/raw-asset
+delete and creation/import remain unimplemented. Source Save belongs to the active-document
+host, not the browser. Supported Scene View/raw-asset
 previews require matching resources; Inspector and Hierarchy remain read-only. Shared text
 Undo/Redo, OS clipboard/IME, physical input, mixed monitors and independent Figma pixel
 equivalence are not certified by this profile.

@@ -17,8 +17,9 @@ licensing and provenance facts. The [documentation plan][plan] owns migration sc
 | Crate/module docs | Local responsibility, features, examples and errors | Unmaintained duplicate authorities |
 
 Describe source-editing APIs without presenting them as a visual editor Save workflow:
-visual document editing, editor Save and Play
-remain unimplemented. A Figma target is a design source, not a screenshot of implemented UI.
+general visual document editing, new-file publication and Play remain unimplemented.
+Only documented Inspector source edits and single-existing-document Save are available.
+A Figma target is a design source, not a screenshot of implemented UI.
 
 ## Verify the claim before writing the recipe
 

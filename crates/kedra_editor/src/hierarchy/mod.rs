@@ -38,6 +38,8 @@ pub(crate) struct Panel {
     dirty: bool,
     window: (usize, usize, usize),
     selected: Option<NodeAddress>,
+    selected_set: Vec<NodeAddress>,
+    range_anchor: Option<NodeAddress>,
     focus: Option<NodeAddress>,
     search_open: bool,
     details_open: bool,
@@ -114,6 +116,8 @@ impl Panel {
             dirty: true,
             window: (0, 0, 0),
             selected: None,
+            selected_set: Vec::new(),
+            range_anchor: None,
             focus: None,
             search_open: false,
             details_open: false,
@@ -152,6 +156,7 @@ impl Panel {
     ) -> Result<(), String> {
         let area = self.element("entries")?;
         if self.document != documents.active {
+            self.range_anchor = None;
             if let Some(previous) = self.document
                 && let Some(navigation) = self.navigation.get_mut(&previous)
             {
@@ -179,12 +184,14 @@ impl Panel {
             self.focus = None;
             self.dirty = true;
         }
-        let selected = documents
+        let selected_set = documents
             .active
-            .and_then(|doc| documents.opened.get(&doc))
-            .and_then(|doc| doc.selected.clone());
-        if self.selected != selected {
+            .map(|document| documents.selected_nodes(document))
+            .unwrap_or_default();
+        let selected = selected_set.last().cloned();
+        if self.selected != selected || self.selected_set != selected_set {
             self.selected = selected;
+            self.selected_set = selected_set;
             self.dirty = true;
         }
         if let Some(doc) = self.document {

@@ -113,6 +113,7 @@ fn library_run_rejects_missing_delivery_before_native_plugin_initialization() {
         Default::default(),
         None,
         None,
+        None,
     )
     .unwrap_err();
     assert!(error.contains("Cannot access asset delivery"));

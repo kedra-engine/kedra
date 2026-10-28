@@ -51,6 +51,77 @@ fn geometry(world: &mut World, entity: Entity, top: f32, height: f32, content: f
 }
 
 #[test]
+fn resource_drag_paths_require_the_current_tracked_entry_root_and_listing_generation() -> TestResult
+{
+    let (_app, mut panel, _id, directory) = fixture()?;
+    let folder = PathBuf::from("Текстуры");
+    let name = std::ffi::OsStr::new("日本語.png");
+    panel.model.path = folder.clone();
+    panel.model.entries = vec![model::Entry {
+        name: name.into(),
+        kind: Kind::File,
+        bytes: Some(0),
+        tracked: true,
+    }];
+    let generation = panel.model.generation();
+    assert_eq!(
+        panel
+            .drag_path(directory.path(), &folder, generation, name)
+            .as_deref(),
+        Some("game://Текстуры/日本語.png")
+    );
+    assert!(
+        panel
+            .drag_path(&directory.path().join("foreign"), &folder, generation, name)
+            .is_none()
+    );
+    assert!(
+        panel
+            .drag_path(directory.path(), &PathBuf::new(), generation, name)
+            .is_none()
+    );
+    assert!(
+        panel
+            .drag_path(directory.path(), &folder, generation + 1, name)
+            .is_none()
+    );
+    panel.model.loading = true;
+    assert!(
+        panel
+            .drag_path(directory.path(), &folder, generation, name)
+            .is_none()
+    );
+    panel.model.loading = false;
+    panel.model.entries[0].tracked = false;
+    assert!(
+        panel
+            .drag_path(directory.path(), &folder, generation, name)
+            .is_none()
+    );
+    panel.model.entries[0].tracked = true;
+    for kind in [Kind::Folder, Kind::Unavailable] {
+        panel.model.entries[0].kind = kind;
+        assert!(
+            panel
+                .drag_path(directory.path(), &folder, generation, name)
+                .is_none()
+        );
+    }
+    panel.model.entries.clear();
+    assert!(
+        panel
+            .drag_path(directory.path(), &folder, generation, name)
+            .is_none()
+    );
+    assert_eq!(
+        std::fs::read_dir(directory.path())?.count(),
+        0,
+        "drag admission must not import files or create sidecars"
+    );
+    Ok(())
+}
+
+#[test]
 fn tree_completion_before_content_does_not_make_a_source_tile_ready() -> TestResult {
     let (mut app, mut panel, id, directory) = fixture()?;
     std::fs::create_dir(directory.path().join("Prefabs"))?;

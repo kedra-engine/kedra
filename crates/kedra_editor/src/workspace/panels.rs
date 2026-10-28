@@ -162,6 +162,17 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
     }
     super::document_views::poll(world, state);
     for (id, scene) in &mut state.panels.scenes {
+        if let Some(opened) = state
+            .documents
+            .opened
+            .values()
+            .find(|opened| opened.view == *id)
+            && let Some(source) = state.documents.scene_source()
+            && let Err(error) = scene.refresh_source(world, &opened.graph, source)
+        {
+            scene.retire(world);
+            scene.message(world, &format!("Source projection failed: {error}"), true);
+        }
         let host = state
             .layout
             .snapshot()
@@ -188,8 +199,14 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
             .opened
             .values()
             .find(|document| document.view == *id)
-            .and_then(|document| document.selected.as_ref());
-        if let Err(error) = scene.select(world, selected) {
+            .and_then(|document| {
+                state
+                    .documents
+                    .selected_nodes(document.document)
+                    .last()
+                    .cloned()
+            });
+        if let Err(error) = scene.select(world, selected.as_ref()) {
             scene.message(
                 world,
                 &format!("Selection bounds unavailable: {error}"),
@@ -203,7 +220,7 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
         }
     }
     for (id, panel) in &mut state.panels.inspectors {
-        if let Err(error) = panel.tick(world, *id, &state.documents) {
+        if let Err(error) = panel.tick(world, *id, &mut state.documents) {
             crate::views::fail(world, error);
         }
     }

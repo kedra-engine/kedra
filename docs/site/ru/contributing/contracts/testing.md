@@ -18,12 +18,21 @@
 | --- | --- | --- |
 | Проекты и пути исходников | `kedra_project` | Запуск, формы и Open |
 | Документы и экземпляры | `kedra_scene` | Документы, Hierarchy, Scene View |
-| Рабочие изменения и протокол сохранения | `kedra_authoring` | Редактирование и Save в редакторе не реализованы |
+| Рабочие изменения, кандидаты свойств и протокол сохранения | `kedra_authoring` | Изменения Transform/UiCaption и Save существующего документа |
+| Восстанавливаемые группы существующих исходников | `kedra_authoring_fs` | Documents: группы/новые правки; нативный shortcut/menu Save; реальный recovery CLI в `apps/kedra/tests/save_recovery.rs` |
 | Поставка ресурсов runtime и её целостность | `kedra_assets` | Привязка ресурсов превью |
+| Нативные asset handles | `kedra_assets/tests/contracts/references.rs` | Inspector: выбор и drops |
+| Сопоставление исходников с delivery | `kedra_authoring_assets` | Documents: назначение ресурса; Scene View |
+| Пассивные static models, bounds, subassets | `kedra_preview` | Scene View: камера/кадры/refresh; Inspector: готовность ресурса |
 | Обработка и публикация | `kedra_import` | Asset Browser, Open и превью |
 | Топология docking и кандидаты | `kedra_docking` | Жесты и координация окон |
-| Retained UI, проекция и ввод | `kedra_ui`, `kedra_desktop` | Docking, окна и фокус |
+| Retained UI, проекция, ввод и подтверждение полей | `kedra_ui`, `kedra_desktop` | Docking, окна и фокус; независимое диагностическое текстовое поле |
+| Очередь нативного текста и локальная история | `kedra_text_input` | Поиск Inspector; поля Transform/UiCaption |
 | Представление отражённых значений | `kedra_inspector` | Адаптер исходников редактора и Inspector |
+| Ограниченная Luau-композиция drawer | `kedra_inspector_luau` | Встроенный UiCaption; изменения caption в UI-only/смешанных сценах |
+| Кандидаты транзакций и именованная история | `kedra_authoring/tests/contracts/edit_transactions.rs` | Реальные Luau/Documents-транзакции в `documents/transactions/tests.rs` |
+| Ограничение истории и сохранённое содержимое | `kedra_authoring/tests/contracts/history_retention.rs` | Контекст коллекций без копий значений в Inspector contracts |
+| Явный запуск проектных editor-скриптов | `kedra_editor/src/edit_scripts/source/tests.rs` | Нативный `editor-scripts`: commit двух документов, общий Undo/Redo, ввод Save и проверка файлов |
 | Жизненный цикл скриптов, модули, области доступа, дочерние последовательности, события, параметры и диагностика | `kedra_script/tests/contracts/`, `kedra_app` | Luau редактора и независимое приложение |
 | Адаптеры скриптов для Transform/UI | `kedra_script_bevy/tests/contracts/` | Нативное переключение с Behavior/Sequence |
 | Стили, иконки и исходники интерфейса редактора | `kedra_editor/tests/contracts/` | Корпус компонентов и геометрия редактора |

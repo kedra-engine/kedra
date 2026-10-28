@@ -44,8 +44,21 @@ The repository currently provides:
   Hierarchy displays composed source nodes with read-only navigation and selection.
   Read-only Scene View renders supported spatial/UI documents and previews
   PNG/static-GLB assets with an explicit matching delivery. Spatial navigation and
-  scoped opaque-mesh selection are implemented. The read-only Inspector follows
-  source selection, with lock, search and shared reflected field presentations.
+  scoped opaque-mesh selection are implemented. Inspector follows source selection,
+  with lock, search and shared reflected fields. Transform supports validated
+  in-memory edits, Scene View refresh and source Undo/Redo. An embedded scoped Luau drawer
+  composes native UiCaption text/alignment/wrap fields through the same source path;
+  primitive dimensions, surface color/metallic/roughness and sun color/illuminance also
+  support typed source edits and retained render refresh. Native bools and enums use
+  checkboxes/choice menus; Primitive variants have valid native constructors. Supported
+  scalar UI properties also use source editing and retained passive refresh. Classes,
+  image densities and shadows support immediate structural editing; typed resources
+  use searchable picking and Browser drops, including retained Model/Environment refresh.
+  Cross-window drop and long-list autoscroll acceptance remain incomplete.
+  Color swatches expand into
+  native RGBA/palette controls; Layout groups native fields with inline length units.
+  Save active document writes its complete accepted existing-source group with conflict
+  checks and explicit interrupted-Save recovery; Cmd/Ctrl+S never accepts pending drafts.
 - Shared scene and prefab documents, composition, instantiation and guarded
   source-editing APIs. The editor's own UI uses authored sources.
 - Asset processing and verified deliveries consumed through shared runtime loaders.
@@ -55,10 +68,12 @@ The repository currently provides:
 - Debug-only, explicitly enabled remote observation, input injection and renderer captures.
 - Shared opt-in Luau behaviors, finite sequences and standard admitted-source modules
   with host-owned API scopes. Native QA uses sequences under external Rust supervision.
+- Explicit project `Editor/` script launch with exact source grants, shared named
+  Undo/Redo and separate Save. Opening projects never executes these scripts automatically.
 - Rust unit/integration tests and local native UI scenarios with real frames/input.
 
-**Not yet implemented:** visual scene/document editing, document Save in the
-editor, project code execution or a complete game runtime/Play workflow.
+**Not yet implemented:** general visual scene/document editing,
+new-document publication, gameplay project-code execution or a complete game runtime/Play workflow.
 The next milestone combines scene/prefab editing, an editable component inspector
 and source-owned Save. In-application Play follows, then project-defined inspectors
 and editor windows. See the [roadmap](docs/roadmap.md) for scope and completion criteria.

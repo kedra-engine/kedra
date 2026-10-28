@@ -85,7 +85,10 @@ pub(super) fn open(
                 .documents
                 .active
                 .and_then(|document| state.documents.opened.get(&document))
-                .is_some_and(|document| document.view == view && document.selected.is_some())
+                .is_some_and(|document| {
+                    document.view == view
+                        && !state.documents.selected_nodes(document.document).is_empty()
+                })
         {
             world
                 .entity_mut(button.root)
@@ -111,8 +114,28 @@ mod tests {
         super::super::test_support::sources(world)?;
         let root = world.resource::<EditorWorkspace>().root;
         let anchor = world.spawn((Node::default(), ChildOf(root))).id();
+        let view = ViewId::new();
+        let document = kedra_scene::document::PrefabDocument::new("Remembered context");
+        let mut catalog = kedra_scene::composition::Catalog::default();
+        catalog.insert(document.clone())?;
+        {
+            let mut state = world.resource_mut::<EditorWorkspace>();
+            state.documents.active = Some(document.id);
+            state.documents.opened.insert(
+                document.id,
+                crate::documents::Opened {
+                    #[cfg(debug_assertions)]
+                    path: "remembered.prefab.ron".into(),
+                    document: document.id,
+                    view,
+                    selected: Some(document.root.into()),
+                    graph: std::sync::Arc::new(catalog.resolve(document.id)?),
+                },
+            );
+            assert!(state.documents.selection.items().is_empty());
+        }
         world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
-            open(world, &mut state, ViewId::new(), anchor, Kind::Selection)
+            open(world, &mut state, view, anchor, Kind::Selection)
         })?;
         let item = world
             .query::<(Entity, &kedra_ui::ElementId)>()

@@ -20,29 +20,16 @@ pub(crate) fn asset(path: &Path) -> String {
     }
 }
 
-pub(crate) fn source(root: &Path, path: &Path) -> String {
-    path.strip_prefix(root).map_or_else(
-        |_| {
-            path.file_name().map_or_else(
-                || "Asset".into(),
-                |name| name.to_string_lossy().into_owned(),
-            )
-        },
-        asset,
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn source_labels_are_project_relative_unicode_and_not_filesystem_locators() {
+    fn asset_labels_are_project_relative_unicode_and_not_filesystem_locators() {
         let root = std::env::current_dir().unwrap_or_else(|error| panic!("{error}"));
         let root = root.join("Private project").join("assets");
         let path = Path::new("Prefabs").join("日本語 Straße.prefab.ron");
         let expected = Path::new("assets").join(&path).display().to_string();
         assert_eq!(asset(&path), expected);
-        assert_eq!(source(&root, &root.join(&path)), expected);
         assert_eq!(asset(&root.join(&path)), "日本語 Straße.prefab.ron");
         assert_eq!(asset(Path::new("../outside.png")), "outside.png");
         assert_eq!(asset(Path::new("")), "assets");

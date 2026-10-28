@@ -92,3 +92,131 @@ fn malformed_receipts_and_pending_reconciliation_preserve_exact_operation() -> R
     );
     Ok(())
 }
+
+#[test]
+fn existing_document_save_preserves_catalog_and_never_acknowledges_newer_edits() -> Result<()> {
+    let (app, policies) = setup()?;
+    let original = document()?;
+    let types = app.world().resource::<AppTypeRegistry>();
+    let mut loader = app.world().resource::<AssetServer>();
+    let mut workspace = Workspace::open(
+        baseline(std::slice::from_ref(&original))?,
+        &types.read(),
+        &policies,
+        &mut loader,
+    );
+    workspace.working.transact_checked(
+        &BTreeMap::from([(original.id, 1)]),
+        |docs| {
+            docs.get_mut(&original.id)
+                .ok_or_else(|| kedra_scene::Error("document missing".into()))?
+                .title = "Pinned".into();
+            Ok(())
+        },
+        |_| Ok(()),
+    )?;
+    let request = workspace
+        .prepare_existing_save(original.id, &types.read(), &policies, &mut loader)?
+        .clone();
+    assert!(
+        request
+            .files
+            .iter()
+            .all(|file| file.document == Some(original.id) && file.expected_hash.is_some())
+    );
+    assert!(
+        request
+            .files
+            .iter()
+            .all(|file| file.path != "catalog.prefabs.ron")
+    );
+    let revisions = BTreeMap::from([(
+        original.id,
+        workspace.working.documents()[&original.id].revision,
+    )]);
+    workspace.working.transact_checked(
+        &revisions,
+        |docs| {
+            docs.get_mut(&original.id)
+                .ok_or_else(|| kedra_scene::Error("document missing".into()))?
+                .title = "Newer".into();
+            Ok(())
+        },
+        |_| Ok(()),
+    )?;
+    workspace.acknowledge(&receipt(&request))?;
+    assert!(workspace.source.index.is_none());
+    assert_eq!(
+        kedra_scene::document::PrefabDocument::parse(&workspace.source.documents[0].source)?.title,
+        "Pinned"
+    );
+    assert_eq!(
+        workspace.working.documents()[&original.id].document.title,
+        "Newer"
+    );
+    assert!(workspace.working.dirty(original.id));
+    assert!(workspace.working.can_undo());
+    workspace.working.undo_checked(|_| Ok(()))?;
+    assert_eq!(
+        workspace.working.documents()[&original.id].document.title,
+        "Pinned"
+    );
+    assert!(
+        !workspace.working.dirty(original.id),
+        "Acknowledgment must pin submitted content even when newer edits exist"
+    );
+    workspace.working.redo_checked(|_| Ok(()))?;
+    assert!(workspace.working.dirty(original.id));
+    Ok(())
+}
+
+#[test]
+fn existing_document_save_pins_complete_coupled_groups_and_refuses_partial_receipts() -> Result<()>
+{
+    let (app, policies) = setup()?;
+    let a = document()?;
+    let mut b = a.clone();
+    b.id = kedra_scene::document::DocumentId::new();
+    let types = app.world().resource::<AppTypeRegistry>();
+    let mut loader = app.world().resource::<AssetServer>();
+    let mut workspace = Workspace::open(
+        baseline(&[a.clone(), b.clone()])?,
+        &types.read(),
+        &policies,
+        &mut loader,
+    );
+    workspace.working.transact_checked(
+        &BTreeMap::from([(a.id, 1), (b.id, 1)]),
+        |docs| {
+            for doc in docs.values_mut() {
+                doc.title = "Coupled".into();
+            }
+            Ok(())
+        },
+        |_| Ok(()),
+    )?;
+    let index = workspace.source.index.clone();
+    let request = workspace
+        .prepare_existing_save(a.id, &types.read(), &policies, &mut loader)?
+        .clone();
+    assert_eq!(request.files.len(), 2);
+    assert!(
+        request
+            .files
+            .iter()
+            .all(|file| file.document.is_some() && file.expected_hash.is_some())
+    );
+    let mut partial = receipt(&request);
+    partial.files.pop();
+    let before = ron::to_string(&workspace)?;
+    assert!(workspace.acknowledge(&partial).is_err());
+    assert_eq!(ron::to_string(&workspace)?, before);
+    workspace.acknowledge(&receipt(&request))?;
+    assert_eq!(
+        ron::to_string(&workspace.source.index)?,
+        ron::to_string(&index)?
+    );
+    assert!(!workspace.working.dirty(a.id) && !workspace.working.dirty(b.id));
+    assert!(workspace.working.can_undo());
+    Ok(())
+}

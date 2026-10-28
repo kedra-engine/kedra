@@ -43,7 +43,9 @@ old delivery. Source Open never initializes sidecars, builds assets or rewrites 
 
 `binding::Delivery::matches` checks admitted documents' path/UUID/hash against delivery
 records/files and every other delivered asset against admitted path/identity/hash. Dependency
-loading rechecks supported type and matching inventory membership. The initial profile
+loading rechecks the requested native type against the manifest's loader identity and
+matching inventory path/UUID/hash/byte length, including symbolic path requests. A record
+admitted as an image cannot be requested as a model or stylesheet. The initial profile
 supports byte-preserving documents, PNG, static GLB, CSS and fonts. Transformed outputs need
 source provenance before support can be claimed. Missing/stale/mismatched delivery reports
 a diagnostic while source navigation remains available. [Source limits](source-documents.md)

@@ -9,11 +9,14 @@ mod boot;
 #[cfg(debug_assertions)]
 mod catalog;
 mod chrome;
+pub mod context;
 #[cfg(debug_assertions)]
 mod diagnostics;
 mod display_paths;
 mod documents;
 pub mod domain;
+pub mod drag;
+pub mod edit_scripts;
 mod entry;
 mod entry_preview;
 mod hierarchy;
@@ -58,6 +61,7 @@ impl Plugin for EditorPlugin {
         updates::install(app);
         asset_browser::install(app);
         hierarchy::install(app);
+        drag::install(app);
         inspector::install(app);
         scene_view::install(app);
         workspace::install(app);
@@ -125,6 +129,7 @@ pub fn run(
     launch: kedra_app::launch::LaunchOptions,
     state_directory: Option<PathBuf>,
     project_assets: Option<PathBuf>,
+    editor_script: Option<edit_scripts::Launch>,
 ) -> Result<(), String> {
     #[cfg(debug_assertions)]
     if launch.scene.is_some() && (project.is_some() || project_assets.is_some()) {
@@ -148,7 +153,7 @@ pub fn run(
             root.to_str().ok_or("Delivery path must be Unicode")?.into(),
             manifest.clone(),
         );
-        app.insert_resource(scene_view::binding::Delivery { source, manifest });
+        app.insert_resource(kedra_authoring_assets::Delivery { source, manifest });
         eprintln!("Scene View delivery verified; source matching is checked on document Open");
     }
     kedra_assets::register_source(
@@ -175,6 +180,15 @@ pub fn run(
         kedra_ui::tooltip::TooltipPlugin,
         EditorPlugin,
     ));
+    if let Some(script) = editor_script {
+        edit_scripts::configure(
+            &mut app,
+            project
+                .as_deref()
+                .ok_or("Editor script execution requires an explicit project")?,
+            script,
+        )?;
+    }
     #[cfg(debug_assertions)]
     {
         diagnostics::install(&mut app)?;

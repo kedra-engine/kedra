@@ -44,6 +44,29 @@ fn child(app: &mut App, parent: Entity, class: &str) -> Entity {
 }
 
 #[test]
+fn restored_shadow_details_become_visible_when_the_header_expands() -> Result<()> {
+    let (mut app, root, _temp) = fixture()?;
+    let row = child(
+        &mut app,
+        root,
+        "property-row property-collection-shadow collapsed",
+    );
+    let editor = child(&mut app, row, "property-editor");
+    frames(&mut app);
+    assert_eq!(
+        app.world().get::<Node>(editor).ok_or("editor")?.display,
+        Display::None
+    );
+    kedra_ui::docking::class(app.world_mut(), row, "collapsed", false);
+    frames(&mut app);
+    assert_eq!(
+        app.world().get::<Node>(editor).ok_or("editor")?.display,
+        Display::Flex
+    );
+    Ok(())
+}
+
+#[test]
 fn primary_fill_has_no_border_while_secondary_keeps_its_outline() -> Result<()> {
     let (mut app, root, _temp) = fixture()?;
     let primary = child(&mut app, root, "button primary");

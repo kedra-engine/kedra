@@ -84,7 +84,7 @@ fn download(url: &str, output: &Path, hash: &str) -> Result<(), String> {
     let bytes = ureq::get(url)
         .header("User-Agent", "Kedra distribution tooling")
         .call()
-        .map_err(|e| format!("Native material download: {e}"))?
+        .map_err(|e| format!("Native material download {url}: {e}"))?
         .body_mut()
         .with_config()
         .limit(64 * 1024 * 1024)

@@ -158,7 +158,7 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
                     .and_then(|entity| world.get_mut::<Text>(entity))
                 {
                     text.0 = format!(
-                        "Source open: {} (read-only)",
+                        "Source open: {} (accepted edits remain in memory until Save)",
                         crate::display_paths::asset(&path)
                     );
                 }

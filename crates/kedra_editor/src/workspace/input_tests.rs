@@ -1,8 +1,18 @@
-//! Dock candidate admission with synthetic geometry, not rendered layout.
+//! Dock input routing and candidate admission with synthetic geometry, not rendered layout.
 use super::super::test_support::{box_at, setup};
 use super::*;
 use kedra_docking::model::Edge;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
+
+#[test]
+fn activation_observer_is_nonexclusive_and_ignores_unrelated_buttons() {
+    let mut app = App::new();
+    app.add_observer(activate);
+    let entity = app.world_mut().spawn_empty().id();
+    app.world_mut().trigger(Activate { entity });
+    app.update();
+    assert!(!app.world().contains_resource::<EditorWorkspace>());
+}
 
 #[test]
 fn missing_measurements_never_become_ready() -> TestResult {

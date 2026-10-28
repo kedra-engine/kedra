@@ -18,6 +18,10 @@ mod tests;
 /// Observe the actual rendered tree, not an alternate test representation.
 /// Reports duplicate visible IDs as errors and marks truncated output explicitly.
 pub fn snapshot(world: &mut World) -> Result<Value, String> {
+    snapshot_selected(world, None)
+}
+// Selection limits serialization work, never the inventory/uniqueness checks.
+fn snapshot_selected(world: &mut World, selected: Option<&str>) -> Result<Value, String> {
     let frame = world
         .get_resource::<bevy::diagnostic::FrameCount>()
         .map_or(0, |frame| frame.0);
@@ -37,7 +41,7 @@ pub fn snapshot(world: &mut World) -> Result<Value, String> {
     let mut nodes = Vec::new();
     let mut unique = std::collections::BTreeSet::new();
     let mut truncated = false;
-    for (entity, id, node, transform, visible, camera, clip) in world
+    for (index, (entity, id, node, transform, visible, camera, clip)) in world
         .query::<(
             Entity,
             &ElementId,
@@ -48,8 +52,9 @@ pub fn snapshot(world: &mut World) -> Result<Value, String> {
             Option<&CalculatedClip>,
         )>()
         .iter(world)
+        .enumerate()
     {
-        if nodes.len() == 4096 {
+        if index == 4096 {
             truncated = true;
             break;
         }
@@ -64,6 +69,16 @@ pub fn snapshot(world: &mut World) -> Result<Value, String> {
         let active = camera_entity
             .and_then(|entity| world.get::<Camera>(entity))
             .is_some_and(|camera| camera.is_active);
+        let visible = active
+            && visible.get()
+            && !node.is_empty()
+            && clip.is_none_or(|clip| !clip.is_fully_clipped());
+        if visible && !unique.insert((window, id.0.as_str())) {
+            return Err(format!("Duplicate visible UI ID: {}", id.0));
+        }
+        if selected.is_some_and(|selected| id.0 != selected) {
+            continue;
+        }
         // Bevy logical UI units divide out UiScale as well as target DPR.
         // Automation coordinates are logical window pixels, not UI units.
         let mut rect = logical_rect(node, transform).map(|coordinate| coordinate * ui_scale);
@@ -75,13 +90,6 @@ pub fn snapshot(world: &mut World) -> Result<Value, String> {
         rect[2] += origin.x;
         rect[1] += origin.y;
         rect[3] += origin.y;
-        let visible = active
-            && visible.get()
-            && !node.is_empty()
-            && clip.is_none_or(|clip| !clip.is_fully_clipped());
-        if visible && !unique.insert((window, id.0.clone())) {
-            return Err(format!("Duplicate visible UI ID: {}", id.0));
-        }
         let mut enabled = world.get::<InteractionDisabled>(entity).is_none();
         let mut parent = world.get::<ChildOf>(entity).map(ChildOf::parent);
         while let Some(ancestor) = parent {
@@ -89,14 +97,20 @@ pub fn snapshot(world: &mut World) -> Result<Value, String> {
             parent = world.get::<ChildOf>(ancestor).map(ChildOf::parent);
         }
         let text = world.get::<Text>(entity).map(|text| text.0.clone());
+        let checked = world
+            .get::<bevy::ui::Checkable>(entity)
+            .map(|_| world.get::<bevy::ui::Checked>(entity).is_some());
         let value = world
             .get::<EditableText>(entity)
             .map(|text| text.value().to_string());
+        let settled = world
+            .get::<kedra_ui::fields::TextField>(entity)
+            .map(|_| !kedra_ui::fields::TextField::unsettled(world, entity));
         let font=world.get::<TextFont>(entity).map(|font| {
             let source=match &font.font {FontSource::Handle(handle)=>world.get_resource::<AssetServer>().and_then(|server|server.get_path(handle.id())).map(|path|path.to_string()),_=>Some(format!("{:?}",font.font))};
             json!({"source":source,"size":format!("{:?}",font.font_size),"weight":format!("{:?}",font.weight)})
         });
-        nodes.push(json!({"id":id.0,"entity":entity.to_bits(),"parent":world.get::<ChildOf>(entity).map(|parent|parent.parent().to_bits()),"window":window.map(Entity::to_bits),"rect":rect,"visible":visible,"enabled":enabled,"center_unclipped":clip.is_none_or(|clip|clip.contains_point(transform.affine().translation)),"focused":focus==Some(entity),"text":text,"value":value,"font":font,"background":world.get::<BackgroundColor>(entity).map(|color|color.0.to_srgba().to_u8_array()),"color":world.get::<TextColor>(entity).map(|color|color.0.to_srgba().to_u8_array())}));
+        nodes.push(json!({"id":id.0,"entity":entity.to_bits(),"parent":world.get::<ChildOf>(entity).map(|parent|parent.parent().to_bits()),"window":window.map(Entity::to_bits),"rect":rect,"visible":visible,"enabled":enabled,"center_unclipped":clip.is_none_or(|clip|clip.contains_point(transform.affine().translation)),"focused":focus==Some(entity),"text":text,"value":value,"settled":settled,"checked":checked,"font":font,"background":world.get::<BackgroundColor>(entity).map(|color|color.0.to_srgba().to_u8_array()),"color":world.get::<TextColor>(entity).map(|color|color.0.to_srgba().to_u8_array())}));
     }
     let input_busy = world
         .get_resource::<crate::input::InputQueue>()
@@ -110,15 +124,26 @@ pub fn snapshot(world: &mut World) -> Result<Value, String> {
         json!({"session":session,"frame":frame,"windows":windows,"native":native,"cameras":cameras,"screens":screens,"elements":nodes,"input_busy":input_busy,"truncated":truncated}),
     )
 }
-pub(crate) fn observe(_: In<Option<Value>>, world: &mut World) -> BrpResult {
-    snapshot(world).map_err(crate::invalid)
+pub(crate) fn observe(In(params): In<Option<Value>>, world: &mut World) -> BrpResult {
+    #[derive(serde::Deserialize, Default)]
+    #[serde(deny_unknown_fields)]
+    struct Selection {
+        element: Option<String>,
+    }
+    let selection = params
+        .filter(|value| !value.is_null())
+        .map(serde_json::from_value::<Selection>)
+        .transpose()
+        .map_err(|error| crate::invalid(error.to_string()))?
+        .unwrap_or_default();
+    snapshot_selected(world, selection.element.as_deref()).map_err(crate::invalid)
 }
 
 /// Resolve a stable element freshly, in logical coordinates of the target window.
 /// Hidden, disabled, clipped, duplicated and stale elements cannot be clicked by ID.
 /// Truncated observations are rejected because they cannot establish uniqueness.
 pub fn element_center(world: &mut World, window: Entity, id: &str) -> Result<Vec2, String> {
-    let snapshot = snapshot(world)?;
+    let snapshot = snapshot_selected(world, Some(id))?;
     if snapshot["truncated"] == true {
         return Err("UI observation was truncated; target uniqueness cannot be established".into());
     }

@@ -331,3 +331,142 @@ fn source_recompile_rejects_untracked_asset_dependencies_and_bad_field_schemas()
     );
     Ok(())
 }
+
+#[test]
+fn symbolic_source_retains_loader_request_paths_for_uuid_only_dependencies() -> Result<()> {
+    use bevy::asset::{AssetApp, AssetPath, LoadFromPath, UntypedHandle};
+    struct SourceLoader(uuid::Uuid);
+    impl LoadFromPath for SourceLoader {
+        fn load_from_path_erased(
+            &mut self,
+            type_id: std::any::TypeId,
+            _: AssetPath<'static>,
+        ) -> UntypedHandle {
+            UntypedHandle::Uuid {
+                type_id,
+                uuid: self.0,
+            }
+        }
+    }
+    let (mut app, mut policies, mut source) = setup()?;
+    app.init_asset::<TestAsset>()
+        .register_asset_reflect::<TestAsset>();
+    let types = app.world().resource::<AppTypeRegistry>();
+    policies.register::<AssetReference>(&mut types.write(), "asset", 1, |_| Ok(()))?;
+    source.nodes[0].components.insert(
+        "asset".into(),
+        ComponentData::ron(1, "(asset:Path(\"game://tracked.test#known\"))")?,
+    );
+    let mut catalog = Catalog::default();
+    catalog.insert(source.clone())?;
+    let mut loader = SourceLoader(uuid::Uuid::new_v4());
+    let snapshot = CompiledPrefab::compile(
+        catalog.resolve(source.id)?,
+        &types.read(),
+        &policies,
+        &mut loader,
+        &BTreeMap::new(),
+    )?;
+    let symbolic = snapshot.symbolic_source(&types.read(), &policies)?;
+    let entity = symbolic.source_entities()[&source.root.into()];
+    let handle = symbolic
+        .authoring_world()
+        .get::<AssetReference>(entity)
+        .ok_or("asset")?
+        .asset
+        .clone()
+        .untyped();
+    assert_eq!(
+        snapshot.dependency_path(&handle).map(ToString::to_string),
+        Some("game://tracked.test#known".into())
+    );
+    assert!(
+        snapshot
+            .dependency_path(&UntypedHandle::Uuid {
+                type_id: std::any::TypeId::of::<TestAsset>(),
+                uuid: uuid::Uuid::new_v4()
+            })
+            .is_none()
+    );
+    assert_eq!(
+        symbolic
+            .authoring_world()
+            .get::<AssetReference>(entity)
+            .ok_or("asset")?
+            .asset
+            .id(),
+        bevy::asset::AssetId::Uuid { uuid: loader.0 }
+    );
+    let encoded = symbolic.encode_value(
+        symbolic
+            .authoring_world()
+            .get::<AssetReference>(entity)
+            .ok_or("asset")?,
+        &policies,
+        &types.read(),
+    )?;
+    assert_eq!(
+        encoded.get_ron(),
+        "(asset:Path(\"game://tracked.test#known\"))"
+    );
+    // Even when the host maps every path to one UUID, a changed subasset label
+    // must not borrow the originally admitted loader request's authority.
+    let mut changed = source.clone();
+    changed.nodes[0].components.insert(
+        "asset".into(),
+        ComponentData::ron(1, "(asset:Path(\"game://tracked.test#foreign\"))")?,
+    );
+    catalog.documents.insert(changed.id, changed);
+    assert!(
+        symbolic
+            .recompile(catalog.resolve(source.id)?, &types.read(), &policies)
+            .is_err()
+    );
+    assert_eq!(snapshot.graph(), symbolic.graph());
+    let mut ambiguous = source.clone();
+    ambiguous.nodes.push(kedra_scene::document::Node {
+        id: NodeId::new(),
+        name: "Other labeled asset".into(),
+        parent: Some(source.root.into()),
+        components: BTreeMap::from([(
+            "asset".into(),
+            ComponentData::ron(1, "(asset:Path(\"game://tracked.test#other\"))")?,
+        )]),
+    });
+    catalog.documents.insert(ambiguous.id, ambiguous);
+    let ambiguous = CompiledPrefab::compile(
+        catalog.resolve(source.id)?,
+        &types.read(),
+        &policies,
+        &mut loader,
+        &BTreeMap::new(),
+    )?;
+    let root = ambiguous.source_entities()[&source.root.into()];
+    assert!(
+        ambiguous
+            .dependency_path(
+                &ambiguous
+                    .authoring_world()
+                    .get::<AssetReference>(root)
+                    .ok_or("asset")?
+                    .asset
+                    .clone()
+                    .untyped()
+            )
+            .is_none()
+    );
+    assert!(
+        ambiguous
+            .encode_value(
+                ambiguous
+                    .authoring_world()
+                    .get::<AssetReference>(root)
+                    .ok_or("asset")?,
+                &policies,
+                &types.read()
+            )
+            .is_err()
+    );
+    assert_eq!(snapshot.graph(), symbolic.graph());
+    Ok(())
+}

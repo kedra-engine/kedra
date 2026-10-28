@@ -20,6 +20,7 @@
  "editor://prefabs/property-row.prefab.ron",
  "editor://prefabs/property-value.prefab.ron",
  "editor://prefabs/property-section.prefab.ron",
+ "editor://prefabs/property-vector.prefab.ron",
  "editor://fixtures/inspector.prefab.ron",
  "editor://fixtures/inspector.scene.ron",
 ]

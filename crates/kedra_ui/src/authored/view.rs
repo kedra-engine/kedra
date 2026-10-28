@@ -14,6 +14,8 @@ use kedra_scene::{
     instance::{CompiledPrefab, PrefabInstance},
 };
 use std::{collections::BTreeMap, sync::Arc};
+mod refresh;
+pub use refresh::PassiveRefresh;
 
 /// Ownership of one hydrated UI instance and its local semantic bindings.
 pub struct UiView {

@@ -78,8 +78,9 @@ fn identities(value: &mut Value) {
     }
 }
 
-fn observation(scope: &Scope) -> lua::Result<Value> {
-    let mut value = call(scope, "app.observe", Value::Null, false)?;
+fn observation(scope: &Scope, element: Option<&str>) -> lua::Result<Value> {
+    let params = element.map_or(Value::Null, |element| json!({"element":element}));
+    let value = call(scope, "app.observe", params, false)?;
     if value["truncated"] != false {
         return Err(lua::Error::runtime("Incomplete UI observation"));
     }
@@ -89,12 +90,11 @@ fn observation(scope: &Scope) -> lua::Result<Value> {
         .ok_or_else(|| lua::Error::runtime("Missing UI inventory"))?
     {
         if element["visible"] == true
-            && !ids.insert((element["window"].to_string(), element["id"].to_string()))
+            && !ids.insert((element["window"].as_u64(), element["id"].as_str()))
         {
             return Err(lua::Error::runtime("Ambiguous visible UI identity"));
         }
     }
-    identities(&mut value);
     Ok(value)
 }
 
@@ -121,7 +121,7 @@ pub fn install_app_api(lua: &Lua, scope: Scope, ctx: &lua::Table) -> lua::Result
     app.set(
         "window",
         lua.create_function(move |_, ()| {
-            let value = observation(&window_scope)?;
+            let value = observation(&window_scope, None)?;
             let windows: Vec<_> = value["windows"]
                 .as_array()
                 .ok_or_else(|| lua::Error::runtime("Missing windows"))?
@@ -132,22 +132,29 @@ pub fn install_app_api(lua: &Lua, scope: Scope, ctx: &lua::Table) -> lua::Result
                 return Err(lua::Error::runtime("Expected one primary window"));
             }
             windows[0]["id"]
-                .as_str()
-                .map(str::to_owned)
+                .as_u64()
+                .map(|id| id.to_string())
                 .ok_or_else(|| lua::Error::runtime("Invalid native window identity"))
         })?,
     )?;
     app.set(
         "node",
         lua.create_function(move |lua, id: String| {
-            let value = observation(&scope)?;
+            let value = observation(&scope, Some(&id))?;
             let node = value["elements"]
                 .as_array()
                 .ok_or_else(|| lua::Error::runtime("Missing UI inventory"))?
                 .iter()
                 .find(|node| node["id"] == id && node["visible"] == true);
             match node {
-                Some(node) => kedra_script::values::to_lua(lua, node),
+                Some(node) => {
+                    // The complete inventory is validated above, but only this endpoint
+                    // crosses into Lua. Do not recursively convert unrelated UI nodes
+                    // on every focus/readiness probe of a large Inspector.
+                    let mut node = node.clone();
+                    identities(&mut node);
+                    kedra_script::values::to_lua(lua, &node)
+                }
                 None => Ok(lua::Value::Nil),
             }
         })?,

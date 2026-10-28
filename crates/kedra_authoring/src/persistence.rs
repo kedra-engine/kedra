@@ -224,6 +224,7 @@ impl Workspace {
             .filter(|id| self.working.dirty(*id))
             .collect::<BTreeSet<_>>();
         let mut candidate = self.working.clone();
+        candidate.saved = refreshed.working.saved.clone();
         candidate
             .documents
             .retain(|id, _| dirty.contains(id) || refreshed.working.documents.contains_key(id));
@@ -437,6 +438,28 @@ impl Workspace {
         policies: &ComponentPolicies,
         loader: &mut dyn LoadFromPath,
     ) -> Result<&CommitRequest> {
+        self.prepare(selected, types, policies, loader, true)
+    }
+    /// Pin an existing document's complete coupled save group, preserving inventory/catalog.
+    /// This profile authorizes neither creation/deletion nor splitting a coupled save group.
+    /// The host must still perform all checks and acknowledge an exact durable receipt.
+    pub fn prepare_existing_save(
+        &mut self,
+        selected: DocumentId,
+        types: &TypeRegistry,
+        policies: &ComponentPolicies,
+        loader: &mut dyn LoadFromPath,
+    ) -> Result<&CommitRequest> {
+        self.prepare(Some(selected), types, policies, loader, false)
+    }
+    fn prepare(
+        &mut self,
+        selected: Option<DocumentId>,
+        types: &TypeRegistry,
+        policies: &ComponentPolicies,
+        loader: &mut dyn LoadFromPath,
+        canonical_catalog: bool,
+    ) -> Result<&CommitRequest> {
         if self.diagnostic.is_some() {
             return Err(failure(
                 "workspace sources are read-only until diagnostics are resolved",
@@ -448,6 +471,31 @@ impl Workspace {
             ));
         }
         let working = self.working.catalog();
+        if !canonical_catalog {
+            let admitted: BTreeSet<_> = self
+                .source
+                .documents
+                .iter()
+                .map(|file| {
+                    PrefabDocument::parse(&file.source).map(|doc| (doc.id, file.path.as_str()))
+                })
+                .collect::<Result<_>>()?;
+            let current: BTreeSet<_> = working
+                .documents
+                .keys()
+                .map(|id| {
+                    (
+                        *id,
+                        self.paths.get(id).map(String::as_str).unwrap_or_default(),
+                    )
+                })
+                .collect();
+            if current != admitted {
+                return Err(failure(
+                    "existing-source Save requires the unchanged admitted source inventory",
+                ));
+            }
+        }
         validate_assignments(&working, &self.paths, &self.source)?;
         // Reject invalid dirty sources, including components/patch schemas, before I/O.
         let snapshots = compile_catalog(&working, types, policies, loader)?;
@@ -523,33 +571,35 @@ impl Workspace {
         // Validate the actual post-commit graph, not a graph containing unrelated unsaved edits.
         compile_catalog(&committed, types, policies, loader)?;
         validate_assignments(&committed, &self.paths, &self.source)?;
-        let mut paths = committed
-            .documents
-            .keys()
-            .map(|id| {
-                self.paths
-                    .get(id)
-                    .map(|path| format!("{}://{path}", self.source.namespace))
-                    .ok_or_else(|| failure("committed document has no source path"))
-            })
-            .collect::<Result<Vec<_>>>()?;
-        paths.sort();
-        let index_source =
-            ron::ser::to_string_pretty(&paths, ron::ser::PrettyConfig::default())? + "\n";
-        CatalogLoader::parse(&index_source)?;
-        if self
-            .source
-            .index
-            .as_ref()
-            .is_none_or(|index| index.source != index_source)
-        {
-            files.push(CommitFile {
-                document: None,
-                path: "catalog.prefabs.ron".into(),
-                revision: files.iter().map(|file| file.revision).max().unwrap_or(1),
-                expected_hash: self.source.index.as_ref().map(|file| file.hash.clone()),
-                source: Some(index_source),
-            });
+        if canonical_catalog {
+            let mut paths = committed
+                .documents
+                .keys()
+                .map(|id| {
+                    self.paths
+                        .get(id)
+                        .map(|path| format!("{}://{path}", self.source.namespace))
+                        .ok_or_else(|| failure("committed document has no source path"))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            paths.sort();
+            let index_source =
+                ron::ser::to_string_pretty(&paths, ron::ser::PrettyConfig::default())? + "\n";
+            CatalogLoader::parse(&index_source)?;
+            if self
+                .source
+                .index
+                .as_ref()
+                .is_none_or(|index| index.source != index_source)
+            {
+                files.push(CommitFile {
+                    document: None,
+                    path: "catalog.prefabs.ron".into(),
+                    revision: files.iter().map(|file| file.revision).max().unwrap_or(1),
+                    expected_hash: self.source.index.as_ref().map(|file| file.hash.clone()),
+                    source: Some(index_source),
+                });
+            }
         }
         if files.is_empty() {
             return Err(failure("nothing to save"));
@@ -621,7 +671,23 @@ impl Workspace {
                 return Err(failure("save receipt content mismatch"));
             }
         }
-        let mut revisions = BTreeMap::new();
+        let revisions: BTreeMap<_, _> = request
+            .files
+            .iter()
+            .filter_map(|file| file.document.map(|id| (id, file)))
+            .map(|(id, file)| {
+                Ok((
+                    id,
+                    (
+                        file.revision,
+                        file.source
+                            .as_deref()
+                            .map(PrefabDocument::parse)
+                            .transpose()?,
+                    ),
+                ))
+            })
+            .collect::<Result<_>>()?;
         for file in &request.files {
             if file.document.is_none() {
                 self.source.index = file.source.as_ref().map(|source| SourceFile {
@@ -638,9 +704,6 @@ impl Workspace {
                     source: source.clone(),
                     hash: content_hash(source),
                 });
-            }
-            if let Some(id) = file.document {
-                revisions.insert(id, file.revision);
             }
         }
         self.source.generation = receipt.generation;

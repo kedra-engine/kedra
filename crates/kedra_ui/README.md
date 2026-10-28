@@ -54,6 +54,46 @@ ordering and text editing. Headless schema/asset hosts do not install this adapt
 These contracts have headless event/schedule regressions, not physical OS/IME
 certification.
 
+`fields::TextAcceptance` supplies the acknowledgment protocol for one retained
+single-line binding over `kedra_text_input`: an ordered native read produces an
+immutable candidate, and the consumer validates its identity/baseline before
+publication. Rejection retains the native buffer/selection/history; acknowledgment
+starts a new local-history epoch without moving the caret. External revisions keep
+drafts stale; cancellation restores the latest accepted value and revokes queued
+work. It never writes sources or owns a second mutable draft buffer. Consumers must
+guard access, lifetime and their own revision immediately before publication.
+`fields::TextField` adapts that protocol to an existing settled authored `UiEditable`
+with a `TextSession`. `NativeInputPlugin` consumes Enter/Escape before native widget
+handlers: Enter queues a read; Escape restores the latest accepted string without
+clearing focus. Applied/queued composition and same-batch IME commit own those keys
+and Tab. Once a candidate is captured, the shared input-mode authority freezes text
+mutation until the host accepts, rejects or cancels, preserving selection/copy.
+An unchanged consumer refresh does not unlock a pending response. The host checks
+`TextField::is_current` and its own revision/access, then acknowledges before
+publishing a synchronous ordinary value. No asynchronous task receives source authority.
+
+`fields::LiveTextField` opts a managed field into ordered candidate capture after
+settled native changes, without Enter. It retains no second buffer: rejection keeps
+the native text and does not retry until another edit. Composition, pending clipboard
+work, hidden/disabled fields and stale bindings cannot auto-publish. Requests retain
+their original gesture stamp across focus loss or Enter; Escape restores the last
+accepted value. Settled live fields emit `TextFieldOutcome::HistoryRequested` for
+consumer Undo/Redo; rejected/incomplete drafts retain local text history. Consumers
+must explicitly handle that outcome and still enforce their own access/history guards.
+
+The editor's independent `inspector-fixture` scene includes an ordinary-string
+consumer with rejection of empty text, an existing kit field and property diagnostic.
+It is not writable project data. Its native scenario exercises acceptance, rejected
+draft retention, cancellation and local-history epochs with injected input/frames.
+Tab/blur settlement, owned popup routing, pending/conflict presentation, cross-view
+draft recovery remain unimplemented. The editor's source adapter opts supported scalar
+fields into live capture, typed source staging and grouped document history; collections
+still have separate local settlement. `FieldAccess::Editable` controls native
+access and lock-icon visibility, never source authority. Managed `ValueView` refresh
+does not overwrite its buffer; the owning adapter uses `TextField::refresh` with an
+explicit source generation. Unchanged-value revision refresh preserves native selection.
+Physical OS/IME, system clipboard and screen-reader behavior are not certified.
+
 Keyboard and IME share the active modal boundary, including before delayed focus
 handoff. Tab traversal retains Bevy's nested nonmodal-group order while excluding
 other windows' controls for the synchronous traversal.

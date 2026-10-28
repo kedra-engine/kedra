@@ -15,6 +15,7 @@ layer = "authoring"
 bevy = { workspace = true, features = ["bevy_asset", "bevy_world_serialization"] }
 kedra_scene.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 ron.workspace = true
 uuid.workspace = true
 sha2.workspace = true

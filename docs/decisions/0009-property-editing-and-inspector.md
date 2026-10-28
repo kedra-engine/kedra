@@ -3,9 +3,14 @@
 Status: full editing contract proposed for owner review. Shared `kedra_ui::fields`,
 `kedra_inspector` and the source-bound read-only Inspector exist; see the
 [current profile](../site/en/contributing/contracts/editor/inspector.md).
-Interactive source-edit sessions, cancellable candidate previews, settlement and
-filesystem Save remain unimplemented. Semantic editing names below specify future
-requirements, not the current read-only API.
+Typed source property candidates exist in `kedra_authoring::properties`; they do not
+implement native input buffers, preview rendering, cross-view settlement or filesystem
+Save. The native Transform adapter consumes these candidates with explicit Enter/Escape,
+in-memory publication, renderer refresh and source Undo/Redo. General field/blur settlement,
+Save and general project-defined drawers remain unimplemented. The embedded UiCaption
+Luau profile is specified by [ADR 0036](0036-scoped-luau-inspector-drawers.md).
+Semantic names below specify the full
+requirements beyond that narrow profile.
 
 ## Context and scope
 
@@ -26,9 +31,11 @@ Existing foundations remain authoritative:
 - `kedra_ui` owns authored retained UI, native input adaptation and Flair styling.
 - `kedra_docking` owns placement, never document edits or close approval.
 
-The current transaction API commits a complete accepted edit; it does not expose
-a cancellable interactive preview transaction. Do not simulate one by appending
-an undo entry per pointer movement or by rewinding shared history on Escape.
+The working-set transaction API commits a complete accepted edit. Property sessions
+separately retain cancellable typed candidates, with exact dependency revisions and
+one accepted transaction. Native gesture/input integration and candidate preview
+rendering remain unimplemented. Do not simulate them by appending an undo entry per
+pointer movement or by rewinding shared history on Escape.
 
 ## Behavioral goals
 
@@ -227,7 +234,7 @@ multi-object writes are deferred until atomic target-set semantics are specified
 | Package/module | Layer | Responsibility and consumer |
 | --- | --- | --- |
 | `kedra_ui::fields` (existing read-only presentation; editing proposed) | runtime | Reusable field interactions and authored/native projection; consumed by inspector and an independent field fixture |
-| `kedra_authoring::properties` (planned module) | authoring | Source bindings, candidate validation and edit-session semantics over existing workspace/policies; consumed by inspector binding adapter |
+| `kedra_authoring::properties` (typed candidates implemented; native binding planned) | authoring | Source targets, revision-pinned typed field batches and candidate/accept/cancel semantics over existing workspace/policies; native inspector binding adapter remains planned |
 | `kedra_inspector` (existing read-only crate; edits proposed) | editor | Generic Bevy-reflected value discovery, default and specialized editors, property rows and proposed consumer-neutral edit intents; consumed by an independent value fixture and the editor inspector panel |
 | `kedra_editor` | editor | Source-binding adapter, document/selection/view lifecycle, preview host, command routing and Save orchestration |
 | Existing source workspace and persistence modules | authoring | Accepted source/history and Save request/receipt authority, not widgets or filesystem publication |

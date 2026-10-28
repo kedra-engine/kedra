@@ -4,12 +4,14 @@
 mod activation_tests;
 mod asset_views;
 mod document_views;
+pub(crate) mod edit_scripts;
 mod feedback;
 #[cfg(debug_assertions)]
 pub(crate) mod fixture;
 mod headers;
 #[cfg(test)]
 mod hierarchy_tests;
+mod history_context;
 mod hit;
 mod hosts;
 mod input;
@@ -22,6 +24,8 @@ mod scene_input;
 mod scene_menu;
 mod scene_tools;
 mod scrolling;
+mod settlement;
+mod source_history;
 
 pub(crate) fn bind_scene_controls(
     world: &mut World,
@@ -102,6 +106,10 @@ mod test_support;
 #[cfg(test)]
 pub(crate) fn browser_test_app() -> Result<App, Box<dyn std::error::Error>> {
     let (mut app, _, _) = test_support::setup()?;
+    app.add_plugins((
+        kedra_script::LuauPlugin,
+        kedra_inspector_luau::InspectorLuauPlugin,
+    ));
     test_support::sources(app.world_mut())?;
     Ok(app)
 }
@@ -153,18 +161,16 @@ pub(crate) struct EditorWorkspace {
     content_view: Option<ViewId>,
     content_actives: BTreeMap<NodeId, ViewId>,
     feedback: Option<feedback::Feedback>,
+    history_context: history_context::History,
 }
 
 pub(crate) fn install(app: &mut App) {
+    source_history::install(app);
     scene_input::install(app);
     app.init_resource::<hosts::CloseRequests>()
         .init_resource::<input::CursorSample>()
         .add_observer(input::activate)
         .add_observer(popup::menu_event)
-        .add_systems(
-            PostUpdate,
-            popup::constrain.before(bevy::ui::UiSystems::Layout),
-        )
         .add_systems(
             Update,
             (hosts::requests, input::cursor, tick, scrolling::wheel)
@@ -282,6 +288,7 @@ fn bind_root(world: &mut World, window: Entity, root: Entity) -> Result<(), Stri
     }
     let host = HostId::new();
     world.insert_resource(EditorWorkspace {
+        history_context: default(),
         layout: Workspace::new(host),
         host,
         window,
@@ -347,10 +354,21 @@ pub(crate) fn browser_action(
         if state.layout.snapshot().location(id).is_none() {
             return;
         }
-        if let Some(panel) = state.panels.browsers.get_mut(&id)
-            && let Err(error) = panel.dispatch(world, id, path, generation, action)
-        {
-            crate::views::fail(world, error);
+        if let Some(panel) = state.panels.browsers.get_mut(&id) {
+            match panel.dispatch(world, id, path, generation, action) {
+                Err(error) => crate::views::fail(world, error),
+                Ok(Some(path)) => {
+                    if let Some(root) = world
+                        .resource::<crate::model::ProjectManager>()
+                        .project
+                        .as_ref()
+                        .map(|project| project.assets.clone())
+                    {
+                        state.documents.select_asset(world, root, path);
+                    }
+                }
+                Ok(None) => (),
+            }
         }
     });
 }
@@ -416,6 +434,176 @@ fn inspector_visible(state: &EditorWorkspace, view: ViewId) -> bool {
             && snapshot.host_of(group).and_then(|host| snapshot.hosts.get(&host)).is_some_and(|host| host.maximized.is_none_or(|max| max == group))
     })
 }
+pub(crate) fn select_context(
+    world: &mut World,
+    items: Vec<kedra_editor_context::SelectionItem>,
+) -> Result<(), String> {
+    if !world.contains_resource::<EditorWorkspace>() {
+        return Err("Editor context is unavailable".into());
+    }
+    world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
+        if settlement::drafts(world, &state) {
+            return Err(
+                "Accept or cancel pending property drafts before changing selection".into(),
+            );
+        }
+        state.documents.replace_selection(items)
+    })
+}
+pub(crate) fn drop_context(
+    world: &mut World,
+    view: ViewId,
+    items: Vec<kedra_editor_context::SelectionItem>,
+) {
+    if !world
+        .get_resource::<EditorWorkspace>()
+        .is_some_and(|state| inspector_visible(state, view))
+    {
+        return;
+    }
+    if let Err(error) = select_context(world, items) {
+        editor_script_feedback(world, &error);
+    }
+}
+
+pub(crate) fn property_input(world: &mut World, event: kedra_ui::fields::TextFieldEvent) {
+    let Some(view) = world
+        .get::<crate::inspector::editing::SourceField>(event.entity)
+        .map(|binding| binding.view)
+    else {
+        return;
+    };
+    if !world.contains_resource::<EditorWorkspace>() {
+        return;
+    }
+    world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
+        if !inspector_visible(&state, view) {
+            return;
+        }
+        if let kedra_ui::fields::TextFieldOutcome::HistoryRequested { redo } = event.outcome {
+            if state
+                .panels
+                .inspectors
+                .get(&view)
+                .is_some_and(|panel| panel.authorizes_input(world, event.entity))
+                && !kedra_ui::fields::TextField::unsettled(world, event.entity)
+                && world
+                    .get::<kedra_ui::fields::FieldAccess>(event.entity)
+                    .is_some_and(|access| !access.is_read_only())
+                && let Err(error) = source_history::apply(world, &mut state, redo)
+            {
+                crate::views::fail(world, error);
+            }
+            return;
+        }
+        let state = &mut *state;
+        let capture = history_context::capture(world, state);
+        if let Some(panel) = state.panels.inspectors.get_mut(&view)
+            && let Err(error) = panel.property_input(world, &mut state.documents, event)
+        {
+            crate::views::fail(world, error);
+        }
+        history_context::accepted(world, state, capture);
+    });
+}
+
+pub(crate) fn refresh_inspector_presentations(world: &mut World) {
+    if let Some(mut state) = world.get_resource_mut::<EditorWorkspace>() {
+        for panel in state.panels.inspectors.values_mut() {
+            panel.refresh_presentation();
+        }
+    }
+}
+
+pub(crate) fn property_control(world: &mut World, event: kedra_inspector::controls::ControlEvent) {
+    let Some(view) = world
+        .get::<crate::inspector::discrete::SourceControl>(event.entity)
+        .map(|source| source.view)
+    else {
+        return;
+    };
+    if !world.contains_resource::<EditorWorkspace>() {
+        return;
+    }
+    world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
+        if !inspector_visible(&state, view) {
+            return;
+        }
+        let state = &mut *state;
+        let capture = history_context::capture(world, state);
+        if let Some(panel) = state.panels.inspectors.get_mut(&view)
+            && let Err(error) = panel.property_control(world, &mut state.documents, event)
+        {
+            crate::views::fail(world, error);
+        }
+        history_context::accepted(world, state, capture);
+    });
+}
+
+pub(crate) fn property_reference(
+    world: &mut World,
+    event: kedra_inspector::resources::ReferenceEvent,
+) {
+    let Some(view) = world
+        .get::<crate::inspector::discrete::SourceControl>(event.entity)
+        .map(|source| source.view)
+    else {
+        return;
+    };
+    if !world.contains_resource::<EditorWorkspace>() {
+        return;
+    }
+    world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
+        if !inspector_visible(&state, view) {
+            return;
+        }
+        let state = &mut *state;
+        let capture = history_context::capture(world, state);
+        if let Some(panel) = state.panels.inspectors.get_mut(&view)
+            && let Err(error) = panel.property_reference(world, &mut state.documents, event)
+        {
+            crate::views::fail(world, error);
+        }
+        history_context::accepted(world, state, capture);
+    });
+}
+
+pub(crate) fn browser_drag_path(
+    world: &World,
+    view: ViewId,
+    folder: &std::path::Path,
+    generation: u64,
+    name: &std::ffi::OsStr,
+) -> Option<String> {
+    let root = &world
+        .get_resource::<crate::model::ProjectManager>()?
+        .project
+        .as_ref()?
+        .assets;
+    let state = world.get_resource::<EditorWorkspace>()?;
+    if !inspector_visible(state, view) {
+        return None;
+    }
+    state
+        .panels
+        .browsers
+        .get(&view)?
+        .drag_path(root, folder, generation, name)
+}
+
+pub(crate) fn node_drag_available(
+    world: &World,
+    view: ViewId,
+    document: kedra_scene::document::DocumentId,
+) -> bool {
+    world
+        .get_resource::<EditorWorkspace>()
+        .is_some_and(|state| {
+            inspector_visible(state, view)
+                && state.panels.hierarchies.contains_key(&view)
+                && state.documents.active == Some(document)
+        })
+}
 
 fn tick(world: &mut World) {
     if !world.contains_resource::<EditorWorkspace>() {
@@ -424,6 +612,18 @@ fn tick(world: &mut World) {
     world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
         let result = (|| {
             hosts::poll(world, &mut state)?;
+            if let Some(message) = state.documents.poll_save() {
+                for panel in state.panels.inspectors.values() {
+                    panel.end_edit_groups(world);
+                }
+                notice(world, &state, &message);
+            }
+            for (view, title) in state.documents.source_titles() {
+                if state.titles.get(&view) != Some(&title) {
+                    state.titles.insert(view, title);
+                    state.rendered = None;
+                }
+            }
             panels::poll(world, &mut state);
             input::tick(world, &mut state)?;
             if state.rendered != Some(state.layout.revision()) {
@@ -535,8 +735,16 @@ fn activate_content(state: &mut EditorWorkspace, view: ViewId) {
         .is_some_and(|view| matches!(view.kind.as_str(), "document" | "asset-preview" | "preview"));
     if content {
         state.content_view = Some(view);
-        state.documents.active = None;
-        state.documents.activate_view(view);
+        if state
+            .documents
+            .opened
+            .values()
+            .any(|opened| opened.view == view)
+        {
+            state.documents.activate_view(view);
+        } else {
+            state.documents.active = None;
+        }
     }
 }
 fn notice(world: &mut World, state: &EditorWorkspace, message: &str) {
@@ -546,6 +754,11 @@ fn notice(world: &mut World, state: &EditorWorkspace, message: &str) {
         .and_then(|entity| world.get_mut::<Text>(entity))
     {
         text.0 = message.into();
+    }
+}
+pub(crate) fn editor_script_feedback(world: &mut World, message: &str) {
+    if world.contains_resource::<EditorWorkspace>() {
+        world.resource_scope(|world, state: Mut<EditorWorkspace>| notice(world, &state, message));
     }
 }
 fn destination(state: &EditorWorkspace) -> Destination {

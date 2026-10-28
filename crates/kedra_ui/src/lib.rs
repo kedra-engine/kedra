@@ -5,6 +5,9 @@ pub mod authored;
 pub mod docking;
 pub mod fields;
 pub mod native_input;
+pub mod popup;
+/// Ordered opt-in native text editing and local history, independent of authoring.
+pub use kedra_text_input as text_input;
 pub mod styles;
 #[cfg(all(feature = "text-capture", debug_assertions))]
 pub mod text_capture;

@@ -3,6 +3,7 @@
     reason = "Native input schedule regression assertions"
 )]
 use super::*;
+mod text_fields;
 use bevy::{
     asset::AssetPlugin,
     camera::RenderTarget,

@@ -91,11 +91,29 @@ fn actual_truncated_snapshot_never_resolves_a_duplicate_beyond_the_cap() {
     let snapshot = snapshot(&mut world).unwrap();
     assert_eq!(snapshot["truncated"], true);
     assert_eq!(snapshot["elements"].as_array().unwrap().len(), 4096);
+    let selected = observe(In(Some(json!({"element":"node.1"}))), &mut world).unwrap();
+    assert_eq!(selected["truncated"], true);
     assert!(element_center(&mut world, window, "duplicate").is_err());
     assert!(element_center(&mut world, window, "node.1").is_err());
     world.despawn(last.unwrap());
     assert_eq!(super::snapshot(&mut world).unwrap()["truncated"], false);
     assert!(element_center(&mut world, window, "duplicate").is_ok());
+}
+
+#[test]
+fn observed_check_state_is_distinct_from_text_and_only_present_for_checkable_nodes() {
+    let (mut world, _, camera) = host();
+    let entity = node(&mut world, camera, "native-choice");
+    assert!(snapshot(&mut world).unwrap()["elements"][0]["checked"].is_null());
+    world.entity_mut(entity).insert(bevy::ui::Checkable);
+    assert_eq!(
+        snapshot(&mut world).unwrap()["elements"][0]["checked"],
+        false
+    );
+    world.entity_mut(entity).insert(bevy::ui::Checked);
+    let observed = snapshot(&mut world).unwrap();
+    assert_eq!(observed["elements"][0]["checked"], true);
+    assert!(observed["elements"][0]["value"].is_null());
 }
 
 #[test]
@@ -124,6 +142,7 @@ fn snapshot_reports_real_fields_focus_ancestors_and_window_scoped_identity() {
     assert_eq!(snapshot["cameras"][0]["entity"], camera.to_bits());
     let field = &snapshot["elements"][0];
     assert_eq!(field["value"], "Кедра");
+    assert!(field["settled"].is_null());
     assert_eq!(field["text"], "Label");
     assert_eq!(field["enabled"], false);
     assert_eq!(field["focused"], true);
@@ -131,6 +150,52 @@ fn snapshot_reports_real_fields_focus_ancestors_and_window_scoped_identity() {
     assert_eq!(field["color"], json!([4, 5, 6, 255]));
     assert!(field["font"].is_object());
     assert_eq!(snapshot["truncated"], false);
+    node(&mut world, camera, "unrelated");
+    let selected = observe(In(Some(json!({"element":"field"}))), &mut world).unwrap();
+    assert_eq!(selected["elements"], json!([field]));
+    assert_eq!(selected["windows"], snapshot["windows"]);
+    assert!(observe(In(Some(json!({"element":42}))), &mut world).is_err());
+    assert!(observe(In(Some(json!({"unknown":true}))), &mut world).is_err());
+    assert_eq!(world.get::<EditableText>(entity).unwrap().value(), "Кедра");
+    let session =
+        kedra_ui::text_input::TextSession::attach(world.get::<EditableText>(entity).unwrap(), 64)
+            .unwrap();
+    world.entity_mut(entity).insert((
+        bevy::ui_widgets::TextInput,
+        session,
+        kedra_ui::authored::components::UiEditable {
+            autofocus: false,
+            select_all: false,
+        },
+    ));
+    // Synthetic observation fixture, not input acceptance: model a native queue
+    // already acknowledged by Bevy. Native scenarios exercise that real schedule.
+    world
+        .get_mut::<EditableText>(entity)
+        .unwrap()
+        .pending_edits
+        .clear();
+    kedra_ui::fields::TextField::attach(&mut world, entity, 1).unwrap();
+    assert_eq!(
+        observe(In(Some(json!({"element":"field"}))), &mut world).unwrap()["elements"][0]["settled"],
+        true
+    );
+    world
+        .get_mut::<EditableText>(entity)
+        .unwrap()
+        .editor_mut()
+        .set_text("draft");
+    assert_eq!(
+        observe(In(Some(json!({"element":"field"}))), &mut world).unwrap()["elements"][0]["settled"],
+        false
+    );
+    kedra_ui::fields::TextField::cancel(&mut world, entity).unwrap();
+    // Cancellation restores the buffer, but native caret acknowledgment is still queued.
+    assert_eq!(world.get::<EditableText>(entity).unwrap().value(), "Кедра");
+    assert_eq!(
+        observe(In(Some(json!({"element":"field"}))), &mut world).unwrap()["elements"][0]["settled"],
+        false
+    );
     assert!(
         element_center(&mut world, window, "field")
             .unwrap_err()
@@ -165,6 +230,8 @@ fn duplicate_hidden_disabled_and_inactive_targets_fail_closed() {
             .message
             .contains("Duplicate")
     );
+    // Filtering response payloads must not hide an ambiguous inventory elsewhere.
+    assert!(observe(In(Some(json!({"element":"absent"}))), &mut world).is_err());
     world
         .entity_mut(duplicate)
         .insert(InheritedVisibility::HIDDEN);

@@ -2,6 +2,7 @@
 mod browser;
 mod dock_fixture;
 mod docking;
+mod edit_scripts;
 mod hierarchy;
 mod inspector;
 mod navigation;
@@ -22,9 +23,12 @@ pub(crate) fn run(root: &Path, output: &Path, only: Option<&str>) -> Result<()> 
     let names = [
         "startup",
         "luau",
+        "editor-scripts",
         "browser",
         "hierarchy",
         "inspector",
+        "inspector-ui",
+        "inspector-collections",
         "workspace",
         "window-chrome",
         "docking",
@@ -152,6 +156,16 @@ pub(crate) fn run(root: &Path, output: &Path, only: Option<&str>) -> Result<()> 
                 command
             };
             command.current_dir(root);
+            if name == "editor-scripts" {
+                command.args([
+                    "--editor-script",
+                    "Editor/rename-pair.luau",
+                    "--edit-source",
+                    "game://Hud.prefab.ron",
+                    "--edit-source",
+                    "game://Cuboid.prefab.ron",
+                ]);
+            }
             let mut native = NativeProcess::spawn(&mut command, &private)?;
             let client = native.connect()?;
             let c = Editor::new(
@@ -169,9 +183,12 @@ pub(crate) fn run(root: &Path, output: &Path, only: Option<&str>) -> Result<()> 
                 Ok(match name {
                     "startup" => startup::run(&c)?,
                     "luau" => scripting::run(&c)?,
+                    "editor-scripts" => edit_scripts::run(&c)?,
                     "browser" => browser::run(&c)?,
                     "hierarchy" => hierarchy::run(&c, &mut hierarchy_phases)?,
                     "inspector" => inspector::run(&c)?,
+                    "inspector-ui" => inspector::ui(&c, false)?,
+                    "inspector-collections" => inspector::ui(&c, true)?,
                     "workspace" | "window-chrome" | "docking" | "docking-states" => {
                         let project = c.open_project()?;
                         let mut data = workspace::run(&c, name)?;

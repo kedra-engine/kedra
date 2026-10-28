@@ -10,6 +10,23 @@ pub struct BindingToken(pub u64);
 
 /// Optional host-supplied context, without source/document types in the inspector.
 pub trait ValueMetadata: Send + Sync {
+    /// Exact source-qualified path recorded for a native asset handle. No runtime
+    /// UUID formatting or guessed path is a substitute. `None` means unavailable;
+    /// this display lookup grants no resource-assignment capability.
+    fn asset_path(&self, _handle: &bevy::asset::UntypedHandle) -> Option<String> {
+        None
+    }
+    /// Source-qualified candidates admitted for this native asset type by the
+    /// host's current immutable catalog/delivery. Assignment still revalidates
+    /// source revisions, membership, type and delivery before publication.
+    fn asset_choices(&self, _asset_type: TypeId) -> Vec<String> {
+        Vec::new()
+    }
+    /// Visual type category from the host's existing field kit, not assignment
+    /// authority. Unknown resources use a generic file icon.
+    fn asset_icon(&self, _asset_type: TypeId) -> kedra_ui::fields::AssetIcon {
+        kedra_ui::fields::AssetIcon::File
+    }
     /// Human-readable provenance or ownership for a native path.
     fn describe(&self, path: Option<&ParsedPath>) -> Option<String>;
     /// Explain a host-specific representation which the generic editor cannot

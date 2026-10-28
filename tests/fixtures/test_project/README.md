@@ -29,6 +29,10 @@ remain component-isolation checks; they do not create substitute test projects.
 
 - Root scenes, `Cuboid.prefab.ron`, `Hud.prefab.ron`, `checker.png` and `ship.glb`:
   spatial/UI/mixed rendering, environments, scene navigation and selection.
+  The Hud image has an authored density list and an initially empty shadow list
+  for source-owned compound Inspector editing without changing its initial appearance.
+- `marker.glb`: single magenta replacement model reusing the Kedra-authored geometry
+  from `ship.glb`; exercises model assignment, retained cameras and source Undo/Redo.
 - `Hierarchy/`: a scene with two instances of a 180-leaf prefab, explicit child
   order, Unicode search and a second document. Stable expectations are in
   `cases.json`, not runtime-generated UUIDs.
@@ -93,3 +97,10 @@ and independently require two clean process lifecycles, actual state/input and
 readback/retention evidence. See [native game usage](native.md) for materialization,
 delivery, launch and external verification commands. Luau API-isolation regressions
 live in `kedra_script` product tests rather than a separate authored project.
+
+## Explicit editor-script fixture
+
+`Editor/rename-pair.luau` changes two existing prefab names through one explicitly
+granted transaction. It never runs on Open and never saves files. The native
+`editor-scripts` scenario authorizes it, exercises common Undo/Redo and native Save,
+and checks both saved members while preserving other files and sidecars.

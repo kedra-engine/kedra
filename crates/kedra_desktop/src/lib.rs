@@ -11,6 +11,15 @@ use bevy::{
 pub mod auxiliary;
 pub mod chrome;
 
+/// Host-owned temporary veto of ordinary main-window close requests. Desktop
+/// neither owns dirty documents nor decides how the host resolves this veto.
+#[derive(Component)]
+pub struct CloseBlocked;
+/// Native close admission milestone. Hosts update `CloseBlocked` before this set
+/// from their current source/input state, not a previous-frame approximation.
+#[derive(SystemSet, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct CloseAdmission;
+
 /// Desktop integration. Install after Bevy's window and input plugins.
 pub struct DesktopPlugin;
 impl Plugin for DesktopPlugin {
@@ -20,7 +29,12 @@ impl Plugin for DesktopPlugin {
             .init_resource::<FrameCount>()
             .add_systems(
                 Update,
-                (created, initial_client_size, close_requested).chain(),
+                (
+                    created,
+                    initial_client_size,
+                    close_requested.in_set(CloseAdmission),
+                )
+                    .chain(),
             );
     }
 }
@@ -192,10 +206,11 @@ fn close_requested(
     mut requests: MessageReader<WindowCloseRequested>,
     surface: Res<DesktopSurface>,
     mut exit: MessageWriter<AppExit>,
+    blocked: Query<(), With<CloseBlocked>>,
 ) {
     if requests
         .read()
-        .any(|request| Some(request.window) == surface.window)
+        .any(|request| Some(request.window) == surface.window && !blocked.contains(request.window))
     {
         exit.write(AppExit::Success);
     }
@@ -205,6 +220,31 @@ fn close_requested(
 mod tests {
     #![allow(clippy::unwrap_used, reason = "Isolated Bevy world assertions")]
     use super::*;
+    #[test]
+    fn host_close_veto_preserves_main_window_until_explicitly_released() {
+        let mut app = App::new();
+        app.add_message::<WindowCloseRequested>()
+            .add_message::<AppExit>()
+            .add_systems(Update, close_requested);
+        let window = app
+            .world_mut()
+            .spawn((Window::default(), CloseBlocked))
+            .id();
+        app.insert_resource(DesktopSurface {
+            window: Some(window),
+            ..default()
+        });
+        app.world_mut()
+            .write_message(WindowCloseRequested { window });
+        app.update();
+        assert!(app.world().resource::<Messages<AppExit>>().is_empty());
+        assert!(app.world().entities().contains(window));
+        app.world_mut().entity_mut(window).remove::<CloseBlocked>();
+        app.world_mut()
+            .write_message(WindowCloseRequested { window });
+        app.update();
+        assert!(!app.world().resource::<Messages<AppExit>>().is_empty());
+    }
     use bevy::window::WindowResolution;
 
     fn live_entities(world: &mut World) -> std::collections::BTreeSet<Entity> {

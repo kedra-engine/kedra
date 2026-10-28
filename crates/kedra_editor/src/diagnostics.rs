@@ -196,6 +196,7 @@ mod tests {
                 },
                 None,
                 delivery,
+                None,
             );
             assert!(result.is_err_and(|error| error.contains("concurrently")));
         }

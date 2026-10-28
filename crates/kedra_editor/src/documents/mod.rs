@@ -1,16 +1,27 @@
 //! Project-owned source sessions. Browser selection is never document activation.
+mod context;
+mod editing;
+pub(crate) use editing::PropertyChange;
 pub(crate) mod inspection;
-mod source;
+mod references;
+mod saving;
+use kedra_authoring::source;
+use kedra_authoring_fs::source as source_files;
+#[cfg(test)]
+#[path = "transactions/tests.rs"]
+mod transaction_tests;
 use bevy::{
     prelude::*,
     tasks::{IoTaskPool, Task, block_on, poll_once},
 };
+use kedra_authoring::editing::SourceEdit;
 use kedra_authoring::persistence::Workspace;
 use kedra_docking::model::ViewId;
 use kedra_scene::{
     document::{DocumentId, NodeAddress},
     reflection::ComponentPolicies,
 };
+pub(crate) use references::{ReferenceRequest, ResourceContext};
 use std::{collections::BTreeMap, path::PathBuf};
 type SourceResult = (u64, Result<Option<source::Admission>, String>);
 
@@ -31,8 +42,13 @@ pub(crate) struct Ready {
 #[derive(Default)]
 pub(crate) struct Documents {
     scope: Option<Workspace>,
-    scope_identity: inspection::ScopeIdentity,
+    render_source: Option<kedra_authoring::persistence::SourceSnapshot>,
+    save: saving::State,
+    scope_identity: kedra_editor_context::ScopeId,
+    pub(crate) selection: kedra_editor_context::Selection,
+    pending_selection: Option<String>,
     compiled: BTreeMap<DocumentId, std::sync::Arc<kedra_scene::instance::CompiledPrefab>>,
+    compiled_revisions: BTreeMap<DocumentId, u64>,
     paths: BTreeMap<PathBuf, DocumentId>,
     pub opened: BTreeMap<DocumentId, Opened>,
     pub active: Option<DocumentId>,
@@ -46,6 +62,41 @@ pub(crate) struct Documents {
     asset_ready: Option<PathBuf>,
 }
 impl Documents {
+    pub(crate) fn edit_scope(&self) -> kedra_editor_context::ScopeId {
+        self.scope_identity
+    }
+    pub(crate) fn begin_edit(&self, label: &str, grants: &[String]) -> Result<SourceEdit, String> {
+        SourceEdit::begin(
+            self.scope.as_ref().ok_or("Source workspace unavailable")?,
+            label,
+            grants,
+        )
+    }
+    pub(crate) fn edit_workspace(&mut self) -> Result<&mut Workspace, String> {
+        self.scope
+            .as_mut()
+            .ok_or("Source workspace unavailable".into())
+    }
+    pub(crate) fn commit_edit(
+        &mut self,
+        edit: &mut SourceEdit,
+        types: &bevy::reflect::TypeRegistry,
+        policies: &ComponentPolicies,
+    ) -> Result<Option<kedra_authoring::workspace::HistoryId>, String> {
+        let outcome = edit.commit(self.edit_workspace()?, types, policies)?;
+        self.compiled = outcome.compiled;
+        self.compiled_revisions = self.revisions();
+        self.reconcile_selection();
+        for (id, opened) in &mut self.opened {
+            if let Some(compiled) = self.compiled.get(id) {
+                opened.graph = std::sync::Arc::new(compiled.graph().clone());
+            }
+        }
+        Ok(outcome.history)
+    }
+    pub(crate) fn source_ready(&self) -> bool {
+        self.scope.is_some() && !self.opening()
+    }
     pub(crate) fn update_clean(&self) -> bool {
         self.pending.is_none()
             && self.task.is_none()
@@ -60,15 +111,21 @@ impl Documents {
     }
     /// Immutable admission baseline used only to verify a renderer delivery.
     pub(crate) fn scene_source(&self) -> Option<&kedra_authoring::persistence::SourceSnapshot> {
-        self.scope.as_ref().map(|scope| &scope.source)
+        self.render_source
+            .as_ref()
+            .or_else(|| self.scope.as_ref().map(|scope| &scope.source))
     }
     pub fn opening(&self) -> bool {
         self.pending.is_some()
     }
     #[cfg(debug_assertions)]
     pub fn snapshot(&self) -> serde_json::Value {
-        serde_json::json!({"active": self.active, "pending": self.pending, "read_only": true,
-            "documents": self.opened.values().map(|d| serde_json::json!({"document":d.document, "path":d.path, "view":d.view, "selection":d.selected})).collect::<Vec<_>>()})
+        serde_json::json!({"active": self.active, "pending": self.pending, "read_only": false,
+            "editable_components":["scene.transform","scene.primitive","scene.surface","scene.sun","scene.model","scene.environment","ui.caption","ui.layout","ui.classes","ui.image","ui.stylesheet","ui.background","ui.border","ui.shadow","ui.z","ui.global_z","ui.outline","ui.spin","ui.editable","ui.pickable","ui.modal","ui.id","ui.screen"],
+            "collection_structural_editing":true,"resource_assignment":true,
+            "save_available":self.can_save(), "saving":self.save_busy(), "save_pending":self.save_pending(), "save_error":self.save.error, "can_undo":self.can_history(false), "can_redo":self.can_history(true),
+            "documents": self.opened.values().map(|d| serde_json::json!({"document":d.document, "path":d.path, "view":d.view, "selection":d.selected,
+                "dirty":self.scope.as_ref().is_some_and(|scope| scope.working.dirty(d.document))})).collect::<Vec<_>>()})
     }
     pub fn request(&mut self, world: &World, root: PathBuf, path: PathBuf) -> Result<(), String> {
         if self.pending.as_ref() == Some(&path) {
@@ -103,7 +160,7 @@ impl Documents {
             let registry = world.resource::<AppTypeRegistry>().clone();
             let policies = world.resource::<ComponentPolicies>().clone();
             self.task = Some(IoTaskPool::get().spawn(async move {
-                let result = source::read(&root)
+                let result = source_files::read(&root, "game")
                     .and_then(|snapshot| source::admit(snapshot, &registry.read(), &policies))
                     .map(Some);
                 (clock, result)
@@ -140,9 +197,9 @@ impl Documents {
                     .and_then(|asset| asset.id);
                 self.task = Some(IoTaskPool::get().spawn(async move {
                     let result = if identity.is_some() {
-                        source::check_inventory(&root, &path, &hash, identity)
+                        source_files::check_inventory(&root, &path, &hash, identity)
                     } else {
-                        source::check(&root, &path, &hash)
+                        source_files::check(&root, &path, &hash)
                     };
                     (clock, result.map(|_| None))
                 }));
@@ -161,7 +218,19 @@ impl Documents {
             // tab. Only the most recent locator can activate after it is admitted.
             match result {
                 Ok(Some((scope, compiled))) => {
-                    self.paths = source::paths(&scope);
+                    self.render_source = Some(scope.source.clone());
+                    self.paths = scope
+                        .working
+                        .documents()
+                        .keys()
+                        .filter_map(|id| scope.path(*id).map(|path| (PathBuf::from(path), *id)))
+                        .collect();
+                    self.compiled_revisions = scope
+                        .working
+                        .documents()
+                        .iter()
+                        .map(|(id, document)| (*id, document.revision))
+                        .collect();
                     self.scope = Some(scope);
                     self.compiled = compiled;
                     self.checked = self.pending.clone();
@@ -172,12 +241,16 @@ impl Documents {
                 Err(error) if clock == self.clock || self.scope.is_none() => {
                     self.error = Some(error);
                     self.pending = None;
+                    self.pending_selection = None;
                 }
                 _ => {}
             }
         }
         if self.scope.is_none() || self.checked != self.pending {
             return None;
+        }
+        if let Some(path) = self.pending_selection.take() {
+            self.select_asset_path(&path);
         }
         let path = self.pending.take()?;
         let Some(document) = self.paths.get(&path).copied() else {
@@ -219,7 +292,7 @@ impl Documents {
         Some((
             doc.title.clone(),
             format!(
-                "{}\n\n{}\n{} source nodes · {} nested instances\n\nSource admitted read-only. Use Hierarchy to navigate composed nodes and Inspector to inspect selected values. Scene View requires a matching verified delivery and supported source data. Save and source edits are unavailable.",
+                "{}\n\n{}\n{} source nodes · {} nested instances\n\nUse Hierarchy to navigate composed nodes and Inspector to inspect selected values. Transform can be edited in memory with source Undo/Redo. Scene View requires a matching verified delivery and supported source data. Save active document writes accepted source changes; unresolved drafts must be accepted or cancelled first.",
                 self.scope.as_ref()?.path(id)?,
                 id.0,
                 doc.nodes.len(),
@@ -229,6 +302,8 @@ impl Documents {
         ))
     }
     pub fn published(&mut self, ready: Ready, view: ViewId, selected: NodeAddress) {
+        let follow =
+            self.active != Some(ready.document) || !self.opened.contains_key(&ready.document);
         self.opened.entry(ready.document).or_insert(Opened {
             #[cfg(debug_assertions)]
             path: ready.path,
@@ -238,10 +313,16 @@ impl Documents {
             graph: ready.graph,
         });
         self.active = Some(ready.document);
+        if follow {
+            self.follow_active_selection();
+        }
     }
     pub fn activate_view(&mut self, view: ViewId) {
-        if let Some(opened) = self.opened.values().find(|opened| opened.view == view) {
+        if let Some(opened) = self.opened.values().find(|opened| opened.view == view)
+            && self.active != Some(opened.document)
+        {
             self.active = Some(opened.document);
+            self.follow_active_selection();
         }
     }
     pub fn select(&mut self, document: DocumentId, node: NodeAddress) -> bool {
@@ -254,7 +335,12 @@ impl Documents {
         if !opened.graph.nodes.contains_key(&node) {
             return false;
         }
-        opened.selected = Some(node);
+        if !self.set_node_selection(document, node.clone(), false) {
+            return false;
+        }
+        if let Some(opened) = self.opened.get_mut(&document) {
+            opened.selected = Some(node);
+        }
         true
     }
     pub fn clear_selection(&mut self, view: ViewId) -> bool {
@@ -268,6 +354,7 @@ impl Documents {
             return false;
         }
         opened.selected = None;
+        self.selection.clear();
         true
     }
 }

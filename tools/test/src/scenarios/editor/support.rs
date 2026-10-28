@@ -48,6 +48,8 @@ pub struct Node {
     pub focused: bool,
     pub text: Option<String>,
     pub value: Option<String>,
+    pub settled: Option<bool>,
+    pub checked: Option<bool>,
     pub background: Option<[u8; 4]>,
 }
 impl Node {

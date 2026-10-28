@@ -1,8 +1,9 @@
-# Read-only source document sessions
+# Source document sessions
 
-Read-only source sessions implement part of
+Source sessions implement part of
 [ADR 0012](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0012-document-sessions-and-selection.md),
-without its proposed editing, settlement or Save lifecycle. See
+with in-memory Transform/UiCaption editing/history, but without general editing,
+settlement or new-document publication. Existing-source group Save is described below. See
 [Editor workspace](../../../manual/editor/index.md) for Open, tabs and external changes.
 
 ## Authority and identity
@@ -20,6 +21,49 @@ by full logical paths such as `editor://prefabs/source-document.prefab.ron`, res
 loaded catalog with membership and published-revision checks. Persisted UUIDs, sidecars, scoped
 addresses and provenance retain their identities. In-project display uses project-relative paths,
 not absolute filesystem paths; display formatting never rewrites native locators.
+
+## Authorized script transactions
+
+Trusted Rust Program bindings explicitly call `kedra_editor::edit_scripts::install`
+with exact admitted paths such as `game://Prefabs/First.prefab.ron`. Grants come from
+native authorization, not script arguments. Editor-layer `kedra_authoring_luau` installs
+`ctx.edit.begin(label)`, not discovery, automatic project-code execution or Save.
+The existing debug observation API remains read-only and does not install this capability.
+The first successful begin binds that installed capability to one source session;
+retirement requires fresh native authorization even when a new session has matching paths.
+
+Leases expose `nodes(path)`, `set_property(node, component, path, value)`, `rename(node,
+name)`, `remove_node(node)`, `reparent(node, parent)`, `remove_component(node, component)`,
+`commit()` and `cancel()`. Nodes are opaque transaction-bound userdata with
+display-only `name`. Values use native reflected deserialization and PropertySession;
+JSON is transport, not a source schema. Each request must produce a valid typed candidate;
+temporarily invalid cross-field staging is not provided by this binding. Nested edits
+remain overrides of the receiving document. Access refuses pending gestures/drafts,
+pending Save, retired scopes and stale revisions. Commit validates the complete catalog
+and publishes one named source-history entry, returning an opaque ID string or nil for a no-op.
+
+Limits: 128 staged mutations, 4096 enumerated nodes per call, 64 KiB JSON per property,
+1024 bytes per field path/name and 256 bytes per component key. Only existing admitted
+documents can be edited. Uncommitted work cannot publish after exception, cancellation
+or run retirement. Explicit commits remain accepted even if later script code fails;
+runtime failure is not rollback of a commit. There is no separate script/Inspector journal.
+Files remain unchanged until separate Save, which preserves the complete coupled group.
+
+Explicit startup launch uses `kedra <project> --editor-script Editor/path.luau
+--edit-source game://Main.scene.ron` (repeat `--edit-source` for each writable source).
+The script defines `function run(ctx)`; standard relative modules use its immutable
+Editor/ snapshot. Loading executes nothing. Snapshots admit at most 256 files / 8 MiB,
+64 KiB per file, within a 1024-entry / depth-16 inventory; links and special files refuse.
+This is not a sandbox against concurrent hostile filesystem replacement. Opening a
+project alone does not launch scripts. `edit_scripts::status` and `cancel` serve native
+hosts; debug workspace observation exposes status without authoring/eval authority.
+Editor tools use a one-second per-resume budget for synchronous source compilation,
+with the ordinary 45-second whole-run deadline. Long batches should yield between
+requests with `wait.updates(1)`; runtime behavior budgets are unchanged.
+
+Source history restores optional logical selection/focus and value-free collection
+mappings keyed by `HistoryId`, not by matching values. Missing/closed panels do not
+block source history. Dirty is based on saved content, not revision equality.
 
 ## Bounded admission
 
@@ -74,7 +118,8 @@ provide a sandbox against concurrent hostile replacement.
 Each opened document has one distinct retained docking view and initially selects its root.
 Reopen returns to that view and its selection. Document-tab activation updates the coordinator;
 tool focus does not. Selection must belong to the active admitted graph. Debug `editor.workspace`
-reports read-only session state alongside docking state, not an editing API.
+reports source revisions/dirty/history availability alongside docking state,
+not a remote editing API.
 
 The first source document hides the empty Document Preview slot. Supported documents use
 [Scene View](scene-view.md), whose matching-delivery and frame readiness are separate from
@@ -83,21 +128,49 @@ activating those views clears the active source target. [Hierarchy](hierarchy.md
 [Inspector](inspector.md) consume the same scoped source selection without needing a frame.
 
 Hide/Close retains accepted sources and descriptors, reachable through Panels or Open. Mixed
-floating-host Close is safe only under the current read-only restriction. Before mutation is
-enabled, implement field settlement, dirty-document reachability and close approval from ADR 0012.
+floating-host Close retains hidden source views and all shared working documents. Transform
+drafts remain retained in Inspector; source history refuses unresolved drafts. Main-window
+Close is vetoed before desktop close admission while input or unsaved sources remain.
+The explicit **Discard all unsaved source changes** menu action restores the admitted
+source baseline without rereading/writing disk, clears history and retires all field/scope bindings.
+Automatic blur settlement or crash recovery is not implied by this close policy.
 Restart restores inactive placeholders only: preferences do not supply trusted document content
 or automatically admit stored paths. Reopen through Assets validates the current scope and
-reuses the descriptor. Crash recovery, reconciliation, Save, Discard and project execution are
-not implemented.
+reuses the descriptor. Unsaved-session recovery, external merge and gameplay execution are
+not implemented. Interrupted authorized Save groups require explicit recovery before Open.
+
+## Save ownership
+
+`documents::saving` pins `prepare_existing_save` for the active source and runs the
+separate `kedra_authoring_fs` writer on the IO pool. Source inventory and catalog remain
+unchanged; the profile refuses new/deleted files and pins complete coupled groups.
+All Inspector drafts must be settled explicitly. Save does not grant Luau filesystem access.
+
+The writer checks complete inventory/hash preconditions, preserves permissions and uses
+atomic replacements under a stable sibling advisory lease and a recoverable group journal.
+The host also
+reuses source admission's asset/sidecar identity checks. External conflicts preserve working
+values and history. Only the exact returned receipt advances the source baseline; newer
+working revisions stay dirty. The original renderer-delivery admission stays pinned separately.
+
+Known refusal releases the operation. An uncertain outcome retains exact pending bytes and
+blocks discard/close; Retry Save reconciles the same request, including already-published
+bytes. Save does not build assets or clear source history. Admission holds a shared lease
+and refuses unfinished groups. After restart use `kedra recover-save <source-root>`;
+Open never writes recovery data. See
+[ADR 0039](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0039-existing-source-save-groups.md).
+See [Save instructions](../../../manual/editor/inspector.md#save-active-document) and
+[ADR 0037](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0037-existing-document-save.md).
 
 ## Owners and verification
 
 Production owners are
 [`documents/mod.rs`](https://github.com/kedra-engine/kedra/blob/main/crates/kedra_editor/src/documents/mod.rs),
-[`documents/source.rs`](https://github.com/kedra-engine/kedra/blob/main/crates/kedra_editor/src/documents/source.rs)
+[`kedra_authoring_fs::source`](https://github.com/kedra-engine/kedra/blob/main/crates/kedra_authoring_fs/src/source.rs)
 and
 [`documents/inspection.rs`](https://github.com/kedra-engine/kedra/blob/main/crates/kedra_editor/src/documents/inspection.rs).
-Their local `tests.rs`, `source_tests.rs` and `inspection_tests.rs` cover repeated/latest opens,
+Editor `tests.rs`/`inspection_tests.rs` and filesystem `source/tests.rs` cover
+repeated/latest opens,
 collision/malformed/missing/mismatched input, reference rejection, scoped selection and unchanged
 source state on failure. The [browser verification route](asset-browser.md#verification) exercises
 source Open natively. Native verification of this revision remains pending.

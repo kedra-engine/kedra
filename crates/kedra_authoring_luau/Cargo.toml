@@ -1,0 +1,22 @@
+[package]
+name = "kedra_authoring_luau"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Scoped Luau edit leases over host-owned authoring transactions"
+
+[package.metadata.kedra]
+layer = "editor"
+
+[dependencies]
+bevy.workspace = true
+kedra_authoring.workspace = true
+kedra_scene.workspace = true
+kedra_script.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

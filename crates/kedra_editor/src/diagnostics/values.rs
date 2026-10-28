@@ -10,6 +10,7 @@ use kedra_ui::{
     fields::{FieldAccess, FieldTemplates, ValueView},
 };
 use std::{any::TypeId, sync::Arc};
+mod text;
 
 #[derive(Clone, Reflect)]
 struct Level {
@@ -26,9 +27,11 @@ pub(super) struct Settings {
     exact: u64,
     level: Level,
     samples: Vec<u32>,
+    transform: Transform,
 }
 #[derive(Resource)]
 struct Fixture {
+    text: text::Demo,
     root: UiView,
     tree: Option<TreeView>,
     templates: FieldTemplates,
@@ -107,6 +110,7 @@ impl ValueEditorView for CompactView {
 }
 
 pub(super) fn install(app: &mut App) {
+    text::install(app);
     app.add_observer(activate).add_systems(Update, update);
     kedra_app::scripting::register(
         app,
@@ -136,7 +140,13 @@ pub(super) fn bind(world: &mut World, root: UiView) -> Result<(), String> {
             .insert(command);
     }
     let templates = crate::inspector::templates(world, 1.)?;
-    let mut editors = EditorRegistry::default();
+    let text = text::bind(
+        world,
+        root.root,
+        root.element("text-demo").map_err(|e| e.to_string())?,
+        &templates,
+    )?;
+    let mut editors = kedra_inspector::builtin::editors()?;
     editors.register_type(TypeId::of::<Level>(), Arc::new(Compact { percent: false }))?;
     editors.register_field(
         TypeId::of::<Settings>(),
@@ -144,6 +154,7 @@ pub(super) fn bind(world: &mut World, root: UiView) -> Result<(), String> {
         Arc::new(Compact { percent: true }),
     )?;
     world.insert_resource(Fixture {
+        text,
         root,
         tree: None,
         templates,

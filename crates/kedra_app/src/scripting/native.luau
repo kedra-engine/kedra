@@ -38,7 +38,8 @@ function api.click(id: string)
 end
 function api.field(id: string, value: string)
     local node = api.wait_node(id)
-    api.click(id)
+    assert(node.enabled, "Target is disabled: " .. id)
+    api.input(node.window, {kind = "click", element = id})
     wait.until_true("pointer-acquired focus for " .. id, function()
         local current = native.node(id)
         return current ~= nil and current.focused

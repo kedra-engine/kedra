@@ -90,7 +90,8 @@ the logical lookup path is neither a filesystem locator nor a replacement identi
 
 Sources own Save. Runtime state, drafts and derived deliveries remain separate. Loading
 a scene does not authorize script execution. Source-editing APIs do not imply visual
-editing, editor Save or Play; those editor workflows remain unimplemented.
+editing, editor Save or Play. Only the documented Inspector source edits and
+single-existing-document Save are implemented; general authoring and Play remain unavailable.
 
 ## Review features, safety and compatibility
 

@@ -12,6 +12,7 @@ description = "Consumer-neutral retained inspection of native Bevy reflected val
 layer = "editor"
 
 [dependencies]
+kedra_assets.workspace = true
 bevy.workspace = true
 kedra_ui.workspace = true
 
@@ -19,5 +20,6 @@ kedra_ui.workspace = true
 workspace = true
 
 [dev-dependencies]
+bevy = { workspace = true, features = ["bevy_clipboard"] }
 kedra_scene.workspace = true
 bevy_flair.workspace = true

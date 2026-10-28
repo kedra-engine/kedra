@@ -13,6 +13,9 @@ use menu::menu;
 
 #[derive(Component, Clone, Copy)]
 pub(super) enum Action {
+    SourceHistory(bool),
+    DiscardSources,
+    SaveSource,
     Panels,
     Reset,
     Float(NodeId),
@@ -153,6 +156,11 @@ fn dispatch(world: &mut World, control: Option<Control>, action: Option<Action>,
             if let Some(action) = action {
                 dismiss(world, &mut state);
                 match action {
+                    Action::SourceHistory(redo) => {
+                        super::source_history::apply(world, &mut state, redo)?
+                    }
+                    Action::DiscardSources => super::source_history::discard(world, &mut state)?,
+                    Action::SaveSource => super::source_history::save(world, &mut state)?,
                     Action::SceneCommand(view, command) => {
                         super::scene_input::cancel(world);
                         if let Some(camera) = state
@@ -980,17 +988,3 @@ mod admission_tests;
 #[cfg(test)]
 #[path = "gesture_tests.rs"]
 mod gesture_tests;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn activation_observer_is_nonexclusive_and_ignores_unrelated_buttons() {
-        let mut app = App::new();
-        app.add_observer(activate);
-        let entity = app.world_mut().spawn_empty().id();
-        app.world_mut().trigger(Activate { entity });
-        app.update();
-        assert!(!app.world().contains_resource::<EditorWorkspace>());
-    }
-}

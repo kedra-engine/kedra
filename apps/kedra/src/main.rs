@@ -1,4 +1,4 @@
-//! Desktop and asset-tool entry point; no project code is built or executed.
+//! Desktop and asset-tool entry point; project editor scripts require explicit grants.
 #![cfg_attr(
     all(target_os = "windows", not(debug_assertions)),
     windows_subsystem = "windows"
@@ -21,6 +21,12 @@ struct Cli {
     /// No assets are built and no project code runs.
     #[arg(long, requires = "project")]
     project_assets: Option<PathBuf>,
+    /// Run this exact Editor/ Luau script once; opening a project alone runs nothing.
+    #[arg(long, requires_all = ["project", "edit_source"])]
+    editor_script: Option<String>,
+    /// Authorize one exact game:// scene/prefab path (repeat for each writable source).
+    #[arg(long, requires = "editor_script")]
+    edit_source: Vec<String>,
     /// Shared debug-only application diagnostics; absent from release CLI schemas.
     #[command(flatten)]
     launch: kedra_app::launch::LaunchOptions,
@@ -34,6 +40,28 @@ struct Cli {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn editor_scripts_require_a_project_and_explicit_source_grants() {
+        for args in [
+            vec!["kedra", "--editor-script", "Editor/edit.luau"],
+            vec!["kedra", "project", "--editor-script", "Editor/edit.luau"],
+            vec!["kedra", "project", "--edit-source", "game://main.scene.ron"],
+        ] {
+            assert!(Cli::try_parse_from(args).is_err());
+        }
+        let cli = Cli::try_parse_from([
+            "kedra",
+            "project",
+            "--editor-script",
+            "Editor/edit.luau",
+            "--edit-source",
+            "game://main.scene.ron",
+            "--edit-source",
+            "game://button.prefab.ron",
+        ])
+        .unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(cli.edit_source.len(), 2);
+    }
     #[test]
     fn explicit_assets_override_environment_and_broken_executable_lookup() {
         let root = asset_root(
@@ -141,6 +169,8 @@ mod tests {
 }
 #[derive(Subcommand)]
 enum Command {
+    /// Finish one interrupted source Save group; conflicts preserve recovery records.
+    RecoverSave { source: PathBuf },
     /// Headless asset tooling shared by editor resources and game projects.
     Assets {
         #[command(subcommand)]
@@ -186,7 +216,24 @@ fn asset_root(
 }
 
 fn run(cli: Cli) -> Result<(), String> {
+    if cli.command.is_some() && cli.editor_script.is_some() {
+        return Err("Editor scripts cannot run with an asset or recovery command".into());
+    }
     match cli.command {
+        Some(Command::RecoverSave { source }) => {
+            eprintln!("Recovering interrupted source Save: {}", source.display());
+            let receipt =
+                kedra_authoring_fs::recover_existing(&source).map_err(|error| error.to_string())?;
+            eprintln!(
+                "SUCCESS: {}",
+                if receipt.is_some() {
+                    "Source Save recovered. Reopen the project."
+                } else {
+                    "No interrupted source Save found."
+                }
+            );
+            Ok(())
+        }
         Some(Command::Assets { command }) => match command {
             AssetCommand::Init { source } => {
                 eprintln!("Initializing asset identities in {}", source.display());
@@ -242,6 +289,11 @@ fn run(cli: Cli) -> Result<(), String> {
                 cli.launch,
                 cli.state_directory,
                 cli.project_assets,
+                cli.editor_script
+                    .map(|path| kedra_editor::edit_scripts::Launch {
+                        path,
+                        sources: cli.edit_source,
+                    }),
             )
         }
     }

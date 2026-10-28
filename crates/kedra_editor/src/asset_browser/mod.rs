@@ -1,5 +1,7 @@
 //! Dockable source browser: ordinary model, asynchronous filesystem effects and retained authored UI.
+mod drag;
 mod hints;
+pub(crate) use drag::path_for_drop;
 mod input;
 mod model;
 #[cfg(test)]
@@ -68,6 +70,30 @@ pub(crate) struct Panel {
     dirty: bool,
 }
 impl Panel {
+    pub(crate) fn drag_path(
+        &self,
+        root: &std::path::Path,
+        path: &std::path::Path,
+        generation: u64,
+        name: &std::ffi::OsStr,
+    ) -> Option<String> {
+        if self.root != root
+            || self.model.path != path
+            || self.model.generation() != generation
+            || self.model.loading
+        {
+            return None;
+        }
+        let entry = self.model.entries.iter().find(|entry| entry.name == name)?;
+        if !entry.tracked || matches!(entry.kind, Kind::Folder | Kind::Unavailable) {
+            return None;
+        }
+        let path = path
+            .join(name)
+            .to_str()?
+            .replace(std::path::MAIN_SEPARATOR, "/");
+        kedra_assets::delivery::normalized(&path).then(|| format!("game://{path}"))
+    }
     pub fn mount(
         world: &mut World,
         parent: Entity,
@@ -204,11 +230,24 @@ impl Panel {
         path: PathBuf,
         generation: u64,
         action: Action,
-    ) -> Result<(), String> {
+    ) -> Result<Option<String>, String> {
         if path != self.model.path || generation != self.model.generation() {
-            return Ok(());
+            return Ok(None);
         }
-        self.action(world, id, action)
+        let selecting = matches!(
+            action,
+            Action::Select(_) | Action::Move(_, _) | Action::Enter(_)
+        );
+        self.action(world, id, action)?;
+        Ok(selecting
+            .then(|| {
+                self.model.selected.as_ref().and_then(|name| {
+                    self.model.path.join(name).to_str().map(|path| {
+                        format!("game://{}", path.replace(std::path::MAIN_SEPARATOR, "/"))
+                    })
+                })
+            })
+            .flatten())
     }
     fn request(&mut self, path: PathBuf, history: Option<usize>) -> Result<(), String> {
         let request = self.model.request(path, history)?;

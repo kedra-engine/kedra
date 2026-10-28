@@ -3,6 +3,7 @@ use super::*;
 use bevy::input_focus::{FocusedInput, InputFocus};
 use kedra_ui::docking::rect;
 pub(super) fn install(app: &mut App) {
+    super::drag::install(app);
     app.add_observer(activate)
         .add_observer(double_click)
         .add_observer(keyboard);

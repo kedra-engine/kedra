@@ -766,6 +766,8 @@ fn real_input_pipeline_delivers_moves_drag_text_chords_and_idempotent_receipts()
         "copy",
         "paste",
         "cut",
+        "undo",
+        "redo",
     ] {
         command(&mut app, a, json!({"kind":"key","key":chord}));
         assert_eq!(

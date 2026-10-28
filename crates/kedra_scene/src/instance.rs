@@ -62,6 +62,7 @@ pub struct CompiledPrefab {
     entities: BTreeMap<NodeAddress, Entity>,
     ports: BTreeMap<String, Option<Entity>>,
     dependencies: Vec<UntypedHandle>,
+    dependency_paths: Vec<(AssetPath<'static>, UntypedHandle)>,
 }
 impl CompiledPrefab {
     /// Compile in an isolated world using registered Bevy component policies.
@@ -79,6 +80,7 @@ impl CompiledPrefab {
         let mut tracking = TrackingLoader {
             inner: loader,
             dependencies: Vec::new(),
+            paths: Vec::new(),
         };
         let mut world = World::new();
         let mut document_links = BTreeSet::new();
@@ -216,6 +218,7 @@ impl CompiledPrefab {
             entities,
             ports,
             dependencies: tracking.dependencies,
+            dependency_paths: tracking.paths,
         })
     }
     /// Whether every recorded native asset dependency is loaded; failures retain their cause.
@@ -304,11 +307,24 @@ impl CompiledPrefab {
                 reverse.entry(entity).or_insert(Reference::Port(name));
             }
         }
-        policies.encode_value(field, types, &reverse)
+        policies.encode_value_paths(field, types, &reverse, &self.dependency_paths)
     }
     /// Immutable mapping into the isolated source world, not live instance handles.
     pub fn source_entities(&self) -> &BTreeMap<NodeAddress, Entity> {
         &self.entities
+    }
+    /// Exact logical loader request recorded by this immutable compilation for a
+    /// native handle, including its source and subasset label. Returns `None` for
+    /// foreign handles or when a host collapsed distinct paths onto one identity.
+    /// This borrows the existing dependency records; it neither resolves a newer
+    /// source catalog nor loads assets or grants assignment/publication authority.
+    pub fn dependency_path(&self, handle: &UntypedHandle) -> Option<&AssetPath<'static>> {
+        let mut paths = self
+            .dependency_paths
+            .iter()
+            .filter(|(_, recorded)| recorded.id() == handle.id());
+        let (path, _) = paths.next()?;
+        paths.all(|(other, _)| other == path).then_some(path)
     }
     /// Symbolic references for encoding isolated values, including explicit ports.
     pub fn references(&self) -> BTreeMap<Entity, Reference> {
@@ -486,7 +502,7 @@ impl CompiledPrefab {
         presence: &BTreeMap<String, bool>,
     ) -> Result<Self> {
         struct Existing<'a> {
-            handles: &'a [UntypedHandle],
+            paths: &'a [(AssetPath<'static>, UntypedHandle)],
             missing: bool,
         }
         impl LoadFromPath for Existing<'_> {
@@ -495,10 +511,10 @@ impl CompiledPrefab {
                 type_id: std::any::TypeId,
                 path: AssetPath<'static>,
             ) -> UntypedHandle {
-                if let Some(handle) = self
-                    .handles
+                if let Some((_, handle)) = self
+                    .paths
                     .iter()
-                    .find(|handle| handle.type_id() == type_id && handle.path() == Some(&path))
+                    .find(|(requested, handle)| handle.type_id() == type_id && requested == &path)
                 {
                     return handle.clone();
                 }
@@ -510,7 +526,7 @@ impl CompiledPrefab {
             }
         }
         let mut loader = Existing {
-            handles: &self.dependencies,
+            paths: &self.dependency_paths,
             missing: false,
         };
         let compiled = Self::compile(graph, types, policies, &mut loader, presence)?;
@@ -534,7 +550,7 @@ impl CompiledPrefab {
         reverse.extend(self.ports.iter().filter_map(|(name, entity)| {
             entity.map(|entity| (entity, Reference::Port(name.clone())))
         }));
-        policies.encode_value(value, types, &reverse)
+        policies.encode_value_paths(value, types, &reverse, &self.dependency_paths)
     }
     /// Preflight dependency/port readiness, then instantiate through Bevy's entity mapping.
     /// Failure removes owned allocations; external parent/port targets remain untouched.
@@ -703,6 +719,7 @@ fn collect_document_links(
 struct TrackingLoader<'a> {
     inner: &'a mut dyn LoadFromPath,
     dependencies: Vec<UntypedHandle>,
+    paths: Vec<(AssetPath<'static>, UntypedHandle)>,
 }
 impl LoadFromPath for TrackingLoader<'_> {
     fn load_from_path_erased(
@@ -710,7 +727,14 @@ impl LoadFromPath for TrackingLoader<'_> {
         type_id: std::any::TypeId,
         path: AssetPath<'static>,
     ) -> UntypedHandle {
-        let handle = self.inner.load_from_path_erased(type_id, path);
+        let handle = self.inner.load_from_path_erased(type_id, path.clone());
+        if !self
+            .paths
+            .iter()
+            .any(|(requested, existing)| *requested == path && existing.type_id() == type_id)
+        {
+            self.paths.push((path, handle.clone()));
+        }
         if !self.dependencies.iter().any(|h| h.id() == handle.id()) {
             self.dependencies.push(handle.clone());
         }

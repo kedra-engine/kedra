@@ -102,7 +102,9 @@ For preview camera and selection controls, see [Scene View](../editor/scene-view
 - **Source works, preview fails:** confirm the explicit project and both delivery paths,
   then follow [asset troubleshooting][preview-errors].
 
-Native input and rendering still need testing on your machine. Visual editing,
-editor document Save and project Play remain unavailable.
+Native input and rendering still need testing on your machine. General visual editing,
+new-file publication and project Play remain unavailable. Existing-source group Save
+for accepted Inspector source edits is described in the
+[Inspector manual](../editor/inspector.md#save-active-document).
 
 [preview-errors]: ../assets/troubleshooting.md#verify-succeeds-but-the-editor-cannot-preview

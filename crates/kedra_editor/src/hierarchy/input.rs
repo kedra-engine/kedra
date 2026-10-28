@@ -164,9 +164,63 @@ impl Panel {
             }
             Action::FocusSearch | Action::Details | Action::CloseSearch => None,
         };
-        if let Some(node) = target
-            && documents.select(document, node.clone())
-        {
+        if let Some(node) = target {
+            let keys = world.get_resource::<ButtonInput<KeyCode>>();
+            let additive = pointer_selection
+                && keys.is_some_and(|keys| {
+                    [
+                        KeyCode::SuperLeft,
+                        KeyCode::SuperRight,
+                        KeyCode::ControlLeft,
+                        KeyCode::ControlRight,
+                    ]
+                    .iter()
+                    .any(|key| keys.pressed(*key))
+                });
+            let range = pointer_selection
+                && keys.is_some_and(|keys| {
+                    keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight)
+                });
+            let accepted = if range {
+                let tree = self.tree.as_ref().ok_or("Hierarchy graph missing")?;
+                let visible = tree.visible(&self.navigation[&document]);
+                let anchor = self
+                    .range_anchor
+                    .as_ref()
+                    .or(self.selected.as_ref())
+                    .unwrap_or(&node);
+                let start = visible
+                    .iter()
+                    .position(|(index, _)| tree.rows[*index].address == *anchor);
+                let end = visible
+                    .iter()
+                    .position(|(index, _)| tree.rows[*index].address == node);
+                match (start, end) {
+                    (Some(start), Some(end)) => {
+                        let mut nodes: Vec<_> = visible[start.min(end)..=start.max(end)]
+                            .iter()
+                            .map(|(index, _)| tree.rows[*index].address.clone())
+                            .collect();
+                        if end < start {
+                            nodes.reverse();
+                        }
+                        documents.select_nodes(document, nodes)
+                    }
+                    _ => false,
+                }
+            } else if additive {
+                documents.toggle_node(document, node.clone())
+            } else {
+                documents.select(document, node.clone())
+            };
+            if !accepted {
+                return Ok(());
+            }
+            if !range {
+                self.range_anchor = Some(node.clone());
+            } else if self.range_anchor.is_none() {
+                self.range_anchor = self.selected.clone();
+            }
             if pointer_selection {
                 if let Some(view) = self.rows.get(&node) {
                     world.resource_mut::<bevy::input_focus::InputFocus>().set(

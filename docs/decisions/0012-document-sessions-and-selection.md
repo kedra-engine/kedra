@@ -137,6 +137,11 @@ Project change retires all old-scope requests, never another session's documents
 
 ## Selection and history
 
+The initial single-node/Browser-local selection below is superseded by
+[ADR 0041](0041-shared-editor-context.md): logical asset/node selection is shared,
+separate from Open/active tabs, with bounded multi-selection and typed drag payloads.
+The source-history and persistent-address requirements remain applicable.
+
 Start with single-node selection plus an explicit empty selection. Store the
 persistent address in the document model, not in a rendered row or preview entity.
 Clicking a source asset only selects it in the browser; it does not silently replace

@@ -15,6 +15,7 @@ layer = "runtime"
 bevy = { workspace = true, features = ["bevy_ui", "bevy_input_focus", "bevy_ui_widgets", "bevy_picking", "serialize"] }
 kedra_scene.workspace = true
 kedra_docking.workspace = true
+kedra_text_input.workspace = true
 serde.workspace = true
 bevy_flair.workspace = true
 # Preserve native Node serde semantics while rejecting ignored/misspelled authored fields.
