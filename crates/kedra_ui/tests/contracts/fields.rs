@@ -22,11 +22,12 @@ use std::{collections::BTreeMap, sync::Arc};
 type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 #[test]
-fn row_reconciles_late_native_geometry_without_another_host_update() -> TestResult {
+fn row_updates_preserve_inline_label_and_editor_at_narrow_widths() -> TestResult {
     let (mut app, parent, templates) = fixture()?;
     let mut row = PropertyRow::mount(app.world_mut(), parent, &templates, "late-layout")?;
     row.update(app.world_mut(), "Label", None)?;
-    for width in [260., 350., 280.] {
+    let editor = row.editor();
+    for width in [260., 350., 280., 200.] {
         let mut computed = app
             .world_mut()
             .get_mut::<ComputedNode>(row.root())
@@ -34,11 +35,19 @@ fn row_reconciles_late_native_geometry_without_another_host_update() -> TestResu
         computed.size.x = width;
         computed.inverse_scale_factor = 1.;
         app.update();
+        row.update(app.world_mut(), "Label", Some("Validation failed"))?;
         let classes = app
             .world()
             .get::<bevy_flair::style::components::ClassList>(row.root())
             .ok_or("classes")?;
-        assert_eq!(classes.contains("compact"), width < 296.);
+        assert!(!classes.contains("compact"));
+        assert_eq!(row.editor(), editor);
+        assert_eq!(
+            app.world()
+                .get::<Text>(row.diagnostic())
+                .map(|t| t.0.as_str()),
+            Some("Validation failed")
+        );
     }
     Ok(())
 }
@@ -59,6 +68,11 @@ fn fixture() -> TestResult<(App, Entity, FieldTemplates)> {
         doc.nodes[0]
             .components
             .insert("ui.classes".into(), ComponentData::ron(1, "(names:[])")?);
+        if keys == ["caption"] {
+            doc.nodes[0]
+                .components
+                .insert("ui.button".into(), ComponentData::ron(1, "()")?);
+        }
         for key in keys {
             let mut components = BTreeMap::from([
                 ("ui.layout".into(), ComponentData::ron(1, "(node:())")?),
@@ -68,7 +82,7 @@ fn fixture() -> TestResult<(App, Entity, FieldTemplates)> {
                 ),
                 ("ui.classes".into(), ComponentData::ron(1, "(names:[])")?),
             ]);
-            if ["label", "diagnostic", "value", "title"].contains(key) {
+            if ["label", "diagnostic", "value", "title", "caption"].contains(key) {
                 components.insert(
                     "ui.caption".into(),
                     ComponentData::ron(1, "(text:\"\",justify:Left,wrap:false)")?,
@@ -99,9 +113,13 @@ fn fixture() -> TestResult<(App, Entity, FieldTemplates)> {
         )?))
     };
     let templates = FieldTemplates {
+        command: template(&["caption"])?,
         row: template(&["label", "editor", "diagnostic"])?,
         section: template(&["title", "toggle", "body"])?,
-        value: template(&["value"])?,
+        value: template(&["value", "swatch"])?,
+        vector: template(&[
+            "axis-x", "value-x", "axis-y", "value-y", "axis-z", "value-z", "axis-w", "value-w",
+        ])?,
         density: 1.,
     };
     let sheet = app
@@ -172,6 +190,72 @@ fn generic_property_slots_retain_native_values_and_retire_only_owned_subtrees() 
     row.retire(app.world_mut());
     assert!(app.world().get_entity(input).is_err());
     assert!(app.world().get_entity(sibling).is_ok());
+    Ok(())
+}
+
+#[test]
+fn color_sample_uses_its_authored_slot_and_retired_surfaces_refuse_without_touching_siblings()
+-> TestResult {
+    let (mut app, parent, templates) = fixture()?;
+    let view = ValueView::mount(app.world_mut(), parent, &templates, "color-sample")?;
+    let sibling = ValueView::mount(app.world_mut(), parent, &templates, "color-sibling")?;
+    view.color_sample(app.world_mut(), Color::srgb(0., 1., 0.))?;
+    let input = view.input();
+    view.retire(app.world_mut());
+    assert!(view.color_sample(app.world_mut(), Color::WHITE).is_err());
+    assert!(!app.world().entities().contains(input));
+    assert!(app.world().entities().contains(sibling.root()));
+    sibling.color_sample(app.world_mut(), Color::srgb(1., 0., 0.))?;
+    sibling.retire(app.world_mut());
+    Ok(())
+}
+
+#[test]
+fn compound_values_retain_order_access_and_owned_controls_and_reject_dimension_changes()
+-> TestResult {
+    use kedra_ui::fields::VectorView;
+    let (mut app, parent, templates) = fixture()?;
+    let before = app.world().entities().count_spawned();
+    assert!(VectorView::mount(app.world_mut(), parent, &templates, "invalid", 1).is_err());
+    assert_eq!(app.world().entities().count_spawned(), before);
+    let mut vector = VectorView::mount(app.world_mut(), parent, &templates, "vector", 3)?;
+    let sibling = app.world_mut().spawn(ChildOf(parent)).id();
+    let access = FieldAccess::ReadOnly {
+        reason: "Source has no write capability".into(),
+    };
+    let values = ["0.33333334".into(), "-12.5".into(), "1000000".into()];
+    vector.update(app.world_mut(), &values, "Position", "Local space", &access)?;
+    let inputs = vector.inputs().collect::<Vec<_>>();
+    for (input, expected) in inputs.iter().zip(&values) {
+        assert_eq!(
+            app.world()
+                .get::<bevy::text::EditableText>(*input)
+                .ok_or("input")?
+                .value(),
+            expected
+        );
+        assert_eq!(app.world().get::<FieldAccess>(*input), Some(&access));
+    }
+    assert!(
+        vector
+            .update(
+                app.world_mut(),
+                &values[..2],
+                "Position",
+                "Local space",
+                &access
+            )
+            .is_err()
+    );
+    vector.update(app.world_mut(), &values, "Position", "Local space", &access)?;
+    assert_eq!(vector.inputs().collect::<Vec<_>>(), inputs);
+    vector.retire(app.world_mut());
+    assert!(
+        inputs
+            .iter()
+            .all(|entity| !app.world().entities().contains(*entity))
+    );
+    assert!(app.world().entities().contains(sibling));
     Ok(())
 }
 

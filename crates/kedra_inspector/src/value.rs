@@ -28,7 +28,24 @@ pub fn display(value: &dyn PartialReflect, limit: usize) -> DisplayValue {
         )* };
     }
     primitive!(
-        bool, char, u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize, f32, f64
+        bool,
+        char,
+        u8,
+        u16,
+        u32,
+        u64,
+        u128,
+        usize,
+        i8,
+        i16,
+        i32,
+        i64,
+        i128,
+        isize,
+        f32,
+        f64,
+        std::num::NonZeroU16,
+        std::num::NonZeroI16
     );
     let text = match value.reflect_ref() {
         ReflectRef::Struct(_) => "Fields".into(),
@@ -68,7 +85,24 @@ fn preview(source: &str, limit: usize) -> DisplayValue {
 pub(crate) fn primitive(value: &dyn PartialReflect) -> bool {
     macro_rules! is { ($($ty:ty),*) => { false $(|| value.try_downcast_ref::<$ty>().is_some())* }; }
     is!(
-        String, bool, char, u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize, f32,
-        f64
+        String,
+        bool,
+        char,
+        u8,
+        u16,
+        u32,
+        u64,
+        u128,
+        usize,
+        i8,
+        i16,
+        i32,
+        i64,
+        i128,
+        isize,
+        f32,
+        f64,
+        std::num::NonZeroU16,
+        std::num::NonZeroI16
     )
 }

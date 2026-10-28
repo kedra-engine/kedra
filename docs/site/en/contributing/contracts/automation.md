@@ -104,6 +104,13 @@ and camera viewport origin; PNG dimensions are physical pixels. Duplicate visibl
 the snapshot; the 4096-element cap reports truncation. Click-by-ID rejects even a uniquely
 matching prefix of a truncated snapshot. Disabled ancestors and clipped centers are
 rejected, but this is neither a full accessibility tree nor proof of no covering widget.
+Optional `{"element":"stable-id"}` parameters restrict only the returned element payload;
+all inventory entries still participate in duplicate detection and the same truncation cap.
+Native Luau node/focus probes and click-by-ID reuse this selected serialization path rather
+than formatting unrelated Inspector fields on each probe. Window/camera metadata is unchanged.
+Managed native text fields also report `settled`: it is false for drafts, pending native
+work or a missing host acknowledgment, and null without a `TextField` binding. This is
+local control settlement, not proof of source publication, Save or rendered acceptance.
 
 Shared RPC window/entity IDs, including `app.observe`, remain full-width **integers**.
 In Luau native observation IDs are decimal strings. Four editor raw-RPC positions also

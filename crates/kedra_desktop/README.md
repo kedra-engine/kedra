@@ -10,6 +10,12 @@ AppKit caption retains the titled/resizable window structure.
 readiness, publishes them and retires only their owned resources. It does not own
 docking topology or feature content.
 
+Hosts may attach `CloseBlocked` to the main window to veto ordinary Close requests.
+Update it before the `CloseAdmission` system set from current input/source state.
+The editor uses this seam for unsaved in-memory Transform edits; it owns diagnostics
+and explicit discard, not desktop. No veto means the existing close-to-exit behavior.
+This mechanism neither implements Save nor intercepts forced process termination.
+
 Ownership and stale-close behavior have headless ECS tests. They do not verify
 real native event delivery, multi-monitor placement or input quality. See
 [startup acceptance](../../docs/site/en/contributing/contracts/startup.md).

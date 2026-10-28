@@ -32,6 +32,10 @@ impl Plugin for NativeInputPlugin {
         );
         app.add_observer(navigation::tab)
             .add_observer(bevy::input_focus::tab_navigation::acquire_focus_tab_index);
+        if !app.is_plugin_added::<kedra_text_input::TextSessionPlugin>() {
+            app.add_plugins(kedra_text_input::TextSessionPlugin);
+        }
+        crate::fields::install_text_fields(app);
     }
     fn finish(&self, app: &mut App) {
         app.world_mut()
@@ -95,7 +99,10 @@ impl Plugin for NativeInputPlugin {
 
 // Explicit camera ancestry wins over renderer-derived components from a prior
 // frame, so transferring a retained root cannot route input to its former host.
-pub(crate) fn owner(world: &World, mut entity: Entity) -> Option<Entity> {
+/// Resolve a retained UI node's live owning window through its target camera.
+/// Returns `None` for retired nodes, inactive cameras or non-window targets.
+/// This is presentation ownership only, not focus, modal or editing permission.
+pub fn owner(world: &World, mut entity: Entity) -> Option<Entity> {
     let mut computed = None;
     let camera = loop {
         if world.get::<Window>(entity).is_some() {
@@ -132,7 +139,7 @@ pub(crate) fn owner(world: &World, mut entity: Entity) -> Option<Entity> {
     }
 }
 
-fn eligible(world: &World, mut entity: Entity) -> bool {
+pub(crate) fn eligible(world: &World, mut entity: Entity) -> bool {
     loop {
         if world.get_entity(entity).is_err()
             || world
@@ -187,6 +194,12 @@ fn keyboard(world: &mut World, mut cursor: Local<MessageCursor<KeyboardInput>>) 
         .collect();
     for event in events {
         if let Some(target) = target(world, event.window, event.state.is_pressed()) {
+            if crate::fields::field_keyboard(world, target, &event) {
+                continue;
+            }
+            if kedra_text_input::handle_keyboard(world, target, &event) {
+                continue;
+            }
             let window = event.window;
             world.trigger(FocusedInput::new(target, event, window));
         }

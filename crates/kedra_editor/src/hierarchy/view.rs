@@ -38,7 +38,7 @@ impl Panel {
                 continue;
             };
             let generic = row.parent.is_some() && !row.children && !row.boundary;
-            let selected = active && self.selected.as_ref() == Some(address);
+            let selected = active && self.selected_set.contains(address);
             class(
                 world,
                 view.element("object").map_err(|e| e.to_string())?,

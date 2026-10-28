@@ -6,11 +6,11 @@ function run(ctx: AppContext, args)
         assert(type(id) == "string" and string.sub(id, 1, 17) == "fixture/settings/",
             "Refusing a field outside the reflected-value composition")
     end
-    assert(app.wait_node(args.boolean).value == "true", "Expected initial host value")
+    assert(app.wait_node(args.boolean).checked == true, "Expected initial host value")
     assert(app.wait_node(args.gain).value == "25%", "Expected specialized field")
     app.click("fixture/refresh")
     wait.until_true("host-owned refresh", function()
-        return app.wait_node(args.boolean).value == "false"
+        return app.wait_node(args.boolean).checked == false
     end, 12000)
     app.click("fixture/toggle")
     wait.until_true("explicit default presentation", function()

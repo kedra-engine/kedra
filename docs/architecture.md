@@ -5,7 +5,8 @@
 The workspace contains `xtask`, native startup/editor modules and shared asset
 runtime/import modules, with the editor and isolated native fixtures as consumers.
 The workspace pins Bevy 0.20.0. Shared opt-in Luau execution uses `kedra_script`;
-Play isolation has not been selected, and project script loading is not implemented.
+Play isolation has not been selected. Project editor scripts require explicit launch/grants;
+opening a project does not execute code.
 The game-style asset consumer is an isolated test host, not a running game SDK.
 See [ADR 0002](decisions/0002-native-startup.md), the
 [windowless startup revision](decisions/0021-windowless-startup.md) and
@@ -91,6 +92,30 @@ Do not interpret an empty engine graph as proven player isolation.
 
 ## Module rules
 
+Shared source commands/inspection/compilation live in `kedra_authoring::{editing,
+changes,inspection,source}`, independent of UI and Lua. Bounded source-file admission
+lives in `kedra_authoring_fs::source`. Native reflected handle construction lives in
+`kedra_assets::references`; source/delivery resource admission in the independent
+authoring-layer `kedra_authoring_assets`. Editor-layer `kedra_preview` owns passive
+static model forests, bounds and GLTF subasset enumeration. The editor retains native
+input acknowledgment, project lifetime, viewport orchestration and tool draft settlement.
+See [ADR 0040](decisions/0040-shared-authoring-and-preview-boundaries.md).
+
+Editor-layer `kedra_editor_context` borrows the existing source inventory/catalog
+for logical assets, source-lifetime-qualified node references, shared multi-selection
+and typed drag payloads. Selection does not open tabs or grant source writes.
+`kedra_editor::{context,drag}` adapts native consumers and producer lifetimes;
+Inspector follows the active item or pins its local context. See
+[ADR 0041](decisions/0041-shared-editor-context.md) for current limits.
+
+Runtime-layer `kedra_text_input` owns opt-in ordered native text operations and
+local text history independently of authoring and Inspector. `kedra_ui` supplies
+window/focus eligibility and invokes local shortcuts in its existing input dispatch;
+native widgets and Parley retain rendering/buffer authority. Inspector search uses
+this path without enabling property editing. See the
+[native-input contract](../crates/kedra_text_input/README.md) and
+[ADR 0010](decisions/0010-text-field-interaction.md) for source provenance and limits.
+
 `kedra_update` owns blocking release validation, verified download/package lifetime,
 native marker checks and explicit macOS staging/replacement. It has no workspace
 or Bevy dependencies. The editor supplies trusted application configuration and
@@ -101,18 +126,59 @@ See [ADR 0026](decisions/0026-editor-self-update.md) and the
 
 [ADR 0009](decisions/0009-property-editing-and-inspector.md) proposes the full
 authoring workflow's field interactions and isolated own-source preview. The
-[read-only Inspector profile](site/en/contributing/contracts/editor/inspector.md)
+[Inspector profile](site/en/contributing/contracts/editor/inspector.md)
 implements shared `kedra_ui::fields` controls, consumer-neutral `kedra_inspector`
 reflection/presentation and an editor
 source adapter. The architecture gate additionally restricts Inspector production
-workspace dependencies to core/runtime layers. Editing and Save remain unimplemented.
+workspace dependencies to core/runtime layers. The native Transform drawer supports
+validated in-memory source edits and source Undo/Redo;
+primitive dimensions, surface color/metallic/roughness and sun color/illuminance reuse
+the same source protocol. Exact numeric adapters and native SDR color/Vec3 proposals
+ live in `kedra_inspector::fields`. Discrete native proposals carry immutable control
+ identities and are separately bound to exact source revisions by the editor. Native
+ enum defaults and explicitly registered domain constructors build complete payloads.
+   Classes, image density and shadow lists use direct source-bound fields and complete
+   structural proposals without Apply/Cancel. Typed resource proposals validate native
+   type/source/delivery before loading and publication; native collection/resource
+   acceptance remains incomplete. Environment refresh retains per-view lighting;
+   Model refresh stages replacement of recorded imported descendants before retiring
+   the serving forest. GLTF choices use native loaded scene paths rather than guessed labels.
+Existing-document Save uses the independent
+authoring-layer `kedra_authoring_fs` with the existing preparation/receipt protocol.
+It preserves inventory, performs recoverable group publication off the UI thread,
+and retains newer edits/history. `fs-transaction` owns journal/rollback/replay; Kedra
+owns exact request grants, advisory admission/writer exclusion and explicit recovery. See
+[ADR 0037](decisions/0037-existing-document-save.md) and its
+[filesystem contract](../crates/kedra_authoring_fs/README.md).
+Group publication and its limits are defined by [ADR 0039](decisions/0039-existing-source-save-groups.md).
+
+Editor-layer `kedra_inspector_luau` composes that existing value-editor protocol with
+`kedra_script` owner scopes and the shared field kit. The editor explicitly authorizes
+its embedded UiCaption composition; opening a project does not authorize project code.
+Scripts select bounded native field paths/labels, not source schemas or mutable World
+access. Native String/bool/unit-enum proposals reuse typed source staging and history;
+passive caption reprojection updates Text/TextLayout and invalidates all affected frame
+epochs. See [ADR 0036](decisions/0036-scoped-luau-inspector-drawers.md) and the
+[adapter contract](../crates/kedra_inspector_luau/README.md) for bounds and limitations.
+
+`kedra_authoring::transaction` provides isolated, explicitly granted document candidates
+over the same WorkingSet history. Named history identities are shared by native tools
+and opt-in scripts, not owned by Inspector. Editor-layer `kedra_authoring_luau` adapts
+leases to existing runtime scopes; `kedra_editor::edit_scripts::install` supplies trusted
+source-path grants and the real Documents backend. Explicit bounded Editor/ loading reuses
+standard Luau modules; no automatic execution, implicit Save or arbitrary reversible
+World/filesystem effects are installed. History keeps bounded affected-document deltas,
+content checkpoints and optional transaction-keyed presentation attachments. See
+[ADR 0038](decisions/0038-editor-edit-transactions.md).
 
 [ADR 0012](decisions/0012-document-sessions-and-selection.md) proposes shared
 document/selection authority. Asset Browser, Hierarchy, Inspector and Document
 Preview each have a separate linked ADR and independent existing-docking view.
-The [current read-only source profile](site/en/contributing/contracts/editor/source-documents.md)
-uses one `kedra_authoring` workspace per project; it does not implement editable-document
-settlement or Save. Rendering is a separate read-only presentation capability,
+The [current source profile](site/en/contributing/contracts/editor/source-documents.md)
+uses one `kedra_authoring` workspace per project. Transform acceptance stages and compiles
+a complete candidate before native acknowledgment and synchronous publication.
+General editable-document settlement and new-document publication remain unavailable.
+Rendering is a separate presentation capability,
 requiring an explicit matching verified delivery rather than source validity alone.
 Read-only [Hierarchy](site/en/contributing/contracts/editor/hierarchy.md)
 projects the existing composed graph and routes scoped node selection through that
@@ -142,6 +208,16 @@ asset-editing/Save, skybox/IBL and full game/editor frame parity are not impleme
 - Editor UI, import tools and filesystem writers are not runtime dependencies.
 - Persistent document/asset identity is distinct from runtime entity/asset handles.
 - Authoring operations validate a candidate before publishing changes and undo history.
+- `kedra_authoring::properties` owns revision-pinned typed property candidates and
+  atomic field-batch acceptance over that workspace. It owns neither native input
+  buffers nor UI/script execution. The Inspector source adapter refreshes its
+  immutable compilation cache from pinned working revisions, including accepted
+  changes and history, without writing files. Native Transform acceptance uses this
+  cache and updates opened graphs; Scene View refreshes projected native transforms
+  with a new frame epoch while retaining its camera. Source history refuses pending
+  drafts. Main-window Close is vetoed until input/unsaved sources are resolved through
+  Save or explicit all-source discard; uncertain Save outcomes retain exact pending bytes
+  and block discard/close until reconciled. Ordinary panel hiding retains shared sources.
 - Filesystem commit, authoring transaction and deferred ECS mutation are different guarantees.
 - Lifecycle APIs define owners, cancellation and rejection of stale async results.
 - Save writes sources, never the live simulation World.

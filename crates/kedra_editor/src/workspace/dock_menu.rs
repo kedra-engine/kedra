@@ -20,6 +20,29 @@ pub(super) fn menu(
     let menu = super::super::popup::attach(world, anchor)?;
     state.menu.push(menu);
     let mut items = Vec::new();
+    if state.documents.can_save() {
+        items.push((
+            if state.documents.save_pending() {
+                "Retry Save"
+            } else {
+                "Save active document"
+            }
+            .into(),
+            Action::SaveSource,
+        ));
+    }
+    if !state.documents.update_clean() {
+        items.push((
+            "Discard all unsaved source changes".into(),
+            Action::DiscardSources,
+        ));
+    }
+    if state.documents.can_history(false) {
+        items.push(("Undo source edit".into(), Action::SourceHistory(false)));
+    }
+    if state.documents.can_history(true) {
+        items.push(("Redo source edit".into(), Action::SourceHistory(true)));
+    }
     if let Some(group) = group {
         let maximized = state.layout.snapshot().hosts[&host].maximized == Some(group);
         items.push((

@@ -8,21 +8,53 @@ type EditableInputs<'w, 's> = Query<
     (
         Has<InteractionDisabled>,
         Option<&'static crate::fields::FieldAccess>,
+        Option<&'static crate::fields::TextField>,
         &'static mut TextReadWriteMode,
     ),
     With<UiEditable>,
 >;
 
 pub(super) fn editing(mut inputs: EditableInputs<'_, '_>) {
-    for (disabled, access, mut mode) in &mut inputs {
-        let next = if disabled || access.is_some() {
-            TextReadWriteMode::ReadOnly
-        } else {
-            TextReadWriteMode::Editable
-        };
+    for (disabled, access, field, mut mode) in &mut inputs {
+        let next = input_mode(
+            disabled,
+            access.is_some_and(crate::fields::FieldAccess::is_read_only),
+            field,
+        );
         if *mode != next {
             *mode = next;
         }
+    }
+}
+
+fn input_mode(
+    disabled: bool,
+    access: bool,
+    field: Option<&crate::fields::TextField>,
+) -> TextReadWriteMode {
+    if disabled || access || field.is_some_and(|field| field.awaiting_response()) {
+        TextReadWriteMode::ReadOnly
+    } else {
+        TextReadWriteMode::Editable
+    }
+}
+// Apply the same authority at candidate/response boundaries before a new input
+// batch can mutate the captured candidate. This is not a second mode policy.
+pub(crate) fn sync_editing(world: &mut World, input: Entity) {
+    if world.get::<UiEditable>(input).is_none() {
+        return;
+    }
+    let next = input_mode(
+        world.get::<InteractionDisabled>(input).is_some(),
+        world
+            .get::<crate::fields::FieldAccess>(input)
+            .is_some_and(crate::fields::FieldAccess::is_read_only),
+        world.get::<crate::fields::TextField>(input),
+    );
+    if let Some(mut mode) = world.get_mut::<TextReadWriteMode>(input)
+        && *mode != next
+    {
+        *mode = next;
     }
 }
 

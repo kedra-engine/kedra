@@ -35,6 +35,12 @@ pub(super) fn sources(world: &mut World) -> TestResult {
         ),
         ("editor://prefabs/property-value.prefab.ron", &["value"]),
         (
+            "editor://prefabs/property-vector.prefab.ron",
+            &[
+                "axis-x", "value-x", "axis-y", "value-y", "axis-z", "value-z", "axis-w", "value-w",
+            ],
+        ),
+        (
             "editor://prefabs/property-section.prefab.ron",
             &["title", "toggle", "body"],
         ),
@@ -220,6 +226,11 @@ pub(super) fn sources(world: &mut World) -> TestResult {
         doc.nodes[0]
             .components
             .insert("ui.classes".into(), ComponentData::ron(1, "(names:[])")?);
+        if *path == "editor://prefabs/button.prefab.ron" {
+            doc.nodes[0]
+                .components
+                .insert("ui.button".into(), ComponentData::ron(1, "()")?);
+        }
         if *path == "editor://prefabs/window-frame.prefab.ron" {
             let sheet = kedra_ui::authored::components::UiStylesheet {
                 asset: Handle::default(),
@@ -271,10 +282,18 @@ pub(super) fn sources(world: &mut World) -> TestResult {
                     ComponentData::ron(1, "(text:\"Test\",justify:Left,wrap:false)")?,
                 );
             }
-            if *key == "value" {
+            if *key == "value"
+                || (*key == "search" && *path == "editor://prefabs/inspector.prefab.ron")
+            {
                 components.insert(
                     "ui.editable".into(),
                     ComponentData::ron(1, "(autofocus:false,select_all:false)")?,
+                );
+            }
+            if *key == "search" && *path == "editor://prefabs/inspector.prefab.ron" {
+                components.insert(
+                    "ui.caption".into(),
+                    ComponentData::ron(1, "(text:\"\",justify:Left,wrap:false)")?,
                 );
             }
             doc.nodes.push(SourceNode {

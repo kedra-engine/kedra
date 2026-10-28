@@ -49,7 +49,8 @@ document/tree/selection and explicitly identifies the retained tree. Whole-scope
 failure can prevent any tree; unsupported source is never replaced by default nodes.
 Navigation changes neither source bytes nor authoring revisions/history or gameplay state.
 [Inspector](inspector.md) follows the shared selection. Rename, add/delete, drag/reparent,
-source editing and Save remain unavailable. Editable Inspector must add field settlement
+structural source editing remains unavailable. Existing-document Save is host-owned;
+general editable Inspector must add field settlement
 before selection can replace an edited target.
 
 ## Authored presentation and reference

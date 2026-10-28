@@ -32,3 +32,4 @@ impl bevy::prelude::Plugin for KedraAssetsPlugin {
             .init_asset_loader::<data::DataLoader>();
     }
 }
+pub mod references;

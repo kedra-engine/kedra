@@ -50,6 +50,22 @@ fn app() -> App {
         std::path::Path::new("icons/browser-right.svg"),
         include_str!("../../../../../assets/editor/icons/browser-right.svg"),
     );
+    for (path, source) in [
+        (
+            "icons/plus.svg",
+            include_str!("../../../../../assets/editor/icons/plus.svg"),
+        ),
+        (
+            "icons/minus.svg",
+            include_str!("../../../../../assets/editor/icons/minus.svg"),
+        ),
+        (
+            "icons/dock-grip.svg",
+            include_str!("../../../../../assets/editor/icons/dock-grip.svg"),
+        ),
+    ] {
+        memory.insert_asset_text(std::path::Path::new(path), source);
+    }
     let mut app = App::new();
     app.register_asset_source(
         "editor",

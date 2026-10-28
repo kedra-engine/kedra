@@ -1,0 +1,21 @@
+[package]
+name = "kedra_editor_context"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Source-backed editor asset library, selection and drag payloads"
+
+[package.metadata.kedra]
+layer = "editor"
+
+[dependencies]
+kedra_authoring.workspace = true
+kedra_scene.workspace = true
+uuid.workspace = true
+serde.workspace = true
+
+[lints]
+workspace = true

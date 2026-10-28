@@ -1,7 +1,7 @@
 //! Read-only projection. Document authority and rendered ownership never coincide.
 mod asset_target;
-pub(crate) mod binding;
-mod bounds;
+use kedra_authoring_assets as binding;
+use kedra_preview::{bounds, models};
 pub(crate) mod camera;
 pub(crate) mod camera_motion;
 #[cfg(test)]
@@ -15,7 +15,6 @@ mod control_tests;
 mod controls;
 mod gpu;
 mod lifecycle;
-mod models;
 pub(crate) mod orientation;
 #[cfg(test)]
 mod orientation_tests;
@@ -23,6 +22,7 @@ mod projection;
 mod selection;
 #[cfg(test)]
 mod selection_tests;
+mod source_refresh;
 mod stage;
 #[cfg(test)]
 pub(crate) mod test_support;
@@ -65,6 +65,7 @@ pub(crate) struct View {
     controls: controls::Controls,
     marker: selection::Marker,
     compiled: Option<Arc<CompiledPrefab>>,
+    pending_source: Option<Arc<CompiledPrefab>>,
     projection: Option<projection::Projection>,
     lifecycle: lifecycle::Lifecycle,
     elapsed: f32,
@@ -119,6 +120,7 @@ impl View {
             controls: controls::Controls::mount(world, &view)?,
             marker: default(),
             compiled: None,
+            pending_source: None,
             projection: None,
             lifecycle: default(),
             elapsed: 0.,
@@ -183,6 +185,9 @@ impl View {
         kedra_ui::docking::class(world, self.information, "hidden", false);
     }
     pub fn tick(&mut self, world: &mut World, visible: bool, dpr: f32) -> Result<(), String> {
+        if self.pending_source.is_some() {
+            return Ok(());
+        }
         // Early dependency/host exits must not retain last frame's enabled tools.
         self.controls_enabled(world, false);
         self.lifecycle.resized();
@@ -302,6 +307,7 @@ impl View {
         Ok(())
     }
     pub fn retire(&mut self, world: &mut World) {
+        self.pending_source = None;
         self.marker.clear(world);
         self.lifecycle.retire();
         self.controls_enabled(world, false);
@@ -424,6 +430,38 @@ impl View {
             "overlays": self.marker.is_visible(),
             "editor_lighting": editor_lighting,
             "aligning": camera_motion::active(world, camera),
+            "source_spatial": self.spatial_values(world),
+            "source_transforms": self.projection.as_ref().map(|projection| projection.nodes.iter().filter_map(|(address, entity)| {
+                self.compiled.as_ref()?.graph().nodes.get(address)?.components.get("scene.transform")?;
+                let value = world.get::<Transform>(*entity)?;
+                Some(serde_json::json!({"node":address,"translation":value.translation.to_array(),"rotation":value.rotation.to_array(),"scale":value.scale.to_array()}))
+            }).collect::<Vec<_>>()),
+            "source_captions": self.projection.as_ref().map(|projection| projection.nodes.iter().filter_map(|(address, entity)| {
+                self.compiled.as_ref()?.graph().nodes.get(address)?.components.get("ui.caption")?;
+                let text = world.get::<Text>(*entity)?;
+                let layout = world.get::<TextLayout>(*entity)?;
+                Some(serde_json::json!({"node":address,"text":text.0,"justify":format!("{:?}",layout.justify),"wrap":layout.linebreak != bevy::text::LineBreak::NoWrap}))
+            }).collect::<Vec<_>>()),
+            "source_ui_layouts": self.projection.as_ref().map(|projection| projection.nodes.iter().filter_map(|(address, entity)| {
+                self.compiled.as_ref()?.graph().nodes.get(address)?.components.get("ui.layout")?;
+                let node = world.get::<Node>(*entity)?;
+                let rect = world.get::<ComputedNode>(*entity).zip(world.get::<UiGlobalTransform>(*entity)).map(|(node, transform)| kedra_ui::logical_rect(node, transform));
+                Some(serde_json::json!({"node":address,"width":format!("{:?}",node.width),"height":format!("{:?}",node.height),"rect":rect}))
+            }).collect::<Vec<_>>()),
+            "source_ui_collections": self.projection.as_ref().map(|projection| projection.nodes.iter().filter_map(|(address, entity)| {
+                let classes = world.get::<kedra_ui::authored::components::UiClasses>(*entity)?;
+                let native = world.get::<bevy_flair::style::components::ClassList>(*entity)?;
+                Some(serde_json::json!({"node":address,"classes":classes.names,"classes_applied":classes.names.iter().all(|name| native.contains(name.clone()))}))
+            }).collect::<Vec<_>>()),
+            "source_ui_images": self.projection.as_ref().map(|projection| projection.nodes.iter().filter_map(|(address, entity)| {
+                let image = world.get::<kedra_ui::authored::components::UiImage>(*entity)?;
+                let rendered = world.get::<ImageNode>(*entity)?;
+                Some(serde_json::json!({"node":address,"densities":image.variants.iter().map(|entry|entry.density).collect::<Vec<_>>(),"images":image.variants.iter().map(|entry|entry.image.path().map(ToString::to_string)).collect::<Vec<_>>(),"rendered_image":rendered.image.path().map(ToString::to_string)}))
+            }).collect::<Vec<_>>()),
+            "source_ui_shadows": self.projection.as_ref().map(|projection| projection.nodes.iter().filter_map(|(address, entity)| {
+                let shadows = world.get::<BoxShadow>(*entity)?;
+                Some(serde_json::json!({"node":address,"values":shadows.0.iter().map(|shadow|serde_json::json!({"x":format!("{:?}",shadow.x_offset),"y":format!("{:?}",shadow.y_offset),"spread":format!("{:?}",shadow.spread_radius),"blur":format!("{:?}",shadow.blur_radius),"color":shadow.color.to_srgba().to_f32_array()})).collect::<Vec<_>>()}))
+            }).collect::<Vec<_>>()),
         })
     }
     pub fn prepare_asset(

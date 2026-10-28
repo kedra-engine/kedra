@@ -290,10 +290,13 @@ mod tests {
             node.components.remove("ui.image");
         }
         let mut catalog = Catalog::default();
-        let button = PrefabDocument::parse(include_str!(
+        let mut button = PrefabDocument::parse(include_str!(
             "../../../assets/editor/prefabs/button.prefab.ron"
         ))
         .unwrap();
+        for node in &mut button.nodes {
+            node.components.remove("ui.image");
+        }
         let native_documents = vec![
             (
                 "editor://prefabs/project-row.prefab.ron".to_string(),

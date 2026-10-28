@@ -105,6 +105,31 @@ fn behavior(c: &Editor<'_>) -> Result<Value> {
             && one["instances"] != two["instances"],
         "Nested source instances lost address identity",
     )?;
+    c.modifier("control", true)?;
+    let clicked = c.click(&leaves_rows[0].id);
+    c.modifier("control", false)?;
+    clicked?;
+    c.until("shared additive source selection", || {
+        let state = c.state()?;
+        let items = array(&state["selection"]["items"])?;
+        Ok(items.len() == 2
+            && items.iter().any(|item| item["Node"]["node"] == one)
+            && items.iter().any(|item| item["Node"]["node"] == two))
+    })?;
+    c.frame(c.window()?, "shared hierarchy multi-selection")?;
+    c.modifier("shift", true)?;
+    let clicked = c.click(&leaves_rows[1].id);
+    c.modifier("shift", false)?;
+    clicked?;
+    c.until("shared range active endpoint", || {
+        let state = c.state()?;
+        let items = array(&state["selection"]["items"])?;
+        Ok(items.len() >= 2 && items.last().is_some_and(|item| item["Node"]["node"] == two))
+    })?;
+    c.click(&leaves_rows[1].id)?;
+    c.until("plain click replaces shared selection", || {
+        Ok(array(&c.state()?["selection"]["items"])?.len() == 1)
+    })?;
     search(c, &view, &prefix, "nothing matches")?;
     c.find("empty hierarchy filter", |n| {
         n.caption() == "No nodes match this search."

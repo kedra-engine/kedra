@@ -1,7 +1,8 @@
 # Source editing and Save
 
 Use the Rust authoring APIs to build source-editing tools and integrate Save into a host
-application. These are not instructions for saving in the editor. See the
+application. For the editor command, see
+[Save active document](../editor/inspector.md#save-active-document). See the
 [Rust API guide](../../api/index.md) for exact interfaces.
 
 Contributors changing transaction safety or persistence should read the
@@ -9,7 +10,12 @@ Contributors changing transaction safety or persistence should read the
 
 Source editing changes authored documents, not live instances. The Rust authoring APIs
 provide validated transactions, history, Apply/Revert, complete Unpack and a Save protocol.
-They do not currently provide a filesystem writer or visual editor editing/Save/Play.
+That library does not perform filesystem I/O or implement Play. The editor supports
+the documented [Inspector source edits](../editor/inspector.md), including Transform,
+primitive/surface/light parameters and embedded Luau UiCaption fields,
+with validated source history and guarded recoverable existing-source Save groups through
+`kedra_authoring_fs`. New-file publication
+and Play remain unavailable.
 
 Prerequisites: [document structure](index.md#document-fields) and
 [composition ownership](composition.md#apply-revert-and-unpack).
@@ -56,6 +62,19 @@ unchanged. Successful edits use monotonic revisions and clear redo history.
 creates a new revision; it does not roll the revision clock back. Conflicts with externally
 changed affected content reject history restoration without consuming the history entry.
 `dirty(id)` compares current and acknowledged saved revisions, not a gameplay World diff.
+
+### Propose fields without committing
+
+`kedra_authoring::properties::PropertySession` separates a typed field candidate from accepted
+working sources. Begin with a current compilation and an explicit containing-document target;
+use `propose` for one field or `propose_batch` for related fields, supplying complete typed
+catalog validation. `candidate` produces a separately validated catalog for an isolated preview.
+`accept` rechecks revisions and commits the changed fields in one undoable transaction.
+`cancel` or dropping the session discards proposals without modifying working sources or redo.
+The editor's Transform and embedded UiCaption adapters consume these sessions; other reflected
+fields and Save are not enabled. Read the
+[property candidate contract](../../contributing/contracts/source-authoring.md#typed-property-candidates)
+for ownership, capability limits and rejection behavior.
 
 ### Choosing the edit owner
 

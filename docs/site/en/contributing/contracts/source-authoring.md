@@ -23,7 +23,57 @@ Undo/redo validate the candidate and require unchanged affected source content. 
 not consume history. Restored content gets a new monotonic revision, not an old timestamp.
 Unrelated documents and instance links remain intact. `last_mapping` records source-address
 selection remapping; undo uses the inverse Unpack map and redo restores the forward map.
-Dirty state compares current and acknowledged revisions, not rendered/gameplay differences.
+Dirty state compares authored content with the acknowledged saved content, independently
+of monotonic revisions. Undo to saved content is clean. History retains changed-document
+before/after deltas, not full unaffected catalogs. `HistoryPolicy` defaults to 256 operations
+and 64 MiB encoded payload; oldest entries are evicted and oversized operations refuse
+without publication. This is not a total allocator-memory guarantee.
+
+## Scoped edit transactions
+
+`kedra_authoring::transaction::EditTransaction` stages an isolated catalog with explicit
+grants for 1..=128 admitted document identities. It pins the complete working revision
+inventory and working-set lineage. Foreign/deserialized workspaces, intervening source
+edits, Undo/Redo, admission and Save acknowledgement invalidate the lease. Staging cannot
+change inventory, document identities or ungranted documents. Commit performs complete
+host validation and publishes through the existing `WorkingSet` history; cancel/drop
+never publishes. Failed staging/validation preserves the previous candidate.
+
+`transact_named` and `transact_grouped_named` attach bounded action labels. `undo_entry`
+and `redo_entry` expose stable lineage-local `HistoryId`, label and affected documents.
+Grouping retains the first entry identity/label; Undo/Redo restores recorded sources,
+not callbacks or scripts. A validated no-op closes its lease without consuming Redo.
+Commit, filesystem Save and Git commit remain separate operations. See
+[editor integration](editor/source-documents.md#authorized-script-transactions) and
+[ADR 0038](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0038-editor-edit-transactions.md).
+
+## Typed property candidates
+
+`kedra_authoring::properties::PropertySession` owns a source-bound candidate over an exact
+immutable compilation. Its target is the opened document, full scoped node address and
+canonical component key; edits of nested prefab nodes create containing-document overrides,
+not implicit Apply to the prefab source. The host owns session/view generations and revokes
+access when its source scope retires. The session is not a UI input buffer or a permission token.
+
+Begin captures the destination and transitive composition revisions. Propose checks exact
+native represented types and Bevy field paths, encodes typed values with the existing reference
+serializer, and validates an isolated working-set candidate. Batch proposals validate related
+fields together, without rejecting a valid final state because an intermediate field is invalid.
+Hosts must supply complete typed catalog compilation at proposal, candidate and acceptance;
+graph-only validation is insufficient. Missing paths, wrong types, overlapping proposals,
+stale dependency revisions and host rejection preserve working sources and the previous candidate.
+
+At most 32 disjoint proposals / 64 KiB of encoded values are retained. Indexed collection/struct
+paths and structural commands are unsupported. Child edits inside an existing parent-field or
+whole-component override in the same layer require editing that existing override; implicit
+override expansion is not implemented. Entity-reference pickers and new asset dependency
+admission require their own host integration, not live entity handles supplied as values.
+
+Candidate construction and cancellation never change working sources, history or Save baselines.
+Accept rechecks revisions and host validation, publishing one transaction for all changed fields.
+No-op acceptance preserves redo. Acceptance closes the session; rejection leaves its candidate
+available for inspection or correction, without automatic rebasing. The editor's native field
+interaction, projection refresh, settlement and Save are not implemented by this library API.
 
 ## Exact compilation for Apply and Unpack
 
@@ -93,7 +143,10 @@ unchanged-source/asset hash checks (including catalog presence/absence), exact c
 write/delete representations, document revisions and expected prior hashes or absence.
 A host writer owns filesystem compare-and-swap, durability and actual publication. It must
 check those read preconditions and commit the coupled bytes; preparing or acknowledging an
-in-memory request does not itself perform I/O. No filesystem authoring writer is installed.
+in-memory request does not itself perform I/O. The separate `kedra_authoring_fs` adapter
+implements guarded recoverable replacement of an existing document group. Its
+`prepare_existing_save` profile pins the complete group while preserving admitted inventory/catalog.
+Full canonical `prepare_save` still needs a writer supporting catalog/inventory changes.
 
 ## Lost responses, refusal and receipts
 
@@ -106,8 +159,8 @@ Save is pending preserves the pending operation and state.
 `acknowledge` validates operation correlation, exactly the next generation, complete unique
 file membership, paths, document IDs, submitted revisions and exact content hashes/deletions
 before updating the source baseline. A matching receipt records the submitted bytes, not
-newer local edits; saved revisions advance only where current revisions still match the
-submission. The last acknowledged operation can be acknowledged again without another state
+newer local edits; saved revisions and content checkpoints record the pinned submission
+even when newer working edits exist. The last acknowledged operation can be acknowledged again without another state
 transition. This idempotence is not a second write or authority to accept unrelated receipts.
 
 ## Reconcile without writing

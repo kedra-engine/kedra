@@ -11,13 +11,17 @@ false rollback promise. The workspace has a read-only Assets browser with a lazy
 folder tree, Unicode search, virtualized grid/list and source document Open through
 one project-owned authoring workspace. Hierarchy displays composed source nodes,
 including nested prefabs, with search, expansion and shared document selection.
-The read-only Inspector follows source selection with lock, search and shared
-reflected field presentations. Document tabs host the initial read-only
+Inspector follows shared logical asset/node selection with lock, search and shared
+reflected field presentations. `context` and `drag` expose source-backed selection
+and typed payloads to native consumers without granting authoring permission.
+Document tabs host the initial read-only
 Scene View for supported spatial/UI sources; PNG/static-GLB assets use separate
 asset-preview views. An explicit matching verified project delivery is required.
 Spatial camera navigation, grid/inspection controls and scoped opaque-mesh picking
 are implemented. Their native input acceptance remains separate from compilation.
-Scene editing, project execution and document Save are not implemented.
+Supported Inspector fields and explicitly granted editor scripts share authoring
+transactions/Undo/Redo. Existing-document group Save is separate from accepting
+in-memory edits. General scene editing and gameplay project execution remain unavailable.
 
 The registry crate supplies this library, not the editor executable or the external
 `assets/editor` source/delivery. Assemble those through the source repository's

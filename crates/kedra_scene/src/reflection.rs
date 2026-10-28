@@ -49,6 +49,22 @@ impl ComponentPolicies {
         let processor = EncodeReferences {
             entities,
             visited: RefCell::default(),
+            asset_paths: &[],
+        };
+        let serializer = TypedReflectSerializer::with_processor(value, types, &processor);
+        crate::value::parse(&ron::to_string(&serializer)?)
+    }
+    pub(crate) fn encode_value_paths(
+        &self,
+        value: &dyn PartialReflect,
+        types: &TypeRegistry,
+        entities: &BTreeMap<Entity, Reference>,
+        asset_paths: &[(bevy::asset::AssetPath<'static>, bevy::asset::UntypedHandle)],
+    ) -> Result<Box<ron::value::RawValue>> {
+        let processor = EncodeReferences {
+            entities,
+            visited: RefCell::default(),
+            asset_paths,
         };
         let serializer = TypedReflectSerializer::with_processor(value, types, &processor);
         crate::value::parse(&ron::to_string(&serializer)?)
@@ -163,6 +179,7 @@ impl ComponentPolicies {
         let processor = EncodeReferences {
             entities,
             visited: RefCell::default(),
+            asset_paths: &[],
         };
         let serializer = TypedReflectSerializer::with_processor(value, types, &processor);
         let text = ron::to_string(&serializer)?;
@@ -193,6 +210,7 @@ impl ComponentPolicies {
 struct EncodeReferences<'a> {
     entities: &'a BTreeMap<Entity, Reference>,
     visited: RefCell<BTreeMap<Entity, usize>>,
+    asset_paths: &'a [(bevy::asset::AssetPath<'static>, bevy::asset::UntypedHandle)],
 }
 impl ReflectSerializerProcessor for EncodeReferences<'_> {
     fn try_serialize<S: serde::Serializer>(
@@ -207,6 +225,31 @@ impl ReflectSerializerProcessor for EncodeReferences<'_> {
                 serde::ser::Error::custom("reference points outside authored graph/ports")
             })?;
             return Ok(Ok(reference.serialize(serializer)?));
+        }
+        // Source-only loaders may return UUID handles with no native path. Restore
+        // their exact recorded loader request through Bevy's own HandleReference,
+        // not a second serializer or an external identity lookup registry.
+        if !self.asset_paths.is_empty()
+            && let Some(native) = value.try_as_reflect()
+            && let Some(handle) = registry
+                .get_type_data::<bevy::asset::ReflectHandle>(native.type_id())
+                .and_then(|reflect| reflect.downcast_handle_untyped(native.as_any()))
+            && matches!(handle, bevy::asset::UntypedHandle::Uuid { .. })
+        {
+            let mut paths = self
+                .asset_paths
+                .iter()
+                .filter(|(_, tracked)| tracked.id() == handle.id());
+            if let Some((path, _)) = paths.next() {
+                if paths.any(|(other, _)| other != path) {
+                    return Err(serde::ser::Error::custom(
+                        "Source handle has ambiguous recorded asset paths",
+                    ));
+                }
+                return Ok(Ok(
+                    bevy::asset::HandleReference::Path(path.clone()).serialize(serializer)?
+                ));
+            }
         }
         HandleSerializeProcessor {
             ephemeral_handle_behavior: EphemeralHandleBehavior::Error,

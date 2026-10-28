@@ -1,6 +1,7 @@
 //! Shared authored UI hydration and native behavior, used by games and editor alike.
 pub mod components;
 mod style;
+pub(crate) use style::sync_editing;
 pub mod view;
 use bevy::{
     prelude::*,
@@ -59,15 +60,13 @@ impl Plugin for AuthoredUiPlugin {
         if let Err(error) = registration {
             app.world_mut().resource_mut::<UiFailure>().0 = Some(error.to_string());
         }
-        app.add_systems(
-            Update,
-            (
-                style::editing,
-                style::images,
-                style::spin,
-                crate::fields::responsive_rows,
-            ),
-        );
+        app.add_systems(Update, (style::editing, style::images, style::spin));
+        if app.is_plugin_added::<bevy::input_focus::InputDispatchPlugin>() {
+            app.add_systems(
+                PostUpdate,
+                crate::popup::constrain.before(bevy::ui::UiSystems::Layout),
+            );
+        }
     }
 }
 

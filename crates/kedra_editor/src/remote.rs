@@ -72,8 +72,10 @@ pub(crate) fn workspace_state(_: In<Option<Value>>, world: &mut World) -> BrpRes
         "revision": workspace.layout.revision(),
         "layout": workspace.layout.snapshot(),
         "documents": workspace.documents.snapshot(),
+        "selection": workspace.documents.selection,
         "scene_views":workspace.scene_state(world),
         "navigation_input":workspace.navigation_input(world),
+        "editor_script":crate::edit_scripts::status(world),
     }))
 }
 fn state(_: In<Option<Value>>, world: &mut World) -> BrpResult {

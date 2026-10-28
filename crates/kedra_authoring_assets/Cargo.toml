@@ -1,0 +1,23 @@
+[package]
+name = "kedra_authoring_assets"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Source-matched native asset admission for authoring tools"
+
+[package.metadata.kedra]
+layer = "authoring"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_gltf", "bevy_world_serialization"] }
+bevy_flair.workspace = true
+kedra_assets.workspace = true
+kedra_authoring.workspace = true
+kedra_scene.workspace = true
+uuid.workspace = true
+
+[lints]
+workspace = true

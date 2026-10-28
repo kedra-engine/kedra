@@ -5,8 +5,18 @@ Status: full editable interaction proposed for owner review under
 supplies retained read-only presentations for the
 [Inspector](../site/en/contributing/contracts/editor/inspector.md);
 that subset does not implement this editable acceptance/history protocol.
-Native text history, rejection feedback and accessibility have unresolved upstream
-or integration requirements. Do not claim the field ready by omitting them.
+Opt-in native text history and ordered operations exist in `kedra_text_input`, first
+consumed by Inspector search. Editable acceptance, rejection feedback and accessibility
+still have unresolved integration requirements. `kedra_ui::fields::TextAcceptance`
+implements ordered candidate capture, identity/baseline checks, acknowledgment,
+rejection, external refresh and cancellation over the native session. `fields::TextField`
+connects Enter/Escape in eligible native windows and freezes mutation during a consumer
+response. The independent `inspector-fixture` ordinary-string consumer uses the existing
+kit field and property diagnostic; it rejects empty text without editing project data.
+The native Transform source adapter also consumes this protocol with staged authoring
+acceptance and explicit document history. Tab/blur settlement, owned popups and complete
+pending/conflict presentation remain unimplemented.
+Do not claim the complete field ready by omitting them.
 
 ## Scope and ownership
 
@@ -215,7 +225,7 @@ cannot later insert into a replacement binding after Cancel or retirement. The
 existing native queue stays the ordering authority; do not fetch clipboard text a
 second time to guess whether the native paste succeeded.
 
-### 6. Local history is mandatory, but not yet solved upstream
+### 6. Local history and the selected native adaptation
 
 While an editable text field owns input, command Undo/Redo belongs to local text
 history even when it is empty. It must never fall through to document history.
@@ -233,10 +243,23 @@ Prefer an upstream native-input history implementation or a maintained compatibl
 integration which preserves the existing text engine. Before selecting either,
 evaluate Unicode/IME grouping, selection restoration, cut/paste ordering, bounded
 history, license, maintenance, dependency cost and all claimed desktop targets.
-No dependency or toolchain change is selected here. Do not write a parallel text
-engine, add a per-frame snapshot stack, or silently drop the requirement to ship.
-This is a blocker to the complete shared TextField, not a blocker to specification
-or a narrowly scoped native-fit fixture.
+The selected incremental implementation is a Kedra-owned copy of the operation
+layer, not a Bevy fork or a second text engine. Runtime-layer `kedra_text_input`
+adapts insertion, clipboard sequencing and shortcut matching from Bevy 0.20.0;
+native widgets and Parley retain interaction, rendering and buffer ownership.
+Its [crate contract](../../crates/kedra_text_input/README.md) records exact source
+provenance, licensing, compatibility rationale and remaining limits. Direct
+clipboard/Parley dependencies reuse versions resolved by the pinned Bevy release;
+no toolchain or system-clipboard feature change is selected.
+
+History captures native states at individual mutation boundaries, never by polling
+one snapshot per frame. There are at most 32 entries; preedit is excluded and an
+IME commit forms one step. Native selection is restored without reconstructing byte
+carets. Typing coalescence is not implemented. The first product consumer is Inspector
+search, not authoring fields; other inputs retain their existing behavior. Clipboard
+timeout, total allocation bounds, acceptance/blur policy and reviewed error states
+still block the complete shared TextField. This adaptation relaxes none of those
+requirements and does not authorize source editing by itself.
 
 ### 7. Visual and accessible presentation
 

@@ -153,6 +153,10 @@
                     version: 1,
                     value: (variants:[(density:1.0,image:Path("game://checker.png"))],color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0))),
                 ),
+                "ui.shadow": (
+                    version: 1,
+                    value: ([]),
+                ),
                 "ui.layout": (
                     version: 1,
                     value: (node:()),

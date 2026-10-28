@@ -14,6 +14,8 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     sync::Arc,
 };
+mod slot;
+use slot::EditorSlot;
 
 /// Native disclosure binding. Hosts route activation to the owning `TreeView`.
 #[derive(Component, Clone)]
@@ -29,14 +31,17 @@ pub struct Disclosure {
 enum NodeView {
     Group(SectionView),
     Leaf(PropertyRow, ValueView),
-    Custom(PropertyRow, Box<dyn ValueEditorView>, Arc<dyn ValueEditor>),
-    Failed(PropertyRow, ValueView, Arc<dyn ValueEditor>, String),
+    Choice(PropertyRow, crate::controls::ChoiceView),
+    Custom(EditorSlot, Box<dyn ValueEditorView>, Arc<dyn ValueEditor>),
+    Failed(EditorSlot, ValueView, Arc<dyn ValueEditor>, String),
 }
 impl NodeView {
     fn root(&self) -> Entity {
         match self {
             Self::Group(s) => s.root(),
-            Self::Leaf(r, _) | Self::Custom(r, _, _) | Self::Failed(r, _, _, _) => r.root(),
+            Self::Leaf(r, _) => r.root(),
+            Self::Choice(r, _) => r.root(),
+            Self::Custom(slot, _, _) | Self::Failed(slot, _, _, _) => slot.root(),
         }
     }
     fn retire(&self, world: &mut World) {
@@ -59,6 +64,7 @@ pub struct TreeView {
     filter: String,
     matched: bool,
     incomplete: bool,
+    selected_fields: Option<BTreeSet<String>>,
 }
 impl TreeView {
     /// Mount a value tree. On failure all newly owned UI is reclaimed.
@@ -81,6 +87,38 @@ impl TreeView {
         default_mode: bool,
         filter: &str,
     ) -> Result<Self, String> {
+        Self::mount_selected(world, parent, context, binding, default_mode, filter, None)
+    }
+    /// Mount a semantic group over selected named fields of the original native value.
+    /// Excluded subtrees consume no discovery allowance. Paths and source authority
+    /// are unchanged; the caller must account for every field across its groups.
+    pub fn mount_fields(
+        world: &mut World,
+        parent: Entity,
+        context: &mut EditorContext<'_>,
+        binding: ValueBinding<'_>,
+        default_mode: bool,
+        fields: BTreeSet<String>,
+    ) -> Result<Self, String> {
+        Self::mount_selected(
+            world,
+            parent,
+            context,
+            binding,
+            default_mode,
+            "",
+            Some(fields),
+        )
+    }
+    fn mount_selected(
+        world: &mut World,
+        parent: Entity,
+        context: &mut EditorContext<'_>,
+        binding: ValueBinding<'_>,
+        default_mode: bool,
+        filter: &str,
+        selected_fields: Option<BTreeSet<String>>,
+    ) -> Result<Self, String> {
         let frame = SectionView::mount(world, parent, context.templates, context.scope)
             .map_err(|e| e.to_string())?;
         let mut view = Self {
@@ -91,6 +129,7 @@ impl TreeView {
             filter: filter.to_lowercase(),
             matched: false,
             incomplete: false,
+            selected_fields,
         };
         if let Err(error) = view.update(world, context, binding, default_mode) {
             view.retire(world);
@@ -104,13 +143,27 @@ impl TreeView {
     }
     /// Toggle a native disclosure only if its retained owner/token are still current.
     pub fn disclose(&mut self, action: &Disclosure) -> bool {
-        if action.owner != self.root() || action.token != self.token {
+        if action.owner != self.root() {
+            return self.nodes.values_mut().any(|node| match node {
+                NodeView::Custom(_, view, _) => view.disclose(action),
+                _ => false,
+            });
+        }
+        if action.token != self.token {
             return false;
         }
         if !self.collapsed.remove(&action.key) {
             self.collapsed.insert(action.key.clone());
         }
         true
+    }
+    /// Whether a disclosure belongs to this value or a retained custom child.
+    pub fn owns_disclosure(&self, action: &Disclosure) -> bool {
+        (action.owner == self.root() && action.token == self.token)
+            || self.nodes.values().any(|node| match node {
+                NodeView::Custom(_, view, _) => view.owns_disclosure(action),
+                _ => false,
+            })
     }
     /// Filter only presentation; ancestors remain visible and values are never mutated.
     pub fn filter(&mut self, filter: &str) {
@@ -158,7 +211,25 @@ impl TreeView {
             self.collapsed.clear();
             self.token = binding.token;
         }
-        let title = if binding
+        let root_type = binding
+            .value
+            .get_represented_type_info()
+            .map(|info| info.type_id());
+        let root_path = binding.path.cloned().unwrap_or_else(|| {
+            bevy::reflect::ParsedPath::from(Vec::<bevy::reflect::Access<'static>>::new())
+        });
+        let editor_title = context
+            .editors
+            .resolve(
+                binding.owner_type.or(root_type),
+                Some(&root_path),
+                root_type,
+                default_mode,
+            )
+            .and_then(|selection| selection.editor.title());
+        let title = if let Some(title) = editor_title {
+            title.into()
+        } else if binding
             .metadata
             .and_then(|m| m.limitation(binding.value, binding.path))
             .is_none()
@@ -180,14 +251,15 @@ impl TreeView {
             key: Vec::new(),
             token: self.token,
         });
-        let rows = inspect(
-            binding.value,
-            context.types,
-            Limits {
-                rows: context.budget.remaining,
-                ..Default::default()
-            },
-        );
+        let limits = Limits {
+            rows: context.budget.remaining,
+            ..Default::default()
+        };
+        let rows = if let Some(fields) = &self.selected_fields {
+            crate::discovery::inspect_fields(binding.value, context.types, limits, fields)
+        } else {
+            inspect(binding.value, context.types, limits)
+        };
         context.budget.remaining = context.budget.remaining.saturating_sub(rows.len());
         self.incomplete = rows.iter().any(|row| row.incomplete);
         if self.incomplete && !self.filter.is_empty() {
@@ -206,7 +278,28 @@ impl TreeView {
         let root_match = binding.label.to_lowercase().contains(&self.filter);
         let mut matched = vec![false; rows.len()];
         for (index, row) in rows.iter().enumerate() {
+            let ty = row
+                .value
+                .get_represented_type_info()
+                .map(|info| info.type_id());
+            let path = binding_path(binding.path, row.path.as_ref());
+            let aliases_match = context
+                .editors
+                .resolve(
+                    binding.owner_type.or(root_type),
+                    path.as_ref(),
+                    ty,
+                    default_mode,
+                )
+                .is_some_and(|selection| {
+                    selection
+                        .editor
+                        .search_terms()
+                        .iter()
+                        .any(|term| term.to_lowercase().contains(&self.filter))
+                });
             matched[index] = root_match
+                || aliases_match
                 || row.parent.is_some_and(|i| matched[i])
                 || row.label.to_lowercase().contains(&self.filter)
                 || value::display(row.value, 4096)
@@ -243,16 +336,7 @@ impl TreeView {
                     .get_represented_type_info()
                     .map(|t| t.type_id())
             });
-            let path = row.path.as_ref().map(|path| {
-                let accesses = binding
-                    .path
-                    .into_iter()
-                    .flat_map(|p| p.0.iter())
-                    .chain(path.0.iter())
-                    .map(|p| p.access.clone())
-                    .collect::<Vec<_>>();
-                bevy::reflect::ParsedPath::from(accesses)
-            });
+            let path = binding_path(binding.path, row.path.as_ref());
             let selection = context
                 .editors
                 .resolve(owner, path.as_ref(), ty, default_mode);
@@ -260,7 +344,18 @@ impl TreeView {
                 .metadata
                 .and_then(|m| m.limitation(row.value, path.as_ref()));
             let description = binding.metadata.and_then(|m| m.describe(path.as_ref()));
-            let group = structural(row.value) && selection.is_none() && limitation.is_none();
+            let choices = if limitation.is_none() && selection.is_none() {
+                crate::controls::finite_choices(ValueBinding {
+                    value: row.value,
+                    ..binding
+                })
+                .or_else(|| context.editors.variant_choices(row.value, context.types))
+            } else {
+                None
+            };
+            let choice = choices.is_some();
+            let group =
+                structural(row.value) && selection.is_none() && limitation.is_none() && !choice;
             if index == 0 && group && row.diagnostic.is_none() {
                 continue;
             }
@@ -294,7 +389,8 @@ impl TreeView {
                             Some(new),
                         ) => Arc::ptr_eq(old, new.editor),
                         (NodeView::Group(_), None) => group,
-                        (NodeView::Leaf(_, _), None) => !group,
+                        (NodeView::Leaf(_, _), None) => !group && !choice,
+                        (NodeView::Choice(_, _), None) => choice,
                         _ => false,
                     });
             if !compatible && let Some(old) = self.nodes.remove(&row.key) {
@@ -302,8 +398,14 @@ impl TreeView {
             }
             if !self.nodes.contains_key(&row.key) {
                 let node = if let Some(selection) = &selection {
-                    let mut row_view = PropertyRow::mount(world, parent, context.templates, &scope)
-                        .map_err(|e| e.to_string())?;
+                    let mut row_view = EditorSlot::mount(
+                        world,
+                        parent,
+                        context.templates,
+                        &scope,
+                        selection.editor.layout(),
+                        index == 0,
+                    )?;
                     let mut child_context = EditorContext {
                         templates: context.templates,
                         types: context.types,
@@ -320,8 +422,14 @@ impl TreeView {
                         Ok(custom) => NodeView::Custom(row_view, custom, selection.editor.clone()),
                         Err(error) => {
                             row_view.retire(world);
-                            row_view = PropertyRow::mount(world, parent, context.templates, &scope)
-                                .map_err(|e| e.to_string())?;
+                            row_view = EditorSlot::mount(
+                                world,
+                                parent,
+                                context.templates,
+                                &scope,
+                                selection.editor.layout(),
+                                index == 0,
+                            )?;
                             let value = match ValueView::mount(
                                 world,
                                 row_view.editor(),
@@ -337,6 +445,22 @@ impl TreeView {
                             NodeView::Failed(row_view, value, selection.editor.clone(), error)
                         }
                     }
+                } else if choice {
+                    let row_view = PropertyRow::mount(world, parent, context.templates, &scope)
+                        .map_err(|e| e.to_string())?;
+                    let control = match crate::controls::ChoiceView::mount(
+                        world,
+                        row_view.editor(),
+                        context,
+                        &scope,
+                    ) {
+                        Ok(control) => control,
+                        Err(error) => {
+                            row_view.retire(world);
+                            return Err(error);
+                        }
+                    };
+                    NodeView::Choice(row_view, control)
                 } else if group {
                     NodeView::Group(
                         SectionView::mount(world, parent, context.templates, &scope)
@@ -363,6 +487,35 @@ impl TreeView {
                 .get_mut(&row.key)
                 .ok_or("Retained inspector row disappeared")?;
             match node {
+                NodeView::Choice(row_view, control) => {
+                    row_view
+                        .update(
+                            world,
+                            if index == 0 && matches!(row.value.reflect_ref(), ReflectRef::Enum(_))
+                            {
+                                "Variant"
+                            } else {
+                                label
+                            },
+                            binding.diagnostic,
+                        )
+                        .map_err(|e| e.to_string())?;
+                    control.update(
+                        world,
+                        current,
+                        row_view.diagnostic(),
+                        &value::display(row.value, 4096).text,
+                        choices.ok_or("Choice type changed")?,
+                    )?;
+                    if let Some(checked) = row.value.try_downcast_ref::<bool>() {
+                        control.checkbox(world, *checked, label);
+                    }
+                    if !structural(row.value)
+                        || matches!(row.value.reflect_ref(), ReflectRef::Enum(value) if value.field_len() == 0)
+                    {
+                        skip = Some(row.key.clone());
+                    }
+                }
                 NodeView::Group(section) => {
                     let summary = value::display(row.value, 4096);
                     let title = if matches!(row.value.reflect_ref(), ReflectRef::Enum(_)) {
@@ -407,6 +560,29 @@ impl TreeView {
                     row_view
                         .update(world, label, diagnostic)
                         .map_err(|e| e.to_string())?;
+                    let field = if !preview.truncated && !preview.escaped && diagnostic.is_none() {
+                        let empty = bevy::reflect::ParsedPath::from(Vec::<
+                            bevy::reflect::Access<'static>,
+                        >::new(
+                        ));
+                        crate::fields::ReflectedField::bind(
+                            value.input(),
+                            row_view.diagnostic(),
+                            current,
+                            &empty,
+                        )
+                        .ok()
+                    } else {
+                        None
+                    };
+                    let unavailable = kedra_ui::fields::FieldAccess::ReadOnly {
+                        reason: "This value requires a supported typed editor; use default view for inspection.".into(),
+                    };
+                    let access = if field.is_some() {
+                        binding.access
+                    } else {
+                        &unavailable
+                    };
                     value
                         .update(
                             world,
@@ -415,10 +591,17 @@ impl TreeView {
                             } else {
                                 &preview.text
                             },
-                            binding.access,
+                            access,
                         )
                         .map_err(|e| e.to_string())?;
-                    let kedra_ui::fields::FieldAccess::ReadOnly { reason } = binding.access;
+                    if let Some(field) = field {
+                        world.entity_mut(value.input()).insert(field);
+                    } else {
+                        world
+                            .entity_mut(value.input())
+                            .remove::<crate::fields::ReflectedField>();
+                    }
+                    let reason = access.description();
                     value
                         .describe(
                             world,
@@ -437,6 +620,17 @@ impl TreeView {
                     }
                 }
                 NodeView::Custom(row_view, custom, _) => {
+                    // A matching component/group reveals its complete custom
+                    // subtree, just like native reflected descendants. Passing
+                    // the ancestor query into local item labels would hide all
+                    // settled collection items again immediately after Apply.
+                    custom.filter(
+                        if root_match || row.label.to_lowercase().contains(&self.filter) {
+                            ""
+                        } else {
+                            &self.filter
+                        },
+                    );
                     let mut child_context = EditorContext {
                         templates: context.templates,
                         types: context.types,
@@ -448,8 +642,22 @@ impl TreeView {
                         .update(world, &mut child_context, current)
                         .err()
                         .map(|e| format!("Custom editor failed: {e}. Use default view."));
+                    if let Some(reason) = &diagnostic {
+                        disable_controls(world, custom.root(), reason);
+                    }
+                    let title = custom.item_count().map(|count| format!("{label}  {count}"));
                     row_view
-                        .update(world, label, diagnostic.as_deref().or(binding.diagnostic))
+                        .update(
+                            world,
+                            title.as_deref().unwrap_or(label),
+                            diagnostic.as_deref().or(binding.diagnostic),
+                            !self.collapsed.contains(&row.key) || !self.filter.is_empty(),
+                            Disclosure {
+                                owner: self.frame.root(),
+                                key: row.key.clone(),
+                                token: self.token,
+                            },
+                        )
                         .map_err(|e| e.to_string())?;
                     skip = Some(row.key.clone());
                 }
@@ -459,10 +667,22 @@ impl TreeView {
                             world,
                             label,
                             Some(&format!("Custom editor failed: {error}. Use default view.")),
+                            !self.collapsed.contains(&row.key) || !self.filter.is_empty(),
+                            Disclosure {
+                                owner: self.frame.root(),
+                                key: row.key.clone(),
+                                token: self.token,
+                            },
                         )
                         .map_err(|e| e.to_string())?;
                     value
-                        .update(world, "Presentation unavailable", binding.access)
+                        .update(
+                            world,
+                            "Presentation unavailable",
+                            &kedra_ui::fields::FieldAccess::ReadOnly {
+                                reason: format!("Custom editor failed: {error}. Use default view."),
+                            },
+                        )
                         .map_err(|e| e.to_string())?;
                     skip = Some(row.key.clone());
                 }
@@ -487,6 +707,18 @@ impl TreeView {
         for (parent, children) in attachments {
             world.entity_mut(parent).replace_children(&children);
         }
+        if !self.incomplete
+            && let Some(NodeView::Custom(_, custom, _)) = self.nodes.get(&Vec::new())
+            && let Some(count) = custom.item_count()
+        {
+            self.frame
+                .update(
+                    world,
+                    &format!("{title}  {count}"),
+                    !self.collapsed.contains(&Vec::new()) || !self.filter.is_empty(),
+                )
+                .map_err(|e| e.to_string())?;
+        }
         Ok(())
     }
     /// Idempotently retire all owned UI, including custom editor cleanup.
@@ -499,6 +731,38 @@ impl TreeView {
         self.frame.retire(world);
     }
 }
+fn disable_controls(world: &mut World, root: Entity, reason: &str) {
+    let descendants = world
+        .query::<&Children>()
+        .query(world)
+        .iter_descendants::<Children>(root)
+        .collect::<Vec<_>>();
+    for entity in std::iter::once(root).chain(descendants) {
+        if world.get::<kedra_ui::fields::FieldAccess>(entity).is_some() {
+            world
+                .entity_mut(entity)
+                .insert(kedra_ui::fields::FieldAccess::ReadOnly {
+                    reason: reason.into(),
+                });
+        }
+    }
+}
+
+fn binding_path(
+    base: Option<&bevy::reflect::ParsedPath>,
+    child: Option<&bevy::reflect::ParsedPath>,
+) -> Option<bevy::reflect::ParsedPath> {
+    child.map(|child| {
+        bevy::reflect::ParsedPath::from(
+            base.into_iter()
+                .flat_map(|path| path.0.iter())
+                .chain(&child.0)
+                .map(|item| item.access.clone())
+                .collect::<Vec<_>>(),
+        )
+    })
+}
+
 fn structural(value: &dyn PartialReflect) -> bool {
     matches!(
         value.reflect_ref(),

@@ -15,13 +15,23 @@ Product contracts, assembled acceptance and repository policy are separate respo
 | Capability | Primary contract owner | Assembled editor / native boundary |
 | --- | --- | --- |
 | Projects/source paths | `kedra_project` | Startup/forms/Open |
+| Logical assets/shared selection/typed drag | `kedra_editor_context/tests/contracts` | Documents admission/activation, Inspector following/locking and native producer/drop lifecycle |
 | Documents/instances | `kedra_scene` | Documents, Hierarchy, Scene View |
-| Working changes/save protocol | `kedra_authoring` | Editor editing/Save unimplemented |
+| Working changes/property candidates/save protocol | `kedra_authoring` | Transform/UiCaption source edits and existing-document Save |
+| Recoverable existing-source groups | `kedra_authoring_fs` | Documents group receipts/newer edits; native Save shortcut/menu; real recovery CLI in `apps/kedra/tests/save_recovery.rs` |
 | Runtime delivery/integrity | `kedra_assets` | Preview resource binding |
+| Native handle reconstruction | `kedra_assets/tests/contracts/references.rs` | Inspector picking/drops |
+| Source-matched resource admission | `kedra_authoring_assets` | Documents resource assignment and Scene View |
+| Passive static model/bounds/subassets | `kedra_preview` | Scene View camera/frame/refresh; Inspector resource readiness |
 | Processing/publication | `kedra_import` | Browser/Open/preview |
 | Dock topology/candidates | `kedra_docking` | Gestures/host coordination |
-| Retained UI/projection/input | `kedra_ui`, `kedra_desktop` | Dock/host/focus |
+| Retained UI/projection/input and field acknowledgment | `kedra_ui`, `kedra_desktop` | Dock/host/focus; independent diagnostic text field |
+| Ordered native text/local history | `kedra_text_input` | Inspector search; Transform/UiCaption fields |
 | Reflected presentation | `kedra_inspector` | Editor source adapter/Inspector |
+| Scoped Luau drawer composition | `kedra_inspector_luau` | Embedded UiCaption; UI-only/mixed caption source edits |
+| Scoped edit candidates/named history | `kedra_authoring/tests/contracts/edit_transactions.rs` | Real Luau/Documents transactions in `documents/transactions/tests.rs` |
+| History retention/content checkpoints | `kedra_authoring/tests/contracts/history_retention.rs` | Value-free collection attachments in Inspector contracts |
+| Explicit project editor scripts | `kedra_editor/src/edit_scripts/source/tests.rs` | `editor-scripts` native scenario: two-document commit, common Undo/Redo, Save input and disk bytes |
 | Script lifecycle/modules/scopes/children/events/parameters/diagnostics | `kedra_script/tests/contracts/`, `kedra_app` | Editor Luau/independent host |
 | Script Transform/UI adapters | `kedra_script_bevy/tests/contracts/` | Native switch Behavior/Sequence |
 | Editor styles/icons/authored sources | `kedra_editor/tests/contracts/` | Component corpus/editor geometry |

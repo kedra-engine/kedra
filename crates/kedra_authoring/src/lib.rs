@@ -3,8 +3,14 @@
 //! Runtime scene loading does not depend on this crate. A host executes explicit
 //! save requests and returns their receipts; history cannot acknowledge unrelated
 //! or newer edits. No filesystem writer or remote transport is implicitly installed.
+pub mod changes;
+pub mod editing;
+pub mod inspection;
 pub mod overrides;
 pub mod persistence;
+pub mod properties;
+pub mod source;
+pub mod transaction;
 pub mod unpack;
 pub mod workspace;
 

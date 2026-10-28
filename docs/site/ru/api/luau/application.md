@@ -109,7 +109,7 @@ Sequence тоже действует и может закончиться ран
 
 Значения `Key`: `enter`, `escape`, `tab`, `shift_tab`, `space`, `backspace`,
 `delete`, `left`, `right`, `up`, `down`, `home`, `end`, `f1`, `f2`, `f3`, `f4`, `f5`,
-`f6`, `f7`, `f8`, `f12`, `select_all`, `copy`, `paste`, `cut`.
+`f6`, `f7`, `f8`, `f12`, `select_all`, `copy`, `paste`, `cut`, `undo`, `redo`.
 Это не произвольная автоматизация клавиатуры/ОС. Проверка нативного ввода и его подтверждения
 определяют реальное поведение; см. [ввод/захваты](../../manual/automation/input-and-captures.md).
 

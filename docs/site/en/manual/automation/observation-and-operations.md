@@ -27,6 +27,12 @@ An element can report stable `id`, runtime `entity`/`parent`, owning `window`, `
 metadata and colors. These are actual retained-tree observations, not an alternate
 test layout or a complete accessibility tree. Text values and native metadata may
 contain private information; do not publish unrestricted snapshots.
+For repeated probes, pass `{"element":"projects.new"}` to return only matching element
+entries. Duplicate-ID validation and the 4096-entry truncation boundary still cover the
+whole inventory; a selected response does not establish completeness when `truncated` is true.
+For a managed `TextField`, `settled` distinguishes an acknowledged native control from
+a displayed but unaccepted draft. It is null for unmanaged fields and says nothing about
+document Save or preview readiness; check those feature postconditions separately.
 
 ## Stable UI names and geometry
 

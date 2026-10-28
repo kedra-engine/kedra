@@ -10,6 +10,25 @@ pub(super) struct UiCanvas {
     frames: u32,
 }
 impl UiCanvas {
+    pub(super) fn source_changed(&mut self, world: &mut World) -> Result<(), String> {
+        let epoch = self
+            .epoch
+            .checked_add(1)
+            .ok_or("UI canvas generation exhausted")?;
+        if let Some(readback) = self.readback.take() {
+            readbacks::cancel(world, readback);
+        }
+        self.epoch = epoch;
+        self.frames = 0;
+        world.entity_mut(self.camera).remove::<Confirmed>();
+        if self.target.is_some() {
+            world.entity_mut(self.camera).insert(TargetVersion {
+                size: Self::SIZE,
+                epoch,
+            });
+        }
+        Ok(())
+    }
     pub(super) const SIZE: UVec2 = UVec2::new(1280, 720);
 
     pub(super) fn mount(world: &mut World, owner: Entity, layer: usize, nodes: &[Entity]) -> Self {

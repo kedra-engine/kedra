@@ -2,26 +2,7 @@
 use super::*;
 
 #[derive(Component)]
-pub(crate) struct ResponsivePropertyRow;
-
-type ResponsiveRows<'w, 's> = Query<
-    'w,
-    's,
-    (
-        &'static ComputedNode,
-        &'static mut bevy_flair::style::components::ClassList,
-    ),
-    (With<ResponsivePropertyRow>, Changed<ComputedNode>),
->;
-
-pub(crate) fn responsive_rows(mut rows: ResponsiveRows<'_, '_>) {
-    for (node, mut classes) in &mut rows {
-        let width = node.size().x * node.inverse_scale_factor();
-        if width.is_finite() && width > 0. && classes.contains("compact") != (width < 296.) {
-            classes.toggle("compact");
-        }
-    }
-}
+struct DiagnosticTarget(Entity);
 
 /// A property label, arbitrary editor slot and associated diagnostic.
 /// Retiring the row also retires controls mounted beneath its slot.
@@ -41,12 +22,16 @@ impl PropertyRow {
     ) -> Result<Self> {
         let view = templates.mount(world, parent, &templates.row, scope)?;
         let root = view.root;
-        world.entity_mut(root).insert(ResponsivePropertyRow);
         let result = (|| {
+            let editor = view.element("editor")?;
+            let diagnostic = view.element("diagnostic")?;
+            world
+                .entity_mut(editor)
+                .insert(DiagnosticTarget(diagnostic));
             Ok(Self {
                 label: view.element("label")?,
-                editor: view.element("editor")?,
-                diagnostic: view.element("diagnostic")?,
+                editor,
+                diagnostic,
                 view,
             })
         })();
@@ -63,6 +48,16 @@ impl PropertyRow {
     pub fn editor(&self) -> Entity {
         self.editor
     }
+    /// Retained diagnostic text target for an input adapter's bounded feedback.
+    pub fn diagnostic(&self) -> Entity {
+        self.diagnostic
+    }
+    /// Diagnostic owned by this exact editor slot, when it belongs to a property row.
+    /// Compound controls may share the target without discovering ancestors or IDs.
+    /// The returned presentation entity is invalid after its owning row is retired.
+    pub fn diagnostic_for(world: &World, editor: Entity) -> Option<Entity> {
+        world.get::<DiagnosticTarget>(editor).map(|target| target.0)
+    }
     /// Update labels without replacing value widgets, native focus or selection.
     pub fn update(
         &mut self,
@@ -73,12 +68,6 @@ impl PropertyRow {
         text(world, self.label, label)?;
         text(world, self.diagnostic, diagnostic.unwrap_or(""))?;
         crate::docking::class(world, self.diagnostic, "hidden", diagnostic.is_none());
-        let width = world
-            .get::<ComputedNode>(self.root())
-            .map(|n| n.size().x * n.inverse_scale_factor());
-        if let Some(width) = width.filter(|w| *w > 0.) {
-            crate::docking::class(world, self.root(), "compact", width < 296.);
-        }
         Ok(())
     }
     /// Idempotently release this row and descendants, never siblings or its parent.

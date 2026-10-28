@@ -1,0 +1,26 @@
+[package]
+name = "kedra_inspector_luau"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Scoped Luau composition of native reflected Inspector fields"
+
+[package.metadata.kedra]
+layer = "editor"
+
+[dependencies]
+bevy.workspace = true
+kedra_inspector.workspace = true
+kedra_ui.workspace = true
+kedra_script.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+kedra_scene.workspace = true
+bevy_flair.workspace = true

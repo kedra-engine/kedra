@@ -7,5 +7,7 @@ mod docking;
 mod fields;
 #[path = "contracts/geometry.rs"]
 mod geometry;
+#[path = "contracts/text_acceptance.rs"]
+mod text_acceptance;
 #[path = "contracts/window_chrome.rs"]
 mod window_chrome;

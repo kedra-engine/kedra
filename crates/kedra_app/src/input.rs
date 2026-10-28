@@ -290,16 +290,21 @@ fn keys(key: &str, window: Entity) -> Result<Vec<KeyboardInput>, String> {
         "f7" => (KeyCode::F7, Key::F7),
         "f8" => (KeyCode::F8, Key::F8),
         "f12" => (KeyCode::F12, Key::F12),
-        "select_all" | "copy" | "paste" | "cut" => {
+        "select_all" | "copy" | "paste" | "cut" | "undo" | "redo" | "save" => {
             modifiers.push(if cfg!(target_os = "macos") {
                 (KeyCode::SuperLeft, Key::Super)
             } else {
                 (KeyCode::ControlLeft, Key::Control)
             });
+            if key == "redo" {
+                modifiers.push((KeyCode::ShiftLeft, Key::Shift));
+            }
             match key {
                 "select_all" => (KeyCode::KeyA, Key::Character("a".into())),
                 "copy" => (KeyCode::KeyC, Key::Character("c".into())),
                 "paste" => (KeyCode::KeyV, Key::Character("v".into())),
+                "undo" | "redo" => (KeyCode::KeyZ, Key::Character("z".into())),
+                "save" => (KeyCode::KeyS, Key::Character("s".into())),
                 _ => (KeyCode::KeyX, Key::Character("x".into())),
             }
         }

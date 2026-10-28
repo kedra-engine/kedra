@@ -98,6 +98,19 @@ the exact source resolved by Cargo; see the external documentation section of th
   forwarding modules or duplicate suites. Preserve safety guarantees and required
   execution routes, and update the guide's ownership map and affected commands.
 
+## Product UI content
+
+- Keep product UI compact and task-focused. Do not add persistent tips, tutorial
+  text, explanatory paragraphs, instructional banners or redundant state captions
+  unless the owner explicitly requests them. Express selection, focus, drag targets
+  and availability through the controls' visual states, not explanatory prose.
+- Keep necessary control/field labels, values, paths, counts and actionable errors.
+  Icon-only controls require accessible names; concise action-name tooltips may
+  identify an otherwise ambiguous control, but must not become mini-tutorials.
+  Put behavioral explanations and implementation notes in documentation or design
+  review material outside the product surface. This does not suppress required
+  diagnostics, safety warnings or CLI progress and failure summaries.
+
 ## International project
 
 - Use English for code, identifiers, comments, documentation, diagnostics and public PRs.

@@ -185,6 +185,90 @@ fn passive_mixed_graph_detaches_ui_roots_and_retires_both_native_forests() -> Re
 }
 
 #[test]
+fn passive_value_refresh_retains_nodes_and_styled_layout_and_rejects_replaced_owners() -> Result<()>
+{
+    let mut app = setup();
+    let mut document = PrefabDocument::new("Retained passive values");
+    document.nodes[0].components = BTreeMap::from([
+        (
+            "ui.layout".into(),
+            ComponentData::ron(1, "(node:(width:Px(20.0)))")?,
+        ),
+        (
+            "ui.classes".into(),
+            ComponentData::ron(1, "(names:[\"before\"])")?,
+        ),
+        ("ui.button".into(), ComponentData::ron(1, "()")?),
+    ]);
+    let baseline = compile(&app, document.clone())?;
+    let view = UiView::mount_passive(app.world_mut(), &baseline, None, 1.)?;
+    let root = view.root;
+    let foreign = app
+        .world_mut()
+        .spawn(Node {
+            width: px(999),
+            ..default()
+        })
+        .id();
+    // Native stylesheet output is not the authored Node baseline. An unrelated
+    // class/value refresh must not reset it to the source's default layout.
+    app.world_mut().get_mut::<Node>(root).ok_or("node")?.width = px(75);
+    document.nodes[0].components.insert(
+        "ui.classes".into(),
+        ComponentData::ron(1, "(names:[\"after\"])")?,
+    );
+    let updated = compile(&app, document.clone())?;
+    let staged = view.prepare_refresh(app.world(), updated.clone(), 1.)?;
+    assert_eq!(
+        app.world().get::<UiClasses>(root).ok_or("classes")?.names,
+        ["before"]
+    );
+    staged.apply(app.world_mut())?;
+    assert_eq!(app.world().get::<Node>(root).ok_or("node")?.width, px(75));
+    assert_eq!(
+        app.world().get::<UiClasses>(root).ok_or("classes")?.names,
+        ["after"]
+    );
+    assert!(app.world().get::<bevy::ui_widgets::Button>(root).is_none());
+    document.nodes[0].components.insert(
+        "ui.layout".into(),
+        ComponentData::ron(1, "(node:(width:Px(42.0)))")?,
+    );
+    let layout = compile(&app, document.clone())?;
+    let staged = view.prepare_refresh(app.world(), layout.clone(), 1.)?;
+    let late = view.prepare_refresh(app.world(), updated, 1.)?;
+    staged.apply(app.world_mut())?;
+    assert!(late.apply(app.world_mut()).is_err());
+    assert_eq!(app.world().get::<Node>(root).ok_or("node")?.width, px(42));
+    document.nodes[0].components.remove("ui.classes");
+    assert!(
+        view.prepare_refresh(app.world(), compile(&app, document)?, 1.)
+            .is_err()
+    );
+    assert_eq!(
+        app.world().get::<UiClasses>(root).ok_or("classes")?.names,
+        ["after"]
+    );
+    let staged = view.prepare_refresh(app.world(), layout, 1.)?;
+    let saved_node = app.world().get::<Node>(root).ok_or("node")?.clone();
+    app.world_mut().entity_mut(root).remove::<Node>();
+    assert!(staged.apply(app.world_mut()).is_err());
+    assert_eq!(
+        app.world().get::<UiClasses>(root).ok_or("classes")?.names,
+        ["after"]
+    );
+    app.world_mut().entity_mut(root).insert(saved_node);
+    let staged = view.prepare_refresh(app.world(), baseline, 1.)?;
+    view.retire(app.world_mut());
+    assert!(staged.apply(app.world_mut()).is_err());
+    assert_eq!(
+        app.world().get::<Node>(foreign).ok_or("foreign")?.width,
+        px(999)
+    );
+    Ok(())
+}
+
+#[test]
 fn misspelled_layout_and_nonfinite_values_are_rejected() -> Result<()> {
     let app = setup();
     for data in ["(node:(widht:Px(24.0)))", "(node:(width:Px(NaN)))"] {

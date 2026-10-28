@@ -85,6 +85,9 @@ pub fn fixture() -> TestResult<(App, Entity, FieldTemplates)> {
         )?))
     };
     let templates = FieldTemplates {
+        command: compile(include_str!(
+            "../../../../assets/editor/prefabs/button.prefab.ron"
+        ))?,
         row: compile(include_str!(
             "../../../../assets/editor/prefabs/property-row.prefab.ron"
         ))?,
@@ -94,6 +97,9 @@ pub fn fixture() -> TestResult<(App, Entity, FieldTemplates)> {
         section: compile(include_str!(
             "../../../../assets/editor/prefabs/property-section.prefab.ron"
         ))?,
+        vector: compile(include_str!(
+            "../../../../assets/editor/prefabs/property-vector.prefab.ron"
+        ))?,
         density: 1.,
     };
     // Real path-bearing loads preserve source compilation's ephemeral-handle guard.
@@ -101,7 +107,12 @@ pub fn fixture() -> TestResult<(App, Entity, FieldTemplates)> {
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
     loop {
         let mut ready = true;
-        for template in [&templates.row, &templates.value, &templates.section] {
+        for template in [
+            &templates.row,
+            &templates.value,
+            &templates.section,
+            &templates.vector,
+        ] {
             ready &= template.asset_status(app.world().resource::<AssetServer>())?;
         }
         if ready {

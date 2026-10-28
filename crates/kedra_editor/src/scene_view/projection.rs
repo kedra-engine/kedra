@@ -4,6 +4,7 @@ mod lifecycle_tests;
 mod readbacks;
 #[cfg(test)]
 mod schema_tests;
+mod source_values;
 mod ui_canvas;
 use bevy::{
     camera::{RenderTarget, visibility::RenderLayers},
@@ -172,12 +173,13 @@ pub(super) struct Projection {
     canvas: Option<UVec2>,
     ui_canvas: Option<ui_canvas::UiCanvas>,
     ui_nodes: Vec<Entity>,
-    passive: Option<kedra_ui::authored::view::PassiveView>,
+    pub(super) passive: Option<kedra_ui::authored::view::PassiveView>,
     pub(super) grid: Option<Entity>,
     pub(super) inspection: Option<Entity>,
     scene_environment: Option<kedra_scene::environment::Environment>,
     studio_environment: Option<kedra_scene::environment::Environment>,
     scene_lights: Vec<Entity>,
+    pub(super) models: BTreeMap<Entity, super::models::Instance>,
 }
 impl Projection {
     pub fn pending(layer: usize) -> Self {
@@ -202,6 +204,7 @@ impl Projection {
             scene_environment: None,
             studio_environment: None,
             scene_lights: Vec::new(),
+            models: BTreeMap::new(),
         }
     }
     pub fn mounted(&self) -> bool {
@@ -325,8 +328,10 @@ impl Projection {
                 self.scene_lights.push(*entity);
             }
             if let Some(model) = world.get::<Model>(*entity).cloned() {
-                count +=
+                let instance =
                     super::models::mount(world, *entity, &model.scene, self.layer, 4096 - count)?;
+                count += instance.len();
+                self.models.insert(*entity, instance);
             }
         }
         // Calculate initial finite framing through the composed parent ordering;
@@ -498,6 +503,22 @@ impl Projection {
                 Visibility::Hidden
             };
         }
+        self.invalidate(world, camera, epoch);
+        Ok(())
+    }
+    pub(super) fn source_changed(&mut self, world: &mut World) -> Result<(), String> {
+        let camera = self.camera.ok_or("Scene camera missing")?;
+        let epoch = self
+            .epoch
+            .checked_add(1)
+            .ok_or("Scene target generation exhausted")?;
+        if let Some(canvas) = self.ui_canvas.as_mut() {
+            canvas.source_changed(world)?;
+        }
+        self.invalidate(world, camera, epoch);
+        Ok(())
+    }
+    fn invalidate(&mut self, world: &mut World, camera: Entity, epoch: u64) {
         self.epoch = epoch;
         if let Some(readback) = self.readback.take() {
             readbacks::cancel(world, readback);
@@ -510,7 +531,6 @@ impl Projection {
             });
         }
         self.frames = 0;
-        Ok(())
     }
     pub fn update(
         &mut self,
@@ -678,6 +698,7 @@ impl Projection {
                 })
     }
     pub fn retire(&mut self, world: &mut World) {
+        self.models.clear();
         self.release_target(world);
         if let Some(passive) = self.passive.take() {
             passive.retire(world);

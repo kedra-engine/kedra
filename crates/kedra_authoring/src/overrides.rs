@@ -373,7 +373,7 @@ fn remove_field(
 ) -> usize {
     remove_matching(document, node, |operation, node| {
         matches!(operation, Operation::SetField {node:n,component:c,path:p,..}
-            if n == node && c == component && (p == path || p.starts_with(&format!("{path}."))))
+            if n == node && c == component && field_prefix(path,p))
     })
 }
 
@@ -446,12 +446,30 @@ fn remove_matching(
     }
     removed
 }
-fn upsert(operations: &mut Vec<Operation>, operation: Operation) {
+pub(crate) fn upsert(operations: &mut Vec<Operation>, operation: Operation) {
     match &operation {
-        Operation::SetField {node,component,path,..}=>operations.retain(|op|!matches!(op,Operation::SetField {node:n,component:c,path:p,..} if n==node&&c==component&&(p==path||p.starts_with(&format!("{path}."))))),
+        Operation::SetField {node,component,path,..}=>operations.retain(|op|!matches!(op,Operation::SetField {node:n,component:c,path:p,..} if n==node&&c==component&&field_prefix(path,p))),
         Operation::SetComponent {node,component,..}=>operations.retain(|op|!matches!(op,Operation::SetComponent {node:n,component:c,..}|Operation::SetField {node:n,component:c,..} if n==node&&c==component)),
         Operation::RemoveComponent {node,component}=>operations.retain(|op|!matches!(op,Operation::SetComponent {node:n,component:c,..}|Operation::SetField {node:n,component:c,..}|Operation::RemoveComponent {node:n,component:c} if n==node&&c==component)),
         _=>{},
     }
     operations.push(operation);
+}
+
+fn field_prefix(parent: &str, child: &str) -> bool {
+    if parent.is_empty() {
+        return child.is_empty();
+    }
+    let (Ok(parent), Ok(child)) = (
+        bevy::reflect::ParsedPath::parse(parent),
+        bevy::reflect::ParsedPath::parse(child),
+    ) else {
+        return parent == child;
+    };
+    parent.0.len() <= child.0.len()
+        && parent
+            .0
+            .iter()
+            .zip(&child.0)
+            .all(|(a, b)| a.access == b.access)
 }

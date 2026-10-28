@@ -3,9 +3,10 @@
 Status: proposed for owner review. This refines the inspector boundary in
 [ADR 0009](0009-property-editing-and-inspector.md). The existing `kedra_inspector`
 crate and editor panel provide the
-[read-only profile](../site/en/contributing/contracts/editor/inspector.md).
+[current profile](../site/en/contributing/contracts/editor/inspector.md), with narrow
+in-memory Transform and embedded Luau UiCaption editing.
 Full editable bindings, source settlement and additional component-authoring
-capabilities remain proposed; read-only implementation does not accept that plan.
+capabilities remain proposed; those narrow implementations do not accept the full plan.
 
 ## Context
 
@@ -114,6 +115,13 @@ precedence fail visibly. An unavailable or erroneous specialized editor reports
 that failure; it cannot silently hide fields. Provide an explicit raw/default
 view using the same value binding, including when a specialization exists.
 
+Component chrome belongs to the base Inspector, not a custom drawer. Root components
+always reuse their TreeView header. Nested block presentations receive a standard
+base-owned section/disclosure and share collapse state with default reflected groups;
+collapsing keeps their controls alive. Native or future scripted drawers fill only
+the section body. The read-only implementation enforces this through `EditorLayout`
+and the private view slot adapter, not per-component collapse implementations.
+
 Custom editors compose the shared field kit and emit the same Begin/Propose/
 Accept/Cancel interactions. They may batch related field proposals atomically,
 but cannot bypass the host's revision checks, validation, history or persistence.
@@ -128,6 +136,14 @@ Do not introduce mandatory editor macros, a new schema DSL or per-type crates.
 Project loading, unloading, trust and compatibility remain stage 3 work.
 
 ### 4. Native components get convenient editors, not replacement components
+
+The read-only implementation registers native Vec2/Vec3/Vec4, Quat and Transform
+drawers through `kedra_inspector::builtin::editors`. Shared authored vector controls
+keep axes inline. Transform composes Position / Rotation / Scale; quaternion display
+uses degrees and Bevy YXZ order, consistent with Scene View camera conventions.
+Projection normalizes only a bounded display copy and never rewrites the source.
+Default view retains native reflected access. This is not angle editing: gesture
+continuity, input history and source settlement remain implementation gates.
 
 `Transform` is a motivating specialized editor:
 
@@ -180,6 +196,25 @@ service locator or plugin runtime. No additional inspector-core/value-schema cra
 is justified by this split. The existing crate has concrete panel/value consumers.
 
 ## Delivery order and verification
+
+### Extension language direction
+
+Universal reflection, shared field interactions, native math and common runtime
+component drawers belong in Rust. UI-authoring-specific grouping and conditional
+presentations may use Luau, consuming the same native controls and typed property
+bindings. The first intended script drawer is UiCaption (text, alignment and wrapping),
+with UI Layout following that path. The narrow embedded UiCaption profile is implemented
+by [ADR 0036](0036-scoped-luau-inspector-drawers.md); UI Layout and general project-defined
+drawers remain planned, not an installed project-loading API.
+
+Luau composition must reuse `kedra_script` owner scopes, budgets and explicit execution
+authorization. Scripts receive bounded property/UI capabilities, never mutable source
+or gameplay World access. Script failure must retain diagnostics and an explicit
+default view. Loading/replacement retires old handles; project open does not execute
+editor scripts. No second UI schema, value registry or separate source-write route
+is authorized by using a scripting language.
+
+### Editable delivery
 
 The generic editor comes before convenient component specializations:
 

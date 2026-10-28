@@ -6,7 +6,8 @@
   "editor.surface":(version:1,value:(width:420,height:740)),
   "editor.values":(version:1,value:(
    name:"Calibration 名称",enabled:true,gain:0.25,threshold:0.33333334,exact:18446744073709551615,
-   level:(current:3,maximum:9),samples:[2,3,5],
+    level:(current:3,maximum:9),samples:[2,3,5],
+    transform:(translation:(12.5,23.75,-0.125),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
   )),
  })],
  instances:[(id:"19a80000-0000-4000-8000-000000000009",asset:"19a80000-0000-4000-8000-000000000001",parent:(instances:[],node:"19a80000-0000-4000-8000-000000000002"),bindings:{},overrides:[])],

@@ -3,6 +3,13 @@ use crate::failure;
 use kedra_scene::{Result, composition::Catalog, document::*};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
+mod groups;
+pub use groups::EditGroup;
+mod history;
+pub(crate) use history::validate_label;
+pub use history::{HistoryId, HistoryInfo};
+mod policy;
+pub use policy::HistoryPolicy;
 
 #[derive(Clone, Serialize, Deserialize)]
 /// One source working copy and its monotonic current/saved revisions.
@@ -16,6 +23,8 @@ pub struct WorkingDocument {
 }
 #[derive(Clone, Serialize, Deserialize)]
 pub(crate) struct History {
+    id: HistoryId,
+    label: String,
     before: BTreeMap<DocumentId, WorkingDocument>,
     after: BTreeMap<DocumentId, WorkingDocument>,
     pub(crate) mapping: Option<(DocumentId, BTreeMap<NodeAddress, NodeAddress>)>,
@@ -23,7 +32,11 @@ pub(crate) struct History {
 #[derive(Default, Clone, Serialize, Deserialize)]
 /// Atomic multi-document edits and their revision-guarded history.
 pub struct WorkingSet {
+    #[serde(skip)]
+    group_scope: std::sync::Arc<()>,
     pub(crate) documents: BTreeMap<DocumentId, WorkingDocument>,
+    pub(crate) saved: BTreeMap<DocumentId, PrefabDocument>,
+    policy: HistoryPolicy,
     pub(crate) undo: Vec<History>,
     redo: Vec<History>,
     coupled: Vec<BTreeSet<DocumentId>>,
@@ -60,6 +73,7 @@ impl WorkingSet {
         if self.documents.contains_key(&document.id) {
             return Err(failure("document already open; share the working document"));
         }
+        self.saved.insert(document.id, document.clone());
         self.documents.insert(
             document.id,
             WorkingDocument {
@@ -68,6 +82,7 @@ impl WorkingSet {
                 saved_revision: 1,
             },
         );
+        self.group_scope = std::sync::Arc::new(());
         Ok(())
     }
     /// Build an independent candidate catalog without publishing or writing it.
@@ -88,6 +103,29 @@ impl WorkingSet {
         edit: impl FnOnce(&mut BTreeMap<DocumentId, PrefabDocument>) -> Result<()>,
         validate: impl FnOnce(&Catalog) -> Result<()>,
     ) -> Result<()> {
+        self.transact_named("Edit sources", expected, edit, validate)
+    }
+    /// Atomically publish one named source operation after full caller validation.
+    /// Invalid labels, stale revisions and errors preserve sources/history/Redo.
+    /// A no-op creates no entry. This is working-source commit, never filesystem Save.
+    pub fn transact_named(
+        &mut self,
+        label: &str,
+        expected: &BTreeMap<DocumentId, u64>,
+        edit: impl FnOnce(&mut BTreeMap<DocumentId, PrefabDocument>) -> Result<()>,
+        validate: impl FnOnce(&Catalog) -> Result<()>,
+    ) -> Result<()> {
+        self.transact(label, expected, edit, validate, false)
+    }
+    fn transact(
+        &mut self,
+        label: &str,
+        expected: &BTreeMap<DocumentId, u64>,
+        edit: impl FnOnce(&mut BTreeMap<DocumentId, PrefabDocument>) -> Result<()>,
+        validate: impl FnOnce(&Catalog) -> Result<()>,
+        merge: bool,
+    ) -> Result<()> {
+        history::validate_label(label)?;
         for (id, revision) in expected {
             if self
                 .documents
@@ -129,7 +167,7 @@ impl WorkingSet {
         if changed.is_empty() {
             return Ok(());
         }
-        self.clock = self
+        let clock = self
             .clock
             .max(
                 self.documents
@@ -140,14 +178,14 @@ impl WorkingSet {
             )
             .checked_add(1)
             .ok_or_else(|| failure("authoring revision counter exhausted"))?;
-        self.documents = candidate
+        let documents: BTreeMap<_, _> = candidate
             .into_iter()
             .map(|(id, document)| {
                 let previous = before.get(&id);
                 let revision = if changed.contains(&id) {
-                    self.clock
+                    clock
                 } else {
-                    previous.map_or(self.clock, |d| d.revision)
+                    previous.map_or(clock, |d| d.revision)
                 };
                 (
                     id,
@@ -159,16 +197,64 @@ impl WorkingSet {
                 )
             })
             .collect();
-        if changed.len() > 1 {
-            self.coupled.push(changed);
-        }
-        self.undo.push(History {
-            before,
-            after: self.documents.clone(),
+        let latest = History {
+            id: HistoryId(clock),
+            label: label.into(),
+            before: before
+                .into_iter()
+                .filter(|(id, _)| changed.contains(id))
+                .collect(),
+            after: documents
+                .iter()
+                .filter(|(id, _)| changed.contains(id))
+                .map(|(id, doc)| (*id, doc.clone()))
+                .collect(),
             mapping: None,
-        });
-        self.last_mapping = None;
+        };
+        let history = if merge {
+            let mut previous = self
+                .undo
+                .last()
+                .cloned()
+                .ok_or_else(|| failure("live history entry missing"))?;
+            previous.merge(latest);
+            previous
+        } else {
+            latest
+        };
+        self.check_history(&history)?;
+        let mut coupled: BTreeSet<_> = history
+            .before
+            .keys()
+            .chain(history.after.keys())
+            .copied()
+            .collect();
+        self.documents = documents;
+        self.clock = clock;
+        if coupled.len() > 1 {
+            loop {
+                let count = coupled.len();
+                self.coupled.retain(|group| {
+                    if group.is_disjoint(&coupled) {
+                        true
+                    } else {
+                        coupled.extend(group);
+                        false
+                    }
+                });
+                if coupled.len() == count {
+                    break;
+                }
+            }
+            self.coupled.push(coupled);
+        }
+        if merge {
+            self.undo.pop();
+        }
+        self.undo.push(history);
         self.redo.clear();
+        self.trim_history();
+        self.last_mapping = None;
         Ok(())
     }
     /// Undo atomically against unchanged affected source content and a caller validator.
@@ -263,11 +349,12 @@ impl WorkingSet {
         self.clock = revision;
         Ok(())
     }
-    /// Whether current source differs in revision from its save acknowledgment.
+    /// Whether current authored content differs from the acknowledged source content.
+    /// Revisions still advance monotonically; returning to saved content is clean.
     pub fn dirty(&self, id: DocumentId) -> bool {
         self.documents
             .get(&id)
-            .is_some_and(|d| d.revision != d.saved_revision)
+            .is_some_and(|d| self.saved.get(&id) != Some(&d.document))
     }
     /// Compute the transaction-coupled document set that must be saved together.
     pub fn save_group(&self, id: DocumentId) -> BTreeSet<DocumentId> {
@@ -287,11 +374,22 @@ impl WorkingSet {
             }
         }
     }
-    pub(crate) fn acknowledge(&mut self, revisions: &BTreeMap<DocumentId, u64>) {
-        for (id, revision) in revisions {
-            if let Some(document) = self.documents.get_mut(id)
-                && document.revision == *revision
-            {
+    pub(crate) fn acknowledge(
+        &mut self,
+        revisions: &BTreeMap<DocumentId, (u64, Option<PrefabDocument>)>,
+    ) {
+        // A Save boundary must not be absorbed by a continuing live edit.
+        self.group_scope = std::sync::Arc::new(());
+        for (id, (revision, source)) in revisions {
+            match source {
+                Some(source) => {
+                    self.saved.insert(*id, source.clone());
+                }
+                None => {
+                    self.saved.remove(id);
+                }
+            }
+            if let Some(document) = self.documents.get_mut(id) {
                 document.saved_revision = *revision;
             }
         }

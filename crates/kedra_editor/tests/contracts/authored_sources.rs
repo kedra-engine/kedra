@@ -104,6 +104,37 @@ fn startup_sources_compile_with_loading_keys_and_real_editor_surface_without_spl
     )?;
     assert_eq!(compiled.len(), sources.catalog.documents.len());
 
+    let section = sources.document("editor://prefabs/property-section.prefab.ron")?;
+    let section = compiled
+        .get(&section.id)
+        .ok_or("Property section compilation missing")?;
+    let section_world = section.authoring_world();
+    let toggle = section
+        .source_entities()
+        .values()
+        .copied()
+        .find(|entity| {
+            section_world
+                .get::<ElementId>(*entity)
+                .is_some_and(|id| id.0 == "toggle")
+        })
+        .ok_or("Property disclosure missing")?;
+    let order = section_world
+        .get::<Children>(toggle)
+        .ok_or("Property header children missing")?
+        .iter()
+        .filter_map(|entity| {
+            section_world
+                .get::<ElementId>(entity)
+                .map(|id| id.0.as_str())
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        order,
+        ["down", "right", "title"],
+        "Canonical section disclosure precedes its title; source UUID sorting must not move it to the trailing edge"
+    );
+
     let loading = sources.document("editor://scenes/loading.scene.ron")?;
     let snapshot = compiled
         .get(&loading.id)

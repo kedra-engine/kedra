@@ -12,6 +12,9 @@ description = "Project lifecycle and retained dockable native editor workspace"
 layer = "editor"
 
 [dependencies]
+kedra_authoring_assets.workspace = true
+kedra_preview.workspace = true
+kedra_editor_context.workspace = true
 bevy = { workspace = true, features = ["bevy_state", "multi_threaded", "ui_bevy_render", "ui_picking", "png", "bevy_pbr", "bevy_gltf", "pan_orbit_camera", "render_dev_tools", "mesh_picking", "bevy_gizmos_render"] }
 kedra_project.workspace = true
 kedra_update.workspace = true
@@ -26,9 +29,12 @@ kedra_app.workspace = true
 kedra_script.workspace = true
 kedra_ui = { workspace = true, features = ["system-fonts", "text-capture"] }
 kedra_inspector.workspace = true
+kedra_inspector_luau.workspace = true
 kedra_scene = { workspace = true, features = ["render"] }
 kedra_docking.workspace = true
 kedra_authoring.workspace = true
+kedra_authoring_luau.workspace = true
+kedra_authoring_fs.workspace = true
 ron.workspace = true
 walkdir = "2"
 unicase = "=2.9.0"
