@@ -173,7 +173,16 @@ impl Storage for Guarded<'_> {
         }
     }
     async fn sync(&self, path: &Path, need: Durability) -> io::Result<()> {
-        StdFs.sync(path, need).await
+        if path.is_dir() {
+            directories(path).map_err(io::Error::other)?;
+            return StdFs.sync(path, need).await;
+        }
+        self.check(path)?;
+        match read_bounded(path, 16 * 1024 * 1024) {
+            Ok(_) => sync_existing_file(path),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(error),
+        }
     }
     async fn replace(&self, path: &Path, contents: &[u8]) -> io::Result<()> {
         self.check(path)?;

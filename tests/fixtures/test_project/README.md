@@ -97,6 +97,7 @@ and independently require two clean process lifecycles, actual state/input and
 readback/retention evidence. See [native game usage](native.md) for materialization,
 delivery, launch and external verification commands. Luau API-isolation regressions
 live in `kedra_script` product tests rather than a separate authored project.
+
 ## Explicit editor-script fixture
 
 `Editor/rename-pair.luau` changes two existing prefab names through one explicitly

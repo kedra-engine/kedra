@@ -42,9 +42,9 @@
     "notices": ["mimalloc-2.1.7/LICENSE"]
   },
   {
-    "file": "musl-dev-1.2.5-r11.apk",
-    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/musl-dev-1.2.5-r11.apk",
-    "sha256": "d3b5ab01046a92b9a168b790f516606e320f015cbd4deeb584c5e115a02124ba",
+    "file": "musl-dev-1.2.5-r12.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/musl-dev-1.2.5-r12.apk",
+    "sha256": "0b0357736d51253ddf82a4338378848cfbbe6d695aba60cf7790423670d61b2a",
     "notices": []
   },
   {
@@ -78,9 +78,9 @@
     "notices": []
   },
   {
-    "file": "musl-1.2.5-r11.apk",
-    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/musl-1.2.5-r11.apk",
-    "sha256": "61e84757a8bfbc0d7fa8f4ce6de9cd4d791714369d78f6a08e5b03510fb2a623",
+    "file": "musl-1.2.5-r12.apk",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/musl-1.2.5-r12.apk",
+    "sha256": "abfcfe822d37bb6fa621d7d682e26eba95152c642dc5619b768b4e4a9789133e",
     "notices": []
   },
   {

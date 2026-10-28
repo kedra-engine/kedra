@@ -160,7 +160,8 @@ Save is pending preserves the pending operation and state.
 file membership, paths, document IDs, submitted revisions and exact content hashes/deletions
 before updating the source baseline. A matching receipt records the submitted bytes, not
 newer local edits; saved revisions and content checkpoints record the pinned submission
-even when newer working edits exist. The last acknowledged operation can be acknowledged again without another state
+even when newer working edits exist. The last acknowledged operation can be acknowledged
+again without another state
 transition. This idempotence is not a second write or authority to accept unrelated receipts.
 
 ## Reconcile without writing

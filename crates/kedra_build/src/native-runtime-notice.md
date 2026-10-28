@@ -36,9 +36,14 @@ The exact patch is included in the runtime source archive under
 `f5636118e0d8645e7f572771b5ac98b6da931f95` records it. No other libfuse source
 modifications are used in the official binary.
 
-The accompanying Alpine APKs provide the corresponding static objects, CRT
-objects and headers for the other linked libraries, including Alpine's musl/zlib
-fixes. The upstream musl/zlib archives are supplemental upstream source, **not**
+The accompanying Alpine APKs provide static objects, CRT objects and headers
+for relinking, including Alpine's musl/zlib fixes. The musl and musl-dev inputs
+are pinned to 1.2.5-r12, not the official binary's 1.2.5-r11. This is an updated
+replacement libc for recipient rebuilds, not the original build's exact objects.
+Alpine [commit 5245849][musl-r12]
+adds the CVE-2026-107891 regcomp fix in r12; it does not patch the prebuilt runtime.
+The other APK versions match the recorded official build. The upstream musl/zlib
+archives are supplemental upstream source, **not**
 a claim to contain Alpine's downstream patches. These permissive libraries are
 provided as linkable object code; libfuse and the complete runtime/squashfuse
 sources and build scripts are provided to allow replacement and relinking.
@@ -84,8 +89,9 @@ sh rebuild.sh build "$PWD/work"
 ./work/runtime-x86_64 --appimage-version
 ```
 
-The build uses the included sources, AppImage patch, upstream Makefile and exact
-bundled library objects. The compiler/build utilities are standard Alpine tools;
+The build uses the included sources, AppImage patch, upstream Makefile and
+checksum-pinned relink objects, including the replacement musl revision above.
+The compiler/build utilities are standard Alpine tools;
 the process is not claimed hermetic or byte-for-byte reproducible. The output is
 an unsigned, replaceable runtime, not a signed update or a trusted publisher.
 To create an AppImage using it, use appimagetool's standard `--runtime-file`
@@ -95,3 +101,5 @@ Keep the original image and work in a new output directory.
 If an upstream moving download changes, Kedra packaging fails its checksum rather
 than silently embedding an uncovered runtime. The bundled materials remain
 available for recipients independently of those moving download locations.
+
+[musl-r12]: https://github.com/alpinelinux/aports/commit/5245849e14d213abe18d589b4b80d65793327940

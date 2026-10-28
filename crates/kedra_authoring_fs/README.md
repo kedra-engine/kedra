@@ -22,9 +22,12 @@ Kedra owns bounded request admission and exact-byte grants, not another journal 
   cooperating writers. It is intentionally retained outside the asset inventory;
   it contains no document state or persistent lookup identities.
 - A private sibling staging directory preserves the original permissions and keeps
-  crash-orphaned temporary bytes outside authored inventory. Bytes are synced before replacement. The
+  crash-orphaned temporary bytes outside authored inventory. Bytes are synced before
+  replacement. The
   original read-only source is never made writable. Sidecars/catalogs are not touched.
 - `tempfile::persist` atomically replaces each existing name on the same filesystem.
+  File flushes open with write access on Windows, without truncation or permission changes;
+  POSIX uses read access. Windows has no equivalent POSIX directory-sync step.
   The transaction engine journals the group and flushes publication/rollback before
   retiring its journal. Physical power-loss durability is not certified by process tests.
 - An exact already-published retry returns a correlated receipt without rewriting
@@ -56,7 +59,8 @@ the original verified renderer-delivery provenance, and does not rebuild assets.
 Public contracts exercise real Unicode files, permissions, exact retries, conflicts,
 inventory changes, symlink redirection, lease contention and invalid requests. Private
 contracts cover real-file groups, guarded rollback, interrupted intent/replay and refusal
-of foreign journal operations. `kedra_authoring` owns preparation/receipt/newer-revision safety. Editor tests
+of foreign journal operations. `kedra_authoring` owns preparation/receipt/newer-revision
+safety. Editor tests
 own asynchronous completion, pending retry/discard/close policy and retained history.
 The Inspector native scenario owns actual Cmd/Ctrl+S, draft refusal and source writes
 on a complete private fixture, including an external-write conflict.

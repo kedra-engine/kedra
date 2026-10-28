@@ -147,7 +147,8 @@ unchanged; the profile refuses new/deleted files and pins complete coupled group
 All Inspector drafts must be settled explicitly. Save does not grant Luau filesystem access.
 
 The writer checks complete inventory/hash preconditions, preserves permissions and uses
-atomic replacements under a stable sibling advisory lease and a recoverable group journal. The host also
+atomic replacements under a stable sibling advisory lease and a recoverable group journal.
+The host also
 reuses source admission's asset/sidecar identity checks. External conflicts preserve working
 values and history. Only the exact returned receipt advances the source baseline; newer
 working revisions stay dirty. The original renderer-delivery admission stays pinned separately.
@@ -168,7 +169,8 @@ Production owners are
 [`kedra_authoring_fs::source`](https://github.com/kedra-engine/kedra/blob/main/crates/kedra_authoring_fs/src/source.rs)
 and
 [`documents/inspection.rs`](https://github.com/kedra-engine/kedra/blob/main/crates/kedra_editor/src/documents/inspection.rs).
-Editor `tests.rs`/`inspection_tests.rs` and filesystem `source/tests.rs` cover repeated/latest opens,
+Editor `tests.rs`/`inspection_tests.rs` and filesystem `source/tests.rs` cover
+repeated/latest opens,
 collision/malformed/missing/mismatched input, reference rejection, scoped selection and unchanged
 source state on failure. The [browser verification route](asset-browser.md#verification) exercises
 source Open natively. Native verification of this revision remains pending.

@@ -254,9 +254,7 @@ pub fn commit_existing(root: &Path, request: &CommitRequest) -> Result<Receipt, 
     if old == 0 {
         for file in &request.files {
             let path = session.root.join(&file.path);
-            File::open(&path)
-                .and_then(|file| file.sync_all())
-                .map_err(uncertain)?;
+            sync_existing_file(&path).map_err(uncertain)?;
             sync_directory(
                 path.parent()
                     .ok_or_else(|| uncertain("Source parent missing"))?,

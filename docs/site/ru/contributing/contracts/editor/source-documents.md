@@ -30,8 +30,10 @@
 
 ## Разрешённые скриптовые транзакции {#authorized-script-transactions}
 
-Явный запуск: `kedra <project> --editor-script Editor/path.luau --edit-source game://Main.scene.ron`;
-`--edit-source` повторяется для каждого разрешённого документа. Скрипт определяет `function run(ctx)`;
+Явный запуск:
+`kedra <project> --editor-script Editor/path.luau --edit-source game://Main.scene.ron`;
+`--edit-source` повторяется для каждого разрешённого документа.
+Скрипт определяет `function run(ctx)`;
 обычные относительные модули читаются из неизменяемого снимка Editor/. Само открытие проекта код
 не запускает. Снимок ограничен 256 файлами / 8 MiB, 64 KiB на файл, 1024 элементами / глубиной 16;
 ссылки и специальные файлы запрещены. Это не sandbox против конкурентной враждебной подмены файлов.
@@ -179,7 +181,8 @@ Save не собирает ресурсы и не очищает историю.
 [`kedra_authoring_fs::source`](https://github.com/kedra-engine/kedra/blob/main/crates/kedra_authoring_fs/src/source.rs)
 и
 [`documents/inspection.rs`](https://github.com/kedra-engine/kedra/blob/main/crates/kedra_editor/src/documents/inspection.rs).
-Редакторные `tests.rs`/`inspection_tests.rs` и файловые `source/tests.rs` проверяют повторный и последний
+Редакторные `tests.rs`/`inspection_tests.rs` и файловые `source/tests.rs` проверяют
+повторный и последний
 Open, коллизии, неверные, отсутствующие и несовпадающие данные, отказ ссылок, выбор с областью
 экземпляров и неизменность
 исходников при ошибке. [Asset Browser](asset-browser.md) описывает нативную проверку Open.

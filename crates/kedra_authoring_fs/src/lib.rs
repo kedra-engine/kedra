@@ -234,6 +234,15 @@ fn lease(root: &Path, shared: bool) -> Result<File, SaveError> {
     }
     Ok(file)
 }
+fn sync_existing_file(path: &Path) -> std::io::Result<()> {
+    // Windows FlushFileBuffers requires write access, unlike POSIX fsync.
+    // Do not create/truncate the file or make a read-only source writable.
+    OpenOptions::new()
+        .read(true)
+        .write(cfg!(windows))
+        .open(path)?
+        .sync_all()
+}
 #[cfg(unix)]
 fn sync_directory(path: &Path) -> std::io::Result<()> {
     File::open(path)?.sync_all()

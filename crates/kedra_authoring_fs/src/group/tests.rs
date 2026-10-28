@@ -296,3 +296,25 @@ fn guarded_port_refusal_rolls_back_an_earlier_replacement_without_changing_permi
     }));
     Ok(())
 }
+
+#[test]
+fn guarded_flush_preserves_admitted_bytes_and_refuses_foreign_paths() -> TestResult {
+    let (directory, request) = fixture()?;
+    let root = directory.path().join("assets");
+    let session = Session::new(&root)?;
+    let backend = storage::Guarded {
+        session: &session,
+        request: &request,
+    };
+    let path = session.root.join(&request.files[0].path);
+    let before = std::fs::read(&path)?;
+    block_on(backend.sync(&path, fs_transaction::fs::Durability::Durable))?;
+    assert_eq!(std::fs::read(&path)?, before);
+    let foreign = directory.path().join("foreign.txt");
+    std::fs::write(&foreign, b"not granted")?;
+    assert!(block_on(backend.sync(&foreign, fs_transaction::fs::Durability::Durable)).is_err());
+    assert_eq!(std::fs::read(&foreign)?, b"not granted");
+    assert!(!session.journal_present()?);
+    assert!(!session.intent.exists());
+    Ok(())
+}

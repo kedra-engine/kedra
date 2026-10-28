@@ -51,13 +51,14 @@ The repository currently provides:
   primitive dimensions, surface color/metallic/roughness and sun color/illuminance also
   support typed source edits and retained render refresh. Native bools and enums use
   checkboxes/choice menus; Primitive variants have valid native constructors. Supported
-   scalar UI properties also use source editing and retained passive refresh. Classes,
-   image densities and shadows support immediate structural editing; typed resources
-   use searchable picking and Browser drops, including retained Model/Environment refresh.
-   Cross-window drop and long-list autoscroll acceptance remain incomplete. Color swatches expand into
+  scalar UI properties also use source editing and retained passive refresh. Classes,
+  image densities and shadows support immediate structural editing; typed resources
+  use searchable picking and Browser drops, including retained Model/Environment refresh.
+  Cross-window drop and long-list autoscroll acceptance remain incomplete.
+  Color swatches expand into
   native RGBA/palette controls; Layout groups native fields with inline length units.
-   Save active document writes its complete accepted existing-source group with conflict
-   checks and explicit interrupted-Save recovery; Cmd/Ctrl+S never accepts pending drafts.
+  Save active document writes its complete accepted existing-source group with conflict
+  checks and explicit interrupted-Save recovery; Cmd/Ctrl+S never accepts pending drafts.
 - Shared scene and prefab documents, composition, instantiation and guarded
   source-editing APIs. The editor's own UI uses authored sources.
 - Asset processing and verified deliveries consumed through shared runtime loaders.
@@ -66,7 +67,7 @@ The repository currently provides:
   [distribution](docs/site/en/manual/build-and-distribution/index.md).
 - Debug-only, explicitly enabled remote observation, input injection and renderer captures.
 - Shared opt-in Luau behaviors, finite sequences and standard admitted-source modules
-   with host-owned API scopes. Native QA uses sequences under external Rust supervision.
+  with host-owned API scopes. Native QA uses sequences under external Rust supervision.
 - Explicit project `Editor/` script launch with exact source grants, shared named
   Undo/Redo and separate Save. Opening projects never executes these scripts automatically.
 - Rust unit/integration tests and local native UI scenarios with real frames/input.

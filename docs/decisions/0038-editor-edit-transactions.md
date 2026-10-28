@@ -38,7 +38,8 @@ source-qualified path grants. The existing read-only debug scripting API acquire
 authoring capability. The host reuses Documents compilation/publication; typed values
 reuse PropertySession, and native property gestures use named working-set history.
 The Lua profile exposes nodes, reflected property requests, renames, node removal,
-reparenting, component removal, commit and cancel. Each staged request must be valid; temporarily invalid cross-field
+reparenting, component removal, commit and cancel. Each staged request must be valid;
+temporarily invalid cross-field
 batches are not exposed. Explicit successful commits survive later script failures.
 
 ## Boundaries and follow-up

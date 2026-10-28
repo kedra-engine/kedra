@@ -66,7 +66,8 @@ Scene View recompiles renderer bindings, validates the unchanged topology/other 
 and updates retained native transforms/passive UI values, owned primitive meshes/materials and
 scene lights with a fresh readback epoch. Spatial asset lookups and derived bounds are
 preflighted before any native replacement; handles, entities and camera stay retained. Camera
-state remains intact. General cross-view settlement and new-document publication are not implemented.
+state remains intact. General cross-view settlement and new-document publication are
+not implemented.
 
 Exact native integers/floats never pass through a universal f64. Vec3 axis proposals
 replace only the intended axis in the complete native vector. SDR color fields preserve

@@ -150,7 +150,8 @@ and retains newer edits/history. `fs-transaction` owns journal/rollback/replay; 
 owns exact request grants, advisory admission/writer exclusion and explicit recovery. See
 [ADR 0037](decisions/0037-existing-document-save.md) and its
 [filesystem contract](../crates/kedra_authoring_fs/README.md).
-Group publication and its limits are defined by [ADR 0039](decisions/0039-existing-source-save-groups.md).
+Group publication and its limits are defined by
+[ADR 0039](decisions/0039-existing-source-save-groups.md).
 
 Editor-layer `kedra_inspector_luau` composes that existing value-editor protocol with
 `kedra_script` owner scopes and the shared field kit. The editor explicitly authorizes
