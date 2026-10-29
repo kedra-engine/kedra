@@ -89,10 +89,13 @@ bounded per-frame capture. SDK incremental state is reset periodically for rolli
 decodability. Adapter depth/mismatch drops are reported separately in the manifest.
 See [ADR 0042](../../docs/decisions/0042-runtime-profiling-and-editor-analysis.md).
 
-Windows MSVC consumers must define `NOMINMAX` when compiling the SDK's C++ backend,
-so Windows header macros do not replace standard-library min/max identifiers.
-The workspace supplies `CXXFLAGS_x86_64_pc_windows_msvc=-DNOMINMAX` in Cargo config;
-an explicit consumer override must retain that define. This does not disable warnings.
+Windows MSVC consumers must define `NOMINMAX` and `WIN32_LEAN_AND_MEAN` when compiling
+the SDK's C++ backend. These prevent Windows min/max macro substitution and the
+legacy Winsock declarations pulled in by `windows.h` before `winsock2.h`.
+The workspace supplies both through `CXXFLAGS_x86_64_pc_windows_msvc` in Cargo
+config; an explicit consumer override must retain them. Warnings remain enabled.
+The header-order requirement is documented by
+[Microsoft](https://learn.microsoft.com/en-us/windows/win32/winsock/creating-a-basic-winsock-application).
 
 Contract tests exercise actual repeated native recordings, cached spans, invalid admission,
 cancellation, file failure and unchanged foreign recordings. Run disabled and enabled
