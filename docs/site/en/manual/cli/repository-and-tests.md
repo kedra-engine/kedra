@@ -20,23 +20,30 @@ cargo xtask features --non-interactive
 | --- | --- |
 | `files` | Per-file growth policy, including tracked ignored files |
 | `architecture` | Workspace dependency layers, license and lint-inheritance policy |
+| `dependency-policy` | Offline advisory exception expiry/reachability and bounded duplicate/license waivers |
 | `fmt` | `cargo fmt --all -- --check`; does not apply formatting |
 | `lint` | Workspace all-target/all-feature locked Clippy; unsafe code forbidden and warnings denied |
 | `test` | Locked workspace all-target/all-feature tests, then separate doctests |
 | `doc` | Locked workspace all-feature API docs without dependency docs; strict rustdoc warnings/links |
-| `check` | `files`, `architecture`, `fmt`, `lint`, `test`, `doc`, in that order |
+| `check` | `files`, `architecture`, `dependency-policy`, `fmt`, `lint`, `test`, `doc`, in that order |
 | `features` | Default/minimal workspace, independent runtime/data crates and release diagnostic boundary |
 | `visual` | Explicit offline reference inspection or screenshot comparison |
 
-`check` has seven stages because `test` contains two Cargo invocations. It does not
+`check` has eight stages because `test` contains two Cargo invocations. It does not
 include `features`, native desktop scenarios or offline visual comparison. `doc`
 generates local Rust API documentation, not an installed or hosted API-reference service.
 
 `features` checks workspace default and no-default-feature all-target builds, then
 isolated no-default-feature libraries `kedra_app`, `kedra_script`, `kedra_scene`,
-`kedra_assets` and `kedra_ui`. Finally it runs `kedra_app`'s `launch::tests` under
+`kedra_assets`, `kedra_ui` and `kedra_wakeup`, plus profiling-disabled `kedra_profiling`
+tests. Finally it runs `kedra_app`'s `launch::tests` under
 the `release-boundary` profile without default features. It does not certify all
 target/feature combinations or native interaction.
+
+`dependency-policy` reads the repository's `deny.toml` and `Cargo.lock` without
+invoking Cargo or requiring its package cache. `KEDRA_LUAU_LOCKFILE` optionally
+selects an additional resolved consumer lock; a missing, malformed or unreviewed
+explicit lock fails. Cargo-deny remains the separate advisory/license scanner.
 
 Omitting the task in an interactive terminal opens a keyboard chooser. Outside that mode,
 omitting the task fails instead of prompting or selecting `check`. `CI` presence,

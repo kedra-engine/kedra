@@ -52,6 +52,10 @@ jobs:
           python-version: '3.13'
       - name: Resolve pinned Rust toolchain
         run: rustup show active-toolchain
+      - name: Select MSVC-compatible C++ driver
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: '"CXX=clang-cl" >> $env:GITHUB_ENV'
       - name: Require clean current main, successful push CI and publication metadata
         env:
           GH_TOKEN: ${{ github.token }}

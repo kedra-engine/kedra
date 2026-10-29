@@ -1,11 +1,12 @@
 //! Distribution validation inspects extracted bytes, not just input staging.
-use crate::{package_verify, test_support::fixture};
+use crate::{package_verify, test_support::delivery};
 use std::{fs, io::Write};
 
 #[test]
 fn corrupt_extracted_package_blocks_the_success_inventory() -> Result<(), Box<dyn std::error::Error>>
 {
-    let fixture = fixture()?;
+    let fixture = delivery()?;
+    fixture.compile_executable()?;
     let output = fixture.root.path().join("packages");
     fs::create_dir(&output)?;
     let source = fixture.stage.join("assets/hello.txt");
@@ -31,7 +32,8 @@ fn corrupt_extracted_package_blocks_the_success_inventory() -> Result<(), Box<dy
 #[test]
 fn inspecting_an_nsis_installer_extracts_without_executing_it()
 -> Result<(), Box<dyn std::error::Error>> {
-    let fixture = fixture()?;
+    let fixture = delivery()?;
+    fixture.compile_executable()?;
     #[cfg(not(windows))]
     fs::copy(
         fixture
@@ -122,7 +124,8 @@ fn missing_empty_source_directory_does_not_mean_missing_license_materials()
 #[test]
 fn installed_delivery_cannot_differ_from_verified_staging() -> Result<(), Box<dyn std::error::Error>>
 {
-    let fixture = fixture()?;
+    let fixture = delivery()?;
+    fixture.compile_executable()?;
     package_verify::installed(
         &fixture.app,
         &fixture.stage,

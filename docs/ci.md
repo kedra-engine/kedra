@@ -175,7 +175,8 @@ Run each command as a separate checked process; stop on its nonzero status. In P
 | --- | --- |
 | File growth, architecture, fmt, lint, tests/doctests, API docs | `cargo xtask check --non-interactive` |
 | Default/minimal features and independent runtime | `cargo xtask features --non-interactive` |
-| Bootstrap/native dependency contracts | `cargo test -p xtask --test portable_contracts --locked` |
+| Bootstrap isolation | `cargo test -p xtask --test portable_contracts --locked` |
+| Reviewed dependency exceptions | `cargo xtask dependency-policy --non-interactive` |
 | Native buttons/fields screenshots (idle desktop, reviewed profile) | `cargo xtask test -- components` |
 | Licenses/advisories/sources | `cargo deny --locked check` |
 | Markdown | `rumdl check .` |
@@ -198,10 +199,11 @@ no cloud credentials; only the environment-scoped upload step receives the two O
 Storage secrets. Fork/PR checks and the required gate do not depend on those secrets.
 See [hosting](../tools/hosting/README.md) for source freshness, domain and permission rules.
 
-`features` runs eight separate Cargo invocations with streamed diagnostics, logs and
+`features` runs separate Cargo invocations with streamed diagnostics, logs and
 fail-closed stage aggregation: workspace default and no-default-feature all-target checks;
 isolated no-default-feature library checks for `kedra_app`, `kedra_script`, `kedra_scene`,
-`kedra_assets` and `kedra_ui`; and `kedra_app`'s `launch::tests` under the
+`kedra_assets`, `kedra_ui` and `kedra_wakeup`; profiling-disabled `kedra_profiling`
+tests; and `kedra_app`'s `launch::tests` under the
 debug-assertions-disabled `release-boundary` profile. The isolated checks detect capabilities
 accidentally supplied by workspace feature unification, including production Linux Winit
 backends. No skipped stage is reported as passed. All-features testing alone does not
@@ -227,7 +229,7 @@ cargo xtask features --non-interactive
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 ```
 
-The wrapper builds all-feature test executables with `--no-run --timings --verbose`;
+The wrapper builds all-feature test executables with `--no-run --timings`;
 it does not replace tests/doctests. It preserves Cargo's exit status and samples
 compiler/linker CPU/memory, system memory and disk every 15 seconds, including an
 initial synchronous sample, without dumping environment variables. Evidence is in
@@ -238,6 +240,10 @@ not serialize tests. Line-table debug profiles retain source locations, not full
 interactive variable/type inspection; use separate full-debug builds for that.
 These are optional local resource settings, not changed workspace defaults or
 measured completion guarantees.
+
+`-SampleIntervalSeconds` selects a positive sampling interval (default 15).
+The wrapper regression uses a one-second interval and waits for an actual second
+sample under a deadline, rather than sleeping for a fixed compilation duration.
 
 ## Acceptance requirements
 

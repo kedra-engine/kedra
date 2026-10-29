@@ -332,7 +332,7 @@ budgets, exclusions and
 evidence policy. See [ADR 0004](decisions/0004-visual-regression.md).
 Manifest lint-inheritance and portable bootstrap/runtime contracts use the standard
 `toml` parser. Provider-specific workflow adapters are not part of the local gate.
-Dependency-exception tests use RustSec's MIT/Apache `cargo-lock` 11.1.0 to read
+The `xtask dependency-policy` command uses RustSec's MIT/Apache `cargo-lock` 11.1.0 to read
 exact package/caller identities without a package cache or Cargo invocation.
 It supports the current lockfile format and pinned Rust toolchain; its optional
 CLI/graph features are disabled. The parser reuses serde/TOML/semver and adds the

@@ -67,8 +67,8 @@ maintained replacement, but cannot be substituted for ab_glyph's parser API.
 Admit only this advisory ID until review on **2026-12-26 UTC**, without changing
 the treatment of future vulnerability IDs or other unmaintained packages.
 Pinned cargo-deny 0.19.0 lacks native expiry/reachability fields, so an
-ordinary Rust policy regression enforces the UTC deadline, exact parser/wrapper
-versions and allowed immediate caller. The test is part of `cargo xtask check`.
+`cargo xtask dependency-policy` enforces the UTC deadline, exact parser/wrapper
+versions and allowed immediate caller. This stage is part of `cargo xtask check`.
 Remove the exception when upstream changes, or explicitly review it before the
 deadline; do not automatically extend it. Linux exposure remains real even though
 the current macOS UI does not use these caption fonts.
@@ -89,14 +89,14 @@ this path. Its only other admitted immediate consumer is
 `bevy_mod_scripting_functions 0.23.0`, which also depends on the Lua backend.
 
 Admit this advisory ID until **2026-12-26 UTC**, matching the existing dependency
-review checkpoint. The regression checks exact versions, registry sources and all
+review checkpoint. The policy checks exact versions, registry sources and all
 immediate callers along the chain. Additional versions/sources/callers, a future
 vulnerability advisory or a later review date do not inherit approval. Prefer an
 upstream maintained resolution; remove the exception when no consumer needs it,
 or explicitly review before the deadline rather than extending automatically.
 
 Shared Luau execution is implemented under [ADR 0029](0029-luau-runtime-evaluation.md).
-The required policy test always checks the main lock and review deadline. For the
+The required policy command always checks the main lock and review deadline. For the
 canonical runtime-only game in `tests/fixtures/test_project`, supply the actual
 resolved lock from its materialized copy explicitly before relying on the advisory
 ignore. The commands below assume that copy is at `target/test-project`; substitute
@@ -104,7 +104,7 @@ the actual materialization directory consistently if different:
 
 ```sh
 KEDRA_LUAU_LOCKFILE="$PWD/target/test-project/Cargo.lock" \
-  cargo test -p xtask --test dependency_policy --locked luau::
+  cargo xtask dependency-policy --non-interactive
 cargo deny --manifest-path target/test-project/Cargo.toml --locked check licenses advisories
 ```
 
@@ -112,7 +112,7 @@ Both commands must pass for the same unchanged lock. Pinned cargo-deny 0.19.0
 can ignore an advisory ID but cannot express this chain or expiry; its success
 alone is insufficient. A missing or unreadable explicitly supplied lock fails.
 No generated/private fixture lock is required by ordinary CI. BMS's main-runtime
-chain is covered by the mandatory main-lock regression as well.
+chain is covered by the mandatory main-lock policy as well.
 
 ## Unmaintained profiling build-time macro
 
@@ -123,7 +123,7 @@ unmaintained, with no patched release. Registry `perfetto-sdk 1.2.1` depends on
 workspace consumer is `kedra_profiling 0.1.3`; recording remains opt-in. Macro code
 executes with build/CI authority even though it is not runtime trace processing.
 
-Admit only this advisory ID until **2026-12-26 UTC**. The dependency-policy suite
+Admit only this advisory ID until **2026-12-26 UTC**. The dependency-policy command
 enforces the review deadline. Cargo and cargo-deny own package resolution, source,
 license and advisory admission; tests do not repeat package pins or parse a Cargo
 dependency tree. Cargo-deny's ignore applies to the advisory ID, not an individual

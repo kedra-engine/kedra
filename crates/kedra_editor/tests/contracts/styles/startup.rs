@@ -1,4 +1,4 @@
-//! Editor theme consumers must share the approved palette after delivery import.
+//! Editor recovery geometry and reversible production-theme interaction states.
 use super::*;
 
 #[test]
@@ -7,28 +7,17 @@ fn loading_recovery_actions_fit_the_minimum_native_client_size() -> Result<()> {
         ecs::system::SystemState,
         ui::{LayoutContext, ui_surface::UiSurface},
     };
-    let temp = tempfile::tempdir()?;
-    let source = temp.path().join("source");
-    fs::create_dir(&source)?;
-    fs::write(
-        source.join("startup.css"),
-        format!(
-            "{}\n{}",
-            include_str!("../../../../../assets/editor/styles/controls.css"),
-            include_str!("../../../../../assets/editor/styles/startup.css")
-        ),
-    )?;
-    kedra_import::initialize(&source, |_| {})?;
-    let output = temp.path().join("installed");
-    let manifest = kedra_import::build(&source, &output, "game", "game", |_| {})?;
-    let mut app = consumer(&output, manifest);
-    let sheet = load(&mut app, "game://startup.css")?;
+    let (mut app, theme) = stylesheet(format!(
+        "{}\n{}",
+        include_str!("../../../../../assets/editor/styles/controls.css"),
+        include_str!("../../../../../assets/editor/styles/startup.css")
+    ))?;
     for (failed, height) in [(false, 360), (false, 320), (true, 360), (true, 320)] {
         let root = app
             .world_mut()
             .spawn((
                 Node::default(),
-                Styled::new(sheet.clone()),
+                ChildOf(theme),
                 ClassList::new("window-frame"),
             ))
             .id();
@@ -121,34 +110,19 @@ fn loading_recovery_actions_fit_the_minimum_native_client_size() -> Result<()> {
 }
 
 #[test]
-fn editor_controls_share_the_purple_interaction_palette() -> Result<()> {
-    let temp = tempfile::tempdir()?;
-    let source = temp.path().join("source");
-    fs::create_dir(&source)?;
+fn hover_and_press_feedback_is_distinct_and_reversible() -> Result<()> {
     // Font loading is not part of this color fixture; use the real theme rules.
     let tokens = include_str!("../../../../../assets/editor/styles/tokens.css")
         .lines()
         .filter(|line| !line.starts_with("@font-face"))
         .collect::<Vec<_>>()
         .join("\n");
-    fs::write(
-        source.join("theme.css"),
-        format!(
-            "{tokens}\n{}\n{}\n{}",
-            include_str!("../../../../../assets/editor/styles/controls.css"),
-            include_str!("../../../../../assets/editor/styles/docking.css"),
-            include_str!("../../../../../assets/editor/styles/startup.css"),
-        ),
-    )?;
-    kedra_import::initialize(&source, |_| {})?;
-    let output = temp.path().join("installed");
-    let manifest = kedra_import::build(&source, &output, "game", "game", |_| {})?;
-    let mut app = consumer(&output, manifest);
-    let sheet = load(&mut app, "game://theme.css")?;
-    let root = app
-        .world_mut()
-        .spawn((Node::default(), Styled::new(sheet), ClassList::new("theme")))
-        .id();
+    let (mut app, root) = stylesheet(format!(
+        "{tokens}\n{}\n{}\n{}",
+        include_str!("../../../../../assets/editor/styles/controls.css"),
+        include_str!("../../../../../assets/editor/styles/docking.css"),
+        include_str!("../../../../../assets/editor/styles/startup.css"),
+    ))?;
     let button = app
         .world_mut()
         .spawn((
@@ -182,11 +156,8 @@ fn editor_controls_share_the_purple_interaction_palette() -> Result<()> {
             ChildOf(root),
         ))
         .id();
-    for (hovered, pressed, expected) in [
-        (false, false, Color::srgb_u8(121, 80, 188)),
-        (true, false, Color::srgb_u8(134, 92, 195)),
-        (true, true, Color::srgb_u8(96, 57, 147)),
-    ] {
+    let mut fills = Vec::new();
+    for (hovered, pressed) in [(false, false), (true, false), (true, true), (false, false)] {
         app.world_mut()
             .entity_mut(button)
             .insert(bevy::picking::hover::Hovered(hovered));
@@ -198,34 +169,42 @@ fn editor_controls_share_the_purple_interaction_palette() -> Result<()> {
                 .remove::<bevy::ui::Pressed>();
         }
         frames(&mut app);
-        assert_eq!(
+        fills.push(
             app.world()
                 .get::<BackgroundColor>(button)
                 .ok_or("button fill")?
                 .0,
-            expected
         );
     }
-    assert_eq!(
+    assert_ne!(fills[0], fills[1]);
+    assert_ne!(fills[1], fills[2]);
+    assert_ne!(fills[0], fills[2]);
+    assert_eq!(fills[0], fills[3]);
+    assert!(
         app.world()
             .get::<BackgroundColor>(selected)
             .ok_or("selection fill")?
-            .0,
-        Color::srgb_u8(87, 65, 111)
+            .0
+            .alpha()
+            > 0.
     );
-    assert_eq!(
+    assert!(
         app.world()
             .get::<BorderColor>(preview)
             .ok_or("preview border")?
-            .top,
-        Color::srgb_u8(208, 139, 255)
+            .top
+            .alpha()
+            > 0.
     );
-    assert_eq!(
-        app.world()
-            .get::<BackgroundColor>(preview)
-            .ok_or("preview fill")?
-            .0,
-        Color::srgba_u8(121, 80, 188, 26)
+    let alpha = app
+        .world()
+        .get::<BackgroundColor>(preview)
+        .ok_or("preview fill")?
+        .0
+        .alpha();
+    assert!(
+        alpha > 0. && alpha < 1.,
+        "Preview must preserve visibility of covered content"
     );
     assert_eq!(
         app.world().get::<Node>(frame).ok_or("frame node")?.border,

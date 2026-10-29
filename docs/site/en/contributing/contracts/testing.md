@@ -5,6 +5,55 @@ Place tests with the code that owns the guarantee and choose checks that can exp
 the [Testing Manual](../../manual/testing/index.md) supplies command recipes.
 [ADR 0031][adr-testing] defines the policy and its rationale.
 
+## Test change decision rules
+
+Before adding, changing, moving or removing tests:
+
+1. Identify the Kedra guarantee and its production owner.
+2. State the observable failure the check must detect, including relevant unchanged state.
+3. Inspect existing owner and integration suites; identify the gap or actual redundancy.
+4. Choose the least expensive environment that can expose that failure. Real import,
+   compilation, filesystem operations, processes and windows need a contract-specific reason.
+5. For removal or weaker assertions, identify the remaining check and execution route,
+   or explain why the guarantee is no longer required. Preserve required failure boundaries.
+
+Summarize substantive decisions with relevant paths in the change/review description.
+Group related cases; no per-test form, registry or duplicate inventory is required.
+An agent must not add a test without an observable Kedra failure, remove or weaken a
+check without accounting for its guarantee, or claim a stronger boundary than it exercised.
+
+### Resolve ambiguous cases
+
+- **Duplication:** compare guarantees and failure boundaries, not assertion text. Save
+  preparation, filesystem recovery and native Save input can assert the same bytes while
+  detecting different failures. Keep the full error matrix with its owner; higher levels
+  need representative wiring checks and their own boundary failures.
+- **Source inspection:** inspect sources when they are the contract's subject, such as
+  authored assets, provenance or repository policy. Prefer parsing their supported format
+  to lexical bans or formatting-sensitive matches. Verify behavior through execution when
+  source spelling is incidental; do not mirror dependency configuration already owned by tools.
+- **Exact values:** require them for formats, identities and explicitly agreed product
+  requirements. Identify that requirement; current implementation values alone are not a
+  specification. Prefer observable states and geometric relationships to copied palettes,
+  spacing tokens or argument ordering that the contract does not require.
+- **Fixtures:** share preparation for the same contract in its narrowest support module.
+  Keep consumer-specific plugins, lifecycle and authorization with the consumer. Similar
+  setup alone does not justify a universal fixture or a new public production API.
+- **New failures:** investigate before changing assertions or setup. Distinguish a defective
+  fixture, a broken existing contract and a newly exposed boundary. Never silently narrow
+  a scenario, ignore it or delete it merely to obtain green checks. If a newly exposed
+  failure is outside the authorized scope, retain reproducible steps and diagnostics under
+  `target/`, disclose the unresolved guarantee in the review summary, and request direction
+  when it blocks the task. Restore an earlier scenario only with an explicit explanation
+  of its narrower evidence; a passing rerun does not establish that the other failure is fixed.
+  Keep durable accepted limitations in the owning contract; do not publish issues without
+  authorization or put local debugging narratives in repository documentation.
+
+CI enforces objective build, policy and execution requirements. Contract relevance,
+duplication and environment sufficiency require review; do not add source-regex checks,
+test-count targets or mandatory metadata to simulate that judgment. Existing security,
+coverage and acceptance requirements remain binding.
+
 ## Contract ownership
 
 Before adding a test, identify the Kedra guarantee, production owner, observable failure,
@@ -45,7 +94,7 @@ Product contracts, assembled acceptance and repository policy are separate respo
 | Script Transform/UI adapters | `kedra_script_bevy/tests/contracts/` | Native switch Behavior/Sequence |
 | Editor styles/icons/authored sources | `kedra_editor/tests/contracts/` | Component corpus/editor geometry |
 | Build/package/update | `kedra_build`, `kedra_update` | Installed distribution/update |
-| Repository/release policy | `xtask`, `tools/ci`, `tools/security` | Real scanners/distribution workflow |
+| Repository/release policy | `xtask` (including `dependency-policy`), `tools/ci`, `tools/security` | Real scanners/distribution workflow |
 
 ### Placement and fixtures
 
@@ -61,6 +110,9 @@ or `*_tests`. Local nested cases may share their own suite setup, not independen
 Editor CPU hosts use `kedra_editor/src/test_support.rs`; workspace layout/host inputs use
 `workspace/test_support/`; primitive projections use `scene_view/test_support.rs`.
 These are distinct fixtures, not a universal App. Tiny invalid inputs stay beside their cases.
+Inspector's authored CPU kit lives in `kedra_inspector/tests/support/kit.rs`; the
+Luau adapter consumes that same fixture with its own plugins. Build tests select
+configuration, delivery and real executable preparation only when their contract needs it.
 
 Native editor acceptance belongs to `tools/test/src/scenarios/editor`; independent runtime
 acceptance to `tools/test/src/scenarios/runtime.rs`. Component comparison uses the existing
@@ -76,6 +128,12 @@ assembled input/frame delivery. Higher levels need a different failure boundary,
 same matrix repeated through UI. Dock topology belongs to `kedra_docking`, retained
 attachment to `kedra_ui`, document/selection coordination to the editor and gestures/lifecycle
 to native acceptance. Editor design assertions do not belong to generic importer tests.
+Editor CSS behavior uses an in-memory native stylesheet source; the editor's installed
+stylesheet contract separately exercises import and verified delivery. Behavior tests assert
+state restoration and usable geometry, not a second copy of palette and spacing tokens.
+Model topology/error matrices belong to `kedra_assets`; importer tests own selector admission,
+pre-processing refusal and unchanged sources/publication. The native cyclic-model loader
+probe and special-file probes run under an external process deadline.
 
 Negative cases assert unchanged sources, history, published state and foreign resources,
 not only errors. Use controlled clocks/readiness, not wall-clock sleeps. Potentially blocking
@@ -102,11 +160,18 @@ restrictions not expressible in cargo-deny, retain their owning policy tests.
 
 ## Repository and platform scopes
 
-`cargo xtask check` runs file growth, architecture, formatting, Clippy, all-target tests,
+`cargo xtask check` runs file growth, architecture, dependency exception policy, formatting,
+Clippy, all-target tests,
 separate doctests and API docs. It neither launches native apps nor includes feature builds,
 external tools, site builds or pixel comparison. Unknown tasks fail. The alias bootstraps
 only the orchestrator in `target/xtask-bootstrap/`, avoiding Windows replacement of a running
 `xtask.exe`; children use the ordinary Cargo target directory or `CARGO_TARGET_DIR`.
+
+`cargo xtask dependency-policy` owns current-checkout advisory expiry/reachability and
+bounded waiver admission. Its private tests use controlled review times and mutated policy
+inputs; the CLI contract checks real offline execution and explicit consumer-lock failures.
+The CI required gate validates GitHub's actual `needs` JSON at runtime; its process tests
+exercise missing/extra jobs and invalid results rather than the YAML's textual layout.
 
 `cargo xtask features` separately checks default/minimal workspace configurations and
 minimal `kedra_app`, `kedra_script`, `kedra_scene`, `kedra_assets`, `kedra_ui`, `kedra_wakeup`

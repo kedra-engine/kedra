@@ -4,7 +4,7 @@ use super::*;
 #[test]
 fn standalone_application_configuration_does_not_create_native_installation_markers()
 -> Result<(), Box<dyn std::error::Error>> {
-    let mut fixture = crate::test_support::fixture()?;
+    let mut fixture = crate::test_support::configuration()?;
     fixture.app.package.name = "kedra".parse()?;
     let output = fixture.root.path().join("standalone-output");
     let config = configuration(

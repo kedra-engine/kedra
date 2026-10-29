@@ -1,10 +1,6 @@
 //! Deadline-bounded subprocesses prevent a special-file regression hanging Cargo.
 #![cfg(unix)]
-use std::{
-    fs,
-    process::{Command, Stdio},
-    time::{Duration, Instant},
-};
+use std::{fs, process::Command, time::Duration};
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test]
@@ -21,35 +17,17 @@ fn special_source_and_sidecar_files_are_rejected_before_content_opens() -> Resul
                     .status()?
                     .success()
             );
-            let mut child = Command::new(std::env::current_exe()?)
-                .args(["--exact", "nonregular::nonregular_child", "--nocapture"])
-                .env("KEDRA_IMPORT_FIFO_ROOT", temp.path())
-                .env("KEDRA_IMPORT_FIFO_OPERATION", operation)
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .spawn()?;
-            let deadline = Instant::now() + Duration::from_secs(5);
-            loop {
-                if child.try_wait()?.is_some() {
-                    break;
-                }
-                if Instant::now() >= deadline {
-                    child.kill()?;
-                    let output = child.wait_with_output()?;
-                    panic!(
-                        "{operation} blocked on {special}: {}",
-                        String::from_utf8_lossy(&output.stderr)
-                    );
-                }
-                std::thread::sleep(Duration::from_millis(10));
-            }
-            let result = child.wait_with_output()?;
-            assert!(
-                result.status.success(),
-                "{} {}",
-                String::from_utf8_lossy(&result.stdout),
-                String::from_utf8_lossy(&result.stderr)
-            );
+            crate::support::bounded_probe(
+                "nonregular::nonregular_child",
+                &[
+                    ("KEDRA_IMPORT_FIFO_ROOT", temp.path().as_os_str()),
+                    (
+                        "KEDRA_IMPORT_FIFO_OPERATION",
+                        std::ffi::OsStr::new(operation),
+                    ),
+                ],
+                Duration::from_secs(5),
+            )?;
             assert_eq!(fs::read_to_string(source.join("data.txt"))?, "original");
             assert!(!temp.path().join("output").exists());
         }

@@ -13,3 +13,4 @@ mod nonregular;
 mod scenes;
 #[path = "contracts/styles.rs"]
 mod styles;
+mod support;

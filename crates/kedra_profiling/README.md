@@ -97,6 +97,12 @@ config; an explicit consumer override must retain them. Warnings remain enabled.
 The header-order requirement is documented by
 [Microsoft](https://learn.microsoft.com/en-us/windows/win32/winsock/creating-a-basic-winsock-application).
 
+Set `CXX=clang-cl` for Windows MSVC builds. The SDK otherwise auto-selects
+`clang++`, whose CRT default can differ from Rust and Luau. With `clang-cl`, the
+shared `cc` build dependency selects `/MD` or `/MT` from Rust's target features,
+including explicit `crt-static`; do not suppress linker runtime-mismatch checks.
+Windows CI and release jobs select this driver. Non-Windows builds are unchanged.
+
 Contract tests exercise actual repeated native recordings, cached spans, invalid admission,
 cancellation, file failure and unchanged foreign recordings. Run disabled and enabled
 configurations under an external process deadline. Platform build/native support and

@@ -75,7 +75,8 @@ cargo xtask features --non-interactive
 ```
 
 Run commands separately, stop on failure and include relevant feature/target/consumer
-checks. `check` runs file growth, architecture, formatting, Clippy, all-target/all-feature
+checks. `check` runs file growth, architecture, dependency exception policy, formatting,
+Clippy, all-target/all-feature
 tests, a separate doctest run and API documentation. `features` separately checks default,
 minimal and isolated runtime builds plus the shipping diagnostic boundary. It is not
 already included in `check`.

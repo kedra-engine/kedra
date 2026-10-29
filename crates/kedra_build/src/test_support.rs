@@ -8,7 +8,7 @@ pub(crate) struct Fixture {
     pub stage: PathBuf,
 }
 
-pub(crate) fn fixture() -> Result<Fixture, Box<dyn std::error::Error>> {
+pub(crate) fn configuration() -> Result<Fixture, Box<dyn std::error::Error>> {
     let root = tempfile::tempdir()?;
     fs::create_dir(root.path().join("src"))?;
     fs::create_dir(root.path().join("assets"))?;
@@ -43,10 +43,16 @@ notices = ["NOTICE.txt"]
         root.path().join("assets/hello.txt"),
         "independent delivery\n",
     )?;
-    kedra_import::initialize(&root.path().join("assets"), |_| {})?;
     let app = Application::load(&root.path().join("Cargo.toml"), None, None)?;
     let stage = root.path().join("application");
     fs::create_dir(&stage)?;
+    Ok(Fixture { root, app, stage })
+}
+
+pub(crate) fn delivery() -> Result<Fixture, Box<dyn std::error::Error>> {
+    let fixture = configuration()?;
+    let Fixture { root, app, stage } = &fixture;
+    kedra_import::initialize(&app.distribution.assets, |_| {})?;
     kedra_import::build(
         &app.distribution.assets,
         &stage.join("assets"),
@@ -59,13 +65,21 @@ notices = ["NOTICE.txt"]
         root.path().join("NOTICE.txt"),
         stage.join("licenses/NOTICE.txt"),
     )?;
-    let binary = stage.join(format!("independent-probe{}", std::env::consts::EXE_SUFFIX));
-    let status = Command::new("rustc")
-        .args(["--edition", "2024", "--crate-name", "probe"])
-        .arg(root.path().join("src/main.rs"))
-        .arg("-o")
-        .arg(&binary)
-        .status()?;
-    assert!(status.success());
-    Ok(Fixture { root, app, stage })
+    Ok(fixture)
+}
+
+impl Fixture {
+    pub(crate) fn compile_executable(&self) -> Result<PathBuf, Box<dyn std::error::Error>> {
+        let binary = self
+            .stage
+            .join(format!("independent-probe{}", std::env::consts::EXE_SUFFIX));
+        let status = Command::new("rustc")
+            .args(["--edition", "2024", "--crate-name", "probe"])
+            .arg(self.root.path().join("src/main.rs"))
+            .arg("-o")
+            .arg(&binary)
+            .status()?;
+        assert!(status.success());
+        Ok(binary)
+    }
 }

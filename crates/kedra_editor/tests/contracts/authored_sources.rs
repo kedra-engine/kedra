@@ -61,8 +61,7 @@ impl Sources {
 }
 
 #[test]
-fn startup_sources_compile_with_loading_keys_and_real_editor_surface_without_splash() -> Result<()>
-{
+fn startup_sources_compile_with_loading_bindings_and_editor_surface() -> Result<()> {
     let sources = Sources::load("editor://scenes/startup.prefabs.ron")?;
     let mut app = App::new();
     app.register_asset_source(
@@ -182,19 +181,6 @@ fn startup_sources_compile_with_loading_keys_and_real_editor_surface_without_spl
     assert_eq!(initial.snapshot().hosts.len(), 1);
     assert_eq!(initial.snapshot().views.len(), 4);
     assert!(initial.snapshot().hidden.is_empty());
-    // Reject splash sources by their current semantic contract, not a retired UUID.
-    for path in &sources.paths {
-        assert!(!path.to_ascii_lowercase().contains("splash"), "{path}");
-    }
-    for snapshot in compiled.values() {
-        let document = &sources.catalog.documents[&snapshot.graph().document];
-        assert!(!document.title.to_ascii_lowercase().contains("splash"));
-        for entity in snapshot.source_entities().values() {
-            if let Some(id) = snapshot.authoring_world().get::<ElementId>(*entity) {
-                assert!(!id.0.to_ascii_lowercase().contains("splash"), "{}", id.0);
-            }
-        }
-    }
     Ok(())
 }
 

@@ -41,12 +41,13 @@ Cargo-фильтры выбирают по подстроке. Проверяй�
 cargo xtask check
 ```
 
-Задача выполняет семь этапов по порядку и останавливается после первого сбоя:
+Задача выполняет восемь этапов по порядку и останавливается после первого сбоя:
 
 | Этап | Что проверяется |
 | --- | --- |
 | File growth policy | Список Git, включая отслеживаемые ignored-файлы; 1000 строк / 64 KiB |
 | Dependency architecture | Слои workspace-зависимостей, лицензии пакетов и наследование lint |
+| Dependency exception policy | Согласованные advisory, срок пересмотра, ограничения callers и точные исключения дубликатов |
 | Rust formatting | `cargo fmt --all -- --check`; без записи форматирования |
 | Clippy | Workspace, все цели и Cargo features, locked; запрет unsafe и предупреждений |
 | Unit and integration tests | Workspace, все цели и Cargo features, locked |
@@ -57,7 +58,8 @@ All-target tests не запускают обычные бинарные нат�
 `check` не включает feature-матрицу, сравнение изображений, внешние сканеры и сборку сайта.
 Это не оптимизированный release редактора и не приёмка сборки/упаковки/установки.
 
-Для узкого повтора используйте `cargo xtask files`, `architecture`, `fmt`, `lint`, `test` или `doc`.
+Для узкого повтора используйте `cargo xtask files`, `architecture`, `dependency-policy`,
+`fmt`, `lint`, `test` или `doc`.
 Без хвостовых аргументов `cargo xtask test` запускает Rust-тесты, затем doctests.
 Аргументы после `--` передаются нативному test-tool, а не служат фильтрами Rust-тестов.
 
@@ -68,7 +70,8 @@ cargo xtask features --non-interactive
 ```
 
 Команда проверяет workspace с Cargo features по умолчанию и без них, затем отдельно минимальные
-библиотеки `kedra_app`, `kedra_script`, `kedra_scene`, `kedra_assets` и `kedra_ui`.
+библиотеки `kedra_app`, `kedra_script`, `kedra_scene`, `kedra_assets`, `kedra_ui` и `kedra_wakeup`,
+а также тесты `kedra_profiling` без профилирования.
 Раздельные вызовы не позволяют объединению Cargo features редактора незаметно добавить возможности.
 Одна сборка со всеми Cargo features не подтверждает работу минимального потребителя.
 

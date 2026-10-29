@@ -19,23 +19,30 @@ cargo xtask features --non-interactive
 | --- | --- |
 | `files` | Ограничения роста файлов, включая отслеживаемые файлы, попавшие под правила игнорирования |
 | `architecture` | Слои зависимостей workspace, лицензии и наследование lint |
+| `dependency-policy` | Срок и достижимость advisory-исключений, ограничения исключений дубликатов и лицензий |
 | `fmt` | `cargo fmt --all -- --check`; не применяет форматирование |
 | `lint` | Clippy с фиксированными зависимостями для workspace, всех целей и Cargo features; unsafe запрещён, предупреждения считаются ошибками |
 | `test` | Тесты workspace с фиксированными зависимостями для всех целей и Cargo features, затем отдельные doctests |
 | `doc` | Документация API workspace со всеми Cargo features и фиксированными зависимостями, без документации зависимостей; строгая проверка предупреждений и ссылок rustdoc |
-| `check` | `files`, `architecture`, `fmt`, `lint`, `test`, `doc` по порядку |
+| `check` | `files`, `architecture`, `dependency-policy`, `fmt`, `lint`, `test`, `doc` по порядку |
 | `features` | Workspace с Cargo features по умолчанию и без них; отдельные проверки крейтов runtime/данных и отсутствия диагностики в release |
 | `visual` | Явная локальная проверка эталона или сравнение снимков |
 
-У `check` семь этапов: `test` содержит два вызова Cargo. Задача не включает
+У `check` восемь этапов: `test` содержит два вызова Cargo. Задача не включает
 `features`, нативные сценарии рабочего стола или локальное сравнение изображений. `doc`
 генерирует локальную документацию Rust API, а не установленный или опубликованный справочник.
 
 `features` проверяет все цели workspace с default и без default features, затем
 изолированные библиотеки без default features: `kedra_app`, `kedra_script`,
-`kedra_scene`, `kedra_assets` и `kedra_ui`. В конце выполняет `launch::tests` в
+`kedra_scene`, `kedra_assets`, `kedra_ui` и `kedra_wakeup`, а также тесты
+`kedra_profiling` без профилирования. В конце выполняет `launch::tests` в
 `kedra_app` под профилем `release-boundary` без default features. Это не сертификация
 всех сочетаний target/features или нативного взаимодействия.
+
+`dependency-policy` читает `deny.toml` и `Cargo.lock` без запуска Cargo и без его
+кэша пакетов. `KEDRA_LUAU_LOCKFILE` задаёт дополнительный lock потребителя;
+отсутствующий, некорректный или несогласованный явно заданный lock вызывает отказ.
+Cargo-deny остаётся отдельным сканером advisory и лицензий.
 
 Если задача не указана в интерактивном терминале, открывается клавиатурное меню.
 Вне этого режима отсутствие задачи вызывает ошибку, а не запрос или выбор `check`.
