@@ -1,3 +1,9 @@
 [alias]
 xtask = "run --locked --package xtask --target-dir target/xtask-bootstrap --"
 kedra = "run --locked --package kedra-build-tool --target-dir target/kedra-build-bootstrap --"
+
+[env]
+# Perfetto's C++ SDK uses std::numeric_limits::{min,max}; Windows SDK macros
+# must not rewrite those identifiers. cc consumes this only for the MSVC target.
+# Preserve an explicitly supplied target-specific CXXFLAGS value.
+CXXFLAGS_x86_64_pc_windows_msvc = { value = "-DNOMINMAX", force = false }

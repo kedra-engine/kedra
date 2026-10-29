@@ -89,6 +89,11 @@ bounded per-frame capture. SDK incremental state is reset periodically for rolli
 decodability. Adapter depth/mismatch drops are reported separately in the manifest.
 See [ADR 0042](../../docs/decisions/0042-runtime-profiling-and-editor-analysis.md).
 
+Windows MSVC consumers must define `NOMINMAX` when compiling the SDK's C++ backend,
+so Windows header macros do not replace standard-library min/max identifiers.
+The workspace supplies `CXXFLAGS_x86_64_pc_windows_msvc=-DNOMINMAX` in Cargo config;
+an explicit consumer override must retain that define. This does not disable warnings.
+
 Contract tests exercise actual repeated native recordings, cached spans, invalid admission,
 cancellation, file failure and unchanged foreign recordings. Run disabled and enabled
 configurations under an external process deadline. Platform build/native support and
