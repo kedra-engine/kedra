@@ -114,6 +114,27 @@ alone is insufficient. A missing or unreadable explicitly supplied lock fails.
 No generated/private fixture lock is required by ordinary CI. BMS's main-runtime
 chain is covered by the mandatory main-lock regression as well.
 
+## Unmaintained profiling build-time macro
+
+The owner approves a narrow exception for
+[RUSTSEC-2024-0436](https://rustsec.org/advisories/RUSTSEC-2024-0436): `paste` is
+unmaintained, with no patched release. Registry `perfetto-sdk 1.2.1` depends on
+`paste 1.0.15` for procedural identifier generation. The reviewed SDK's only direct
+workspace consumer is `kedra_profiling 0.1.3`; recording remains opt-in. Macro code
+executes with build/CI authority even though it is not runtime trace processing.
+
+Admit only this advisory ID until **2026-12-26 UTC**. The dependency-policy suite
+checks expiry, exact registry identities of paste/SDK, the workspace-only profiling
+owner and all active immediate callers along this chain. The real all-feature,
+all-target inverse `cargo tree` checks feature reachability; Cargo.lock alone also
+contains inactive optional codec dependencies and cannot establish it. The probe
+uses `--locked --offline` and needs Cargo plus its resolved package cache, unlike
+the lock-only parser/BMS policies. New sources, versions, callers
+or vulnerability advisories do not inherit the exception. Remove it when the SDK
+uses a maintained dependency, or explicitly re-review before the deadline; do not
+extend it automatically. No fork or replacement profiler is authorized by this
+exception. Cargo-deny alone cannot enforce this reachability/expiry policy.
+
 ## Verification
 
 Run `cargo deny --locked check` against the complete locked all-feature graph and

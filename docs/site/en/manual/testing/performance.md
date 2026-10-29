@@ -41,7 +41,7 @@ updates in both focus states, including after frame readiness. With the current
 shared World this keeps the whole editor App continuous. These are wait policies,
 not exact FPS caps or an isolated simulation clock. Runtime games inherit none of
 these settings. Indefinite editor sleep is not supported; see
-[ADR 0045](../../../../decisions/0045-bounded-reactive-editor.md).
+[ADR 0045][reactive-policy].
 
 ## Record and open a CPU profile
 
@@ -90,7 +90,7 @@ Add `--profile-label menus` to identify the workload explicitly. Host/build/sess
 identity and the label are saved in `recording.json` and the trace's `kedra.recording`
 event. No label means unspecified; rolling-buffer overwrite can also remove context.
 
-The [local Perfetto review kit](../../../../../tools/profiling/README.md) provides
+The [local Perfetto review kit][review-kit] provides
 bounded SQL for health/system ranking and a ready-made UI macro for categories,
 update intervals and CPU render correlation. Run health checks before interpreting
 timings; inspect the manifest's adapter drops as well as processor loss/error stats.
@@ -184,4 +184,6 @@ RPC round trips include transport, polling and script scheduling; they do not me
 the physical keyboard/mouse-to-display path. Native renderer fences prove frame delivery,
 not perceptual quality. Physical-input and macOS/Windows acceptance remain separate.
 
-[profiling-crate]: ../../../../../crates/kedra_profiling/README.md
+[profiling-crate]: https://github.com/kedra-engine/kedra/blob/main/crates/kedra_profiling/README.md
+[reactive-policy]: https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0045-bounded-reactive-editor.md
+[review-kit]: https://github.com/kedra-engine/kedra/blob/main/tools/profiling/README.md

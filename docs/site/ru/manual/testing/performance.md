@@ -36,7 +36,7 @@
 это оставляет активным весь App редактора. Это политики ожидания, не точный FPS cap
 и не изолированные часы симуляции. Игровые приложения их не наследуют. Бесконечный
 сон редактора не поддерживается; см.
-[ADR 0045](../../../../decisions/0045-bounded-reactive-editor.md).
+[ADR 0045][reactive-policy].
 
 ## Запись CPU-профиля и просмотр
 
@@ -81,7 +81,7 @@ WebView или собственного viewer. Локальное открыт�
 метка сохраняются в `recording.json` и событии `kedra.recording`. Отсутствующая метка
 означает неизвестный сценарий; перезапись кольцевого буфера может удалить контекст.
 
-[Набор локального анализа Perfetto](../../../../../tools/profiling/README.md)
+[Набор локального анализа Perfetto][review-kit]
 содержит ограниченные SQL-запросы здоровья/рейтинга и макрос штатного UI для
 категорий, интервалов updates и связи с CPU render. Перед анализом проверьте потери
 адаптера в manifest и ошибки/потери processor. Опциональная feature `render`
@@ -167,4 +167,6 @@ RPC round trip включает транспорт и скриптовое ра�
 отделяет будущую работу.
 
 [gui-plan]: https://github.com/kedra-engine/kedra/blob/main/docs/plans/gui-responsiveness.md
-[profiling-crate]: ../../../../../crates/kedra_profiling/README.md
+[profiling-crate]: https://github.com/kedra-engine/kedra/blob/main/crates/kedra_profiling/README.md
+[reactive-policy]: https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0045-bounded-reactive-editor.md
+[review-kit]: https://github.com/kedra-engine/kedra/blob/main/tools/profiling/README.md

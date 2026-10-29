@@ -181,7 +181,9 @@ Supervisor также проверяет deadline 350 ms через тот же 
 диагностическим бесконечным idle: без worker release, RPC, Luau или ввода в окно.
 Это не приёмка физической задержки ввода, других платформ или бесконечного сна
 редактора. Сам редактор сохраняет safety sweep 100 ms и active demand подсистем;
-см. [ADR 0045](../../../../decisions/0045-bounded-reactive-editor.md).
+см. [ADR 0045][reactive-policy].
+
+[reactive-policy]: https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0045-bounded-reactive-editor.md
 Результат — `public/report.json`; логи и readbacks остаются в `private/`.
 
 ## Диагностика без потери доказательств

@@ -181,7 +181,9 @@ with diagnostic indefinite idle: no worker release, RPC, Luau or window input
 causes that wake. This does not certify physical input latency, other platforms
 or indefinite editor sleep. The actual editor retains a bounded 100 ms safety
 sweep plus active subsystem hints; see
-[ADR 0045](../../../../decisions/0045-bounded-reactive-editor.md).
+[ADR 0045][reactive-policy].
+
+[reactive-policy]: https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0045-bounded-reactive-editor.md
 Results are in `public/report.json`; logs and readbacks remain private.
 
 ## Diagnose without losing evidence

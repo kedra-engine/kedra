@@ -8,6 +8,8 @@ const REVIEW_DEADLINE: u64 = 1_798_243_200; // 2026-12-26T00:00:00Z
 
 #[path = "dependency_policy/luau.rs"]
 mod luau;
+#[path = "dependency_policy/profiling.rs"]
+mod profiling;
 
 fn parser_exception_valid(now: u64, version: &str, callers: &BTreeSet<String>) -> bool {
     now < REVIEW_DEADLINE
@@ -42,7 +44,7 @@ fn unmaintained_exception_is_time_bounded_and_only_reaches_existing_wrapper()
         .ok_or("advisory ignores missing")?;
     assert_eq!(
         ignored.len(),
-        2,
+        3,
         "new advisory exceptions require explicit review"
     );
     let ids: BTreeSet<_> = ignored
@@ -51,7 +53,11 @@ fn unmaintained_exception_is_time_bounded_and_only_reaches_existing_wrapper()
         .collect();
     assert_eq!(
         ids,
-        BTreeSet::from(["RUSTSEC-2026-0192", "RUSTSEC-2026-0173"])
+        BTreeSet::from([
+            "RUSTSEC-2026-0192",
+            "RUSTSEC-2026-0173",
+            "RUSTSEC-2024-0436",
+        ])
     );
     assert!(ignored.iter().all(|entry| {
         entry["reason"]

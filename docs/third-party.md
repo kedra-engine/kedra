@@ -41,7 +41,7 @@ The reviewed native dependency graph also uses BSD-2-Clause, BSD-3-Clause, ISC,
 MIT-0, Zlib and Unicode-3.0. These are explicitly admitted by `deny.toml`; preserve
 the applicable upstream copyright, attribution and license notices when shipping.
 See [ADR 0007](decisions/0007-dependency-policy.md) for policy rationale, exact
-duplicate-version exceptions and the time-bounded unmaintained-parser exception.
+duplicate-version exceptions and time-bounded unmaintained-dependency exceptions.
 
 ## Source provenance and publication
 

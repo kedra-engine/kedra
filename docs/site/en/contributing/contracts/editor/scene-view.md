@@ -67,8 +67,10 @@ is ready; unchanged entities are not evidence that a viewport may be throttled.
 Hidden, failed and retired owners release that demand. This conservatively keeps
 the entire shared App active, not an independently ticking project App. The
 Scene/Game execution boundary and proposed workflow are defined by
-[ADR 0046](../../../../../decisions/0046-scene-game-runtime-boundaries.md); they do
+[ADR 0046][runtime-boundaries]; they do
 not authorize project code execution or implement Play here.
+
+[runtime-boundaries]: https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0046-scene-game-runtime-boundaries.md
 
 The shared editor World runs only audited presentation hydration for these instances:
 
