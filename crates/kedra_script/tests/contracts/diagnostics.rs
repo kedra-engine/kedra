@@ -84,6 +84,14 @@ fn load_and_resume_exhaustion_have_distinct_machine_readable_categories() {
     )
     .unwrap_err();
     assert_eq!(error.kind, ErrorKind::Load);
+    assert_eq!(app.world().resource::<Counter>().0, 0);
+    // A native parser failure must return to the host without poisoning later loads.
+    let recovered = start(
+        &mut app,
+        "function run(ctx) ctx.game.increment() return ctx.game.count() end",
+    )
+    .unwrap();
+    assert_eq!(finish(&mut app, recovered).unwrap(), serde_json::json!(1));
     let mut program = Program::sequence(
         "budget",
         "budget.luau",

@@ -102,6 +102,10 @@ Set `CXX=clang-cl` for Windows MSVC builds. The SDK otherwise auto-selects
 shared `cc` build dependency selects `/MD` or `/MT` from Rust's target features,
 including explicit `crt-static`; do not suppress linker runtime-mismatch checks.
 Windows CI and release jobs select this driver. Non-Windows builds are unchanged.
+The shared target-specific `CXXFLAGS` also includes `/EHsc`: Luau's parser uses
+C++ exceptions, which `clang-cl` does not enable by default. Consumer overrides
+must retain this flag as well as the Windows header defines when compiling both
+SDKs. This enables C++ stack unwinding; it does not change Rust's panic strategy.
 
 Contract tests exercise actual repeated native recordings, cached spans, invalid admission,
 cancellation, file failure and unchanged foreign recordings. Run disabled and enabled
