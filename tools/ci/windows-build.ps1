@@ -41,8 +41,11 @@ $snapshot = {
 }
 # Write one sample synchronously so even early compilation failures have evidence.
 & $snapshot | Set-Content -Encoding utf8 $resourceLog
-$monitor = Start-ThreadJob -ArgumentList $snapshot, $resourceLog, $SampleIntervalSeconds -ScriptBlock {
-    param($Snapshot, $Log, $Interval)
+# Recreate the script in the worker's session state. Passing the bound ScriptBlock
+# itself lets its invocation use the caller's runspace while Cargo is running.
+$monitor = Start-ThreadJob -ArgumentList $snapshot.ToString(), $resourceLog, $SampleIntervalSeconds -ScriptBlock {
+    param($SnapshotSource, $Log, $Interval)
+    $Snapshot = [scriptblock]::Create($SnapshotSource)
     while ($true) {
         Start-Sleep -Seconds $Interval
         & $Snapshot | Add-Content -Encoding utf8 $Log
