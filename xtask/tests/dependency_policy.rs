@@ -8,8 +8,6 @@ const REVIEW_DEADLINE: u64 = 1_798_243_200; // 2026-12-26T00:00:00Z
 
 #[path = "dependency_policy/luau.rs"]
 mod luau;
-#[path = "dependency_policy/profiling.rs"]
-mod profiling;
 
 fn parser_exception_valid(now: u64, version: &str, callers: &BTreeSet<String>) -> bool {
     now < REVIEW_DEADLINE

@@ -124,16 +124,14 @@ workspace consumer is `kedra_profiling 0.1.3`; recording remains opt-in. Macro c
 executes with build/CI authority even though it is not runtime trace processing.
 
 Admit only this advisory ID until **2026-12-26 UTC**. The dependency-policy suite
-checks expiry, exact registry identities of paste/SDK, the workspace-only profiling
-owner and all active immediate callers along this chain. The real all-feature,
-all-target inverse `cargo tree` checks feature reachability; Cargo.lock alone also
-contains inactive optional codec dependencies and cannot establish it. The probe
-uses `--locked --offline` and needs Cargo plus its resolved package cache, unlike
-the lock-only parser/BMS policies. New sources, versions, callers
-or vulnerability advisories do not inherit the exception. Remove it when the SDK
-uses a maintained dependency, or explicitly re-review before the deadline; do not
-extend it automatically. No fork or replacement profiler is authorized by this
-exception. Cargo-deny alone cannot enforce this reachability/expiry policy.
+enforces the review deadline. Cargo and cargo-deny own package resolution, source,
+license and advisory admission; tests do not repeat package pins or parse a Cargo
+dependency tree. Cargo-deny's ignore applies to the advisory ID, not an individual
+caller chain. The chain above is the reviewed scope, not an automated reachability
+guarantee: version/source/caller changes require owner review. New vulnerability
+advisory IDs remain errors. Remove the exception when the SDK uses a maintained
+dependency, or explicitly re-review before the deadline; do not extend it
+automatically. No fork or replacement profiler is authorized by this exception.
 
 ## Verification
 
