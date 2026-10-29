@@ -248,6 +248,138 @@ fn native_handles_are_strings_and_unsupported_stale_windows_fail_without_roundin
 }
 
 #[test]
+fn resize_sequence_delivers_to_its_window_without_claiming_renderer_readiness() {
+    let (mut app, session, window) = host();
+    let other = app.world_mut().spawn(Window::default()).id();
+    let other_size = app.world().get::<Window>(other).unwrap().physical_size();
+    let id = Uuid::new_v4();
+    rpc(
+        &mut app,
+        "app.scenario",
+        json!({"session":session,"id":id,"scenario":"app.resize",
+        "arguments":{"window":window.to_bits().to_string(),"width":800,"height":600,"dpr":2}}),
+    )
+    .unwrap();
+    let result = receipt(&mut app, id);
+    assert_eq!(result["state"], "succeeded");
+    assert_eq!(
+        app.world().get::<Window>(window).unwrap().size(),
+        Vec2::new(800., 600.)
+    );
+    assert_eq!(
+        app.world().get::<Window>(other).unwrap().physical_size(),
+        other_size
+    );
+    assert!(!app.world().resource::<crate::input::InputQueue>().busy());
+}
+
+#[test]
+fn performance_observation_is_read_only_and_available_to_scoped_luau() {
+    let (mut app, session, _) = host();
+    let text = app.world_mut().spawn(Text::new("Retained 日本語")).id();
+    register(
+        &mut app,
+        Program::sequence(
+            "performance",
+            "performance.luau",
+            "function run(ctx) return ctx.app.performance() end",
+            install_app_api,
+        ),
+    );
+    let id = Uuid::new_v4();
+    rpc(
+        &mut app,
+        "app.scenario",
+        json!({"session":session,"id":id,"scenario":"performance","arguments":{}}),
+    )
+    .unwrap();
+    let result = receipt(&mut app, id);
+    assert_eq!(result["state"], "succeeded");
+    assert_eq!(result["detail"]["enabled"], false);
+    assert!(result["detail"]["update_intervals"]["p95_ms"].is_null());
+    assert_eq!(
+        app.world().get::<Text>(text).map(|text| text.0.as_str()),
+        Some("Retained 日本語")
+    );
+    assert!(!app.world().resource::<crate::input::InputQueue>().busy());
+}
+
+#[test]
+fn element_click_waits_for_window_focus_without_forcing_it_and_rejects_retirement() {
+    for retire in [false, true] {
+        let (mut app, session, window) = host();
+        app.world_mut().get_mut::<Window>(window).unwrap().focused = false;
+        let camera = app
+            .world_mut()
+            .spawn((
+                Camera::default(),
+                bevy::camera::RenderTarget::Window(bevy::window::WindowRef::Entity(window)),
+            ))
+            .id();
+        let mut target = ComputedUiTargetCamera::default();
+        let mut reflected = bevy::reflect::structs::DynamicStruct::default();
+        reflected.insert("camera", Some(camera));
+        target.apply(&reflected);
+        let node = app
+            .world_mut()
+            .spawn((
+                kedra_ui::ElementId::new("focus-target"),
+                ComputedNode {
+                    size: Vec2::splat(20.),
+                    ..default()
+                },
+                UiGlobalTransform::from(bevy::math::Affine2::from_translation(Vec2::splat(50.))),
+                InheritedVisibility::VISIBLE,
+                target,
+            ))
+            .id();
+        let id = Uuid::new_v4();
+        rpc(
+            &mut app,
+            "app.scenario",
+            json!({"session":session,"id":id,"scenario":"app.click","arguments":{"id":"focus-target"}}),
+        )
+        .unwrap();
+        let mut moves = app
+            .world()
+            .resource::<Messages<bevy::window::CursorMoved>>()
+            .get_cursor_current();
+        for _ in 0..8 {
+            assert_eq!(
+                rpc(&mut app, "app.operation", json!({"id":id})).unwrap()["state"],
+                "pending"
+            );
+            assert!(!app.world().get::<Window>(window).unwrap().focused);
+            assert!(!app.world().resource::<crate::input::InputQueue>().busy());
+            assert_eq!(
+                moves
+                    .read(
+                        app.world()
+                            .resource::<Messages<bevy::window::CursorMoved>>()
+                    )
+                    .count(),
+                0
+            );
+        }
+        if retire {
+            app.world_mut().despawn(window);
+            let rejected = receipt(&mut app, id);
+            assert_eq!(rejected["state"], "failed");
+            assert!(
+                rejected["detail"]
+                    .to_string()
+                    .contains("window was retired")
+            );
+            assert!(!app.world().resource::<crate::input::InputQueue>().busy());
+        } else {
+            app.world_mut().get_mut::<Window>(window).unwrap().focused = true;
+            assert_eq!(receipt(&mut app, id)["state"], "succeeded");
+        }
+        assert!(app.world().entities().contains(node));
+    }
+}
+
+#[test]
 fn cancellation_is_scoped_idempotent_and_never_rolls_back_prior_effects() {
     let (mut app, session, _) = host();
     app.init_resource::<Counter>();
@@ -276,6 +408,13 @@ fn cancellation_is_scoped_idempotent_and_never_rolls_back_prior_effects() {
         .is_err()
     );
     let cancel = json!({"session":session,"id":Uuid::new_v4(),"operation":id});
+    assert!(
+        app.world_mut()
+            .resource_mut::<Messages<bevy::window::RequestRedraw>>()
+            .drain()
+            .next()
+            .is_some()
+    );
     assert_eq!(
         rpc(&mut app, "app.scenario_cancel", cancel.clone()).unwrap()["state"],
         "succeeded"
@@ -287,6 +426,15 @@ fn cancellation_is_scoped_idempotent_and_never_rolls_back_prior_effects() {
     assert_eq!(receipt(&mut app, id)["state"], "failed");
     assert_eq!(app.world().resource::<Counter>().0, 1);
     assert!(app.world().resource::<Active>().0.is_none());
+    app.world_mut()
+        .resource_mut::<Messages<bevy::window::RequestRedraw>>()
+        .clear();
+    app.update();
+    assert!(
+        app.world()
+            .resource::<Messages<bevy::window::RequestRedraw>>()
+            .is_empty()
+    );
 }
 
 #[test]

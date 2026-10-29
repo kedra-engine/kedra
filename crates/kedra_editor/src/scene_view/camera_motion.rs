@@ -101,6 +101,7 @@ pub(super) fn advance(
     windows: Query<&Window>,
     mut cameras: Query<(Entity, &Camera, &mut Transform, &mut Alignment)>,
     mut commands: Commands,
+    mut demand: Option<ResMut<kedra_wakeup::WakeDemand>>,
 ) {
     for (entity, camera, mut pose, mut motion) in &mut cameras {
         if !camera.is_active
@@ -122,6 +123,9 @@ pub(super) fn advance(
             continue;
         }
         let curve = CubicSegment::new_bezier_easing((0.77, 0.), (0.175, 1.));
+        if let Some(demand) = demand.as_deref_mut() {
+            demand.active();
+        }
         let amount = curve.ease((motion.elapsed / DURATION).clamp(0., 1.));
         pose.rotation = motion.from.slerp(motion.to.rotation, amount);
         pose.translation = motion.pivot + *pose.back() * motion.radius;

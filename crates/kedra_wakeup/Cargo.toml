@@ -1,0 +1,30 @@
+[package]
+name = "kedra_wakeup"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Native application wake notifications for existing Bevy tasks and producers"
+
+[package.metadata.kedra]
+layer = "runtime"
+
+[features]
+default = []
+native = ["bevy/bevy_winit"]
+
+[dependencies]
+bevy.workspace = true
+
+[dev-dependencies]
+bevy = { workspace = true, features = ["async_executor", "multi_threaded", "bevy_winit", "bevy_render", "bevy_core_pipeline", "png", "x11"] }
+serde_json.workspace = true
+
+[[example]]
+name = "native_readiness"
+required-features = ["native"]
+
+[lints]
+workspace = true

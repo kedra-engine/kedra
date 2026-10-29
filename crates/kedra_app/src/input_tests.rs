@@ -1,63 +1,13 @@
 #![allow(clippy::unwrap_used, reason = "Headless input contract assertions")]
+use super::test_support::{command, held, host};
 use super::*;
 use crate::operations::{OperationState, Operations};
 
 #[derive(Resource, Default)]
 struct RecordedKeyboard(Vec<KeyboardInput>);
 
-fn host() -> (App, Entity, Entity) {
-    let mut app = App::new();
-    app.add_plugins((
-        MinimalPlugins,
-        bevy::asset::AssetPlugin::default(),
-        bevy::input::InputPlugin,
-        crate::KedraAppPlugin,
-    ))
-    .add_message::<WindowEvent>()
-    .add_message::<CursorMoved>();
-    app.update();
-    let a = app.world_mut().spawn(Window::default()).id();
-    let b = app.world_mut().spawn(Window::default()).id();
-    (app, a, b)
-}
-fn command(app: &mut App, window: Entity, input: Value) -> (Uuid, Value) {
-    let id = Uuid::new_v4();
-    let session = app.world().resource::<crate::AppSession>().id.clone();
-    let value = json!({"session":session,"id":id,"window":window.to_bits(),"input":input});
-    let (sender, receiver) = async_channel::bounded(1);
-    app.world()
-        .resource::<bevy_remote::BrpSender>()
-        .try_send(bevy_remote::BrpMessage {
-            method: "app.input".into(),
-            params: Some(value.clone()),
-            sender,
-        })
-        .unwrap();
-    app.update();
-    assert_eq!(receiver.try_recv().unwrap().unwrap()["state"], "pending");
-    for _ in 0..16 {
-        app.update();
-        if !app.world().resource::<InputQueue>().busy() {
-            break;
-        }
-    }
-    assert_eq!(
-        app.world().resource::<Operations>().get(id).unwrap().state,
-        OperationState::Succeeded
-    );
-    (id, value)
-}
-fn held(world: &World) -> (bool, bool, bool) {
-    (
-        world
-            .resource::<ButtonInput<MouseButton>>()
-            .pressed(MouseButton::Left),
-        world
-            .resource::<ButtonInput<KeyCode>>()
-            .pressed(KeyCode::ShiftLeft),
-        world.resource::<ButtonInput<Key>>().pressed(Key::Shift),
-    )
-}
+#[derive(Resource, Default)]
+struct RecordedPointer(Vec<CursorMoved>);
 
 fn unowned_release_is_a_receipted_noop(input: Value, external: bool) {
     let (mut app, target, hardware_window) = host();
@@ -194,6 +144,45 @@ fn cleanup_modifier_releases_without_ownership_succeed_without_input_events() {
 }
 
 #[test]
+fn window_activation_requires_a_native_target_and_never_borrows_injected_holds() {
+    let (mut app, window, other) = host();
+    app.world_mut().get_mut::<Window>(window).unwrap().focused = false;
+    let session = app.world().resource::<crate::AppSession>().id.clone();
+    let id = Uuid::new_v4();
+    request(
+        In(Some(
+            json!({"session":session,"id":id,"window":window.to_bits(),
+        "input":{"kind":"focus_window"}}),
+        )),
+        app.world_mut(),
+    )
+    .unwrap();
+    app.update();
+    assert_eq!(
+        app.world().resource::<Operations>().get(id).unwrap().state,
+        OperationState::Failed
+    );
+    assert!(!app.world().get::<Window>(window).unwrap().focused);
+    assert!(app.world().get::<Window>(other).unwrap().focused);
+    command(&mut app, window, json!({"kind":"button","pressed":true}));
+    let refused = Uuid::new_v4();
+    assert!(
+        request(
+            In(Some(
+                json!({"session":session,"id":refused,"window":window.to_bits(),
+        "input":{"kind":"focus_window"}})
+            )),
+            app.world_mut()
+        )
+        .is_err()
+    );
+    assert!(app.world().resource::<Operations>().get(refused).is_none());
+    assert!(held(app.world()).0);
+    assert!(!app.world().get::<Window>(window).unwrap().focused);
+    command(&mut app, window, json!({"kind":"button","pressed":false}));
+}
+
+#[test]
 fn cross_host_drag_moves_and_releases_in_the_destination_window() {
     let (mut app, floating, primary) = host();
     app.world_mut()
@@ -262,7 +251,7 @@ fn cross_host_drag_moves_and_releases_in_the_destination_window() {
                         .get::<Window>(floating)
                         .unwrap()
                         .cursor_position(),
-                    Some(Vec2::new(100., 100.))
+                    None
                 );
                 assert!(held(app.world()).0);
             }
@@ -629,6 +618,14 @@ fn active_retirement_does_not_clear_unrelated_hardware_or_terminal_receipts() {
 #[test]
 fn input_validation_rejects_invalid_effects_without_admitting_receipts() {
     let (mut app, window, _) = host();
+    app.world_mut()
+        .get_mut::<Window>(window)
+        .unwrap()
+        .set_cursor_position(Some(Vec2::new(12., 13.)));
+    let mut moves = app
+        .world()
+        .resource::<Messages<CursorMoved>>()
+        .get_cursor_current();
     for input in [
         json!({"kind":"click"}),
         json!({"kind":"click","element":"x","position":[1,1]}),
@@ -651,6 +648,17 @@ fn input_validation_rejects_invalid_effects_without_admitting_receipts() {
             .is_err()
         );
         assert!(app.world().resource::<Operations>().get(id).is_none());
+        assert!(!app.world().resource::<InputQueue>().busy());
+        assert_eq!(
+            app.world().get::<Window>(window).unwrap().cursor_position(),
+            Some(Vec2::new(12., 13.))
+        );
+        assert_eq!(
+            moves
+                .read(app.world().resource::<Messages<CursorMoved>>())
+                .count(),
+            0
+        );
     }
     for (width, height, dpr) in [(319., 600., 1.), (800., 3841., 1.), (800., 600., 0.5)] {
         let id = Uuid::new_v4();
@@ -693,11 +701,26 @@ fn real_input_pipeline_delivers_moves_drag_text_chords_and_idempotent_receipts()
             recorded.0.extend(events.read().cloned());
         },
     );
+    app.init_resource::<RecordedPointer>().add_systems(
+        Update,
+        |mut events: MessageReader<CursorMoved>, mut recorded: ResMut<RecordedPointer>| {
+            recorded.0.extend(events.read().cloned());
+        },
+    );
+    // Window cursor setters request hardware warps in bevy_winit. Injected input
+    // must leave that native state unchanged, including with an overridden DPR.
+    {
+        let mut window = app.world_mut().get_mut::<Window>(a).unwrap();
+        window.resolution.set_scale_factor_override(Some(2.));
+        window.set_cursor_position(Some(Vec2::new(120., 130.)));
+    }
     command(&mut app, a, json!({"kind":"move","position":[4,5]}));
     assert_eq!(
         app.world().get::<Window>(a).unwrap().cursor_position(),
-        Some(Vec2::new(4., 5.))
+        Some(Vec2::new(120., 130.))
     );
+    let event = app.world().resource::<RecordedPointer>().0.last().unwrap();
+    assert_eq!((event.window, event.position), (a, Vec2::new(4., 5.)));
     command(
         &mut app,
         a,
@@ -705,8 +728,10 @@ fn real_input_pipeline_delivers_moves_drag_text_chords_and_idempotent_receipts()
     );
     assert_eq!(
         app.world().get::<Window>(a).unwrap().cursor_position(),
-        Some(Vec2::new(40., 50.))
+        Some(Vec2::new(120., 130.))
     );
+    let event = app.world().resource::<RecordedPointer>().0.last().unwrap();
+    assert_eq!((event.window, event.position), (a, Vec2::new(40., 50.)));
     assert!(!held(app.world()).0);
     let (id, value) = command(&mut app, a, json!({"kind":"text","text":"Кедра 日本語"}));
     let events = &app.world().resource::<RecordedKeyboard>().0;
@@ -761,6 +786,7 @@ fn real_input_pipeline_delivers_moves_drag_text_chords_and_idempotent_receipts()
         "f6",
         "f7",
         "f8",
+        "f9",
         "f12",
         "select_all",
         "copy",

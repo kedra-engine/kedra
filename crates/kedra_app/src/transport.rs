@@ -67,6 +67,7 @@ struct ServerState {
     token: Arc<String>,
     sender: async_channel::Sender<BrpMessage>,
     slots: Arc<tokio::sync::Semaphore>,
+    wakeup: kedra_wakeup::Wakeup,
 }
 #[derive(Resource)]
 struct ServerTask {
@@ -126,6 +127,7 @@ pub fn enable(
         .map_err(|e| e.to_string())?;
     file.as_file().sync_all().map_err(|e| e.to_string())?;
     app.insert_resource(Listener(Mutex::new(Some(listener))))
+        .insert_resource(crate::performance::Enabled)
         .insert_resource(Credentials {
             endpoint: endpoint.clone(),
             path: credential_file.into(),
@@ -176,6 +178,7 @@ fn start_with(world: &mut World, prepare: fn(TcpListener) -> Result<PreparedServ
             token: Arc::new(world.resource::<Credentials>().endpoint.token.clone()),
             sender: (**world.resource::<BrpSender>()).clone(),
             slots: Arc::new(tokio::sync::Semaphore::new(16)),
+            wakeup: kedra_wakeup::Wakeup::for_world(world),
         };
         let (stop, receiver) = tokio::sync::oneshot::channel();
         let (initialized, acknowledgement) = std::sync::mpsc::sync_channel(1);
@@ -313,6 +316,8 @@ async fn one(state: &ServerState, value: Value) -> Option<Value> {
             })
             .await
             .map_err(|_| ())?;
+        // Wake only after authenticated publication into the existing mailbox.
+        state.wakeup.notify();
         receiver.recv().await.map_err(|_| ())
     };
     let result=match tokio::time::timeout(Duration::from_secs(5),execution).await {
@@ -413,6 +418,7 @@ mod tests {
                 token: Arc::new("a".repeat(64)),
                 sender: (**app.world().resource::<BrpSender>()).clone(),
                 slots: Arc::new(tokio::sync::Semaphore::new(16)),
+                wakeup: kedra_wakeup::Wakeup::default(),
             };
             for token in [None, Some("Bearer wrong")] {
                 let mut request = Request::builder()

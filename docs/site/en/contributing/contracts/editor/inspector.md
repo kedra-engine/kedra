@@ -268,8 +268,8 @@ property width. Block drawers receive a body inside the base Inspector's section
 of component chrome. Headers, collapse/expand, retained controls and collapse state across
 default/custom modes use the same base path as ordinary reflected groups. Root components reuse
 their existing header. Built-in title/layout/search terms never change binding identity.
-Rotation displays degrees in Bevy YXZ order (Y yaw, X pitch, Z roll), not Unity's coordinate
-convention. Only a display copy within the source unit tolerance is normalized; the quaternion
+Rotation displays degrees in Bevy YXZ order (Y yaw, X pitch, Z roll).
+Only a display copy within the source unit tolerance is normalized; the quaternion
 source is never rewritten. Invalid rotations report a diagnostic with default view available.
 Angle editing is enabled only by the source Transform adapter. Continuity across accepted
 gestures and retained full-turn intent are not implemented. These drawers never grant

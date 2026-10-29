@@ -339,7 +339,7 @@ pub(super) fn install(app: &mut App) {
 }
 #[cfg(debug_assertions)]
 pub(super) fn diagnostics(world: &World, state: &EditorWorkspace) -> serde_json::Value {
-    serde_json::json!({"gesture":state.gesture.is_some(),"pending_host":state.pending.is_some(),"menu_nodes":state.menu.len(),"measuring":state.measurements.is_some(),"rendered":state.rendered,"revision":state.layout.revision(),"capture":world.get_resource::<Input>().and_then(|input|input.capture.as_ref()).map(|capture|serde_json::json!({"view":capture.view,"window":capture.window.to_bits()})),"viewports":state.panels.scenes.iter().map(|(view,scene)|serde_json::json!({"view":view,"rect":scene.area(world).map(|rect|[rect.min.x,rect.min.y,rect.max.x,rect.max.y]),"eligible_windows":state.surfaces.values().filter_map(|surface|eligible(world,state,*view,surface.window).map(|_|surface.window.to_bits().to_string())).collect::<Vec<_>>(),"pointer_windows":state.surfaces.values().filter_map(|surface|under_pointer(world,state,surface.window).filter(|(id,..)|id==view).map(|_|surface.window.to_bits().to_string())).collect::<Vec<_>>()})).collect::<Vec<_>>()})
+    serde_json::json!({"gesture":state.gesture.is_some(),"pending_host":state.pending.is_some(),"menu_nodes":state.menu.len(),"measuring":state.measurements.is_some(),"preview_ready":super::input::preview_ready(state),"rendered":state.rendered,"revision":state.layout.revision(),"capture":world.get_resource::<Input>().and_then(|input|input.capture.as_ref()).map(|capture|serde_json::json!({"view":capture.view,"window":capture.window.to_bits()})),"viewports":state.panels.scenes.iter().map(|(view,scene)|serde_json::json!({"view":view,"rect":scene.area(world).map(|rect|[rect.min.x,rect.min.y,rect.max.x,rect.max.y]),"eligible_windows":state.surfaces.values().filter_map(|surface|eligible(world,state,*view,surface.window).map(|_|surface.window.to_bits().to_string())).collect::<Vec<_>>(),"pointer_windows":state.surfaces.values().filter_map(|surface|under_pointer(world,state,surface.window).filter(|(id,..)|id==view).map(|_|surface.window.to_bits().to_string())).collect::<Vec<_>>()})).collect::<Vec<_>>()})
 }
 fn eligible(
     world: &World,
@@ -729,6 +729,9 @@ fn events(
                     }
                 }
                 if let Some(capture) = input.capture.as_mut() {
+                    if let Some(mut demand) = world.get_resource_mut::<kedra_wakeup::WakeDemand>() {
+                        demand.active();
+                    }
                     let position = position(world, capture.window).unwrap_or(capture.last);
                     let delta = position - capture.last;
                     capture.last = position;

@@ -12,6 +12,8 @@ description = "Shared opt-in Luau execution, scoped host bindings and Bevy lifec
 layer = "runtime"
 
 [dependencies]
+kedra_wakeup.workspace = true
+kedra_profiling.workspace = true
 bevy = { workspace = true, features = ["bevy_asset"] }
 bevy_mod_scripting = { version = "=0.23.0", default-features = false, features = ["luau", "mlua_serialize"] }
 parking_lot = "0.12"

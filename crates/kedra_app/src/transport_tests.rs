@@ -24,6 +24,7 @@ fn host() -> (App, ServerState) {
         token: Arc::new("a".repeat(64)),
         sender: (**app.world().resource::<BrpSender>()).clone(),
         slots: Arc::new(tokio::sync::Semaphore::new(16)),
+        wakeup: kedra_wakeup::Wakeup::default(),
     };
     (app, state)
 }
@@ -163,6 +164,7 @@ fn closed_mailbox_returns_uncertain_execution_error_without_replaying() {
             token: Arc::new("private".into()),
             sender,
             slots: Arc::new(tokio::sync::Semaphore::new(1)),
+            wakeup: kedra_wakeup::Wakeup::default(),
         };
         let response = one(
             &state,
@@ -370,6 +372,7 @@ fn mailbox_timeout_keeps_the_already_queued_effect_and_reports_uncertainty() {
             token: Arc::new("private".into()),
             sender,
             slots: Arc::new(tokio::sync::Semaphore::new(1)),
+            wakeup: kedra_wakeup::Wakeup::default(),
         };
         let response = one(
             &state,

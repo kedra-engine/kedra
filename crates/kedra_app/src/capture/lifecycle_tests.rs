@@ -3,6 +3,83 @@ use bevy::render::view::screenshot::{CapturedScreenshots, ScreenshotPlugin};
 use std::sync::{Arc, Mutex, mpsc};
 
 #[test]
+fn readback_deadline_uses_real_time_and_rejects_late_callbacks_before_the_next_sweep()
+-> Result<(), Box<dyn std::error::Error>> {
+    for expired in [false, true] {
+        let (mut app, directory, window) = test_support::host();
+        let id = test_support::admit(app.world_mut(), window);
+        app.world_mut()
+            .resource_mut::<bevy::diagnostic::FrameCount>()
+            .0 = 6;
+        advance(app.world_mut());
+        assert!(
+            app.world_mut()
+                .resource_mut::<Messages<bevy::window::RequestRedraw>>()
+                .drain()
+                .next()
+                .is_some()
+        );
+        let screenshot = app
+            .world_mut()
+            .query_filtered::<Entity, With<CaptureOwned>>()
+            .single(app.world())?;
+        app.world_mut()
+            .resource_mut::<bevy::diagnostic::FrameCount>()
+            .0 = 10_000;
+        app.world_mut()
+            .resource_mut::<Time<Real>>()
+            .advance_by(READBACK_TIMEOUT - Duration::from_nanos(1));
+        advance(app.world_mut());
+        assert!(
+            app.world()
+                .resource::<PendingCaptures>()
+                .0
+                .contains_key(&id)
+        );
+        if expired {
+            app.world_mut()
+                .resource_mut::<Time<Real>>()
+                .advance_by(Duration::from_nanos(1));
+        }
+        // Completion can run before Last's timeout sweep. It must enforce the
+        // same deadline, rather than publishing a frame that already expired.
+        app.world_mut().trigger(ScreenshotCaptured {
+            entity: screenshot,
+            image: test_support::image(),
+        });
+        app.world_mut().flush();
+        let expected = if expired {
+            crate::operations::OperationState::Failed
+        } else {
+            crate::operations::OperationState::Succeeded
+        };
+        assert_eq!(
+            app.world()
+                .resource::<crate::operations::Operations>()
+                .get(id)
+                .map(|operation| &operation.state),
+            Some(&expected)
+        );
+        assert_eq!(
+            directory.path().join(format!("{id}.png")).exists(),
+            !expired
+        );
+        assert!(app.world().get::<Window>(window).is_some());
+        assert!(app.world().resource::<PendingCaptures>().0.is_empty());
+        app.world_mut()
+            .resource_mut::<Messages<bevy::window::RequestRedraw>>()
+            .clear();
+        advance(app.world_mut());
+        assert!(
+            app.world()
+                .resource::<Messages<bevy::window::RequestRedraw>>()
+                .is_empty()
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn capture_admission_retry_and_rejection_preserve_window_focus()
 -> Result<(), Box<dyn std::error::Error>> {
     for focused in [false, true] {
@@ -79,8 +156,8 @@ fn cancelled_native_capture_accepts_deferred_completion_without_publication()
             app.world_mut().despawn(window);
         } else {
             app.world_mut()
-                .resource_mut::<bevy::diagnostic::FrameCount>()
-                .0 = 181;
+                .resource_mut::<Time<Real>>()
+                .advance_by(READBACK_TIMEOUT);
         }
         advance(app.world_mut());
         advance(app.world_mut());
@@ -146,8 +223,8 @@ fn cancelled_noncompleting_owned_requests_remain_bounded_and_reject_new_admissio
             .single(app.world())?;
         app.world_mut().entity_mut(entity).insert(Capturing);
         app.world_mut()
-            .resource_mut::<bevy::diagnostic::FrameCount>()
-            .0 += 181;
+            .resource_mut::<Time<Real>>()
+            .advance_by(READBACK_TIMEOUT);
         advance(app.world_mut());
         assert_eq!(
             app.world_mut()

@@ -1,7 +1,7 @@
 # Startup geometry contracts
 
-Startup geometry uses UI-KIT `2EZlK40cfx2Mub7GmDyI70`, family `109:9133`, page `175:45356`
-as an independent reference, not a full-window screenshot baseline.
+Startup design provenance uses UI-KIT `2EZlK40cfx2Mub7GmDyI70`, family `109:9133`, page `175:45356`
+as an independent design reference, not a functional-test geometry baseline.
 There are no startup image references/pixel-comparison cases; only [kit controls](ui-corpus.md)
 have screenshot coverage.
 
@@ -30,13 +30,14 @@ and palette. Preparation creates sources, not a Rust host, starter scene or exec
 ## Independent geometry and evidence
 
 [`docs/ui/startup-reference.json`](https://github.com/kedra-engine/kedra/blob/main/docs/ui/startup-reference.json)
-is the manually transcribed geometry contract. Its rectangles use logical endpoint coordinates,
+is a manually transcribed design reference. Its rectangles use logical endpoint coordinates,
 independent of renderer DPR, with viewport `[1120, 720]` and tolerance `1.0`. It preserves boot,
 manager, create, open and loading node provenance and declared manager/create/loading regions.
 The `pixels` entries are retained point/color declarations, not PNG hashes or an active pixel
 comparison suite. The presence of boot/loading design identities does not authorize a splash or
-heavy artwork. The current startup scenario reads `manager`/`create` geometry at DPR 1/2;
-the retained loading geometry and `pixels` declarations are not active pixel assertions.
+heavy artwork. Native startup scenarios check user workflows at DPR 1/2, not exact reference
+coordinates, padding or colors. The geometry and `pixels` declarations are design provenance,
+not active functional assertions.
 
 The native startup scenario checks pointer/keyboard input, Unicode draft retention, modal traversal,
 validation failures, source lifecycle and window retirement. Renderer readbacks are transient GPU

@@ -27,13 +27,21 @@
 | Обработка и публикация | `kedra_import` | Asset Browser, Open и превью |
 | Топология docking и кандидаты | `kedra_docking` | Жесты и координация окон |
 | Retained UI, проекция, ввод и подтверждение полей | `kedra_ui`, `kedra_desktop` | Docking, окна и фокус; независимое диагностическое текстовое поле |
+| Удаление неэффективного clip в render-копии | `kedra_ui/src/render_clipping/tests.rs` | Редактор и независимая native-игра с `kedra_ui/render`; совпадающие viewport/DPR; clipping основного мира и ввод остаются у Bevy |
+| Инвалидация retained docking-иерархии | `kedra_ui/tests/contracts/docking.rs` и `docking/headers.rs` | Редактор и независимая native-проекция; неизменные ticks связей/порядка, реальная смена топологии, сохранность ввода/content и отказов |
+| Общий live CSS / matching и invalidation patches | `kedra_ui/tests/contracts/styles.rs`; private selector/invalidation-тесты в pinned Flair fork | Классы, фокус, иерархия и вложенные sheets; inline-геометрия, переменные, явное/обычное наследование и transitions; отдельный engine suite по ADR 0043; нативные ввод и кадры редактора/игры проверяются отдельно |
 | Очередь нативного текста и локальная история | `kedra_text_input` | Поиск Inspector; поля Transform/UiCaption |
+| Уведомления о готовности нативных задач и producers | `kedra_wakeup/tests/contracts.rs`: автоматическая регистрация, ready/pending/cancel/await и ошибки/backpressure producer | `native-wakeup`: реальный sleep и worker через pipe до первого опроса владельцем, GPU-кадры без RPC/Luau-подкачки; проверки результатов и отказов остаются у владельцев редактора |
+| Ограниченный reactive wait и спрос подсистем на кадры | `kedra_wakeup/src/reactive/tests.rs`; tooltip/caret/readback в `kedra_ui`; clocks/terminal в `kedra_script`; preferences/motion редактора | Deadline в `native-wakeup` даёт реальные GPU-кадры без внешнего release/input; поведение редактора и независимой игры проверяется отдельно |
+| Непрерывные кадры обслуживаемого preview | `kedra_editor/src/scene_view/control_tests.rs` и `kedra_wakeup/src/reactive/tests.rs` | Ready/unchanged view не должен переходить в idle; скрытие, ошибка и retirement снимают требование; нативная навигация и пассивные наблюдения проверяются отдельно |
 | Представление отражённых значений | `kedra_inspector` | Адаптер исходников редактора и Inspector |
 | Ограниченная Luau-композиция drawer | `kedra_inspector_luau` | Встроенный UiCaption; изменения caption в UI-only/смешанных сценах |
 | Кандидаты транзакций и именованная история | `kedra_authoring/tests/contracts/edit_transactions.rs` | Реальные Luau/Documents-транзакции в `documents/transactions/tests.rs` |
 | Ограничение истории и сохранённое содержимое | `kedra_authoring/tests/contracts/history_retention.rs` | Контекст коллекций без копий значений в Inspector contracts |
 | Явный запуск проектных editor-скриптов | `kedra_editor/src/edit_scripts/source/tests.rs` | Нативный `editor-scripts`: commit двух документов, общий Undo/Redo, ввод Save и проверка файлов |
 | Жизненный цикл скриптов, модули, области доступа, дочерние последовательности, события, параметры и диагностика | `kedra_script/tests/contracts/`, `kedra_app` | Luau редактора и независимое приложение |
+| Ограниченные CPU-записи, метки и counters | `kedra_profiling/tests/contracts` | Self-recording редактора, независимый Bevy consumer и готовый Perfetto UI |
+| Scoped Luau profiling API | `kedra_script/tests/contracts/profiling` | Метки редакторского workload, без разрешения запуска записи |
 | Адаптеры скриптов для Transform/UI | `kedra_script_bevy/tests/contracts/` | Нативное переключение с Behavior/Sequence |
 | Стили, иконки и исходники интерфейса редактора | `kedra_editor/tests/contracts/` | Корпус компонентов и геометрия редактора |
 | Сборка, упаковка и обновление | `kedra_build`, `kedra_update` | Установленный дистрибутив и обновление |
@@ -90,6 +98,12 @@ Kedra и не добавляйте имитации QA-драйверов/отч
 защищена оставшаяся гарантия, и сохраните пути отказа, идентичности, владение, происхождение
 и маршруты запуска. Не ослабляйте правила безопасности, эталонов или покрытия ради успеха проверки.
 
+Не добавляйте тесты, которые лишь повторяют имена зависимостей, версии, Git revisions или
+списки источников из Cargo manifests/lockfiles. Разрешением и допуском зависимостей занимаются
+Cargo и cargo-deny; тестируйте реальное поведение интеграции. Содержательные политики
+безопасности, например ограниченные advisory-исключения со сроком и допустимыми callers,
+не выражаемые средствами cargo-deny, сохраняют собственные policy-тесты.
+
 ## Области repository и platform проверок
 
 `cargo xtask check` проверяет рост файлов, архитектуру, форматирование, Clippy, тесты всех целей,
@@ -100,7 +114,8 @@ Kedra и не добавляйте имитации QA-драйверов/отч
 Cargo или `CARGO_TARGET_DIR`.
 
 `cargo xtask features` отдельно проверяет default/minimal-конфигурации workspace и минимальные
-библиотеки `kedra_app`, `kedra_script`, `kedra_scene`, `kedra_assets`, `kedra_ui`. Так объединение
+библиотеки `kedra_app`, `kedra_script`, `kedra_scene`, `kedra_assets`, `kedra_ui`, `kedra_wakeup`,
+а также контракт приложения с выключенным профилированием. Так объединение
 features редактора не может незаметно добавить опциональные возможности runtime. Профиль
 `release-boundary` запускает контракты запуска `kedra_app` с выключенными debug assertions и
 оптимизацией для разработки: он проверяет отсутствие диагностического парсера/плагина, а не
@@ -141,7 +156,8 @@ release сами по себе. Игнорируемым платформенн�
 
 Для каждого нативного запуска нужны новый каталог результатов и свободный рабочий стол.
 Отмечайте ошибки подготовки, невыполненные случаи и неполные выборки: они не дают полной приёмки.
-`--only hierarchy` запускает фазы поведения и внешнего вида один раз в одном сеансе, с отдельными
+`--only hierarchy` запускает фазы поведения и удобства взаимодействия один раз в одном сеансе,
+с отдельными
 результатами и кадрами рендерера, включая отказы. Задачи `hierarchy-appearance` нет.
 `scene-navigation` проверяет навигацию в модельной и смешанной сценах со своими условиями
 готовности; `scene-view` отдельно проверяет превью PNG/model/UI/mixed и перенос между окнами.
@@ -172,6 +188,14 @@ release сами по себе. Игнорируемым платформенн�
 [native game contract (English)][native-game].
 
 ### Категории свидетельств и screenshot boundary
+
+Нативные функциональные сценарии проверяют пользовательские операции, доступность,
+сохранность состояния и исходников, пригодность компоновки, а не координаты Figma,
+точные отступы или палитру. Запрошенные размеры viewport проверяют компактные/большие
+окна и DPR; оконный менеджер может округлить фактический размер. Readback-барьеры
+по-прежнему требуют точного совпадения с независимо наблюдаемыми размерами viewport.
+Совпадение области drop-preview с результатом docking остаётся поведенческим контрактом,
+не сравнением с дизайном.
 
 Различайте чтение исходников, выполнение на обычных значениях/без окна, синтетическую компоновку,
 RPC/внедрённый ввод, readback рендерера, явные проверки пикселей и физический ввод/ревью человеком.

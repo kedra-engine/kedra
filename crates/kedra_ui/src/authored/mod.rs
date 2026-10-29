@@ -68,6 +68,13 @@ impl Plugin for AuthoredUiPlugin {
             );
         }
     }
+
+    fn finish(&self, _app: &mut App) {
+        #[cfg(feature = "render")]
+        crate::render_clipping::install(_app);
+        #[cfg(feature = "render")]
+        crate::wake_render::install(_app);
+    }
 }
 
 passive_schema! { policies, types;

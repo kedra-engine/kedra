@@ -139,6 +139,6 @@ skip = [
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-# Reviewed exact-revision window input fix and native packaging tool; ADRs 0020/0023.
-allow-git = ["https://github.com/kedra-engine/winit.git", "https://github.com/crabnebula-dev/cargo-packager.git"]
+# Exact-revision window/CSS fixes and native packaging tool; ADRs 0020/0023/0043.
+allow-git = ["https://github.com/kedra-engine/winit.git", "https://github.com/crabnebula-dev/cargo-packager.git", "https://github.com/kedra-engine/bevy_flair.git"]
 required-git-spec = "rev"

@@ -39,6 +39,7 @@ Entry evaluation cannot yield or perform Scope effects, including through `requi
 | `entity: EntityHandle?` | Opaque attached live target; absent when unattached |
 | `params: {[string]: JsonValue}` | Host-validated, deeply readonly parameter snapshot |
 | `log: Log` | Owned structured telemetry, including during load/stop |
+| `profiler: Profiler` | Bounded CPU scopes, logical operations and absolute counters; no recording authority |
 
 `ctx.params` is separate from Sequence `args` and Behavior `self`. The default host
 validator accepts only an empty object. Parameters are validated before allocation or
@@ -47,6 +48,25 @@ replacement; they are not an automatic scene property schema or serialization AP
 `BehaviorContext.entity` is optional too. Operations requiring an attached target
 must narrow it or use a host context that guarantees attachment; see
 [attachment annotations](limitations.md#behavior-attachment-annotation).
+
+## Profiling instrumentation
+
+`ctx.profiler.scope(name, callback, ...)` executes a synchronous CPU scope and returns
+the callback's results. It preserves errors and forbids yielding.
+`ctx.profiler.operation(name, callback, ...)` instead records logical elapsed duration,
+including Sequence waits; it is not CPU execution time. Both use the engine profiling
+facade, not direct tracing/Perfetto APIs. Owner revocation closes unfinished operations.
+
+`ctx.profiler.counter(name, value, unit?)` emits one absolute finite numeric sample.
+Units are `count` (default), `bytes`, `ms`, `percent`; a name's unit cannot change within
+a run. Numeric precision is Luau's, not arbitrary native integer precision. Labels are
+program-qualified, 1..=96 UTF-8 bytes, without control characters. Each run admits at most
+64 CPU marker definitions, 64 counters, 64 operation names and 32 concurrent operations.
+Capacity/invalid requests fail without changing existing definitions or foreign runs.
+
+Instrumentation is available in ordinary contexts but records nothing without an explicitly
+enabled native recorder. It grants no Start/Stop, network, filesystem or World authority.
+See [recording and local Perfetto analysis](../../manual/testing/performance.md).
 
 ## Clocks and waits
 
@@ -67,8 +87,9 @@ wait.until_true: (label: string, predicate: () -> boolean, timeout_ms: number) -
 - `until_true` requires a string label, function and timeout in `(0, 600000]` milliseconds.
   It polls immediately and then once per future update, returning no value on success.
   The implementation accepts a truthy predicate result; the declaration asks for boolean.
-  Timeout raises an error. The deadline is checked between calls, not preemptively inside
-  a yielding predicate's nested waits. Never retain native borrows across suspension.
+  Timeout raises an error. The deadline is checked before and after the predicate;
+  late success is rejected and expired waits do not call the predicate again. This
+  does not preempt native calls or nested waits. Never retain borrows across suspension.
 
 Sequence resumption is in Last at `ScriptSystems::Run`. Module initialization required
 by a live Sequence can suspend under its existing wait/budget/cancellation rules;

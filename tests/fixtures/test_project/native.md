@@ -3,6 +3,13 @@
 This project's ordinary Bevy game executable proves the no-editor/importer/test-tool
 runtime dependency boundary. `Cargo.toml`, `src/`, scenes, finite programs and scoped
 API declarations belong to this one project, not a separate consumer workspace.
+The native host enables `kedra_ui/render`; AuthoredUiPlugin installs the same
+contained-clip render-copy optimization used by the editor. This is a shared
+runtime implementation, not an editor plugin or an inherited editor polling policy.
+Its Cargo-root patch selects the same pinned Git Flair subject prefilter as the
+editor; the shared docking projection also preserves unchanged hierarchy edges.
+Native-switch/projection exercise the independent integration; editor performance
+numbers do not establish a game-scene speedup or shared native acceptance.
 Unique headless Luau API-isolation regressions belong to
 [`kedra_script` product tests](../../../crates/kedra_script/README.md).
 

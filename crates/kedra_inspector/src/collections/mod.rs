@@ -86,14 +86,18 @@ fn within(world: &World, mut entity: Entity, root: Entity) -> bool {
 /// `except` excludes only that array's pending complete proposal, never its queued
 /// actions or unaccepted text. Hidden native drafts remain unsettled.
 pub fn unsettled(world: &World, root: Entity, except: Option<Entity>) -> bool {
-    world.iter_entities().any(|entity| {
-        within(world, entity.id(), root)
-            && (entity.get::<State>().is_some_and(|state| {
-                state.queued > 0
-                    || state.drag.is_some()
-                    || (Some(entity.id()) != except && state.pending.is_some())
-            }) || (entity.contains::<TextField>() && TextField::unsettled(world, entity.id())))
-    })
+    world
+        .iter_entities()
+        .filter(|entity| entity.contains::<State>() || entity.contains::<TextField>())
+        .any(|entity| {
+            within(world, entity.id(), root)
+                && (entity.get::<State>().is_some_and(|state| {
+                    state.queued > 0
+                        || state.drag.is_some()
+                        || (Some(entity.id()) != except && state.pending.is_some())
+                }) || (entity.contains::<TextField>()
+                    && TextField::unsettled(world, entity.id())))
+        })
 }
 /// Original array endpoint for an outstanding complete structural proposal.
 /// Fields and choices inside items use their ordinary full native source paths.

@@ -29,6 +29,11 @@ the exact source resolved by Cargo; see the external documentation section of th
 - Use ordinary Rust crates and Bevy plugins. No parallel ECS, reflection system,
   DI container, proprietary UI language or compatibility forwarding crates.
 - Runtime cannot depend on editor, importer or filesystem authoring writer.
+- Shared runtime/UI performance improvements belong in their owning libraries, not
+  editor-only copies. Exercise the same implementation in the editor and an
+  independent game consumer before claiming shared acceptance. Native consumers
+  must enable the applicable library features; keep headless consumers minimal
+  and editor-specific pacing, orchestration and authorization out of games.
 - Assign each package a `package.metadata.kedra.layer`; obey the checked DAG.
 - Public API must document invariants, errors, ownership and lifecycle semantics.
 - Native code must reference prefab and scene assets by their full, source-qualified

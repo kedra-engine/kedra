@@ -139,7 +139,10 @@ fn poll(world: &mut World) {
         return;
     };
     let result = match kedra_script::status(world, run) {
-        Some(Status::Running) => return,
+        Some(Status::Running) => {
+            world.write_message(bevy::window::RequestRedraw);
+            return;
+        }
         Some(Status::Completed(value)) => Ok(value.clone()),
         Some(Status::Failed(error)) => Err(error.to_string()),
         Some(Status::Cancelled) => Err("Application scenario was cancelled".into()),

@@ -1,0 +1,36 @@
+[package]
+name = "kedra_profiling"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Explicit bounded application profiling over Bevy tracing and Perfetto"
+
+[package.metadata.kedra]
+layer = "runtime"
+
+[features]
+default = []
+capture = ["dep:perfetto-sdk", "dep:tracing-subscriber", "bevy/trace", "bevy/debug"]
+# Opt-in correlation for hosts already using Bevy's render sub-app.
+render = ["capture", "bevy/bevy_render"]
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_log"] }
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+clap = { version = "4.5", features = ["derive"] }
+perfetto-sdk = { version = "=1.2.1", optional = true }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std"], optional = true }
+
+[lints]
+workspace = true
+
+[[example]]
+name = "record_application"
+required-features = ["capture"]

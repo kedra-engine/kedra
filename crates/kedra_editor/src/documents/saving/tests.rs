@@ -1,5 +1,6 @@
 //! Save acknowledgment belongs to the document host; byte replacement belongs to fs.
 use super::*;
+use bevy::tasks::block_on;
 use kedra_authoring::properties::PropertyEdit;
 use kedra_scene::document::{ComponentData, PrefabDocument};
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -336,7 +337,7 @@ fn unresolved_receipt_retains_exact_request_until_same_byte_retry_is_acknowledge
     // Documents, then deliver the transport/host's uncertain completion instead.
     let task = documents.save.task.take().ok_or("task")?;
     block_on(task)?;
-    documents.save.task = Some(IoTaskPool::get().spawn(async {
+    documents.save.task = Some(Wakeup::default().spawn(IoTaskPool::get(), async {
         Err(SaveError {
             uncertain: true,
             message: "Receipt delivery was interrupted".into(),

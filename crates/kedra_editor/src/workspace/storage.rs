@@ -1,7 +1,8 @@
 //! Bounded layout preferences, separate from source Save and session drafts.
 use super::*;
-use bevy::tasks::{IoTaskPool, Task, block_on, poll_once};
+use bevy::tasks::{IoTaskPool, block_on};
 use kedra_docking::snapshot::{MAX_BYTES, Snapshot};
+use kedra_wakeup::{Task, Wakeup};
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{self, File, OpenOptions},
@@ -200,12 +201,7 @@ fn write(path: &Path, baseline: Option<&[u8]>, bytes: &[u8]) -> Result<(), Strin
     Ok(())
 }
 pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
-    if let Some(result) = state
-        .preferences
-        .task
-        .as_mut()
-        .and_then(|task| block_on(poll_once(task)))
-    {
+    if let Some(result) = state.preferences.task.as_mut().and_then(Task::poll) {
         state.preferences.task = None;
         match result {
             Ok(bytes) => state.preferences.baseline = Some(bytes),
@@ -222,9 +218,14 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
         return;
     }
     let now = world.resource::<Time<Real>>().elapsed();
-    if state.preferences.task.is_some()
-        || now.saturating_sub(state.preferences.last) < Duration::from_secs(2)
-    {
+    if state.preferences.task.is_some() {
+        return;
+    }
+    let next = state.preferences.last + Duration::from_secs(2);
+    if now < next {
+        if state.preferences.path.is_some() {
+            preference_deadline(world, next);
+        }
         return;
     }
     // Include native resize/move even when topology revision is unchanged.
@@ -232,6 +233,7 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
     let Some(path) = state.preferences.path.clone() else {
         return;
     };
+    preference_deadline(world, now + Duration::from_secs(2));
     let bytes = match encoded(world, state) {
         Ok(bytes) => bytes,
         Err(error) => {
@@ -245,10 +247,19 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
     }
     let baseline = state.preferences.baseline.clone();
     state.preferences.dirty = false;
-    state.preferences.task = Some(IoTaskPool::get().spawn(async move {
-        write(&path, baseline.as_deref(), &bytes)?;
-        Ok(bytes)
-    }));
+    state.preferences.task = Some(
+        Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
+            write(&path, baseline.as_deref(), &bytes)?;
+            Ok(bytes)
+        }),
+    );
+}
+
+fn preference_deadline(world: &mut World, elapsed: Duration) {
+    let time = *world.resource::<Time<Real>>();
+    if let Some(mut demand) = world.get_resource_mut::<kedra_wakeup::WakeDemand>() {
+        demand.at_real(&time, elapsed);
+    }
 }
 pub(super) fn save(world: &World, state: &mut EditorWorkspace) {
     if let Err(error) = save_checked(world, state) {

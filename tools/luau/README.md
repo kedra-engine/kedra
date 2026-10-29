@@ -1,12 +1,12 @@
 # Luau editing
 
 Install **Luau Language Server** (`JohnnyMorganz.luau-lsp`) in VS Code. The repository
-recommends it through `.vscode/extensions.json`; no Roblox Studio or Rojo is needed.
+recommends it through `.vscode/extensions.json`; no separate game editor is needed.
 Open the repository folder and reload the language server after installing it.
 The server executable is bundled with the extension. Definitions use the syntax
 supported by luau-lsp 1.70.1.
 
-Repository `.vscode/settings.json` selects standard Luau, disables Roblox sourcemaps,
+Repository `.vscode/settings.json` selects standard Luau, disables platform-specific sourcemaps,
 enables standard `require`/automatic imports and loads the current runtime,
 application and editor definitions in dependency order. No personal VS Code settings
 or installed extensions are changed automatically.

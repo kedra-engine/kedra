@@ -96,15 +96,25 @@ pub(super) fn images(
 pub(super) fn spin(
     time: Res<Time<Real>>,
     motion: Res<UiMotion>,
-    mut nodes: Query<(&UiSpin, &mut UiTransform)>,
+    mut nodes: Query<(&UiSpin, &mut UiTransform, Option<&InheritedVisibility>)>,
+    mut redraw: MessageWriter<bevy::window::RequestRedraw>,
 ) {
-    for (spin, mut transform) in &mut nodes {
+    for (spin, mut transform, visible) in &mut nodes {
+        if visible.is_some_and(|visible| !visible.get()) {
+            continue;
+        }
         let radians = if motion.reduced || spin.paused {
             0.
         } else {
             (time.elapsed_secs() / spin.seconds).fract() * std::f32::consts::TAU
         };
-        transform.rotation = Rot2::radians(radians);
+        let rotation = Rot2::radians(radians);
+        if transform.rotation != rotation {
+            transform.rotation = rotation;
+        }
+        if !motion.reduced && !spin.paused {
+            redraw.write(bevy::window::RequestRedraw);
+        }
     }
 }
 
@@ -252,6 +262,7 @@ mod tests {
         let mut world = World::new();
         world.init_resource::<Time<Real>>();
         world.init_resource::<UiMotion>();
+        world.init_resource::<Messages<bevy::window::RequestRedraw>>();
         let spinner = world
             .spawn((
                 UiSpin {
@@ -296,6 +307,72 @@ mod tests {
             .unwrap_or_else(|e| panic!("{e}"));
         assert_eq!(
             world.get::<UiTransform>(spinner).map(|t| t.rotation),
+            Some(Rot2::IDENTITY)
+        );
+    }
+
+    #[test]
+    fn hidden_or_stopped_spinner_does_not_invalidate_its_transform_or_request_frames() {
+        let mut world = World::new();
+        world.init_resource::<Time<Real>>();
+        world.init_resource::<UiMotion>();
+        world.init_resource::<Messages<bevy::window::RequestRedraw>>();
+        let spinner = world
+            .spawn((
+                UiSpin {
+                    seconds: 1.,
+                    paused: false,
+                },
+                UiTransform::default(),
+                InheritedVisibility::HIDDEN,
+            ))
+            .id();
+        world
+            .resource_mut::<Time<Real>>()
+            .advance_by(std::time::Duration::from_millis(250));
+        for hidden in [true, false] {
+            if !hidden {
+                world
+                    .entity_mut(spinner)
+                    .insert(InheritedVisibility::VISIBLE);
+                world
+                    .get_mut::<UiSpin>(spinner)
+                    .unwrap_or_else(|| panic!("spinner"))
+                    .paused = true;
+            }
+            world.clear_trackers();
+            world
+                .run_system_once(spin)
+                .unwrap_or_else(|error| panic!("{error}"));
+            assert!(
+                !world
+                    .entity(spinner)
+                    .get_ref::<UiTransform>()
+                    .unwrap_or_else(|| panic!("transform"))
+                    .is_changed()
+            );
+            assert!(
+                world
+                    .resource::<Messages<bevy::window::RequestRedraw>>()
+                    .is_empty()
+            );
+        }
+        world
+            .get_mut::<UiSpin>(spinner)
+            .unwrap_or_else(|| panic!("spinner"))
+            .paused = false;
+        world
+            .run_system_once(spin)
+            .unwrap_or_else(|error| panic!("{error}"));
+        assert!(
+            !world
+                .resource::<Messages<bevy::window::RequestRedraw>>()
+                .is_empty()
+        );
+        assert_ne!(
+            world
+                .get::<UiTransform>(spinner)
+                .map(|transform| transform.rotation),
             Some(Rot2::IDENTITY)
         );
     }

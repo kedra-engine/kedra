@@ -39,6 +39,8 @@ impl Plugin for StylesPlugin {
             bevy_flair::style::FlairDefaultStyleAnimationsPlugin,
         ));
         app.add_message::<bevy::window::WindowEvent>()
-            .add_message::<bevy::window::RequestRedraw>();
+            .add_message::<bevy::window::RequestRedraw>()
+            .init_resource::<kedra_wakeup::WakeDemand>()
+            .add_systems(PostUpdate, (crate::wake::caret, crate::wake::sources));
     }
 }

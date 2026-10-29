@@ -37,6 +37,7 @@ pub(crate) fn install(app: &mut App) {
         json!({}),
         observe::observe,
     );
+    crate::performance::install(app);
     app.register_remote(
         "app.operation",
         "Read an asynchronous operation receipt",
@@ -52,7 +53,7 @@ pub(crate) fn install(app: &mut App) {
     app.register_remote(
             "app.input",
             "Inject pointer/keyboard events through Bevy",
-            json!({"session":"app.describe.session","id":"UUID idempotency key","window":"app.observe.windows[].id","input":{"kind":["click","move","button","modifier","drag","wheel","key","text"],"click":"exactly one of element or position:[x,y]","move":"position:[x,y]","button":"pressed:boolean, left pointer button","modifier":"modifier:shift|control|alt|super, pressed:boolean; explicitly release after held gestures","drag":"from:[x,y],to:[x,y]","wheel":"delta:[x,y] in pixels","key":"documented chord name","text":"UTF-8, at most 16 KiB"}}),
+            json!({"session":"app.describe.session","id":"UUID idempotency key","window":"app.observe.windows[].id","input":{"kind":["click","move","button","modifier","drag","wheel","key","text","close_window","focus_window"],"click":"exactly one of element or position:[x,y]","move":"position:[x,y]","button":"pressed:boolean, left pointer button","modifier":"modifier:shift|control|alt|super, pressed:boolean; explicitly release after held gestures","drag":"from:[x,y],to:[x,y]","wheel":"delta:[x,y] in pixels","key":"documented chord name","text":"UTF-8, at most 16 KiB","focus_window":"request native activation once; receipt awaits backend/Bevy acknowledgment"}}),
             input::request,
         );
     app.register_remote(

@@ -36,6 +36,13 @@ fn game_host_exposes_only_registered_methods_and_rejects_stale_input() {
     let mut app = host();
     let description = call(&mut app, "app.describe", None).unwrap();
     assert!(description["methods"].get("editor.project").is_none());
+    assert!(
+        description["methods"]["app.input"]["params"]["input"]["kind"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|kind| kind == "focus_window")
+    );
     assert!(call(&mut app, "world.spawn_entity", Some(json!({}))).is_err());
     let window = app.world_mut().spawn(Window::default()).id();
     let id = uuid::Uuid::new_v4();

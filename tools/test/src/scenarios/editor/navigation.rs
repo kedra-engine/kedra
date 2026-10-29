@@ -357,6 +357,7 @@ fn narrow(c: &Editor<'_>, view: &str, other: &str, p: &str, frames: &mut Vec<Val
         let n = c.node(&format!("{p}viewport"))?;
         Ok(n.rect[3] - n.rect[1] < 230. && c.group(view)? != c.group(other)?)
     })?;
+    c.activate(floating)?;
     c.click(&Editor::label(view))?;
     scene::ready(c, p)?;
     geometry::toolbar(c, p)?;
@@ -378,6 +379,7 @@ fn narrow(c: &Editor<'_>, view: &str, other: &str, p: &str, frames: &mut Vec<Val
     c.until("temporary split retired", || {
         Ok(c.node(&Editor::label(other))?.window()? == c.window()?)
     })?;
+    c.activate(floating)?;
     c.click(&Editor::label(view))?;
     c.resize(floating, 480, 430, 2)?;
     scene::ready(c, p)?;

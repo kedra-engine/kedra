@@ -37,6 +37,8 @@ kedra_preview = { path = "crates/kedra_preview", version = "=0.1.3" }
 kedra_editor_context = { path = "crates/kedra_editor_context", version = "=0.1.3" }
 kedra_authoring_luau = { path = "crates/kedra_authoring_luau", version = "=0.1.3" }
 kedra_docking = { path = "crates/kedra_docking", version = "=0.1.3" }
+kedra_profiling = { path = "crates/kedra_profiling", version = "=0.1.3" }
+kedra_wakeup = { path = "crates/kedra_wakeup", version = "=0.1.3" }
 bevy_remote = { version = "=0.20.0", default-features = false }
 bevy_flair = { version = "=0.9.0", default-features = false }
 serde = { version = "1", features = ["derive"] }
@@ -61,13 +63,21 @@ todo = "deny"
 unimplemented = "deny"
 dbg_macro = "deny"
 
+# Keep the native UI usable during development; unoptimized ECS/text/clipping
+# costs are not representative of the application's interaction budget.
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 2
+
 # Bevy's release-mode recommendations: trade compilation time for runtime speed.
 [profile.release]
 opt-level = 3
 codegen-units = 1
 lto = "thin"
 
-# Exercise the shipping capability boundary without optimizing the whole editor.
+# Exercise the shipping capability boundary with development optimization, not LTO.
 [profile.release-boundary]
 inherits = "dev"
 debug-assertions = false
@@ -75,4 +85,10 @@ debug = 0
 
 # ADR 0020: AppKit must not steal client drags in the transparent titlebar.
 [patch.crates-io]
+# ADR 0043: keep Flair's path-linked family on one reviewed Git source.
+bevy_flair = { git = "https://github.com/kedra-engine/bevy_flair.git", rev = "9be09fb26caa0787afdb63617a82d62eaae0ab00" }
+bevy_flair_core = { git = "https://github.com/kedra-engine/bevy_flair.git", rev = "9be09fb26caa0787afdb63617a82d62eaae0ab00" }
+bevy_flair_core_macros = { git = "https://github.com/kedra-engine/bevy_flair.git", rev = "9be09fb26caa0787afdb63617a82d62eaae0ab00" }
+bevy_flair_style = { git = "https://github.com/kedra-engine/bevy_flair.git", rev = "9be09fb26caa0787afdb63617a82d62eaae0ab00" }
+bevy_flair_css_parser = { git = "https://github.com/kedra-engine/bevy_flair.git", rev = "9be09fb26caa0787afdb63617a82d62eaae0ab00" }
 winit = { git = "https://github.com/kedra-engine/winit.git", rev = "948d27f0007602d2536a8974fd483c6fd33d19d3" }

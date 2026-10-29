@@ -21,6 +21,7 @@ See [connection setup](../../manual/automation/connecting.md), not a script-side
 
 ```luau
 ctx.app.window: () -> WindowId
+ctx.app.performance: (options: {include_changed_nodes: boolean}?) -> Performance
 ctx.app.node: (id: string) -> Node?
 ctx.app.wait_node: (id: string) -> Node
 ctx.app.input: (window: WindowId, input: Input) -> Delivered
@@ -31,28 +32,40 @@ ctx.app.click: (id: string) -> Delivered
 ctx.app.field: (id: string, value: string) -> ()
 ```
 
-`window` and `node` are synchronous observations; other functions can yield and belong
-in Sequences, not Behavior lifecycle/event callbacks.
+`window`, `performance` and `node` are synchronous observations; other functions can yield
+and belong in Sequences, not Behavior lifecycle/event callbacks.
 
 | Function | Result and failure behavior |
 | --- | --- |
 | `window()` | Returns the primary window's decimal ID string; errors if no usable primary exists |
+| `performance()` | Read-only rolling update intervals and UI-change diagnostics; not GPU or input-to-photon timings |
 | `node(id)` | First visible matching UI identity, or nil; incomplete/ambiguous observation fails |
 | `wait_node(id)` | Polls for a visible node for up to 40000 ms; timeout fails |
 | `input(window, input)` | Awaits native delivery receipt, not application-specific acceptance |
-| `resize(window,w,h,dpr?)` | Awaits native resize; dimensions are logical pixels |
+| `resize(window,w,h,dpr?)` | Awaits delivery; input sizes are logical pixels, not an exact native-size guarantee |
 | `capture(window)` | Awaits a renderer-produced frame, not a synthetic node screenshot |
-| `click(id)` | Waits for a visible target, rejects a disabled target, then submits an element click |
+| `click(id)` | Waits for a visible enabled target and its window's native focus, then submits an element click |
 | `field(id,value)` | Clicks, waits for focus, selects all, inserts text, waits for exact value |
 
-Native observation chooses the first entity marked `PrimaryWindow`; it does not validate
-uniqueness of native primary markers. The host owns the single-primary invariant.
+`window()` requires exactly one live `Window` with `PrimaryWindow`. This check does not
+serialize or depend on the UI inventory.
 
 `field` uses separate 40000 ms focus/value waits. Native operations poll receipts with a
 12000 ms timeout and raise on failed receipts. The Sequence's total budget still applies
 and may expire before a helper's own timeout. Stale windows, invalid input and native
 feature failures are errors, not successful delivery. Cancellation revokes future script
 effects but does not undo input, resize, captures or already queued native work.
+
+`click` and the initial `field` click wait up to 40000 ms for native window focus without
+requesting activation or retrying input. Window retirement fails the wait. This readiness
+boundary avoids pressing while a newly shown or surviving window is still regaining focus.
+
+When another live window legitimately owns focus, the caller must explicitly submit
+`ctx.app.input(window, {kind = "focus_window"})` before the next interaction. This requests
+activation once and waits up to eight seconds for backend/Bevy acknowledgment, without
+replaying input. Injected holds, retirement and unacknowledged/unsupported activation fail.
+After resize, await the feature's usable state or request a renderer fence separately.
+Native rounding can change size; exact backend/Bevy/camera equality is not a generic readiness gate.
 
 Native validation (`crates/kedra_app/src/input.rs`) requires resize width/height in
 `320..=3840`, and optional DPR in `1..=4`, all finite. Pointer positions must be finite
@@ -92,6 +105,7 @@ Snapshots are owned data; table edits do not update UI or prove a frame was pres
 
 | `kind` | Additional fields |
 | --- | --- |
+| `focus_window` | None; explicitly requests and acknowledges native activation |
 | `close_window` | None |
 | `modifier` | `modifier: "shift" \| "control" \| "alt" \| "super"`, `pressed: boolean` |
 | `button` | `pressed: boolean` (primary pointer button) |

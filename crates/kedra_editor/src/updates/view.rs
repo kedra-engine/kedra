@@ -78,6 +78,10 @@ fn text(world: &mut World, entity: Entity, value: &str) {
 }
 
 pub(super) fn sync(world: &mut World) {
+    static REFRESH: kedra_profiling::Marker =
+        kedra_profiling::Marker::new("editor.updates.refresh")
+            .with_category(kedra_profiling::Category::Editor);
+    let _scope = REFRESH.enter();
     let Some(updates) = world.get_resource::<super::Updates>() else {
         return;
     };
@@ -168,11 +172,14 @@ pub(super) fn sync(world: &mut World) {
             "hidden",
             phase != Phase::Downloading,
         );
-        if let Some(mut node) = world.get_mut::<Node>(control.fill) {
+        if let Some(mut node) = world.get_mut::<Node>(control.fill)
+            && node.width != Val::Percent(percent)
+        {
             node.width = Val::Percent(percent);
         }
         if let Some(mut spin) =
             world.get_mut::<kedra_ui::authored::components::UiSpin>(control.spinner)
+            && spin.paused == busy
         {
             spin.paused = !busy;
         }
@@ -180,13 +187,16 @@ pub(super) fn sync(world: &mut World) {
         text(world, control.version, &version);
         text(world, control.detail, &detail);
         text(world, control.notes, &notes);
-        if let Some(mut accessibility) = world.get_mut::<bevy::a11y::AccessibilityNode>(entity) {
-            accessibility.set_label(match phase {
-                Phase::Ready if automatic => "Install update and restart",
-                Phase::Ready => "Update — reveal package for manual installation",
-                Phase::Error => "Retry update download",
-                _ => status,
-            });
+        let label = match phase {
+            Phase::Ready if automatic => "Install update and restart",
+            Phase::Ready => "Update — reveal package for manual installation",
+            Phase::Error => "Retry update download",
+            _ => status,
+        };
+        if let Some(mut accessibility) = world.get_mut::<bevy::a11y::AccessibilityNode>(entity)
+            && accessibility.label() != Some(label)
+        {
+            accessibility.set_label(label);
         }
         if open {
             let rect = kedra_ui::docking::rect(world, entity);
@@ -199,12 +209,29 @@ pub(super) fn sync(world: &mut World) {
                     .get::<ComputedNode>(control.popup)
                     .map_or(0., |n| n.size().y * n.inverse_scale_factor());
                 if let Some(mut node) = world.get_mut::<Node>(control.popup) {
-                    node.width = px(width);
-                    node.max_width = px(width);
-                    node.max_height = px((viewport.y - 8.).max(1.));
-                    node.left =
-                        px((rect.max.x - width).clamp(4., (viewport.x - width - 4.).max(4.)));
-                    node.top = px((rect.max.y + 4.).min((viewport.y - height - 4.).max(4.)));
+                    let next = (
+                        px(width),
+                        px(width),
+                        px((viewport.y - 8.).max(1.)),
+                        px((rect.max.x - width).clamp(4., (viewport.x - width - 4.).max(4.))),
+                        px((rect.max.y + 4.).min((viewport.y - height - 4.).max(4.))),
+                    );
+                    if (
+                        node.width,
+                        node.max_width,
+                        node.max_height,
+                        node.left,
+                        node.top,
+                    ) != next
+                    {
+                        (
+                            node.width,
+                            node.max_width,
+                            node.max_height,
+                            node.left,
+                            node.top,
+                        ) = next;
+                    }
                 }
             }
         }
@@ -223,13 +250,19 @@ pub(super) fn popup_requested(world: &World, entity: Entity) -> bool {
 
 pub(super) fn indicator(world: &mut World, entity: Entity, phase: Phase) {
     if let Some(mut node) = world.get_mut::<Node>(entity) {
-        node.display = if phase == Phase::Hidden {
+        let display = if phase == Phase::Hidden {
             Display::None
         } else {
             Display::Flex
         };
-        node.width = px(if phase == Phase::Ready { 64 } else { 22 });
-        node.height = px(22);
+        let next = (
+            display,
+            px(if phase == Phase::Ready { 64 } else { 22 }),
+            px(22),
+        );
+        if (node.display, node.width, node.height) != next {
+            (node.display, node.width, node.height) = next;
+        }
     }
     for (class, enabled) in [
         ("hidden", phase == Phase::Hidden),
@@ -250,6 +283,79 @@ pub(super) fn indicator(world: &mut World, entity: Entity, phase: Phase) {
 mod tests {
     use super::*;
     use bevy_flair::style::components::ClassList;
+
+    #[test]
+    fn unchanged_update_status_does_not_invalidate_layout_or_animation()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let mut world = World::new();
+        world.init_resource::<super::super::Updates>();
+        let popup = world.spawn(Node::default()).id();
+        let status = world.spawn(Text::new("")).id();
+        let version = world.spawn(Text::new("")).id();
+        let detail = world.spawn(Text::new("")).id();
+        let notes = world.spawn(Text::new("")).id();
+        let spinner = world
+            .spawn(kedra_ui::authored::components::UiSpin {
+                seconds: 1.,
+                paused: false,
+            })
+            .id();
+        let progress = world.spawn(Node::default()).id();
+        let fill = world.spawn(Node::default()).id();
+        let button = world
+            .spawn((
+                Node::default(),
+                Control {
+                    popup,
+                    status,
+                    version,
+                    detail,
+                    notes,
+                    spinner,
+                    progress,
+                    fill,
+                },
+            ))
+            .id();
+        let foreign = world
+            .spawn(Node {
+                width: px(37),
+                ..default()
+            })
+            .id();
+        for phase in [
+            Phase::Hidden,
+            Phase::Downloading,
+            Phase::Ready,
+            Phase::Error,
+        ] {
+            world.resource_mut::<super::super::Updates>().model.phase = phase;
+            sync(&mut world);
+            world.clear_trackers();
+            sync(&mut world);
+            for entity in [button, fill, foreign] {
+                assert!(
+                    !world
+                        .entity(entity)
+                        .get_ref::<Node>()
+                        .ok_or("layout")?
+                        .is_changed()
+                );
+            }
+            assert!(
+                !world
+                    .entity(spinner)
+                    .get_ref::<kedra_ui::authored::components::UiSpin>()
+                    .ok_or("spinner")?
+                    .is_changed()
+            );
+            assert_eq!(
+                world.get::<Node>(foreign).ok_or("foreign layout")?.width,
+                px(37)
+            );
+        }
+        Ok(())
+    }
     #[test]
     fn hidden_reclaims_width_and_ready_is_primary_64_by_22() {
         let mut world = World::new();

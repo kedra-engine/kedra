@@ -606,10 +606,24 @@ pub(crate) fn node_drag_available(
 }
 
 fn tick(world: &mut World) {
+    static UPDATE: kedra_profiling::Marker =
+        kedra_profiling::Marker::new("editor.workspace.update")
+            .with_category(kedra_profiling::Category::Editor);
+    let _scope = UPDATE.enter();
     if !world.contains_resource::<EditorWorkspace>() {
         return;
     }
     world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
+        if (state.gesture.is_some()
+            || state.pending.is_some()
+            || state
+                .surfaces
+                .values()
+                .any(|surface| surface.staged.is_some()))
+            && let Some(mut demand) = world.get_resource_mut::<kedra_wakeup::WakeDemand>()
+        {
+            demand.active();
+        }
         let result = (|| {
             hosts::poll(world, &mut state)?;
             if let Some(message) = state.documents.poll_save() {
@@ -659,6 +673,10 @@ fn tick(world: &mut World) {
 }
 
 fn redraw(world: &mut World, state: &mut EditorWorkspace) -> Result<(), String> {
+    static PROJECTION: kedra_profiling::Marker =
+        kedra_profiling::Marker::new("editor.workspace.project")
+            .with_category(kedra_profiling::Category::Editor);
+    let _scope = PROJECTION.enter();
     document_views::reconcile_activation(state);
     for (id, node) in &state.layout.snapshot().nodes {
         if let kedra_docking::model::Node::Split { fraction, .. } = node {

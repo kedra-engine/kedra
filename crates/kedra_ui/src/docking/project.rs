@@ -11,9 +11,12 @@ use kedra_scene::instance::CompiledPrefab;
 use std::{collections::BTreeMap, sync::Arc};
 #[path = "headers.rs"]
 mod headers;
+#[path = "hierarchy.rs"]
+mod hierarchy;
 #[path = "staging.rs"]
 mod staging;
 pub use headers::HeaderDestination;
+use hierarchy::{order_children, reparent};
 
 /// Compiled, dependency-ready authored chrome shared by product and measurement.
 pub struct Skin {
@@ -217,20 +220,9 @@ impl Projection {
         let prepared = self.prepare(world, state, stash, skin, scope, density)?;
         // All fallible validation/allocation precedes the publication boundary.
         prepared.publish(world, self, stash);
-        self.restore_headers(world);
+        self.restore_headers(world, state);
         self.reconcile_focus(world, state);
-        // Park feature roots before retiring any chrome ancestor. This is the
-        // lifetime boundary: despawning a stale group must never despawn content.
-        for root in self.content.values() {
-            world.entity_mut(*root).insert(ChildOf(stash));
-        }
-        for tab in self.tabs.values() {
-            world.entity_mut(tab.view.root).insert(ChildOf(stash));
-        }
-        // Detach all node roots before retiring splits whose children may survive.
-        for chrome in self.nodes.values() {
-            world.entity_mut(chrome.root()).insert(ChildOf(stash));
-        }
+        self.park_transfers(world, state, hosts, stash);
         let stale: Vec<_> = self
             .nodes
             .keys()
@@ -341,7 +333,7 @@ impl Projection {
         // prepare validated every kind/binding and mounted all missing keys.
         let chrome = &self.nodes[&id];
         let root = chrome.root();
-        world.entity_mut(root).insert(ChildOf(parent));
+        reparent(world, root, parent);
         let visible =
             maximized.is_none_or(|group| subtree_contains(state, id, group) || id == group);
         class(world, root, "hidden", !visible);
@@ -357,8 +349,8 @@ impl Projection {
             ) => {
                 let (tabs, body) = (*tabs, *body);
                 if let Some(destination) = self.header_destinations.get(&id) {
-                    world.entity_mut(tabs).insert(ChildOf(destination.row));
-                    world.entity_mut(*menu).insert(ChildOf(destination.menu));
+                    reparent(world, tabs, destination.row);
+                    reparent(world, *menu, destination.menu);
                     if let Some(slot) = world
                         .get::<crate::window_chrome::HeaderSlot>(destination.row)
                         .copied()
@@ -396,7 +388,7 @@ impl Projection {
                     world
                         .entity_mut(tab.view.root)
                         .insert(crate::ElementId::new(format!("{scope}/tab/{view_id:?}")));
-                    world.entity_mut(tab.view.root).insert(ChildOf(tabs));
+                    reparent(world, tab.view.root, tabs);
                     world.entity_mut(tab.label).insert(TabLabel {
                         view: *view_id,
                         group: id,
@@ -419,11 +411,11 @@ impl Projection {
                     if *view_id == *active
                         && let Some(content) = self.content.get(view_id)
                     {
-                        world.entity_mut(*content).insert(ChildOf(body));
+                        reparent(world, *content, body);
                     }
                 }
                 let children: Vec<_> = order.iter().map(|id| self.tabs[id].view.root).collect();
-                world.entity_mut(tabs).replace_children(&children);
+                order_children(world, tabs, &children);
                 flex(world, root, 1.);
             }
             (
@@ -478,9 +470,7 @@ impl Projection {
                 };
                 flex(world, first, a);
                 flex(world, second, b);
-                world
-                    .entity_mut(root)
-                    .replace_children(&[first, divider, second]);
+                order_children(world, root, &[first, divider, second]);
             }
             _ => unreachable!("Chrome kinds were checked before publication"),
         }

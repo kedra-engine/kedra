@@ -111,6 +111,7 @@ fn library_run_rejects_missing_delivery_before_native_plugin_initialization() {
         None,
         directory.path().join("missing"),
         Default::default(),
+        Default::default(),
         None,
         None,
         None,

@@ -45,6 +45,20 @@ duplicate-version exceptions and the time-bounded unmaintained-parser exception.
 
 ## Source provenance and publication
 
+### Bevy Flair style
+
+Bevy Flair 0.9.0 uses the public [Kedra fork](https://github.com/kedra-engine/bevy_flair),
+pinned to `9be09fb26caa0787afdb63617a82d62eaae0ab00`. Its base is upstream
+`efc44a46be8f5adf772089dab8535b231c6d89dd`, matching the five registry 0.9.0
+packages. The source delta is mandatory subject class/ID rejection, isolation of
+inline-only changes from relational selector invalidation, and their private
+regression tests; the remaining crate sources are unchanged. The
+path-linked family shares one Git source. Use the MIT redistribution option and
+retain the original `Copyright (c) 2024 Erick Z` notice and full upstream LICENSE
+in generated binary notices. See [ADR 0043](decisions/0043-css-subject-prefilter.md).
+There is no vendored source or local-clone build dependency. No `selectors`/CSS parser
+source is modified; the MPL-covered registry archives above remain required.
+
 ### Native Linux components
 
 Cargo license collection covers Rust crates only. Linux packages additionally

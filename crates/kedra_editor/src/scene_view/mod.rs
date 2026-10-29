@@ -185,7 +185,26 @@ impl View {
         kedra_ui::docking::class(world, self.information, "hidden", false);
     }
     pub fn tick(&mut self, world: &mut World, visible: bool, dpr: f32) -> Result<(), String> {
+        // Readiness is not inactivity. A serving viewport must keep its normal
+        // render/update loop even after resources and its first frame are ready.
+        // Until project execution is isolated, this conservatively keeps the
+        // shared App continuous; no individual effect owns a wake obligation.
+        if visible
+            && (self.compiled.is_some() || self.pending_source.is_some())
+            && !matches!(
+                self.lifecycle.phase,
+                lifecycle::Phase::Failed | lifecycle::Phase::Retired
+            )
+            && let Some(mut demand) = world.get_resource_mut::<kedra_wakeup::WakeDemand>()
+        {
+            demand.continuous();
+        }
         if self.pending_source.is_some() {
+            if visible
+                && let Some(mut demand) = world.get_resource_mut::<kedra_wakeup::WakeDemand>()
+            {
+                demand.active();
+            }
             return Ok(());
         }
         // Early dependency/host exits must not retain last frame's enabled tools.
@@ -208,6 +227,15 @@ impl View {
             self.viewport,
             visible && self.navigation(world).is_some(),
         );
+        if visible
+            && matches!(
+                self.lifecycle.phase,
+                lifecycle::Phase::Dependencies | lifecycle::Phase::Frame
+            )
+            && let Some(mut demand) = world.get_resource_mut::<kedra_wakeup::WakeDemand>()
+        {
+            demand.active();
+        }
         result
     }
     fn controls_enabled(&self, world: &mut World, enabled: bool) {

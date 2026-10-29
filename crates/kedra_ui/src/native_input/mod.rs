@@ -69,6 +69,11 @@ impl Plugin for NativeInputPlugin {
         app.add_systems(
             PreUpdate,
             navigation::gate
+                .run_if(
+                    on_message::<KeyboardInput>
+                        .or_eager(on_message::<bevy::input::mouse::MouseButtonInput>)
+                        .or_eager(on_message::<bevy::input::touch::TouchInput>),
+                )
                 .before(InputFocusSystems::Dispatch)
                 .after(InputSystems),
         )

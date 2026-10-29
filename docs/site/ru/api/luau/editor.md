@@ -104,7 +104,7 @@ end
 `orthographic`, `overlays`, `editor_lighting`, `aligning`, а также `ready`.
 Готовность и геометрия не подтверждают качество нативного кадра или принятие ввода.
 
-`NavigationInput` содержит `gesture`, `pending_host`, `menu_nodes`, `measuring`,
+`NavigationInput` содержит `gesture`, `pending_host`, `menu_nodes`, `measuring`, `preview_ready`,
 `rendered`, допускающий null, `revision`, `capture={view,window}` или null и `viewports`.
 У каждой области просмотра есть `view`, прямоугольник `rect` в логических пикселях или null,
 `eligible_windows`, `pointer_windows`.

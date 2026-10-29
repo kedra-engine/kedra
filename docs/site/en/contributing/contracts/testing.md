@@ -26,6 +26,12 @@ Product contracts, assembled acceptance and repository policy are separate respo
 | Processing/publication | `kedra_import` | Browser/Open/preview |
 | Dock topology/candidates | `kedra_docking` | Gestures/host coordination |
 | Retained UI/projection/input and field acknowledgment | `kedra_ui`, `kedra_desktop` | Dock/host/focus; independent diagnostic text field |
+| Retained docking hierarchy invalidation | `kedra_ui/tests/contracts/docking.rs` and `docking/headers.rs` | Editor and independent native projection; unchanged edge/order ticks, changed topology, retained input/content and rejection safety |
+| Shared live CSS / matching and invalidation patches | `kedra_ui/tests/contracts/styles.rs`; private selector/invalidation tests in the pinned Flair fork | Class/focus/hierarchy/nested-sheet behavior; inline geometry, variables, explicit/default inheritance and transitions; explicit engine suite per ADR 0043; editor/game input and frames remain separate |
+| Contained-clip render elision | `kedra_ui/src/render_clipping/tests.rs` | Editor and independent native game with `kedra_ui/render`; matching viewport/DPR frames; main-world clipping and input remain Bevy-owned |
+| Native task/producer readiness notifications | `kedra_wakeup/tests/contracts.rs`: automatic initial registration, ready/pending/cancel/await ownership and producer backpressure/failure | `native-wakeup` supervises the real example: sleep and pipe-released worker before any owner poll, GPU frames without RPC/Luau frame pumping; editor owners retain result/failure checks |
+| Bounded reactive waits and subsystem demand | `kedra_wakeup/src/reactive/tests.rs`; tooltip/caret/readback tests in `kedra_ui`; clock/terminal tests in `kedra_script`; preferences/motion tests in editor | `native-wakeup` deadline advances real GPU frames without external release/input; editor behavior and independent game regressions remain separate |
+| Continuous serving previews | `kedra_editor/src/scene_view/control_tests.rs` and `kedra_wakeup/src/reactive/tests.rs` | Ready/unchanged views must not idle; hidden/failed/retired owners release demand; native Scene navigation and passive update observations are separate from headless policy checks |
 | Ordered native text/local history | `kedra_text_input` | Inspector search; Transform/UiCaption fields |
 | Reflected presentation | `kedra_inspector` | Editor source adapter/Inspector |
 | Scoped Luau drawer composition | `kedra_inspector_luau` | Embedded UiCaption; UI-only/mixed caption source edits |
@@ -33,6 +39,9 @@ Product contracts, assembled acceptance and repository policy are separate respo
 | History retention/content checkpoints | `kedra_authoring/tests/contracts/history_retention.rs` | Value-free collection attachments in Inspector contracts |
 | Explicit project editor scripts | `kedra_editor/src/edit_scripts/source/tests.rs` | `editor-scripts` native scenario: two-document commit, common Undo/Redo, Save input and disk bytes |
 | Script lifecycle/modules/scopes/children/events/parameters/diagnostics | `kedra_script/tests/contracts/`, `kedra_app` | Editor Luau/independent host |
+| Update intervals/UI mutation diagnostics | `kedra_app::performance` | Opt-in RPC/Luau performance observation, not physical-input latency |
+| Finite CPU recordings/markers/counters | `kedra_profiling/tests/contracts` | Editor self-recording and independent Bevy consumer; ready-made Perfetto analysis |
+| Scoped Luau profiling adapter | `kedra_script/tests/contracts/profiling` | Editor workload instrumentation; no recording authority |
 | Script Transform/UI adapters | `kedra_script_bevy/tests/contracts/` | Native switch Behavior/Sequence |
 | Editor styles/icons/authored sources | `kedra_editor/tests/contracts/` | Component corpus/editor geometry |
 | Build/package/update | `kedra_build`, `kedra_update` | Installed distribution/update |
@@ -85,6 +94,12 @@ modules, aliases or duplicate suites. Removing redundancy must identify the rema
 guarantee and preserve failure paths, identities, ownership, provenance and execution routes.
 Never weaken security, reference or coverage policy to make a change pass.
 
+Do not add tests that merely repeat dependency names, versions, Git revisions or
+source lists from Cargo manifests/lockfiles. Cargo and cargo-deny own dependency
+resolution and admission. Test actual integration behavior instead. Substantive
+security policies, such as bounded advisory exceptions with expiry and caller
+restrictions not expressible in cargo-deny, retain their owning policy tests.
+
 ## Repository and platform scopes
 
 `cargo xtask check` runs file growth, architecture, formatting, Clippy, all-target tests,
@@ -94,7 +109,8 @@ only the orchestrator in `target/xtask-bootstrap/`, avoiding Windows replacement
 `xtask.exe`; children use the ordinary Cargo target directory or `CARGO_TARGET_DIR`.
 
 `cargo xtask features` separately checks default/minimal workspace configurations and
-minimal `kedra_app`, `kedra_script`, `kedra_scene`, `kedra_assets`, `kedra_ui` libraries.
+minimal `kedra_app`, `kedra_script`, `kedra_scene`, `kedra_assets`, `kedra_ui`, `kedra_wakeup`
+libraries, plus the profiling-disabled application contract.
 This prevents editor feature unification from supplying optional runtime capabilities.
 The `release-boundary` profile runs `kedra_app` launch contracts with debug assertions off
 and development optimization: diagnostic parser/plugin absence, not optimized editor/native
@@ -133,7 +149,7 @@ Forced termination can leave incomplete logs and no summary.
 
 Each native run requires a fresh output directory and idle desktop. Setup failures, unrun
 cases and partial selections remain explicit; none establish complete acceptance.
-`--only hierarchy` runs behavior/appearance phases once in one session, with separate
+`--only hierarchy` runs behavior/usability phases once in one session, with separate
 results and renderer frames including failures. There is no `hierarchy-appearance` task.
 `scene-navigation` covers model/mixed navigation with its own readiness fences; `scene-view`
 separately covers PNG/model/UI/mixed preview and host transfer. Catalog/docking scenes use
@@ -161,6 +177,14 @@ own ordinary Rust verifier using `kedra_test`. See
 [native game contract][native-game].
 
 ### Evidence categories and screenshot boundary
+
+Native feature scenarios verify user workflows, availability, retained state, source safety
+and usable layout, not Figma coordinates, exact padding or palette values. Requested viewport
+sizes exercise compact/large and DPR configurations; window managers can round native sizes.
+Resize delivery is not a pixel-equality readiness gate. Native compass/order/refusal/cancellation
+matrices belong to `dock-fixture`; editor docking scenarios own real-panel and menu integration.
+Readback fences still require exact agreement with independently observed viewport dimensions.
+Precise drop-preview/commit agreement remains a docking behavior contract, not design matching.
 
 Distinguish source inspection, pure/headless execution, synthetic layout, RPC/injected input,
 renderer readback, explicit pixel assertions and physical input/human review. Source inspection

@@ -91,22 +91,20 @@ impl Documents {
         };
         let baseline = scope.source.clone();
         self.save.error = None;
-        self.save.task = Some(IoTaskPool::get().spawn(async move {
-            let result = verify(&root, &baseline, &request)
-                .and_then(|()| kedra_authoring_fs::commit_existing(&root, &request));
-            result.map_err(|mut error| {
-                error.uncertain |= retry;
-                error
-            })
-        }));
+        self.save.task = Some(
+            Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
+                let result = verify(&root, &baseline, &request)
+                    .and_then(|()| kedra_authoring_fs::commit_existing(&root, &request));
+                result.map_err(|mut error| {
+                    error.uncertain |= retry;
+                    error
+                })
+            }),
+        );
         Ok(())
     }
     pub(crate) fn poll_save(&mut self) -> Option<String> {
-        let result = self
-            .save
-            .task
-            .as_mut()
-            .and_then(|task| block_on(poll_once(task)))?;
+        let result = self.save.task.as_mut().and_then(Task::poll)?;
         self.save.task = None;
         let scope = self.scope.as_mut()?;
         let result = match result {

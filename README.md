@@ -66,6 +66,8 @@ The repository currently provides:
   desktop applications without an installed editor; see
   [distribution](docs/site/en/manual/build-and-distribution/index.md).
 - Debug-only, explicitly enabled remote observation, input injection and renderer captures.
+- Optional finite CPU profiling for editor/independent Bevy applications, with engine-owned
+  Rust/Luau markers and counters and standard recordings opened locally in Perfetto UI.
 - Shared opt-in Luau behaviors, finite sequences and standard admitted-source modules
   with host-owned API scopes. Native QA uses sequences under external Rust supervision.
 - Explicit project `Editor/` script launch with exact source grants, shared named

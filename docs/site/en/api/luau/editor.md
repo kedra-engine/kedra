@@ -101,7 +101,7 @@ persisted identities do not become runtime entity handles. This is not document 
 `editor_lighting`, `aligning`, plus `ready`. Readiness/geometry observations are not proof
 of native frame quality or input acceptance.
 
-`NavigationInput` contains `gesture`, `pending_host`, `menu_nodes`, `measuring`,
+`NavigationInput` contains `gesture`, `pending_host`, `menu_nodes`, `measuring`, `preview_ready`,
 nullable `rendered`, `revision`, nullable `capture={view,window}`, and `viewports`.
 Each viewport has `view`, nullable logical `rect`, `eligible_windows`, `pointer_windows`.
 Both window arrays contain `WindowId` decimal strings, not Luau numbers.

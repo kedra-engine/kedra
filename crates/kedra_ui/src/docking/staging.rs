@@ -4,7 +4,7 @@ use super::*;
 use crate::authored::components::UiLayout;
 
 pub(super) struct Prepared {
-    owner: Entity,
+    owner: Option<Entity>,
     nodes: BTreeMap<NodeId, Chrome>,
     tabs: BTreeMap<ViewId, Tab>,
 }
@@ -19,7 +19,9 @@ impl Prepared {
         }
         projection.nodes.extend(self.nodes);
         projection.tabs.extend(self.tabs);
-        world.despawn(self.owner);
+        if let Some(owner) = self.owner {
+            world.despawn(owner);
+        }
     }
 }
 
@@ -63,6 +65,18 @@ impl Projection {
         for tab in self.tabs.values() {
             live_bindings(world, &tab.view)?;
         }
+        let needs_mount = state.nodes.keys().any(|id| !self.nodes.contains_key(id))
+            || state.nodes.values().any(|node| {
+                matches!(node,
+                Node::Group { tabs, .. } if tabs.iter().any(|id| !self.tabs.contains_key(id)))
+            });
+        if !needs_mount {
+            return Ok(Prepared {
+                owner: None,
+                nodes: BTreeMap::new(),
+                tabs: BTreeMap::new(),
+            });
+        }
         // Parent scope is needed for inherited stylesheet checks during mounting.
         // Nothing is detached from the committed tree until every mount succeeds.
         let had_children = world.get::<Children>(stash).is_some();
@@ -70,7 +84,7 @@ impl Projection {
             .spawn((bevy::ui::Node::default(), ChildOf(stash)))
             .id();
         let mut prepared = Prepared {
-            owner,
+            owner: Some(owner),
             nodes: BTreeMap::new(),
             tabs: BTreeMap::new(),
         };

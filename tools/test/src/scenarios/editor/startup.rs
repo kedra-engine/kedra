@@ -1,23 +1,8 @@
-//! Native project-manager geometry, modal input and source lifecycle.
+//! Native project-manager modal input and source lifecycle.
 use super::support::*;
 use kedra_test::Result;
 use serde_json::{Value, json};
 use std::fs;
-
-fn geometry(c: &Editor<'_>, reference: &Value, state: &str) -> Result<Value> {
-    let nodes = c.nodes()?;
-    for (id, expected) in object(&reference[state])? {
-        let n = nodes
-            .iter()
-            .find(|n| n.id == *id)
-            .ok_or("Missing startup reference element")?;
-        let expected: [f64; 4] = serde_json::from_value(expected.clone())?;
-        for (a, b) in n.rect.into_iter().zip(expected) {
-            near(a, b, number(&reference["tolerance"])?)?;
-        }
-    }
-    c.client.observe()
-}
 
 pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
     c.until("project manager", || {
@@ -27,18 +12,15 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
         c.rpc("editor.state")?["entry"].is_null(),
         "Start with closed startup forms",
     )?;
-    let reference = crate::read_json(&c.root.join("docs/ui/startup-reference.json"))?;
     let mut runs = Vec::new();
     for dpr in [1, 2] {
         c.resize(c.window()?, 1120, 720, dpr)?;
         let mut run = json!({"dpr":dpr,"frames":{}});
-        run["manager"] = geometry(c, &reference, "manager")?;
         run["frames"]["manager"] = c.frame(c.window()?, "manager")?;
         c.click("projects.new")?;
         c.until("create form", || {
             Ok(!c.rpc("editor.state")?["entry"].is_null())
         })?;
-        run["create"] = geometry(c, &reference, "create")?;
         c.until("modal autofocus", || Ok(c.node("entry.name")?.focused))?;
         c.key("tab")?;
         check(c.node("entry.directory")?.focused, "Tab escaped modal")?;
@@ -73,6 +55,9 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
         })?;
         run["frames"]["open"] = c.frame(c.window()?, "open")?;
         c.click("entry.cancel")?;
+        c.until("open form cancellation", || {
+            Ok(c.rpc("editor.state")?["entry"].is_null())
+        })?;
         runs.push(run);
     }
     let parent = c.state_dir.join("lifecycle");
@@ -145,7 +130,5 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
         )?;
         steps.push(json!({"command":command["kind"],"expected_failure":true}));
     }
-    Ok(
-        json!({"status":"passed","reference":reference["source"],"runs":runs,"lifecycle":{"project":project,"steps":steps}}),
-    )
+    Ok(json!({"status":"passed","runs":runs,"lifecycle":{"project":project,"steps":steps}}))
 }

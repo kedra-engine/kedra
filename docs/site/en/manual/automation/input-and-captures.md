@@ -51,6 +51,7 @@ effect needs its own session/window envelope and fresh non-nil UUID:
 {"kind":"key","key":"select_all"}
 {"kind":"text","text":"Кедра 日本語"}
 {"kind":"close_window"}
+{"kind":"focus_window"}
 ```
 
 A click accepts exactly one of `element` or `position`. Pointer coordinates must be
@@ -70,12 +71,19 @@ input in another window are rejected. Do not borrow hardware-held inputs for a t
 The host can refuse it. If the target retires before the final receipt, observe
 retirement and verify process exit instead of blindly retrying the close.
 
+`focus_window` explicitly requests backend activation once and awaits backend/Bevy focus
+acknowledgment for up to eight seconds. It rejects injected holds and never fabricates
+focus by setting an observed flag. Use it for deliberate window transitions, not to
+restart a gesture cancelled by focus loss. Unsupported/unacknowledged activation fails.
+
 ## Resize and test DPR
 
 `app.resize` uses `width` and `height` in logical pixels, each within 320..3840.
 Optional `dpr` is a finite test override within 1..4. It does not move a window between
 physical monitors or change monitor hardware. Wait for delivery and new layout/camera
 observations before comparing geometry or requesting a capture.
+The script-backed resize helper confirms delivery, not exact backend/Bevy/camera size
+agreement. Native rounding is retained; await usable feature state and renderer evidence separately.
 
 ## Request a renderer frame
 
@@ -85,8 +93,9 @@ parameters, without an arbitrary output-file parameter. It publishes
 overwriting. Wait for input delivery first: capture admission rejects a busy input queue.
 
 The service waits at least six application frames before selecting a readback and
-fails a request after more than 180 frames or target retirement. Those frame counts
-are not wall-clock deadlines; a stalled application needs an external watchdog.
+fails a request after eight real-time seconds or target retirement. The timeout is
+independent of FPS and is checked again by completion before publication. The Bevy
+clock still needs updates; a stalled application needs an external watchdog.
 
 A succeeded receipt's `detail` contains `path`, `width`, `height`, `uniform`, `window`
 and `frame`. Width/height are physical image pixels. Success requires renderer readback,

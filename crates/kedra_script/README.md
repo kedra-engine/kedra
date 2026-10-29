@@ -41,6 +41,10 @@ default budgets; `Program::behavior` supplies persistent defaults.
 Calling `start` is execution authorization; registration, imports, scene loading
 and project open are not. `attach` additionally ties lifetime to a live parent using
 ordinary Bevy hierarchy and supplies `ctx.entity`. Unattached programs have no entity.
+The runtime publishes active `WakeDemand` while any authorized instance is Running,
+including clock waits. Completion, failure, cancellation and retirement stop that
+hint. This preserves real/game/fixed/update-clock servicing without per-script
+wake code; it does not install editor pacing or change a game's Winit settings.
 Loading/replacement inside native script callbacks is rejected; schedule it after
 dispatch to avoid re-entering BMS registries.
 
@@ -149,8 +153,10 @@ Update/fixed waits count future Bevy schedule executions, not GPU frames. Waitin
 for fixed steps does not move a sequence into FixedUpdate. Game seconds use virtual
 time and honor pause; real seconds use monotonic time but still need updates to resume.
 `wait.until_true` polls immediately and then on updates, with a finite positive
-deadline; a yielding predicate must not hold a borrow across suspension. Its deadline
-is checked between predicate calls, not as a preemptive deadline for nested waits.
+deadline; a yielding predicate must not hold a borrow across suspension. The deadline
+is checked before and after each predicate: late success is rejected and an expired
+wait does not invoke another predicate. This does not preempt a blocked native call
+or nested wait; callback/sequence budgets and external process supervision still apply.
 
 ## Ownership and failure
 

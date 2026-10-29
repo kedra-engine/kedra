@@ -151,7 +151,7 @@ fn feature_checks_fail_closed_when_cargo_is_unavailable() -> Result<(), Box<dyn 
     assert!(!output.status.success());
     let stdout = String::from_utf8(output.stdout)?;
     assert!(stdout.contains("FAIL Default features"));
-    assert!(stdout.contains("0 passed, 1 failed, 7 skipped"));
+    assert!(stdout.contains("0 passed, 1 failed, 9 skipped"));
     assert!(!stdout.contains("[2/4]"));
     let path = stdout
         .lines()

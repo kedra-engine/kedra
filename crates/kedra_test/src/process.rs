@@ -2,20 +2,50 @@
 use crate::{Client, Result};
 use std::{
     fs,
+    io::Write,
     path::{Path, PathBuf},
-    process::{Child, Command, Stdio},
+    process::{Child, Command, ExitStatus, Stdio},
     thread,
     time::{Duration, Instant},
 };
 
 /// Owns one native process, private log and fresh credentials. Drop kills and
-/// reaps an unfinished child as a safety net; only `finish` proves clean shutdown.
+/// reaps an unfinished child as a safety net, never as proof of clean shutdown.
+/// Hosts validate authorized termination through `finish` or explicit exit status.
 pub struct NativeProcess {
     child: Child,
     credentials: PathBuf,
 }
 
 impl NativeProcess {
+    /// OS identity of this owned child, for passive external readiness observation.
+    pub fn id(&self) -> u32 {
+        self.child.id()
+    }
+
+    /// Publish bounded protocol input to a child explicitly started with piped stdin.
+    ///
+    /// Does not inject native window input or retry an operation. Standard pipe
+    /// writes can block; the host must bound its protocol and supervise its child
+    /// under an external deadline. Missing/closed pipes return an error.
+    pub fn write_stdin(&mut self, bytes: &[u8]) -> Result<()> {
+        let input = self
+            .child
+            .stdin
+            .as_mut()
+            .ok_or("Child stdin is not piped")?;
+        input.write_all(bytes)?;
+        input.flush()?;
+        Ok(())
+    }
+
+    /// Observe/reap termination without driving the child or authorizing shutdown.
+    /// `None` means still running. The host must validate the expected exit status;
+    /// dropping a running child remains forced cleanup, not successful acceptance.
+    pub fn try_wait(&mut self) -> Result<Option<ExitStatus>> {
+        Ok(self.child.try_wait()?)
+    }
+
     /// Start a project-configured command. The private directory must be new;
     /// creates `native.log` there with owner-only directory access on Unix.
     /// Caller supplies matching credential/artifact arguments in `command`.

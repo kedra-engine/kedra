@@ -21,6 +21,9 @@ pub(super) struct HeldInputs {
     release_keys: Vec<Key>,
 }
 impl HeldInputs {
+    pub(super) fn has_injected_holds(&self) -> bool {
+        self.owner.is_some()
+    }
     pub(super) fn validate_window(&self, window: Entity) -> Result<(), String> {
         if self.owner.is_some_and(|owner| owner != window) {
             Err("Release injected holds before targeting another window".into())

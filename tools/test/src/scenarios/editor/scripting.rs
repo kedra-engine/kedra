@@ -4,9 +4,7 @@ use kedra_test::{Result, evidence};
 use serde_json::{Value, json};
 
 pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
-    let reference = crate::read_json(&c.root.join("docs/ui/startup-reference.json"))?;
-    let arguments =
-        json!({"preferences":c.state_dir.join("recent-projects.toml"),"reference":reference});
+    let arguments = json!({"preferences":c.state_dir.join("recent-projects.toml")});
     // No source strings are admitted; a wrong scope precondition must also fail
     // before UI input and leave the manager usable for the real sequence.
     let mut refused = arguments.clone();
@@ -29,7 +27,12 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
         let dpr = frame["dpr"].as_u64().ok_or("Missing independent DPR")? as u32;
         check(matches!(dpr, 1 | 2), "Unexpected script DPR")?;
         let receipt: evidence::Frame = serde_json::from_value(frame["receipt"].clone())?;
-        let evidence = evidence::consume_fence(receipt, c.artifacts, [1120 * dpr, 720 * dpr])?;
+        let size: [u32; 2] = serde_json::from_value(frame["size"].clone())?;
+        check(
+            size.iter().all(|side| *side > 0),
+            "Missing measured viewport",
+        )?;
+        let evidence = evidence::consume_fence(receipt, c.artifacts, size)?;
         let mut value = serde_json::to_value(evidence)?;
         value["label"] = frame["label"].clone();
         frames.push(value);

@@ -23,7 +23,9 @@ pub struct Tooltip(pub String);
 pub struct TooltipPlugin;
 impl Plugin for TooltipPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Active>().add_systems(Update, update);
+        app.init_resource::<Active>()
+            .init_resource::<kedra_wakeup::WakeDemand>()
+            .add_systems(Update, update);
     }
 }
 
@@ -127,6 +129,13 @@ fn present(
             return;
         };
         if now.saturating_sub(active.since) < DELAY {
+            // One subsystem integration covers every Tooltip, including changed
+            // targets/text and retirement. No control owns a wake call or timer.
+            if let Some(time) = world.get_resource::<Time<Real>>().copied()
+                && let Some(mut demand) = world.get_resource_mut::<kedra_wakeup::WakeDemand>()
+            {
+                demand.at_real(&time, active.since + DELAY);
+            }
             return;
         }
         let bubble = if let Some(bubble) = active
@@ -166,10 +175,15 @@ fn present(
             .map_or(Vec2::ZERO, |node| node.size() * node.inverse_scale_factor());
         let position = placement(cursor, size, viewport);
         if let Some(mut node) = world.get_mut::<Node>(bubble) {
-            node.left = px(position.x);
-            node.top = px(position.y);
-            node.max_width = px(320_f32.min((viewport.x - 2. * MARGIN).max(1.)));
-            node.max_height = px((viewport.y - 2. * MARGIN).max(1.));
+            let next = (
+                px(position.x),
+                px(position.y),
+                px(320_f32.min((viewport.x - 2. * MARGIN).max(1.))),
+                px((viewport.y - 2. * MARGIN).max(1.)),
+            );
+            if (node.left, node.top, node.max_width, node.max_height) != next {
+                (node.left, node.top, node.max_width, node.max_height) = next;
+            }
         }
     });
 }
@@ -195,6 +209,12 @@ mod tests {
     -> Result<(), &'static str> {
         let mut world = World::new();
         world.init_resource::<Active>();
+        world.init_resource::<Time<Real>>();
+        let origin = world.resource::<Time<Real>>().startup() + std::time::Duration::from_secs(5);
+        world
+            .resource_mut::<Time<Real>>()
+            .update_with_instant(origin);
+        world.init_resource::<kedra_wakeup::WakeDemand>();
         let source = world.spawn(Node::default()).id();
         let candidate = Some((
             source,
@@ -209,7 +229,15 @@ mod tests {
             false,
         );
         assert!(world.resource::<Active>().bubble.is_none());
+        let mut expected = kedra_wakeup::WakeDemand::default();
+        expected.at(origin + DELAY);
+        assert_eq!(world.resource::<kedra_wakeup::WakeDemand>(), &expected);
+        world.insert_resource(kedra_wakeup::WakeDemand::default());
         present(&mut world, candidate.clone(), DELAY, false);
+        assert_eq!(
+            world.resource::<kedra_wakeup::WakeDemand>(),
+            &kedra_wakeup::WakeDemand::default()
+        );
         let bubble = world.resource::<Active>().bubble.ok_or("Delayed hint")?;
         assert!(
             world.get::<bevy::ui::FixedNode>(bubble).is_some(),
@@ -223,6 +251,15 @@ mod tests {
             "Never stretch a hint across its source/panel"
         );
         assert_eq!(node.max_width, px(320));
+        world.clear_trackers();
+        present(&mut world, candidate.clone(), DELAY, false);
+        assert!(
+            !world
+                .entity(bubble)
+                .get_ref::<Node>()
+                .ok_or("Bubble layout")?
+                .is_changed()
+        );
         assert_eq!(world.get::<Text>(bubble).ok_or("Text")?.0, "Straße.txt");
         let pick = world
             .get::<bevy::picking::Pickable>(bubble)
@@ -234,6 +271,10 @@ mod tests {
                 .is_none()
         );
         present(&mut world, None, DELAY, false);
+        assert_eq!(
+            world.resource::<kedra_wakeup::WakeDemand>(),
+            &kedra_wakeup::WakeDemand::default()
+        );
         assert!(!world.entities().contains(bubble));
         present(&mut world, candidate.clone(), DELAY, false);
         present(&mut world, candidate.clone(), DELAY * 2, false);

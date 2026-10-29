@@ -7,6 +7,10 @@ Status: styling contract in use; native platform acceptance is separate.
 Use pinned Bevy Flair 0.9.0 with Bevy 0.20 and no default features. Its property
 registry, parser, selectors, variables, imports and cascade own styling. Bevy
 UI/Taffy owns layout. Kedra does not implement another CSS parser or layout engine.
+The `bevy_flair_style` source override adds conservative subject class/ID
+rejection before stock matching and isolates inline-only changes from relational
+selector invalidation. Provenance, lifecycle and verification boundaries are
+defined by [ADR 0043](0043-css-subject-prefilter.md).
 
 `kedra_ui::styles::StyleAssetsPlugin` installs headless parsing/property assets.
 `StylesPlugin` adds live cascade/animation systems. The importer uses the headless

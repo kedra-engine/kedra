@@ -18,9 +18,12 @@ wait = table.freeze({
         assert(type(label) == "string" and type(predicate) == "function")
         assert(type(timeout_ms) == "number" and timeout_ms > 0 and timeout_ms <= 600000)
         local deadline = runtime.elapsed_ms() + timeout_ms
+        local expired = "Timed out waiting for " .. label
         while true do
-            if predicate() then return end
-            assert(runtime.elapsed_ms() < deadline, "Timed out waiting for " .. label)
+            assert(runtime.elapsed_ms() < deadline, expired)
+            local ready = predicate()
+            assert(runtime.elapsed_ms() < deadline, expired)
+            if ready then return end
             suspend("updates", 1)
         end
     end,

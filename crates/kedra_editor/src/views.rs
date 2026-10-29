@@ -166,6 +166,11 @@ pub(crate) fn hydrate(world: &mut World) {
         })
         .collect::<Vec<_>>();
     requests.sort_by_key(|request| request.0);
+    if !requests.is_empty()
+        && let Some(mut demand) = world.get_resource_mut::<kedra_wakeup::WakeDemand>()
+    {
+        demand.active();
+    }
     for (_, entity, parent, kind, started) in requests {
         if !world.entities().contains(entity) || !world.entities().contains(parent) {
             continue;

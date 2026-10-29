@@ -15,4 +15,6 @@ mod lifecycle;
 mod modules;
 #[path = "contracts/parameters.rs"]
 mod parameters;
+#[path = "contracts/profiling.rs"]
+mod profiling;
 mod support;

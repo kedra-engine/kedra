@@ -394,7 +394,7 @@ pub(super) fn step(world: &mut World, position: Vec2, button: Option<bool>) {
     tick(world);
 }
 
-pub(super) fn wait<T: Send + 'static>(task: &bevy::tasks::Task<T>) {
+pub(super) fn wait<T: Send + 'static>(task: &kedra_wakeup::Task<T>) {
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
     while !task.is_finished() {
         assert!(

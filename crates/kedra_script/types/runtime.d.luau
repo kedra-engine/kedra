@@ -15,7 +15,15 @@ export type Log = {
     error: (message: string, fields: JsonValue?) -> (),
 }
 export type RuntimeContext = {
-    entity: EntityHandle?, params: {[string]: JsonValue}, log: Log,
+    entity: EntityHandle?, params: {[string]: JsonValue}, log: Log, profiler: Profiler,
+}
+export type Profiler = {
+    -- Synchronous CPU scope. Callback cannot yield; results/errors are preserved.
+    scope: <T...>(name: string, callback: (...any) -> T..., ...any) -> T...,
+    -- Logical elapsed duration, including yields; not CPU time. Owner cancellation closes it.
+    operation: <T...>(name: string, callback: (...any) -> T..., ...any) -> T...,
+    -- Absolute finite sample. Unit is immutable for a name within this run.
+    counter: (name: string, value: number, unit: ("count" | "bytes" | "ms" | "percent")?) -> (),
 }
 declare extern type SequenceHandle with end
 export type SequenceOutcome = {state: "queued" | "running" | "cancelled"}
@@ -24,7 +32,7 @@ export type SequenceOutcome = {state: "queued" | "running" | "cancelled"}
 export type Connection = {disconnect: (self: Connection) -> ()}
 export type BehaviorContext = {
     -- Only attach supplies an entity; start also supports unattached Behaviors.
-    entity: EntityHandle?, params: {[string]: JsonValue}, log: Log,
+    entity: EntityHandle?, params: {[string]: JsonValue}, log: Log, profiler: Profiler,
     sequences: {
         start: (path: string, args: JsonValue?) -> SequenceHandle,
         status: (handle: SequenceHandle) -> SequenceOutcome,

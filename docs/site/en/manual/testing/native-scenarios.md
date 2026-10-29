@@ -44,7 +44,7 @@ Use fresh paths for each invocation. With no `--output`, the driver reserves a n
 | Preview/navigation | `scene-view`, `scene-navigation` | Resource/layout readiness and scoped interaction |
 | Isolated Inspector | `inspector-fixture` | Authored explicit scene, without project startup |
 
-Hierarchy includes behavior and appearance phases in one session, with separate results and frame
+Hierarchy includes behavior and usability phases in one session, with separate results and frame
 receipts. There is no `hierarchy-appearance` command and no Hierarchy screenshot golden.
 `scene-navigation` uses the model and mixed scene needed for navigation; it does not replace the
 separate PNG/model/UI/mixed preview and host-transfer checks of `scene-view`.
@@ -78,12 +78,21 @@ It does not prove a document is loaded, a control is mounted or a preview has re
 | Native credential startup | 45 seconds, checking for early child exit |
 | One HTTP request | 8-second total timeout; no redirects or proxy |
 | Native operation receipt | 12-second polling deadline |
+| Explicit window activation | Eight seconds for acknowledgment; no forced observed state or input replay |
+| Native readback | Eight real-time seconds, independent of FPS; late publication is rejected |
+| Floating host creation/restoration | Ten real-time seconds; expiry is checked before publication |
+| Default finite Sequence budget | 45 seconds for the whole program, not per helper |
 | Named in-application Luau sequence | 55-second outer polling deadline |
 | Common editor state/node readiness | 40-second polling deadline |
 | Authorized graceful shutdown | Successful child exit within 10 seconds |
 
 Polling deadlines are checked between attempts; a bounded RPC/predicate can extend elapsed time.
 These are not a single hard deadline for compilation or the whole suite.
+The finite sequence's own budget also applies; helper deadlines are not additive
+extensions of that budget. Readiness predicates are checked before/after evaluation in
+Luau, but cannot preempt native calls. Dock preview observation waits for a live gesture
+and production candidate readiness, then a renderer fence. It does not demand repeated
+pixel-identical readbacks or replay a cancelled input gesture.
 Potentially blocking custom tests need an independent killable-process deadline as well.
 Drop kills/reaps unfinished native children as cleanup, never as successful lifecycle evidence.
 
@@ -149,12 +158,41 @@ not native input/frame acceptance. Report its execution separately. `native-proj
 accepts the same command arguments as `native-switch`, selecting the independent docking
 composition in two processes rather than switch startup.
 
+## Native task readiness
+
+On Linux, the Rust supervisor can verify the shared readiness adapter independently
+of editor pacing, RPC polling and active Luau sequences:
+
+```sh
+cargo xtask test -- native-wakeup --output target/test/native-wakeup
+```
+
+This builds the concrete `kedra_wakeup/native_readiness` example, verifies native
+sleep through the owned process's OS wait state, and releases its worker through
+stdin. The owner never polls the handle before worker release, so readiness must
+be registered automatically at construction, not by incidental frame polling.
+Success and worker failure require actual GPU readbacks and clean exit;
+failure preserves the prior clear-color frame. A separate no-wakeup control must
+leave the completed worker result unconsumed until the supervisor's deadline and
+forced cleanup. No window input is injected to unblock any case. Uniform
+clear-color images are deliberate state diagnostics, not component references.
+The supervisor also verifies a 350 ms deadline through the same ReactivePlugin
+with diagnostic indefinite idle: no worker release, RPC, Luau or window input
+causes that wake. This does not certify physical input latency, other platforms
+or indefinite editor sleep. The actual editor retains a bounded 100 ms safety
+sweep plus active subsystem hints; see
+[ADR 0045](../../../../decisions/0045-bounded-reactive-editor.md).
+Results are in `public/report.json`; logs and readbacks remain private.
+
 ## Diagnose without losing evidence
 
-Open `public/index.html` and `public/report.json`. Setup failure, unrun selections and failed
+For feature, component and game scenarios, open `public/index.html` and `public/report.json`.
+The readiness scenario publishes `public/report.json`. Setup failure, unrun selections and failed
 cases are explicit. Feature scenarios check behavior: they delete temporary validated PNG
 readbacks and retain renderer receipts and dimensions, not pixel comparisons or galleries.
 Inspect `private/` logs locally, including `native.log` and `rpc-errors.jsonl`, before a fresh run.
+With `KEDRA_DOCK_TRACE=1`, editor scenarios also retain a bounded `input-trace.json` in
+their private session directory, including input, focus, viewport sizes and scale changes.
 Do not publish credentials, unrestricted RPC data, private project copies or personal paths.
 
 Focus loss cancels docking gestures; do not refocus/restart them invisibly to turn a failure green.

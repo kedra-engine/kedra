@@ -11,6 +11,13 @@ use kedra_docking::{
 use kedra_ui::docking::{Control, Divider, Geometry, GroupTarget, TabLabel, class, geometry, rect};
 use menu::menu;
 
+pub(super) fn preview_ready(state: &EditorWorkspace) -> bool {
+    state
+        .measurements
+        .as_ref()
+        .is_some_and(|measurement| measurement.ready >= 3)
+}
+
 #[derive(Component, Clone, Copy)]
 pub(super) enum Action {
     SourceHistory(bool),
@@ -580,7 +587,7 @@ pub(super) fn tick(world: &mut World, state: &mut EditorWorkspace) -> Result<(),
             }
             update_measurement(world, state)?;
             if released {
-                let ready = insertion || state.measurements.as_ref().is_some_and(|m| m.ready >= 3);
+                let ready = insertion || preview_ready(state);
                 debug!(?selection, ?target, insertion, ready, pointer = ?pointer(world, state), revision = state.layout.revision(), "Dock drop admission");
                 clear_measurement(world, state);
                 super::feedback::clear(world, state);

@@ -76,6 +76,7 @@ Review logs for credentials and personal paths before sharing them.
   application assembly versus acceptance.
 - [Repository checks](repository-checks.md): focused Cargo tests, Rust gate and feature builds.
 - [Native scenarios](native-scenarios.md): desktop preparation, explicit launch and recovery.
+- [GUI performance](performance.md): bounded RPC/Luau metrics, timelines and native profiling.
 - [Visual verification](visual-verification.md): source inspection, captures, diffs and review.
 - [Getting started](../getting-started/index.md): native build and startup prerequisites.
 - [Assets](../assets/index.md): why a valid source and a matching delivery are different inputs.

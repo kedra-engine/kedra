@@ -1,10 +1,8 @@
 //! Modal-owned read-only project identity preview. Submission independently
 //! revalidates sources; a preview is never authority to open or execute code.
 use crate::model::*;
-use bevy::{
-    prelude::*,
-    tasks::{IoTaskPool, Task, block_on, poll_once},
-};
+use bevy::{prelude::*, tasks::IoTaskPool};
+use kedra_wakeup::Task;
 use std::path::PathBuf;
 
 #[derive(Component)]
@@ -27,12 +25,14 @@ impl Preview {
 
 pub(crate) fn sync(
     form: Res<EntryForm>,
+    wakeup: Option<Res<kedra_wakeup::Wakeup>>,
     mut previews: Query<&mut Preview>,
     mut texts: Query<&mut Text>,
 ) {
     if form.mode != Some(EntryMode::Open) {
         return;
     }
+    let wakeup = wakeup.as_deref().cloned().unwrap_or_default();
     let (requested, invalid) = match entry_intent(&form) {
         Ok(intent) => (Some(intent.root()), None),
         Err(error) => (None, Some(error)),
@@ -48,17 +48,14 @@ pub(crate) fn sync(
         if preview.requested != requested {
             preview.requested = requested.clone();
             preview.task = requested.clone().map(|path| {
-                IoTaskPool::get().spawn(async move {
+                wakeup.spawn(IoTaskPool::get(), async move {
                     kedra_project::open(&path).map_err(|error| error.to_string())
                 })
             });
             set(&mut texts, preview.name, "Checking project…".into());
             set(&mut texts, preview.detail, "kedra.toml".into());
         }
-        let result = preview
-            .task
-            .as_mut()
-            .and_then(|task| block_on(poll_once(task)));
+        let result = preview.task.as_mut().and_then(Task::poll);
         if let Some(result) = result {
             preview.task = None;
             let (name, detail) = match result {

@@ -126,6 +126,17 @@ impl Task {
                     rustdoc: false,
                 },
                 Stage::Cargo {
+                    label: "Profiling-disabled application contract",
+                    args: &[
+                        "test",
+                        "-p",
+                        "kedra_profiling",
+                        "--no-default-features",
+                        "--locked",
+                    ],
+                    rustdoc: false,
+                },
+                Stage::Cargo {
                     label: "Independent asset data",
                     args: &[
                         "check",
@@ -143,6 +154,18 @@ impl Task {
                         "check",
                         "-p",
                         "kedra_ui",
+                        "--lib",
+                        "--no-default-features",
+                        "--locked",
+                    ],
+                    rustdoc: false,
+                },
+                Stage::Cargo {
+                    label: "Headless readiness adapter",
+                    args: &[
+                        "check",
+                        "-p",
+                        "kedra_wakeup",
                         "--lib",
                         "--no-default-features",
                         "--locked",
@@ -348,6 +371,13 @@ mod tests {
                     "--locked"
                 ],
                 vec![
+                    "test",
+                    "-p",
+                    "kedra_profiling",
+                    "--no-default-features",
+                    "--locked"
+                ],
+                vec![
                     "check",
                     "-p",
                     "kedra_assets",
@@ -359,6 +389,14 @@ mod tests {
                     "check",
                     "-p",
                     "kedra_ui",
+                    "--lib",
+                    "--no-default-features",
+                    "--locked"
+                ],
+                vec![
+                    "check",
+                    "-p",
+                    "kedra_wakeup",
                     "--lib",
                     "--no-default-features",
                     "--locked"
