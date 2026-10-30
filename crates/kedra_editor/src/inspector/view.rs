@@ -69,7 +69,7 @@ impl Panel {
             !self.state.details_open || self.state.target.is_none(),
         );
         let Some(target) = &self.state.target else {
-            if let Some(asset) = &self.state.asset {
+            if let Some(asset) = self.state.asset.clone() {
                 let path = asset
                     .path()
                     .split_once("://")
@@ -86,6 +86,9 @@ impl Panel {
                     !self.state.details_open,
                 );
                 class(world, self.element("message")?, "hidden", true);
+                if asset.path().ends_with(".environment.ron") {
+                    return self.environment_tick(world, id, documents, &asset);
+                }
                 class(world, self.element("entries")?, "hidden", true);
                 return Ok(());
             }
@@ -125,6 +128,12 @@ impl Panel {
         }
         self.text(world, "name", snapshot.name)?;
         self.text(world, "source", snapshot.source_path)?;
+        let environment_missing =
+            documents.scene_root(target) && !snapshot.components.contains_key("scene.environment");
+        let component_commands = documents.component_commands(target, &policies)?;
+        if environment_missing {
+            self.environment_assignment(world, id, &types, documents.environment_choices())?;
+        }
         class(world, self.element("entries")?, "hidden", false);
         let delivery = world
             .get_resource::<kedra_authoring_assets::Delivery>()
@@ -148,7 +157,10 @@ impl Panel {
         self.dirty |= changed;
         if !self.dirty {
             self.sync_fields(world, id, documents)?;
-            self.status(world, snapshot.components.is_empty())?;
+            self.status(
+                world,
+                snapshot.components.is_empty() && !environment_missing,
+            )?;
             self.history_tick(world, id);
             return Ok(());
         }
@@ -159,7 +171,9 @@ impl Panel {
         let mut budget = RenderBudget::default();
         self.limited = false;
         self.components.retain(|key, tree| {
-            if snapshot.components.contains_key(key) {
+            if snapshot.components.contains_key(key)
+                || (key == "environment-assignment" && environment_missing)
+            {
                 true
             } else {
                 tree.retire(world);
@@ -194,7 +208,11 @@ impl Panel {
             let binding = ValueBinding {
                 token: BindingToken(self.state.token),
                 value,
-                label: key,
+                label: if key == "scene.environment" {
+                    "Environment"
+                } else {
+                    key
+                },
                 access: if !self.state.raw
                     && ((key == "scene.transform"
                         && value.try_downcast_ref::<Transform>().is_some())
@@ -265,6 +283,13 @@ impl Panel {
                 tree.filter(&self.filter);
                 tree.update(world, &mut context, binding, self.state.raw)?;
             }
+            let command = component_commands
+                .iter()
+                .find(|command| !command.add && command.key == *key)
+                .cloned();
+            if let Some(tree) = self.components.get(key) {
+                crate::workspace::component_control(world, tree.root(), &scope, command)?;
+            }
         }
         self.dirty = false;
         if self.history_waiting() {
@@ -275,7 +300,10 @@ impl Panel {
             return Ok(());
         }
         self.sync_fields(world, id, documents)?;
-        self.status(world, snapshot.components.is_empty())?;
+        self.status(
+            world,
+            snapshot.components.is_empty() && !environment_missing,
+        )?;
         self.history_tick(world, id);
         Ok(())
     }

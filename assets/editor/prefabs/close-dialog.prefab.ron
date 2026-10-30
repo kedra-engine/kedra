@@ -1,0 +1,11 @@
+(
+ version:1,id:"97f83eab-a0f8-4af0-ad35-f9d6d61b9c56",kind:Prefab,title:"Unsaved sources",root:"271e79e7-16b0-4e85-97c6-8c5a4a5cbe37",base:None,ports:{},
+ nodes:[
+  (id:"271e79e7-16b0-4e85-97c6-8c5a4a5cbe37",name:"Modal barrier",parent:None,components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["theme","modal-barrier"])),"ui.stylesheet":(version:1,value:(asset:Path("editor://styles/workbench.css"))),"ui.modal":(version:1,value:Barrier),"ui.global_z":(version:1,value:(110))}),
+  (id:"6047d07e-f314-45b9-bd80-c097d34024a8",name:"Exit dialog",parent:Some((instances:[],node:"271e79e7-16b0-4e85-97c6-8c5a4a5cbe37")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dialog","close-dialog"])),"ui.modal":(version:1,value:Dialog)}),
+  (id:"ca273b70-e5f9-4f61-81f1-5cd90213fa23",name:"Title",parent:Some((instances:[],node:"6047d07e-f314-45b9-bd80-c097d34024a8")),components:{"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","title"])),"ui.caption":(version:1,value:(text:"Save changes before exiting?",justify:Left,wrap:true))}),
+  (id:"1e3d8129-5d4a-42cb-a634-c5439bbff85f",name:"Sources",parent:Some((instances:[],node:"6047d07e-f314-45b9-bd80-c097d34024a8")),components:{"ui.id":(version:1,value:("sources")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","secondary","close-sources"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:true))}),
+  (id:"7485a1ce-5a48-45cc-9d59-44e13b568701",name:"Error",parent:Some((instances:[],node:"6047d07e-f314-45b9-bd80-c097d34024a8")),components:{"ui.id":(version:1,value:("error")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["text","error"])),"ui.caption":(version:1,value:(text:"",justify:Left,wrap:true))}),
+  (id:"538209bd-7539-4b8c-81a0-7b9ba8176a8f",name:"Actions",parent:Some((instances:[],node:"6047d07e-f314-45b9-bd80-c097d34024a8")),components:{"ui.id":(version:1,value:("actions")),"ui.layout":(version:1,value:(node:())),"ui.classes":(version:1,value:(names:["dialog-actions"]))})
+ ],instances:[],overrides:[],
+)

@@ -538,10 +538,13 @@ fn resize_pointer_preview_escape_release_keyboard_and_preferred_reset() -> TestR
     );
     world.resource_mut::<ButtonInput<KeyCode>>().reset_all();
     step(world, Vec2::new(600., 300.), Some(false));
-    world
-        .resource_mut::<Time<Real>>()
-        .advance_by(std::time::Duration::from_secs(1));
+    // Retry immediately, inside the double-click interval: Escape must not
+    // turn the new drag into a preferred-ratio reset.
     step(world, Vec2::new(400., 300.), Some(true));
+    assert!(matches!(
+        world.resource::<EditorWorkspace>().gesture,
+        Some(Gesture::Resize { .. })
+    ));
     step(world, Vec2::new(600., 300.), Some(false));
     assert!(
         matches!(world.resource::<EditorWorkspace>().layout.snapshot().nodes[&split], Node::Split { fraction, .. } if fraction > 0.7)
@@ -579,6 +582,11 @@ fn menus_maximize_restore_hide_show_and_tab_keyboard_use_product_dispatch() -> T
     let world = app.world_mut();
     sources(world)?;
     let group = measured(world)?;
+    let full_title = "Panel with a very long title that does not fit its tab";
+    world
+        .resource_mut::<EditorWorkspace>()
+        .titles
+        .insert(b, full_title.into());
     let anchor = world
         .resource::<EditorWorkspace>()
         .renderer
@@ -586,6 +594,21 @@ fn menus_maximize_restore_hide_show_and_tab_keyboard_use_product_dispatch() -> T
         .ok_or("anchor")?;
     dispatch(world, Some(Control::Menu(group)), None, anchor);
     assert_eq!(world.resource::<EditorWorkspace>().menu.len(), 1);
+    assert!(world.query::<&Action>().iter(world).any(
+        |action| matches!(action, Action::Submenu(entries) if entries.iter().any(|entry|
+            matches!(entry, kedra_ui::popup::Entry::Command { label, command: Action::Select(view) }
+                if label == full_title && *view == b)))
+    ));
+    let (branch, action) = world
+        .query::<(Entity, &Action)>()
+        .iter(world)
+        .find(|(_, action)| {
+            matches!(action, Action::Submenu(entries) if entries.iter().any(|entry|
+            matches!(entry, kedra_ui::popup::Entry::Command { command: Action::Maximize(_), .. })))
+        })
+        .map(|(entity, action)| (entity, action.clone()))
+        .ok_or("Layout submenu missing")?;
+    dispatch(world, None, Some(action), branch);
     assert!(
         world
             .query::<&Action>()
@@ -613,6 +636,18 @@ fn menus_maximize_restore_hide_show_and_tab_keyboard_use_product_dispatch() -> T
             .contains_key(&a)
     );
     dispatch(world, None, Some(Action::Panels), anchor);
+    let (branch, windows) = world
+        .query::<(Entity, &Action)>()
+        .iter(world)
+        .find_map(|(entity, action)| {
+            if let Action::Submenu(entries) = action {
+                Some((entity, entries.clone()))
+            } else {
+                None
+            }
+        })
+        .ok_or("Windows submenu missing")?;
+    dispatch(world, None, Some(Action::Submenu(windows)), branch);
     assert!(
         world
             .query::<&Action>()

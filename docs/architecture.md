@@ -2,6 +2,10 @@
 
 ## Current scope
 
+Environment asset roots use the ordinary reflected Inspector and source-owned
+working values/Save, with validated authoring overlays for editor previews;
+see [ADR 0052](decisions/0052-environment-asset-root-editing.md).
+
 The workspace contains `xtask`, native startup/editor modules and shared asset
 runtime/import modules, with the editor and isolated native fixtures as consumers.
 The workspace pins Bevy 0.20.0. Shared opt-in Luau execution uses `kedra_script`;
@@ -132,6 +136,24 @@ Do not interpret an empty engine graph as proven player isolation.
 
 ## Module rules
 
+Runtime-layer `kedra_gizmo` owns constrained Move/Rotate/Scale candidates using Bevy geometry.
+The editor owns viewport input, projection previews, cancellation and source-history
+publication; see [ADR 0053](decisions/0053-scene-transform-manipulators.md).
+
+Asset-entry filesystem operations belong to `kedra_authoring_fs::entries` and reuse
+the existing exclusive source lease and bounded inventory reader. The editor owns the
+name/confirmation UI, clean-source settlement and proposed-inventory compilation through
+the common authoring reconciliation path. Rename preserves metadata and document identity;
+deletion detaches to a retained sibling recovery directory. Entry operations are immediate,
+separate from document history/Save, and cannot silently rewrite references or deliveries.
+See the [filesystem contract](../crates/kedra_authoring_fs/README.md#asset-folders).
+
+New scene creation uses the existing project authoring workspace and named source
+history. Document Save groups support new sources and history removals in index-free
+scopes; the filesystem writer retains exact receipt/recovery ownership. Resource-free
+Scene Views need no project delivery, while asset requests still require admission.
+See [ADR 0047](decisions/0047-document-creation-and-history-save.md) for ownership and limits.
+
 Shared source commands/inspection/compilation live in `kedra_authoring::{editing,
 changes,inspection,source}`, independent of UI and Lua. Bounded source-file admission
 lives in `kedra_authoring_fs::source`. Native reflected handle construction lives in
@@ -218,12 +240,13 @@ Preview each have a separate linked ADR and independent existing-docking view.
 The [current source profile](site/en/contributing/contracts/editor/source-documents.md)
 uses one `kedra_authoring` workspace per project. Transform acceptance stages and compiles
 a complete candidate before native acknowledgment and synchronous publication.
-General editable-document settlement and new-document publication remain unavailable.
-Rendering is a separate presentation capability,
-requiring an explicit matching verified delivery rather than source validity alone.
-Read-only [Hierarchy](site/en/contributing/contracts/editor/hierarchy.md)
+General editable-document settlement remains unavailable. New scene and its first Save
+use the source-history and document-group pipeline described in ADR 0047.
+Rendering is a separate presentation capability: resource-free graphs need no delivery,
+while resource-bearing graphs require an explicit matching verified delivery.
+[Hierarchy](site/en/contributing/contracts/editor/hierarchy.md)
 projects the existing composed graph and routes scoped node selection through that
-same document authority.
+same document authority; structural edits publish through source history.
 [ADR 0017](decisions/0017-read-only-scene-view.md) defines the read-only Scene
 View requirements before Inspector: isolated source projection, verified resource binding,
 editor camera navigation and scoped viewport selection. Its initial
@@ -237,8 +260,8 @@ entities, camera-owned display settings and an authored model-preview stage.
 `kedra_scene::environment` supplies the version-1 asset/loader and scene-root
 reference. Its opt-in `render` feature supplies native primitive, material, sun
 and camera-environment hydration consumed by Scene View. No rendering feature is
-required to load the data. Environment source editing remains authoring-owned;
-asset-editing/Save, skybox/IBL and full game/editor frame parity are not implemented.
+required to load the data. Environment source editing and Save remain authoring-owned
+under ADR 0052; skybox/IBL and full game/editor frame parity are not implemented.
 
 - Prefer maintained libraries and standard ecosystem tools over bespoke infrastructure.
   Compare fit, license, platform support, maintenance and dependency cost first.

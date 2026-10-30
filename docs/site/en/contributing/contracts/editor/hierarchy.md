@@ -1,9 +1,9 @@
 # Hierarchy contract
 
-Hierarchy implements read-only navigation and selection under
+Hierarchy implements source navigation, selection and structural commands under
 [ADR 0014](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0014-hierarchy-panel.md),
-without structural editing. See [Hierarchy in the Manual](../../../manual/editor/hierarchy.md)
-for navigation, search and Reveal.
+with shared source transactions/history. See
+[Hierarchy in the Manual](../../../manual/editor/hierarchy.md) for navigation, search and Reveal.
 
 ## Graph authority and scoped selection
 
@@ -12,9 +12,8 @@ or the entry document's raw `nodes` array. Its iterative preorder follows the co
 effective `children` order, including inherited/overridden nodes and nested prefab instances.
 The panel does not interpret overrides or resolve references itself. A root-only document
 still produces one real node. Each open document retains one immutable composed snapshot.
-Future editing must add explicit graph-revision invalidation and selection remapping before
-changing that snapshot; there is no background hierarchy projection or revision-update path
-in this read-only profile.
+Accepted edits replace the composed snapshot, rebuild affected retained rows and reconcile
+source selection. There is no background hierarchy projection.
 
 The [document coordinator](source-documents.md) owns selected `NodeAddress`, including the
 complete nested instance scope. Equal inner IDs/names in two prefab instances remain different
@@ -36,7 +35,7 @@ Reset preserve the panel/search identity; these are session guarantees, not rest
 Search reuses `unicase` Unicode folding, retaining matching ancestors as muted context even
 inside collapsed branches. The retained native field permits 256 characters and rejects
 control characters on insert/paste. Additional node filters are disabled with a hover reason;
-display names do not imply structural menus, new filters or runtime type inference.
+display names do not imply runtime type inference.
 
 Existing composition ceilings apply: 4096 effective nodes per graph, 128 admitted documents
 and the composer's work/depth limits. Projection handles the whole admitted graph; native
@@ -48,10 +47,23 @@ No document, opening, no matches and failed Open are distinct states. Failed Ope
 document/tree/selection and explicitly identifies the retained tree. Whole-scope admission
 failure can prevent any tree; unsupported source is never replaced by default nodes.
 Navigation changes neither source bytes nor authoring revisions/history or gameplay state.
-[Inspector](inspector.md) follows the shared selection. Rename, add/delete, drag/reparent,
-structural source editing remains unavailable. Existing-document Save is host-owned;
-general editable Inspector must add field settlement
-before selection can replace an edited target.
+[Inspector](inspector.md) follows the shared selection. Content right-click menus create
+empty spatial nodes, cubes, spheres, thin-cuboid planes, directional lights and authored
+perspective cameras. Blank-space creation targets the document root; row creation targets
+the clicked node. These commands do not appear in dock-tab menus. Rename (F2), subtree
+Delete and source Undo/Redo share the ordinary authoring transaction and explicit Save.
+Commands pin source scope, target and revisions; stale commands and unresolved Inspector
+drafts refuse without publishing a partial edit. Root deletion is refused.
+
+Node drops onto rows reparent within the same receiving document; dropping onto empty
+Hierarchy space reparents to its root. Ancestor/descendant multi-selection moves only the
+selected outer subtrees. Spatial world pose is retained; cycles, singular parents and
+nonrepresentable shear refuse atomically. Composition boundary rules remain source-owned.
+Sibling insertion/reordering and drag autoscroll are not implemented.
+
+`scene.camera` stores validated perspective parameters without activating a rendering
+camera in the editor. Scene View retains its navigation camera; game camera activation
+and Play remain separate runtime work.
 
 ## Authored presentation and reference
 
@@ -69,8 +81,7 @@ Canonical sources are UI-KIT `128:32776` under Hierarchy `125:17354`, search `12
 keyboard focus `128:32955`, linked marker `128:33170` and collapsed `128:33627`.
 Node/scene SVGs originate there; disclosure/folder icons reuse exact project assets.
 See [Figma provenance](../ui/design-provenance.md#hierarchy-exports).
-Rename/reparent/Unpack specimens are
-references, not implemented read-only actions.
+Unpack specimens remain references; prefab unpacking is not implemented.
 
 ## Verification and evidence boundaries
 
@@ -83,6 +94,7 @@ checks, hidden/stale input and unchanged sources. Required repository checks use
 
 ```sh
 cargo xtask test -- features --only hierarchy --output target/test/hierarchy
+cargo xtask test -- features --only hierarchy-editing --output target/test/hierarchy-editing
 ```
 
 On an idle desktop the native runner uses isolated credentials/state/artifacts and its own

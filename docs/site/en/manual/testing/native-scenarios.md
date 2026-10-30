@@ -16,7 +16,11 @@ See [test dispatch](../cli/repository-and-tests.md) for command selection and
 6. Arrange an external process deadline for potentially blocking custom probes.
 
 The desktop preflight checks the unlocked console on macOS. Linux requires `DISPLAY`, X11 and
-a window manager. This is not Wayland acceptance or hosted platform certification.
+a window manager. The editor feature runner removes `WAYLAND_DISPLAY` from its children
+to select that backend even in a Wayland login session. This is not Wayland acceptance
+or hosted platform certification. Native Wayland programmatic resize can retain the
+previous physical size while the test DPR changes; it is not accepted by this suite.
+A delivered resize request does not guarantee the compositor applied it.
 The Windows path does not provide equivalent unlocked-console proof; arrange the desktop yourself.
 Do not interpret passing preflight as evidence that the requested interaction succeeded.
 
@@ -40,15 +44,18 @@ Use fresh paths for each invocation. With no `--output`, the driver reserves a n
 | Project manager and forms | `startup`, `luau` | Isolated startup; Luau checks an editor-owned form program |
 | Source navigation | `browser`, `hierarchy`, `inspector` | Private project copy and editor state assertions |
 | Native workspace/chrome | `workspace`, `window-chrome` | Hosts, layout, focus and lifecycle behavior |
+| Unsaved-source exit | `exit-save`, `exit-discard` | Native close confirmation, Cancel, Save and exit, Exit without saving; private source bytes and successful process exit |
 | Docking | `docking`, `docking-states`, `dock-fixture` | Production gesture path, state checks and renderer fences |
 | Preview/navigation | `scene-view`, `scene-navigation` | Resource/layout readiness and scoped interaction |
+| Source transforms | `scene-transform` | Move/Rotate/Scale, Undo/Redo/Save, Hand disabling transforms, MMB pan and wheel navigation in main/floating views |
 | Isolated Inspector | `inspector-fixture` | Authored explicit scene, without project startup |
 
 Hierarchy includes behavior and usability phases in one session, with separate results and frame
 receipts. There is no `hierarchy-appearance` command and no Hierarchy screenshot golden.
 `scene-navigation` uses the model and mixed scene needed for navigation; it does not replace the
 separate PNG/model/UI/mixed preview and host-transfer checks of `scene-view`.
-RMB flight and MMB pan still require dedicated acceptance beyond the navigation scenario.
+`scene-transform` exercises injected MMB pan. Physical MMB and RMB flight still require
+dedicated acceptance; injected scenarios do not certify hardware interaction.
 
 ## What the driver owns
 

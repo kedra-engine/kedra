@@ -78,7 +78,7 @@ symlinked or special inventory members are rejected, duplicate/nil identities fa
 must resolve inside the admitted project source scope. A regular-file symlink for `kedra.toml`
 can be accepted; that does not imply symlinked asset members are supported.
 
-The read-only source workspace retains an admitted baseline, not a continuously refreshed file
+The source workspace retains an admitted baseline, not a continuously refreshed file
 view. Newly added documents or changed source bytes can require reopening the project before
 admission. Existing documents are retained when a later source check fails; Open is not a repair
 or overwrite operation. See [Create or open a project](create-open.md) for recovery boundaries.

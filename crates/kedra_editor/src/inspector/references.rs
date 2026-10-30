@@ -50,6 +50,11 @@ impl Panel {
             return Ok(());
         }
         let result = (|| {
+            if crate::workspace::import_pending(world) {
+                return Err(
+                    "Finish the asset filesystem operation before assigning resources.".into(),
+                );
+            }
             if self.has_drafts(world) {
                 return Err(
                     "Correct or cancel pending property input before assigning a resource".into(),
@@ -65,6 +70,8 @@ impl Panel {
                 return Err("This resource field no longer authorizes editing".into());
             }
             let root = world
+                // The empty scene-root slot creates the existing component in one
+                // source transaction; it does not invent a default resource handle.
                 .resource::<crate::model::ProjectManager>()
                 .project
                 .as_ref()
@@ -77,6 +84,19 @@ impl Panel {
             let policies = world
                 .resource::<kedra_scene::reflection::ComponentPolicies>()
                 .clone();
+            if source.component == "environment-assignment" {
+                if let Some(path) = event.path.as_deref() {
+                    documents.assign_environment(
+                        &source.target,
+                        &source.expected,
+                        path,
+                        &types,
+                        &policies,
+                    )?;
+                    self.refresh_presentation();
+                }
+                return Ok(());
+            }
             let value = documents.reference_value(
                 ReferenceRequest {
                     target: &source.target,

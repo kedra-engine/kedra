@@ -1,7 +1,16 @@
 //! Project-owned source sessions. Browser selection is never document activation.
+pub(crate) mod components;
 mod context;
+mod creation;
+mod folders;
+mod models;
+pub(crate) mod structure;
+pub(crate) use structure::ObjectKind;
 mod editing;
-pub(crate) use editing::PropertyChange;
+pub(crate) use editing::{PreparedChange, PropertyChange};
+pub(crate) mod environments;
+#[cfg(test)]
+mod import_tests;
 pub(crate) mod inspection;
 mod references;
 mod saving;
@@ -39,6 +48,8 @@ pub(crate) struct Ready {
 }
 #[derive(Default)]
 pub(crate) struct Documents {
+    pub(crate) environments: kedra_authoring::environment::Edits,
+    creation: creation::Creation,
     scope: Option<Workspace>,
     render_source: Option<kedra_authoring::persistence::SourceSnapshot>,
     save: saving::State,
@@ -60,6 +71,71 @@ pub(crate) struct Documents {
     asset_ready: Option<PathBuf>,
 }
 impl Documents {
+    /// Admit the existing source catalog for passive consumers without opening a
+    /// document. Shares the ordinary Open task/lease and never executes source code.
+    pub(crate) fn ensure_source(&mut self, world: &World, root: PathBuf) {
+        if self.scope.is_some() || self.task.is_some() || self.creating() || self.error.is_some() {
+            return;
+        }
+        let clock = self.clock;
+        let registry = world.resource::<AppTypeRegistry>().clone();
+        let policies = world.resource::<ComponentPolicies>().clone();
+        self.task = Some(
+            Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
+                let result = source_files::read(&root, "game")
+                    .and_then(|snapshot| source::admit(snapshot, &registry.read(), &policies))
+                    .map(Some);
+                (clock, result)
+            }),
+        );
+    }
+    pub(crate) fn imported(
+        &mut self,
+        source: kedra_authoring::persistence::SourceSnapshot,
+        types: &bevy::reflect::TypeRegistry,
+        policies: &ComponentPolicies,
+    ) -> Result<(), String> {
+        if self.environments.unsettled() {
+            return Err("Save or discard environment edits before importing assets".into());
+        }
+        let Some(scope) = &mut self.scope else {
+            return Ok(());
+        };
+        if !scope.source.documents.iter().all(|old| {
+            source
+                .documents
+                .iter()
+                .any(|new| old.path == new.path && old.hash == new.hash)
+        }) || scope.source.index.as_ref().map(|i| &i.hash)
+            != source.index.as_ref().map(|i| &i.hash)
+        {
+            return Err(
+                "Sources changed outside import; reopen the project to reconcile them".into(),
+            );
+        }
+        self.compiled = source::reconcile(scope, source, types, policies)?;
+        self.environments = default();
+        self.paths = scope
+            .working
+            .documents()
+            .keys()
+            .filter_map(|id| scope.path(*id).map(|p| (PathBuf::from(p), *id)))
+            .collect();
+        self.render_source = None;
+        self.compiled_revisions = self.revisions();
+        self.reconcile_selection();
+        for (id, opened) in &mut self.opened {
+            if let Some(compiled) = self.compiled.get(id) {
+                opened.graph = std::sync::Arc::new(compiled.graph().clone());
+            }
+        }
+        Ok(())
+    }
+    pub(crate) fn contains(&self, document: DocumentId) -> bool {
+        self.scope
+            .as_ref()
+            .is_some_and(|scope| scope.working.documents().contains_key(&document))
+    }
     pub(crate) fn edit_scope(&self) -> kedra_editor_context::ScopeId {
         self.scope_identity
     }
@@ -96,16 +172,14 @@ impl Documents {
         self.scope.is_some() && !self.opening()
     }
     pub(crate) fn update_clean(&self) -> bool {
-        self.pending.is_none()
+        !self.environments.unsettled()
+            && !self.creating()
+            && self.pending.is_none()
             && self.task.is_none()
-            && self.scope.as_ref().is_none_or(|scope| {
-                scope.pending().is_none()
-                    && scope
-                        .working
-                        .documents()
-                        .keys()
-                        .all(|id| !scope.working.dirty(*id))
-            })
+            && self
+                .scope
+                .as_ref()
+                .is_none_or(|scope| scope.pending().is_none() && !scope.working.is_dirty())
     }
     /// Immutable admission baseline used only to verify a renderer delivery.
     pub(crate) fn scene_source(&self) -> Option<&kedra_authoring::persistence::SourceSnapshot> {
@@ -119,13 +193,16 @@ impl Documents {
     #[cfg(debug_assertions)]
     pub fn snapshot(&self) -> serde_json::Value {
         serde_json::json!({"active": self.active, "pending": self.pending, "read_only": false,
-            "editable_components":["scene.transform","scene.primitive","scene.surface","scene.sun","scene.model","scene.environment","ui.caption","ui.layout","ui.classes","ui.image","ui.stylesheet","ui.background","ui.border","ui.shadow","ui.z","ui.global_z","ui.outline","ui.spin","ui.editable","ui.pickable","ui.modal","ui.id","ui.screen"],
+            "editable_components":["scene.transform","scene.primitive","scene.surface","scene.sun","scene.camera","scene.model","scene.environment","ui.caption","ui.layout","ui.classes","ui.image","ui.stylesheet","ui.background","ui.border","ui.shadow","ui.z","ui.global_z","ui.outline","ui.spin","ui.editable","ui.pickable","ui.modal","ui.id","ui.screen"],
             "collection_structural_editing":true,"resource_assignment":true,
             "save_available":self.can_save(), "saving":self.save_busy(), "save_pending":self.save_pending(), "save_error":self.save.error, "can_undo":self.can_history(false), "can_redo":self.can_history(true),
             "documents": self.opened.values().map(|d| serde_json::json!({"document":d.document, "path":d.path, "view":d.view, "selection":d.selected,
                 "dirty":self.scope.as_ref().is_some_and(|scope| scope.working.dirty(d.document))})).collect::<Vec<_>>()})
     }
     pub fn request(&mut self, world: &World, root: PathBuf, path: PathBuf) -> Result<(), String> {
+        if self.creating() {
+            return Err("Finish scene creation before opening another source.".into());
+        }
         if self.pending.as_ref() == Some(&path) {
             return Ok(());
         }
@@ -154,17 +231,7 @@ impl Documents {
         self.pending = Some(path.clone());
         self.checked = None;
         if self.scope.is_none() && self.task.is_none() {
-            let clock = self.clock;
-            let registry = world.resource::<AppTypeRegistry>().clone();
-            let policies = world.resource::<ComponentPolicies>().clone();
-            self.task = Some(
-                Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
-                    let result = source_files::read(&root, "game")
-                        .and_then(|snapshot| source::admit(snapshot, &registry.read(), &policies))
-                        .map(Some);
-                    (clock, result)
-                }),
-            );
+            self.ensure_source(world, root);
         } else if let Some(scope) = &self.scope {
             if self
                 .paths
@@ -302,6 +369,8 @@ impl Documents {
     pub fn published(&mut self, ready: Ready, view: ViewId, selected: NodeAddress) {
         let follow =
             self.active != Some(ready.document) || !self.opened.contains_key(&ready.document);
+        self.opened
+            .retain(|id, opened| *id == ready.document || opened.view != view);
         self.opened.entry(ready.document).or_insert(Opened {
             #[cfg(debug_assertions)]
             path: ready.path,

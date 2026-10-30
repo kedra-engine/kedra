@@ -1,6 +1,8 @@
 //! Public source-editing contracts: atomic changes, history, freshness and save receipts.
 #[path = "contracts/component_owners.rs"]
 mod component_owners;
+#[path = "contracts/document_lifecycle.rs"]
+mod document_lifecycle;
 #[path = "contracts/edit_transactions.rs"]
 mod edit_transactions;
 #[path = "contracts/freshness.rs"]
@@ -11,6 +13,8 @@ mod history_retention;
 mod inspection_snapshot;
 #[path = "contracts/native_paths.rs"]
 mod native_paths;
+#[path = "contracts/object_creation.rs"]
+mod object_creation;
 #[path = "contracts/override_contracts.rs"]
 mod override_contracts;
 #[path = "contracts/persistence_guards.rs"]

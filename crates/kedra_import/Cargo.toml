@@ -15,6 +15,7 @@ layer = "import"
 bevy = { workspace = true, features = ["multi_threaded", "asset_processor", "bevy_text", "png", "bevy_gltf", "bevy_pbr"] }
 kedra_assets = { workspace = true, features = ["model-support"] }
 kedra_scene.workspace = true
+kedra_authoring_fs.workspace = true
 bevy_flair.workspace = true
 kedra_ui.workspace = true
 serde.workspace = true

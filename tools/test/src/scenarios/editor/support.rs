@@ -15,6 +15,50 @@ pub fn check(condition: bool, message: impl Into<String>) -> Result<()> {
         Err(message.into().into())
     }
 }
+
+impl Editor<'_> {
+    pub fn hierarchy_menu(&self, node: Option<&str>, path: &str) -> Result<()> {
+        let anchor = self.find("Hierarchy context target", |n| {
+            n.id.starts_with("hierarchy/")
+                && match node {
+                    Some(name) => n.id.ends_with("/name") && n.caption() == name,
+                    None => n.id.ends_with("/entries"),
+                }
+        })?;
+        let position = if node.is_some() {
+            anchor.center()
+        } else {
+            [anchor.rect[2] - 8., anchor.rect[3] - 8.]
+        };
+        self.input(
+            anchor.window()?,
+            json!({"kind":"click", "position":position, "button":"right"}),
+        )?;
+        if node.is_some() {
+            // Let release-triggered row activation and focus updates settle before
+            // choosing a command: the context menu must survive that boundary.
+            self.frame(
+                anchor.window()?,
+                "Hierarchy context menu after secondary release",
+            )?;
+            check(
+                self.nodes()?
+                    .iter()
+                    .any(|n| n.visible && n.id.starts_with("hierarchy-menu/")),
+                "Hierarchy context menu disappeared after secondary release",
+            )?;
+        }
+        for part in path.split('/') {
+            let item = self.find("Hierarchy menu action", |n| {
+                n.id.starts_with("hierarchy-menu/")
+                    && n.id.ends_with("/caption")
+                    && n.caption().trim_end_matches(" ▸") == part
+            })?;
+            self.click(item.id.strip_suffix("/caption").ok_or("Menu caption")?)?;
+        }
+        Ok(())
+    }
+}
 pub fn text(v: &Value) -> Result<&str> {
     v.as_str().ok_or_else(|| "Missing native string".into())
 }
@@ -317,7 +361,16 @@ impl<'a> Editor<'a> {
     pub fn resize(&self, window: u64, width: u32, height: u32, dpr: u32) -> Result<()> {
         self.client
             .resize(window, width, height, Some(f64::from(dpr)))?;
-        Ok(())
+        self.until("requested native logical size and DPR", || {
+            let observed = self.client.observe()?;
+            let target = array(&observed["windows"])?
+                .iter()
+                .find(|value| value["id"] == window)
+                .ok_or("Resize target retired")?;
+            Ok((number(&target["width"])? - f64::from(width)).abs() <= 1.
+                && (number(&target["height"])? - f64::from(height)).abs() <= 1.
+                && (number(&target["dpr"])? - f64::from(dpr)).abs() <= 0.001)
+        })
     }
     pub fn view(&self, kind: &str) -> Result<String> {
         let s = self.state()?;
@@ -346,17 +399,52 @@ impl<'a> Editor<'a> {
     pub fn group_id(group: &str) -> String {
         format!("dock/group/NodeId({group})")
     }
-    pub fn menu(&self, view: &str, caption: &str) -> Result<()> {
-        self.click(&format!("dock/node/NodeId({})/menu", self.group(view)?))?;
-        let n = self.find(caption, |n| {
-            n.id.starts_with("dock-menu/") && n.caption() == caption
-        })?;
-        let id = n.id.strip_suffix("/caption").unwrap_or(&n.id);
-        if caption == "Redock to main window" {
-            self.click_retired(id)
-        } else {
-            self.click(id)
+    pub fn main_menu(&self, path: &str) -> Result<()> {
+        self.activate(self.window()?)?;
+        self.click("workspace/panels")?;
+        for caption in path.split('/') {
+            let node = self.find(caption, |node| {
+                node.id.starts_with("dock-menu/") && node.caption() == caption
+            })?;
+            self.click(node.id.strip_suffix("/caption").unwrap_or(&node.id))?;
         }
+        Ok(())
+    }
+    pub fn menu(&self, view: &str, caption: &str) -> Result<()> {
+        self.until("settled dock menu owner", || {
+            let state = self.state()?;
+            Ok(state["navigation_input"]["pending_host"] == false
+                && state["navigation_input"]["rendered"] == state["revision"])
+        })?;
+        let anchor = self.node(&format!("dock/node/NodeId({})/menu", self.group(view)?))?;
+        self.activate(anchor.window()?)?;
+        self.click(&format!("dock/node/NodeId({})/menu", self.group(view)?))?;
+        if matches!(
+            caption,
+            "Float tab"
+                | "Float group"
+                | "Close group"
+                | "Maximize group"
+                | "Restore group"
+                | "Redock to main window"
+        ) {
+            let branch = self.find("Layout", |node| {
+                node.id.starts_with("dock-menu/") && node.caption() == "Layout"
+            })?;
+            self.click(branch.id.strip_suffix("/caption").unwrap_or(&branch.id))?;
+        }
+        for caption in caption.split('/') {
+            let n = self.find(caption, |n| {
+                n.id.starts_with("dock-menu/") && n.caption() == caption
+            })?;
+            let id = n.id.strip_suffix("/caption").unwrap_or(&n.id);
+            if caption == "Redock to main window" {
+                self.click_retired(id)?;
+            } else {
+                self.click(id)?;
+            }
+        }
+        Ok(())
     }
     pub fn drag(&self, view: &str, point: [f64; 2]) -> Result<u64> {
         let label = self.node(&Self::label(view))?;

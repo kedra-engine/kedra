@@ -21,7 +21,7 @@ instructions, detailed reference pages and connected topics.
 | --- | --- | --- | --- |
 | Introduction | [Introduction](site/en/manual/introduction/index.md) | [Знакомство](site/ru/manual/introduction/index.md) | Kedra and Bevy, product map, current capabilities and limits |
 | Getting started | [Getting started](site/en/manual/getting-started/index.md) | [Начало работы](site/ru/manual/getting-started/index.md) | Build prerequisites, asset preparation, startup and first document |
-| Editor | [Editor](site/en/manual/editor/index.md) | [Редактор](site/ru/manual/editor/index.md) | Workspace and read-only panel controls, selection and preview requirements |
+| Editor | [Editor](site/en/manual/editor/index.md) | [Редактор](site/ru/manual/editor/index.md) | Workspace, source editing/Save, selection and preview requirements |
 | Projects | [Projects](site/en/manual/projects/index.md) | [Проекты](site/ru/manual/projects/index.md) | Project structure, creation/opening, paths and identity |
 | Assets | [Assets](site/en/manual/assets/index.md) | [Ассеты](site/ru/manual/assets/index.md) | Source/delivery concepts, processing, formats and diagnosis |
 | Scenes and prefabs | [Scenes and prefabs](site/en/manual/scenes/index.md) | [Сцены и префабы](site/ru/manual/scenes/index.md) | Documents, composition, lifecycle and source-editing APIs |

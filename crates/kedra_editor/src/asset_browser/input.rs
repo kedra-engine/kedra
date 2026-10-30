@@ -5,8 +5,42 @@ use kedra_ui::docking::rect;
 pub(super) fn install(app: &mut App) {
     super::drag::install(app);
     app.add_observer(activate)
+        .add_observer(context_menu)
         .add_observer(double_click)
         .add_observer(keyboard);
+}
+fn context_menu(
+    mut event: On<bevy::picking::events::PointerPress>,
+    bindings: Query<&Binding>,
+    mut commands: Commands,
+) {
+    if event.button != bevy::picking::pointer::PointerButton::Secondary {
+        return;
+    }
+    let Ok(binding) = bindings.get(event.entity) else {
+        return;
+    };
+    let target = match &binding.action {
+        Action::Select(name) => Some(binding.path.join(name)),
+        Action::TreeNavigate(path) if !path.as_os_str().is_empty() => Some(path.clone()),
+        Action::FocusSearch => None,
+        _ => return,
+    };
+    let anchor = event.entity;
+    let position = event.pointer.position;
+    let binding = binding.clone();
+    event.propagate(false);
+    commands.queue(move |world: &mut World| {
+        crate::workspace::folders::context_menu(
+            world,
+            binding.view,
+            binding.path,
+            binding.generation,
+            target,
+            anchor,
+            position,
+        );
+    });
 }
 fn activate(
     event: On<bevy::ui_widgets::Activate>,
@@ -21,7 +55,8 @@ fn activate(
     }
 }
 fn double_click(
-    mut event: On<bevy::picking::events::PointerPress>,
+    // A second press can begin another drag; only a completed click opens it.
+    mut event: On<bevy::picking::events::PointerClick>,
     bindings: Query<&Binding>,
     mut commands: Commands,
 ) {
@@ -58,8 +93,24 @@ fn keyboard(
         Some(Action::Refresh)
     } else if command && key == KeyCode::KeyF {
         Some(Action::FocusSearch)
+    } else if command
+        && keys.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight])
+        && key == KeyCode::KeyN
+    {
+        Some(Action::Folder(
+            crate::workspace::folders::Mode::Create,
+            None,
+        ))
     } else if let Action::Select(name) = &binding.action {
         match key {
+            KeyCode::F2 => Some(Action::Folder(
+                crate::workspace::folders::Mode::Rename,
+                Some(binding.path.join(name)),
+            )),
+            KeyCode::Delete => Some(Action::Folder(
+                crate::workspace::folders::Mode::Delete,
+                Some(binding.path.join(name)),
+            )),
             KeyCode::Enter => Some(Action::Enter(name.clone())),
             KeyCode::ArrowLeft
             | KeyCode::ArrowRight
@@ -71,6 +122,20 @@ fn keyboard(
             _ => None,
         }
     } else if let Action::TreeNavigate(path) = &binding.action {
+        if matches!(key, KeyCode::F2 | KeyCode::Delete) && !path.as_os_str().is_empty() {
+            let mut binding = binding.clone();
+            binding.action = Action::Folder(
+                if key == KeyCode::F2 {
+                    crate::workspace::folders::Mode::Rename
+                } else {
+                    crate::workspace::folders::Mode::Delete
+                },
+                Some(path.clone()),
+            );
+            event.propagate(false);
+            commands.queue(move |world: &mut World| dispatch(world, binding));
+            return;
+        }
         matches!(
             key,
             KeyCode::ArrowLeft
@@ -175,7 +240,7 @@ impl Panel {
         let columns = if self.model.mode == model::Mode::List {
             1
         } else {
-            rect(world, entries).map_or(1, |r| ((r.width() - 16.) / 120.).floor().max(1.) as usize)
+            rect(world, entries).map_or(1, |r| ((r.width() - 12.) / 84.).floor().max(1.) as usize)
         };
         let current = names
             .iter()
@@ -196,7 +261,7 @@ impl Panel {
             let height = if self.model.mode == model::Mode::List {
                 22.
             } else {
-                104.
+                100.
             };
             let offset = 4. + (next / columns) as f32 * height;
             let area_height = rect(world, entries).map_or(104., |r| r.height());

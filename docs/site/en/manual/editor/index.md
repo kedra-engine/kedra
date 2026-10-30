@@ -1,8 +1,8 @@
 # Editor workspace
 
-The editor is a desktop workspace for browsing project sources and inspecting scenes,
-prefabs and supported assets. Its panels are read-only: opening a project does not run
-project code, and moving a camera or panel does not edit a source document.
+The editor is a desktop workspace for browsing project sources and editing supported
+scenes, prefabs and asset properties. Source edits use Undo/Redo and explicit Save.
+Opening a project does not run project code; moving a camera or panel does not edit sources.
 
 Start with an [open project](../projects/create-open.md). The examples in this section use
 an unchanged working copy of the repository's test project, `tests/fixtures/test_project`.
@@ -19,15 +19,16 @@ Preview above Assets in the middle. This arrangement is a starting point, not a 
 | Panel | Use it to |
 | --- | --- |
 | [Assets / Asset Browser](asset-browser.md) | Browse source folders, search filenames and explicitly open a source. |
-| [Hierarchy](hierarchy.md) | Navigate the active document's composed nodes and select a source node. |
-| [Scene View](scene-view.md) | Preview supported content, navigate a spatial camera and select eligible meshes. |
-| [Inspector](inspector.md) | Read the selected source node's effective component values. |
+| [Hierarchy](hierarchy.md) | Select, create, rename, delete and reparent eligible source nodes. |
+| [Scene View](scene-view.md) | Preview content, navigate, select meshes and transform eligible nodes. |
+| [Inspector](inspector.md) | Inspect and edit supported source properties and manage components. |
 
 Document Preview starts empty. Opening a scene or prefab creates a document tab and hides
 that empty slot. A document tab contains Scene View, not a separate editable scene window.
 PNG and static GLB files open in separate asset-preview tabs.
 
-The header's Play, Pause, Stop, Save, Build and global-search controls are disabled.
+The header's Play, Pause, Stop, Build and global-search controls are disabled.
+Save is available for eligible source changes; the main menu also offers Save All.
 Build deliveries through the
 [command-line workflow](../assets/pipeline.md).
 
@@ -56,9 +57,11 @@ reason. Release over a valid target to commit. Drops that cannot fit the panels 
 layout is not ready leave the published layout unchanged. Close buttons and group-menu
 buttons are not drag handles. Tab rails scroll horizontally when titles do not fit.
 
-The **…** menu offers **Maximize group** / **Restore group**, **Float group**,
-**Float active tab**, **Hide group**, and entries for the group's tabs. Maximizing keeps
-the original split layout for Restore. Use the menu to find a clipped tab title.
+The **…** menu contains panel-specific actions, **Close tab** and a **Layout** submenu.
+Layout offers **Maximize group** / **Restore group** and **Float tab** in the main window.
+Groups with multiple tabs also offer **Float group**, **Close group** and a **Tabs**
+submenu with complete titles for selecting tabs whose rail labels are truncated.
+Maximizing keeps the original split layout for Restore.
 
 In a floating group, **Redock to main window** returns it to the main workspace.
 Use explicit Float/Redock if your window backend cannot target a cross-window drag.
@@ -66,21 +69,23 @@ Floating a view preserves its panel state; it is not a second source session.
 
 ## Hide, reopen and reset
 
-A tab's close button hides the view rather than deleting its source session. Closing a
-floating window hides its views; closing the main window exits the editor. **Panels**
-lists **Show …** for hidden views and **Select …** for visible ones. Opening the same
-source from Assets also returns to its retained tab.
+A tab's close button hides the view rather than deleting its source session. Closing a floating
+window hides its views; closing the main window requests exit. Unsaved changes offer
+**Save and exit**, **Exit without saving** and **Cancel**. The main menu's **Windows** submenu lists
+views by name, reopening hidden views or selecting visible ones. Opening the same source from Assets
+also returns to its retained tab.
 
 **Reset layout** restores the default arrangement without recreating live panel content.
 For example, open `Composed.scene.ron`, select **Warm sphere** in Hierarchy, then float
-Inspector with **Float group**. Redock it and reset the layout: the source document and
+Inspector with **Layout → Float tab**. Redock it and reset the layout: the source document and
 selection remain, while panel placement returns to the preset.
 
 Per-project local preferences retain docking topology, tab order, active/maximized groups
 and window placement. They are not document Save. Browser navigation and spatial camera
 poses are session state, not a promise of restoration after restarting the process.
-Restored document tabs begin as inactive source placeholders: reopen through Assets to
-validate current sources. Preferences alone never supply trusted document contents.
+Restored document tabs begin as source placeholders. Visible tabs automatically request
+the same validated source admission as Assets Open. Preferences alone never supply
+trusted document contents; failed admission requires resolving the diagnostic and retrying Open.
 
 Invalid preferences are reported and preserved. An explicit Reset keeps rejected input
 under a unique `*.rejected-*.json` name. If a restored floating window cannot become ready,
@@ -112,11 +117,11 @@ Already open documents reuse accepted contents and selection rather than rereadi
 Before first opening another admitted source, the editor checks its bytes and identity
 again. A failed Open preserves the previous active document and selection.
 
-**Refresh sources** refreshes browser listings, not accepted documents. Newly added
-documents outside the admitted inventory require reopening the project. For external
-source changes, reopen the project; for previews, also rebuild a matching delivery and
-relaunch with that delivery. There is no automatic reload, reconciliation or Save/Discard
-workflow. See [Scene View prerequisites](scene-view.md#prepare-resources).
+**Refresh sources** refreshes browser listings, not accepted documents. Newly added externally added
+documents outside the admitted inventory require reopening the project. For external source changes,
+reopen the project; for previews, also rebuild a matching delivery and relaunch with that delivery.
+There is no automatic external-change reload or merge workflow. See
+[Scene View prerequisites](scene-view.md#prepare-resources).
 
 Physical input, OS clipboard, IME, screen readers and mixed-DPI behavior still need
 platform-specific testing; certification across desktop platforms is incomplete.

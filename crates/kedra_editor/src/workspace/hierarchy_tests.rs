@@ -66,6 +66,31 @@ fn deferred_hierarchy_input_rejects_inactive_documents_and_hidden_tools() -> Tes
         document: Some(first.id),
         action: Action::Select(leaf.into()),
     };
+    // A row's delayed native activation must not escape the context menu that
+    // took ownership on secondary press (the release can arrive frames later).
+    let menu = world.spawn_empty().id();
+    world.resource_mut::<EditorWorkspace>().menu.push(menu);
+    world
+        .resource_mut::<bevy::input_focus::InputFocus>()
+        .set(menu, bevy::input_focus::FocusCause::Navigated);
+    let selection = world
+        .resource::<EditorWorkspace>()
+        .documents
+        .selected_nodes(first.id);
+    hierarchy_action(world, binding.clone());
+    assert_eq!(
+        world
+            .resource::<EditorWorkspace>()
+            .documents
+            .selected_nodes(first.id),
+        selection
+    );
+    assert_eq!(
+        world.resource::<bevy::input_focus::InputFocus>().get(),
+        Some(menu)
+    );
+    world.despawn(menu);
+    world.resource_mut::<EditorWorkspace>().menu.clear();
     hierarchy_action(world, binding.clone());
     assert_eq!(
         world.resource::<EditorWorkspace>().documents.opened[&first.id].selected,

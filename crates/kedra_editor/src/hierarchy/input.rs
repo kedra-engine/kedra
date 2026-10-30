@@ -1,7 +1,75 @@
 use super::*;
 use bevy::input_focus::FocusedInput;
 pub(super) fn install(app: &mut App) {
-    app.add_observer(activate).add_observer(keyboard);
+    app.add_observer(activate)
+        .add_observer(keyboard)
+        .add_observer(context_menu)
+        .add_observer(dropped)
+        .add_observer(drag_enter)
+        .add_observer(drag_leave);
+}
+fn drag_enter(
+    event: On<bevy::picking::events::PointerDragEnter>,
+    bindings: Query<&Binding>,
+    mut commands: Commands,
+) {
+    let Ok(binding) = bindings.get(event.event_target()).cloned() else {
+        return;
+    };
+    let entity = event.event_target();
+    let owner = event.dragged;
+    commands.queue(move |world: &mut World| {
+        let valid = crate::workspace::hierarchy_menu::drop_valid(world, &binding, owner);
+        kedra_ui::docking::class(world, entity, "drop-target", valid);
+    });
+}
+fn drag_leave(
+    event: On<bevy::picking::events::PointerDragLeave>,
+    bindings: Query<&Binding>,
+    mut commands: Commands,
+) {
+    if bindings.get(event.event_target()).is_err() {
+        return;
+    }
+    let entity = event.event_target();
+    commands.queue(move |world: &mut World| {
+        kedra_ui::docking::class(world, entity, "drop-target", false)
+    });
+}
+fn context_menu(
+    mut event: On<bevy::picking::events::PointerPress>,
+    bindings: Query<&Binding>,
+    mut commands: Commands,
+) {
+    if event.button != bevy::picking::pointer::PointerButton::Secondary {
+        return;
+    }
+    let Ok(binding) = bindings.get(event.event_target()).cloned() else {
+        return;
+    };
+    let anchor = event.event_target();
+    let position = event.pointer.position;
+    event.propagate(false);
+    commands.queue(move |world: &mut World| {
+        crate::workspace::hierarchy_menu::context(world, binding, anchor, position)
+    });
+}
+fn dropped(
+    mut event: On<bevy::picking::events::PointerDragDrop>,
+    bindings: Query<&Binding>,
+    mut commands: Commands,
+) {
+    let Ok(binding) = bindings.get(event.event_target()).cloned() else {
+        return;
+    };
+    let owner = event.dropped;
+    let entity = event.event_target();
+    // Asset drops are handled by the existing model-placement observer.
+    event.propagate(false);
+    commands.queue(move |world: &mut World| {
+        kedra_ui::docking::class(world, entity, "drop-target", false);
+        crate::workspace::hierarchy_menu::reparent(world, binding, owner)
+    });
 }
 fn activate(
     event: On<bevy::ui_widgets::Activate>,
@@ -28,6 +96,16 @@ fn keyboard(
         return;
     };
     let key = event.input.key_code;
+    if matches!(key, KeyCode::F2 | KeyCode::Delete) && matches!(binding.action, Action::Select(_)) {
+        event.propagate(false);
+        if !event.input.repeat {
+            let binding = binding.clone();
+            commands.queue(move |world: &mut World| {
+                crate::workspace::hierarchy_menu::shortcut(world, binding, key == KeyCode::F2)
+            });
+        }
+        return;
+    }
     let command = keys.pressed(KeyCode::ControlLeft)
         || keys.pressed(KeyCode::ControlRight)
         || keys.pressed(KeyCode::SuperLeft)

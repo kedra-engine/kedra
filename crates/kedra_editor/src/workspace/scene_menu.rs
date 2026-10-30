@@ -2,46 +2,27 @@
 use super::input::Action;
 use super::*;
 use crate::scene_view::camera::Command as Camera;
-#[derive(Clone, Copy, Debug)]
-pub(super) enum Kind {
-    Views,
-    Lighting,
-    Selection,
-}
 pub(super) fn open(
     world: &mut World,
     state: &mut EditorWorkspace,
     view: ViewId,
     anchor: Entity,
-    kind: Kind,
 ) -> Result<(), String> {
     scene_input::cancel(world);
     let popup = popup::attach(world, anchor)?;
     state.menu.push(popup);
-    let items = match kind {
-        Kind::Lighting => vec![
-            ("Scene lighting", Action::SceneLight(view, false)),
-            ("Editor lighting", Action::SceneLight(view, true)),
-        ],
-        Kind::Views => vec![
-            (
-                "Frame selection",
-                Action::SceneCommand(view, Camera::FrameSelection),
-            ),
-            ("Frame all", Action::SceneCommand(view, Camera::FrameAll)),
-            ("Front", Action::SceneCommand(view, Camera::Front)),
-            ("Back", Action::SceneCommand(view, Camera::Back)),
-            ("Left", Action::SceneCommand(view, Camera::Left)),
-            ("Right", Action::SceneCommand(view, Camera::Right)),
-            ("Top", Action::SceneCommand(view, Camera::Top)),
-            ("Bottom", Action::SceneCommand(view, Camera::Bottom)),
-            ("Perspective", Action::SceneProjection(view, false)),
-            ("Orthographic", Action::SceneProjection(view, true)),
-            ("Clear selection", Action::SceneClear(view)),
-        ],
-        Kind::Selection => vec![("Clear selection", Action::SceneClear(view))],
-    };
+    let items = vec![
+        ("Frame all", Action::SceneCommand(view, Camera::FrameAll)),
+        ("Clear selection", Action::SceneClear(view)),
+        ("Toggle selection outlines", Action::SceneOverlays(view)),
+        ("Toggle grid", Action::SceneGrid(view)),
+        ("Scene lighting", Action::SceneLight(view, false)),
+        ("Editor lighting", Action::SceneLight(view, true)),
+    ];
     for (index, (title, action)) in items.into_iter().enumerate() {
+        if [1, 4].contains(&index) {
+            super::popup::separator(world, popup);
+        }
         let button = crate::views::mount_asset(
             world,
             popup,
@@ -62,13 +43,13 @@ pub(super) fn open(
             .remove::<(bevy::ui_widgets::Button, bevy::a11y::AccessibilityNode)>()
             .insert(bevy::ui_widgets::MenuItem);
         world.entity_mut(button.root).insert((
-            action,
+            action.clone(),
             bevy::input_focus::tab_navigation::TabIndex(index as i32),
             kedra_ui::ElementId::new(format!("scene-menu/{index}")),
         ));
         if matches!(
             action,
-            Action::SceneCommand(..) | Action::SceneProjection(..)
+            Action::SceneCommand(..) | Action::SceneLight(..) | Action::SceneGrid(..)
         ) && state
             .panels
             .scenes
@@ -135,19 +116,19 @@ mod tests {
             assert!(state.documents.selection.items().is_empty());
         }
         world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
-            open(world, &mut state, view, anchor, Kind::Selection)
+            open(world, &mut state, view, anchor)
         })?;
         let item = world
             .query::<(Entity, &kedra_ui::ElementId)>()
             .iter(world)
-            .find(|(_, id)| id.0 == "scene-menu/0")
+            .find(|(_, id)| id.0 == "scene-menu/1")
             .ok_or("Clear command missing")?
             .0;
         assert!(world.get::<bevy::ui::InteractionDisabled>(item).is_some());
         Ok(())
     }
     #[test]
-    fn view_menu_exposes_projection_and_clear_selection_without_a_second_toolbar_select()
+    fn settings_keeps_scene_options_without_duplicating_navigation_controls()
     -> Result<(), Box<dyn std::error::Error>> {
         let (mut app, _, _) = super::super::test_support::setup()?;
         let world = app.world_mut();
@@ -155,7 +136,7 @@ mod tests {
         let root = world.resource::<EditorWorkspace>().root;
         let anchor = world.spawn((Node::default(), ChildOf(root))).id();
         world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
-            open(world, &mut state, ViewId::new(), anchor, Kind::Views)
+            open(world, &mut state, ViewId::new(), anchor)
         })?;
         let captions = world
             .query::<&Text>()
@@ -163,17 +144,32 @@ mod tests {
             .map(|text| text.0.as_str())
             .collect::<Vec<_>>();
         for caption in [
-            "Frame selection",
             "Frame all",
-            "Front",
-            "Top",
-            "Perspective",
-            "Orthographic",
             "Clear selection",
+            "Toggle selection outlines",
+            "Toggle grid",
+            "Scene lighting",
+            "Editor lighting",
         ] {
             assert!(
                 captions.contains(&caption),
                 "Missing View command: {caption}"
+            );
+        }
+        for caption in [
+            "Frame selection",
+            "Front",
+            "Back",
+            "Left",
+            "Right",
+            "Top",
+            "Bottom",
+            "Perspective",
+            "Orthographic",
+        ] {
+            assert!(
+                !captions.contains(&caption),
+                "Duplicated navigation command: {caption}"
             );
         }
         Ok(())

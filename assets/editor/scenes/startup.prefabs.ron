@@ -1,4 +1,6 @@
 [
+    "editor://prefabs/close-dialog.prefab.ron",
+    "editor://prefabs/document-create.prefab.ron",
     "editor://prefabs/button.prefab.ron",
     "editor://prefabs/raised-button.prefab.ron",
     "editor://prefabs/primary-button.prefab.ron",

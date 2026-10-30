@@ -35,6 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
       - name: Native prerequisites and software Vulkan
         run: |

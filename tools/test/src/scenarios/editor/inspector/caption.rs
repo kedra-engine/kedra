@@ -64,7 +64,7 @@ pub(super) fn run(c: &Editor<'_>, inspector: &str, hierarchy: &str, prefix: &str
         node.id.starts_with(&format!("{}/menu/", alignment.id)) && node.caption() == "Center"
     })?;
     check(
-        projected(c, view, &selected)? == baseline && c.state()?["documents"]["can_undo"] == false,
+        projected(c, view, &selected)? == baseline && c.current_document()?["dirty"] == false,
         "Opening a native choice mutated source/history",
     )?;
     c.input(alignment.window()?, json!({"kind":"key","key":"escape"}))?;
@@ -94,7 +94,7 @@ pub(super) fn run(c: &Editor<'_>, inspector: &str, hierarchy: &str, prefix: &str
         ("justify", json!("Left")),
         ("text", baseline["text"].clone()),
     ] {
-        c.menu(inspector, "Undo source edit")?;
+        c.main_menu("Undo")?;
         c.until("scripted source Undo", || {
             Ok(projected(c, view, &selected)?[part] == expected)
         })?;
@@ -104,7 +104,7 @@ pub(super) fn run(c: &Editor<'_>, inspector: &str, hierarchy: &str, prefix: &str
         ("justify", json!("Center")),
         ("wrap", json!(true)),
     ] {
-        c.menu(inspector, "Redo source edit")?;
+        c.main_menu("Redo")?;
         c.until("scripted source Redo", || {
             Ok(projected(c, view, &selected)?[part] == expected)
         })?;
@@ -133,8 +133,10 @@ pub(super) fn run(c: &Editor<'_>, inspector: &str, hierarchy: &str, prefix: &str
         field(c, prefix, 0)?.value() == "Кедра · 日本語",
         "Script re-admission lost accepted source",
     )?;
-    c.menu(inspector, "Discard all unsaved source changes")?;
-    c.until("scripted all-source discard", || {
+    for _ in 0..3 {
+        c.main_menu("Undo")?;
+    }
+    c.until("scripted source baseline restored", || {
         Ok(projected(c, view, &selected)? == baseline)
     })?;
     scene::ready(c, &preview)?;
@@ -160,7 +162,7 @@ pub(super) fn run(c: &Editor<'_>, inspector: &str, hierarchy: &str, prefix: &str
     })?;
     scene::ready(c, &preview)?;
     c.frame(input.window()?, "Luau caption in UI-only Scene View")?;
-    c.menu(inspector, "Discard all unsaved source changes")?;
+    c.main_menu("Undo")?;
     scene::ready(c, &preview)?;
     Ok(())
 }

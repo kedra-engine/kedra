@@ -1,0 +1,22 @@
+(
+    version: 1,
+    id: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+    kind: Prefab,
+    title: "Crate",
+    root: "090c803f-f599-48be-9b7b-d2e0e159792b",
+    base: None,
+    nodes: [
+        (
+            id: "090c803f-f599-48be-9b7b-d2e0e159792b",
+            name: "Crate",
+            parent: None,
+            components: {
+                "scene.transform": (version: 1, value: (translation:(0.0,0.0,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.7,1.3,1.7))),
+                "scene.model": (version: 1, value: (scene:Path("game://models/platform_wood_1x1x1.glb#Scene0"))),
+            },
+        ),
+    ],
+    instances: [],
+    overrides: [],
+    ports: {},
+)

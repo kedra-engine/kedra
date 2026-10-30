@@ -9,11 +9,11 @@ and window interactions. APIs and source formats remain unstable.
 | --- | --- | --- |
 | Projects | Create/open a project and validate its manifest and asset-root location. | A new project is not a runnable game template. |
 | Workspace | Dock panels and use floating native windows. | Native input, IME and mixed-DPI acceptance remain incomplete. |
-| Asset Browser | Browse folders, search names in the current folder, switch grid/list and explicitly open supported content. | Read-only; not an asset-writing or import-settings editor. |
-| Scene/prefab inspection | Open admitted documents; select composed nodes in Hierarchy and inspect values in Inspector. | Source-bound, read-only presentation; not arbitrary project-defined components. |
-| Scene View | Render supported spatial/UI documents; preview PNG/static-GLB content; use spatial camera navigation and scoped opaque-mesh selection. | Requires an explicit matching verified delivery; not Play or full renderer parity. |
+| Asset Browser | Browse/search, import files, create documents/folders and rename/delete eligible entries. | File operations are immediate and separate from document history; deliveries are not rebuilt automatically. |
+| Scene/prefab editing | Create documents; create, rename, delete and reparent eligible nodes; edit supported Inspector fields and components. | Unsupported reflected fields remain read-only; no arbitrary project-defined components. |
+| Scene View | Render supported content; navigate, select and Move/Rotate/Scale eligible nodes with snapping. | Resource-backed content requires a matching verified delivery; resource-free documents do not. Not Play. |
 | Scene runtime | Compose scenes/prefabs, apply overrides, compile registered components, instantiate and select an explicit startup scene. | Host configuration is required; scene loading does not authorize scripts. |
-| Source authoring APIs | Validated source transactions, revision history, undo/redo and guarded Save protocol. | Rust integration only; no visual scene editing or editor document Save. |
+| Source authoring APIs | Validated transactions, Undo/Redo and guarded Save, consumed by the editor's source-editing tools. | Save is explicit; no crash recovery for unsaved edits or complete prefab Apply/Revert UI. |
 | Assets | Initialize missing source metadata, process supported profiles and verify deliveries for shared loaders. | Not an unrestricted importer for every format or Bevy asset feature. |
 | Standalone applications | Build, verify, package and explicitly launch configured desktop Rust applications with shared tooling. | Not a complete game SDK or an editor build/Play workflow. |
 | Luau | Host-authorized behaviors, finite sequences and admitted-source modules with scoped capabilities. | No automatic project-code discovery/loading or authorization on project Open. |
@@ -22,13 +22,13 @@ and window interactions. APIs and source formats remain unstable.
 To try the editor, follow [Getting started](../getting-started/index.md).
 For a deeper content-focused route, use [Projects](../projects/index.md),
 [Assets](../assets/index.md) and [Scenes and prefabs](../scenes/index.md).
-These explain existing workflows without assuming the missing editor authoring loop.
+These explain supported authoring workflows and their limits.
 
 ## Working foundation versus planned workflow
 
-The next authoring milestone is intended to connect scene/prefab changes, an editable
-component Inspector, undo/redo and source-owned Save with reopening. That connection is
-**planned**, even though some underlying Rust APIs already exist.
+Supported scene/prefab edits, Inspector fields, Undo/Redo and source-owned Save are
+connected. The remaining authoring and native acceptance work is described in the
+[editor manual](../editor/index.md).
 
 In-application **Play** follows authoring: start a scene, observe execution, stop, and
 return to editing with an explicit policy for unsaved revisions. It is not implemented.
@@ -46,8 +46,8 @@ desktop-only. These goals do not certify a platform set today.
 
 **Understand existing content.** Open a prepared project, inspect a supported document's
 hierarchy and values, and compare the preview with its sources. If rendering fails, check
-delivery readiness separately from document validity. Do not expect Inspector changes
-or a Save command.
+delivery readiness separately from document validity. Use a private copy for editing
+and save accepted changes explicitly.
 
 **Evaluate a Rust integration.** In an explicitly configured Bevy host, investigate scene
 loading, source-editing APIs or scoped scripts. Treat each as an integration task, not a

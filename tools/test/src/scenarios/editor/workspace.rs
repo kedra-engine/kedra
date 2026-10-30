@@ -70,7 +70,7 @@ fn workspace(c: &Editor<'_>) -> Result<Value> {
     c.frame(c.window()?, "startup placement")?;
     let inspector = c.view("inspector")?;
     let root = &retained[1];
-    c.menu(&inspector, "Float group")?;
+    c.menu(&inspector, "Float tab")?;
     c.until("second native window", || {
         Ok(array(&c.client.observe()?["windows"])?.len() == 2)
     })?;
@@ -79,15 +79,22 @@ fn workspace(c: &Editor<'_>) -> Result<Value> {
         "Float rebuilt placeholder",
     )?;
     c.frame(c.node(&root.id)?.window()?, "floating Inspector")?;
+    let slot = c.node("floating-caption/window.menu")?;
+    let tabs = c.node("floating-caption/window.tabs")?;
+    let menu = c.node(&format!("dock/node/NodeId({})/menu", c.group(&inspector)?))?;
+    check(
+        menu.rect[0] >= slot.rect[0]
+            && menu.rect[2] <= slot.rect[2]
+            && menu.rect[2] <= tabs.rect[0],
+        "Inspector header actions overflow their slot and overlap tab input",
+    )?;
     c.menu(&inspector, "Redock to main window")?;
     c.until("retired floating window", || {
         Ok(array(&c.client.observe()?["windows"])?.len() == 1)
     })?;
-    c.menu(&inspector, "Hide group")?;
+    c.menu(&inspector, "Close tab")?;
     c.until("hidden Inspector", || c.hidden(&inspector))?;
-    c.click("workspace/panels")?;
-    let item = c.find("Show Inspector", |n| n.caption() == "Show Inspector")?;
-    c.click(item.id.strip_suffix("/caption").unwrap_or(&item.id))?;
+    c.main_menu("Windows/Inspector")?;
     check(
         c.wait_node(&root.id)?.entity == root.entity,
         "Reopen rebuilt placeholder",

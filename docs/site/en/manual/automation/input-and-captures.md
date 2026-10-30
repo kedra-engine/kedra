@@ -8,7 +8,8 @@ the effect envelopes below.
 ## Deliver input through the running UI
 
 `app.input` queues frame-ordered Bevy events. A click moves the pointer, presses and
-releases the left button; it does not directly emit widget activation or assign a
+releases the selected button (`left` by default; `right` and `middle` are supported);
+it does not directly emit widget activation or assign a
 feature's model. Text passes through keyboard/text input rather than direct field
 assignment. The application still decides whether to accept the action.
 
@@ -41,9 +42,12 @@ effect needs its own session/window envelope and fresh non-nil UUID:
 
 ```json
 {"kind":"click","position":[40,80]}
+{"kind":"click","position":[40,80],"button":"right"}
 {"kind":"move","position":[60,90]}
 {"kind":"button","pressed":true}
 {"kind":"button","pressed":false}
+{"kind":"button","button":"middle","pressed":true}
+{"kind":"button","button":"middle","pressed":false}
 {"kind":"modifier","modifier":"shift","pressed":true}
 {"kind":"modifier","modifier":"shift","pressed":false}
 {"kind":"drag","from":[40,80],"to":[160,120]}
@@ -60,7 +64,8 @@ value at most 10000; UTF-8 text is limited to 16 KiB. Chords are named, not arbi
 key expressions: examples include `enter`, `escape`, `tab`, `shift_tab`, arrows and
 `select_all`. Clipboard chords use Super on macOS and Control elsewhere.
 
-For held gestures, explicitly pair press/release and use the host's Escape/cancellation
+For held gestures, pair press/release with the same button identity (`left` by default;
+`right` and `middle` are supported) and use the host's Escape/cancellation
 path when applicable. A succeeded press receipt does not release its hold. Adapter-owned
 holds retain window ownership independently of receipts; retirement releases only
 owned, unshared inputs, preserving hardware state. Cross-window pointer movement and

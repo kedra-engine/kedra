@@ -103,7 +103,6 @@ pub(crate) fn bind_window(
         ("editor.play", "Play is not implemented"),
         ("editor.pause", "Play is not implemented"),
         ("editor.stop", "Play is not implemented"),
-        ("editor.save", "Source Save is not implemented"),
         ("editor.build", "Project Build is not implemented"),
         ("editor.build-menu", "Project Build is not implemented"),
         ("editor.search", "Global search is not implemented"),

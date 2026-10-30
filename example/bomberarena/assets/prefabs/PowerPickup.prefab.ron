@@ -1,0 +1,21 @@
+(
+    version: 1,
+    id: "ce492e40-a35a-481a-8f64-261cbe8ad667",
+    kind: Prefab,
+    title: "PowerPickup",
+    root: "bac47fc6-8f5b-4e56-af45-b3103a439673",
+    base: None,
+    nodes: [
+        (
+            id: "bac47fc6-8f5b-4e56-af45-b3103a439673",
+            name: "PowerPickup",
+            parent: None,
+            components: {
+                "scene.model": (version: 1, value: (scene:Path("game://models/power_blue.glb#Scene0"))),
+            },
+        ),
+    ],
+    instances: [],
+    overrides: [],
+    ports: {},
+)

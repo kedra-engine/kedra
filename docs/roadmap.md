@@ -14,7 +14,7 @@ is not implemented behavior or automatic authorization to expand a change's scop
 | Stage | Status | User-visible result |
 | --- | --- | --- |
 | Foundation | Available; native acceptance incomplete | Open a project, use the native editor shell and shared infrastructure |
-| 1. Scene and prefab authoring | Next; planned | Select an object, configure its components, undo changes, save and reopen |
+| 1. Scene and prefab authoring | Partially implemented; acceptance incomplete | Select an object, configure supported components, undo changes, save and reopen |
 | 2. In-application Play | Planned; follows authoring | Run a scene, inspect diagnostics, stop and return to editing |
 | 3. Project-defined editor extensions | Planned; follows the working authoring/Play loop | Supply custom field/type inspectors and editor windows from a project |
 
@@ -26,22 +26,25 @@ new features are complete. Web and mobile runtime support remain later direction
 The workspace provides native project startup, verified asset deliveries, shared
 authored scenes/UI, source-editing APIs, application automation and retained native
 docking. The editor exposes a
-[read-only Asset Browser](site/en/contributing/contracts/editor/asset-browser.md) and
+[Asset Browser](site/en/contributing/contracts/editor/asset-browser.md) and
 [source document sessions](site/en/contributing/contracts/editor/source-documents.md),
-with a read-only [Hierarchy](site/en/contributing/contracts/editor/hierarchy.md),
-initial read-only [Scene View](site/en/contributing/contracts/editor/scene-view.md)
-projection and a source-bound read-only Inspector. There is no stable game
-SDK, scene editor, document Save or project execution. See
+with editable [Hierarchy](site/en/contributing/contracts/editor/hierarchy.md),
+[Scene View](site/en/contributing/contracts/editor/scene-view.md) transforms and a
+source-bound Inspector. Supported edits use Undo/Redo and explicit Save; creation
+publishes a source before opening its clean tab. There is no stable game SDK or
+in-editor project execution. See
 [architecture](architecture.md) for ownership boundaries.
 
-Existing source-editing APIs are foundations for stage 1, not an already usable
-scene editor. Remote observation, injected input and renderer captures support
+The implemented authoring subset does not complete stage 1. Remote observation,
+injected input and renderer captures support
 automation; they do not certify physical OS input or native UI stability.
 
 ## 1. Scene and prefab authoring
 
-**Status: next, planned.** The first product milestone is editable components in
-a real scene/prefab workflow, not a read-only asset inspector.
+**Status: partially implemented; completion criteria remain acceptance gates.**
+Document creation, supported Inspector/component and Hierarchy edits, single-node
+transforms, Environment editing, history, Save and unsaved-exit choices are implemented.
+Full prefab workflows, drag-placement feedback and platform/native acceptance remain incomplete.
 
 ### Scope
 
@@ -98,9 +101,10 @@ opened scene/prefab, navigate with orbit/pan/zoom and free flight, frame objects
 use grid/axes and standard views, and select objects in sync with Hierarchy.
 Complete it through separately demonstrated render/resource, navigation/docking
 and selection slices. The
-[read-only Inspector](site/en/contributing/contracts/editor/inspector.md) connects to
+[Inspector](site/en/contributing/contracts/editor/inspector.md) connects to
 the same source selection without requiring renderer readiness. Camera and selection
-state are not document edits. Gizmos, source mutation and Play remain excluded.
+state are not document edits. Source transforms are separately owned by
+[ADR 0053](decisions/0053-scene-transform-manipulators.md); Play remains excluded.
 
 The initial projection profile supports spatial/UI documents and PNG/static-GLB
 inspection with an explicit matching verified delivery. Spatial camera navigation

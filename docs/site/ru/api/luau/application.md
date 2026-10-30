@@ -112,7 +112,7 @@ Sequence тоже действует и может закончиться ран
 | `close_window` | Нет |
 | `focus_window` | Нет; явный запрос активации и ожидание нативного подтверждения |
 | `modifier` | `modifier: "shift" \| "control" \| "alt" \| "super"`, `pressed: boolean` |
-| `button` | `pressed: boolean` (основная кнопка указателя) |
+| `button` | `pressed: boolean`, необязательное `button: "left" \| "right" \| "middle"` (по умолчанию left) |
 | `click` | Либо `element: string`, либо `position: Point` |
 | `move` | `position: Point` |
 | `drag` | `from: Point`, `to: Point` |

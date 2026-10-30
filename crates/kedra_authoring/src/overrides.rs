@@ -449,8 +449,10 @@ fn remove_matching(
 pub(crate) fn upsert(operations: &mut Vec<Operation>, operation: Operation) {
     match &operation {
         Operation::SetField {node,component,path,..}=>operations.retain(|op|!matches!(op,Operation::SetField {node:n,component:c,path:p,..} if n==node&&c==component&&field_prefix(path,p))),
-        Operation::SetComponent {node,component,..}=>operations.retain(|op|!matches!(op,Operation::SetComponent {node:n,component:c,..}|Operation::SetField {node:n,component:c,..} if n==node&&c==component)),
-        Operation::RemoveComponent {node,component}=>operations.retain(|op|!matches!(op,Operation::SetComponent {node:n,component:c,..}|Operation::SetField {node:n,component:c,..}|Operation::RemoveComponent {node:n,component:c} if n==node&&c==component)),
+        Operation::SetComponent {node,component,..}=>operations.retain(|op|!matches!(op,Operation::SetComponent {node:n,component:c,..}|Operation::SetField {node:n,component:c,..}|Operation::RemoveComponent {node:n,component:c} if n==node&&c==component)),
+        // Keep a preceding SetComponent: it may be the component's only source.
+        // Removing it would make the removal itself target a nonexistent component.
+        Operation::RemoveComponent {node,component}=>operations.retain(|op|!matches!(op,Operation::SetField {node:n,component:c,..}|Operation::RemoveComponent {node:n,component:c} if n==node&&c==component)),
         _=>{},
     }
     operations.push(operation);

@@ -5,7 +5,9 @@ use bevy::{
     camera::NormalizedRenderTarget,
     input::keyboard::{Key, KeyboardInput},
     input_focus::FocusedInput,
-    picking::events::{PointerDragEnd, PointerDragStart},
+    picking::events::{
+        PointerDragDrop, PointerDragEnd, PointerDragEnter, PointerDragLeave, PointerDragStart,
+    },
     picking::pointer::{PointerAction, PointerId, PointerInput},
 };
 #[derive(Component, Clone)]
@@ -19,6 +21,9 @@ pub(super) fn install(app: &mut App) {
         .add_systems(Update, pointer_cancel)
         .add_observer(start)
         .add_observer(end)
+        .add_observer(drop_entry)
+        .add_observer(enter)
+        .add_observer(leave)
         .add_observer(cancel);
 }
 pub(crate) fn path_for_drop(world: &World, dragged: Entity) -> Option<String> {
@@ -49,7 +54,7 @@ fn start(event: On<PointerDragStart>, bindings: Query<&Binding>, mut commands: C
     let Ok(binding) = bindings.get(event.event_target()) else {
         return;
     };
-    if !matches!(binding.action, Action::Select(_)) {
+    if !matches!(binding.action, Action::Select(_) | Action::TreeNavigate(_)) {
         return;
     }
     let capture = Capture {
@@ -70,6 +75,72 @@ fn start(event: On<PointerDragStart>, bindings: Query<&Binding>, mut commands: C
                 }
             }
         }
+    });
+}
+fn entry(world: &World, binding: &Binding, folder: bool) -> Option<PathBuf> {
+    crate::workspace::browser_entry_path(
+        world,
+        binding.view,
+        &binding.path,
+        binding.generation,
+        &binding.action,
+        folder,
+    )
+}
+fn moving(world: &World, dragged: Entity) -> Option<(ViewId, PathBuf)> {
+    let capture = world.get::<Capture>(dragged)?;
+    let current = world.get::<Binding>(capture.root)?;
+    if current.view != capture.binding.view
+        || current.path != capture.binding.path
+        || current.generation != capture.binding.generation
+    {
+        return None;
+    }
+    let path = entry(world, current, false)?;
+    if path.as_os_str().is_empty() || entry(world, &capture.binding, false)? != path {
+        return None;
+    }
+    Some((current.view, path))
+}
+fn drop_entry(mut event: On<PointerDragDrop>, bindings: Query<&Binding>, mut commands: Commands) {
+    let Ok(binding) = bindings.get(event.event_target()) else {
+        return;
+    };
+    let binding = binding.clone();
+    let dragged = event.dropped;
+    event.propagate(false);
+    commands.queue(move |world: &mut World| {
+        let Some((source_view, from)) = moving(world, dragged) else {
+            return;
+        };
+        let Some(directory) = entry(world, &binding, true) else {
+            return;
+        };
+        crate::workspace::folders::move_entry(world, source_view, binding.view, from, directory);
+    });
+}
+fn enter(event: On<PointerDragEnter>, bindings: Query<&Binding>, mut commands: Commands) {
+    let Ok(binding) = bindings.get(event.event_target()).cloned() else {
+        return;
+    };
+    let target = event.event_target();
+    let dragged = event.dragged;
+    commands.queue(move |world: &mut World| {
+        let valid = moving(world, dragged)
+            .zip(entry(world, &binding, true))
+            .is_some_and(|((_, from), directory)| {
+                !directory.starts_with(&from) && from.parent() != Some(directory.as_path())
+            });
+        kedra_ui::docking::class(world, target, "drop-target", valid);
+    });
+}
+fn leave(event: On<PointerDragLeave>, bindings: Query<&Binding>, mut commands: Commands) {
+    if bindings.get(event.event_target()).is_err() {
+        return;
+    }
+    let target = event.event_target();
+    commands.queue(move |world: &mut World| {
+        kedra_ui::docking::class(world, target, "drop-target", false)
     });
 }
 fn end(event: On<PointerDragEnd>, mut commands: Commands) {

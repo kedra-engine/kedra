@@ -352,9 +352,13 @@ impl WorkingSet {
     /// Whether current authored content differs from the acknowledged source content.
     /// Revisions still advance monotonically; returning to saved content is clean.
     pub fn dirty(&self, id: DocumentId) -> bool {
-        self.documents
-            .get(&id)
-            .is_some_and(|d| self.saved.get(&id) != Some(&d.document))
+        self.documents.get(&id).map(|d| &d.document) != self.saved.get(&id)
+    }
+    /// Whether any working source or pending source removal differs from saved content.
+    /// Includes viewless documents and removals; it does not inspect revision equality.
+    pub fn is_dirty(&self) -> bool {
+        self.documents.keys().any(|id| self.dirty(*id))
+            || self.saved.keys().any(|id| !self.documents.contains_key(id))
     }
     /// Compute the transaction-coupled document set that must be saved together.
     pub fn save_group(&self, id: DocumentId) -> BTreeSet<DocumentId> {
@@ -369,7 +373,7 @@ impl WorkingSet {
             if before == result.len() {
                 // Keep history edges for redo, but an undone, never-saved creation is
                 // not a live Save member. Compute the full closure before filtering.
-                result.retain(|id| self.documents.contains_key(id));
+                result.retain(|id| self.documents.contains_key(id) || self.saved.contains_key(id));
                 return result;
             }
         }

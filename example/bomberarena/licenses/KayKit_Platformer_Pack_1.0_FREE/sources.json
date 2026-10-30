@@ -1,0 +1,856 @@
+{
+  "archive": "KayKit_Platformer_Pack_1.0_FREE.zip",
+  "archiveSha256": "7e140ee01abf99a5896cf93a02ff3dc6a23a7222109fd04854821f44a3a3adeb",
+  "creator": "Kay Lousberg",
+  "license": "CC0-1.0",
+  "conversion": "gltf-pipeline 4.3.1; separateTextures=true; keepUnusedElements=true",
+  "assets": [
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/arch_blue.gltf",
+      "sha256": "c606809ac0d7e7401c6412d5bb7ec5b125d6099d9d84c5cf83e901207b61991d",
+      "destination": "models/arch_blue.glb",
+      "outputSha256": "a803af0f988b9a738a486cd47901aa0e5ed8a7b184d51772cfff87c34904adfa",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/arch_tall_blue.gltf",
+      "sha256": "4f420d253cf8636eab71f4b04c6852d72e9dad19d0dc931c3e2175200d1b9657",
+      "destination": "models/arch_tall_blue.glb",
+      "outputSha256": "f06e628942fc19f039ff5b2392dd1045c1228c9fb12231b41eeffbed04a46414",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/arch_wide_blue.gltf",
+      "sha256": "c35fce0a94d8da9ad2abcbcc72f8a7b577253bb1c6a09877ffac04365758e668",
+      "destination": "models/arch_wide_blue.glb",
+      "outputSha256": "6718051e5cc0396e76ac1a616ce974f18cd48a667032cba4699720c238437bfe",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/ball_blue.gltf",
+      "sha256": "3f61e029b27e23ed063110fc797ebdd62294d97f2ce3372df96fe3cd0c07178c",
+      "destination": "models/ball_blue.glb",
+      "outputSha256": "925892957a6e8bbdc3201c3013116cc9f72fa4314f7f1c1dd01468447235c74b",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_1x1x1_blue.gltf",
+      "sha256": "eb01a833ffccbb41d2f3f79d12ca6de841764bbbe2c41a803ae57dac02cc32dc",
+      "destination": "models/barrier_1x1x1_blue.glb",
+      "outputSha256": "3fabec9b2bd96a8d32758b55a4157802cf01fe257066d256f5b5615f5ce901b9",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_1x1x2_blue.gltf",
+      "sha256": "c1e9fb8c2293c7d4584e3d8117dbd2da3a1fa5e74f49b8d39d50b7a60fd6500f",
+      "destination": "models/barrier_1x1x2_blue.glb",
+      "outputSha256": "f5d0e79ef1874ce1bb6106ab7131d9aebb602607ba3cea2b1355e4aa269c13fc",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_1x1x4_blue.gltf",
+      "sha256": "aa8e8bb38a15c25fe96ca545c2564a55329803ecf8c88a88cd02ce38844180a3",
+      "destination": "models/barrier_1x1x4_blue.glb",
+      "outputSha256": "fab7830f78394f81840a36a4e296a75b5414970a169d6451365836fb40ef00c4",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_2x1x1_blue.gltf",
+      "sha256": "83f34d5c69b81ede7adb23c998b6f884add87e33d9534c8739d3b724d4354e28",
+      "destination": "models/barrier_2x1x1_blue.glb",
+      "outputSha256": "7acbcf7a4781081b01d48f6f7ba4dc915259d8a6987d02d6164ed686a48a4e31",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_2x1x2_blue.gltf",
+      "sha256": "30cc6318257b6287f3f8d6329cc1fb04832725d7d5a0fb3dcc1db4904b3a97bb",
+      "destination": "models/barrier_2x1x2_blue.glb",
+      "outputSha256": "04c20399e07c28eac51410029e26a580e3cc223d81441ca8eb568fe47f00b626",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_2x1x4_blue.gltf",
+      "sha256": "5e39c16ec4c2f169df2a04e28fe01c1f9f618ccf8c2fe99bdf9c428eb2e40af7",
+      "destination": "models/barrier_2x1x4_blue.glb",
+      "outputSha256": "d9e41d3cdee4fc79015792bbc93e096be454b36c5f6a95e6f3470d5ad4f5069c",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_3x1x1_blue.gltf",
+      "sha256": "a04b26af9f3639408d8979c24a34e38ebc2108c48f6d6cd56368f648ee021837",
+      "destination": "models/barrier_3x1x1_blue.glb",
+      "outputSha256": "c08015c4a8b781c152e3ae6eec5cd91f9787fe621fb1de7c54b57c6bc725f806",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_3x1x2_blue.gltf",
+      "sha256": "57a5c93d1a48cf30035aa59083a60d0cb6a380f17b405898f647c7c7a870fd9c",
+      "destination": "models/barrier_3x1x2_blue.glb",
+      "outputSha256": "d6438e29ffc901328564e34f361d5db74f94d938ae46281c462a5afc3233528e",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_3x1x4_blue.gltf",
+      "sha256": "cba1a726a658eb6bbba3c63d48ad2d739a18207f8a726748eb6796a07b3f9028",
+      "destination": "models/barrier_3x1x4_blue.glb",
+      "outputSha256": "5a3376f76b6361ed27f20102139aaa120c6f0c6abd8d6a6609d9bc0322c0dc85",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_4x1x1_blue.gltf",
+      "sha256": "2ce1583da723f3a06e6c148678f2a70ea9c3cfc106d15a8ef254b55798422309",
+      "destination": "models/barrier_4x1x1_blue.glb",
+      "outputSha256": "873b5b80d4a56c0e07fe8a5d9de74b5f05e9924944189ac95a2897a4077ea49c",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_4x1x2_blue.gltf",
+      "sha256": "dd7905f1daacc8e15ccdc3165c8c4ab0471c6416d372dc7cb55f0515f758daba",
+      "destination": "models/barrier_4x1x2_blue.glb",
+      "outputSha256": "43c6100e25ee7ff590f6914a24bb0a9b2448fc4fe7fd8e4589805d2ba6a7f03f",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/barrier_4x1x4_blue.gltf",
+      "sha256": "5e48a61a4ea8d9db8217a4b25056c1d5131697eeecd6728bab71035d641925bd",
+      "destination": "models/barrier_4x1x4_blue.glb",
+      "outputSha256": "d87cf3a2e25d486b8b5463b06a0a56472f427a78cdecf8c76b3852e174b6dde7",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/bomb_A_blue.gltf",
+      "sha256": "091356964c6aba1db93a948b61dc220b06517ae388b0288cb7e57dc6b202aa1c",
+      "destination": "models/bomb_A_blue.glb",
+      "outputSha256": "350e0b85737093f1ee6a5764f1044194d70282a8f831b1b841e97f84fc8ceacb",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/bomb_B_blue.gltf",
+      "sha256": "a053598ead06cb507b2bec4e33886dd134259030366e329a054241d5681289ad",
+      "destination": "models/bomb_B_blue.glb",
+      "outputSha256": "3fdd96060074ea4f5b469f8c2eaf7008f25aa28c78175541cc1c7d610b6de888",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/bracing_large_blue.gltf",
+      "sha256": "8df23eac84b817b8edb3118accfdb2cefb35bfeff84c34bd0db3322403430087",
+      "destination": "models/bracing_large_blue.glb",
+      "outputSha256": "b17cf5f53d3c0beaa98b214936c05e3f43fb96b8a23e25fd2a3b14a8c1bfdf8c",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/bracing_medium_blue.gltf",
+      "sha256": "ddf4472aba06b947da3850a12732765f73bf45914c31519fb531b6d0a38f2c15",
+      "destination": "models/bracing_medium_blue.glb",
+      "outputSha256": "c71971c29642b62d09b45652710f327d543663ebb6031c09fb9cccc452673ff8",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/bracing_small_blue.gltf",
+      "sha256": "97394e0ecf341dbc8b1b7df9fb33a1836c8b220452ee5ab498cf65d67adc0227",
+      "destination": "models/bracing_small_blue.glb",
+      "outputSha256": "87632a0abc1f9bd07497b780d93365ace1477e8df7e0f8de808893ba00eedfce",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/button_base_blue.gltf",
+      "sha256": "aef8b4c43b9bae2101cd83806a8bb8756885915e73fe763191b17216b7ba6ae7",
+      "destination": "models/button_base_blue.glb",
+      "outputSha256": "a8266f5663ab65a36a6cf788f74f47dcd0d2a4713cc1c95f734492b27b66892e",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/cone_blue.gltf",
+      "sha256": "e100116c4fb1c369d38291b636943ebb9fc852ecb24f90ba7754a91f8b1a0266",
+      "destination": "models/cone_blue.glb",
+      "outputSha256": "13028bc0c07a9fb34be5bee87286ef79a22d34c78902e64386ea350e1bc52273",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/diamond_blue.gltf",
+      "sha256": "5b62b2feb4e34963c5df7580788134910cc955d4cf827c574025336df8cb8a4f",
+      "destination": "models/diamond_blue.glb",
+      "outputSha256": "e998d05cd2b34db5f2aa4b182fd472bb3e3953c5071ce1f33a4ef84877e4b0a3",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/flag_A_blue.gltf",
+      "sha256": "f047713f733dd27dc7ea42fd93bd89316cb2b3da4b57644409b725c76cd3a023",
+      "destination": "models/flag_A_blue.glb",
+      "outputSha256": "9486769dfe7d6c09dd4c4a716969f73d6513a16d274727a6d470ade4822acf1e",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/flag_B_blue.gltf",
+      "sha256": "dfd6d7c6eaa1dad23a4068a70a38c82a5884dab7462db57432aecb67d7ed849f",
+      "destination": "models/flag_B_blue.glb",
+      "outputSha256": "4300c1ee6df0090c617cd027eefd1517c3d4bdb30153f47e8056f80ad2856511",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/flag_C_blue.gltf",
+      "sha256": "ba405accd7b9224c1a23ae22a1b93ff31857d2c10419471de4583ff4fd63595b",
+      "destination": "models/flag_C_blue.glb",
+      "outputSha256": "912b47180c57d61fb984e684652d2d5c4376d795f155f28617eba6cc6da1d9ae",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/heart_blue.gltf",
+      "sha256": "3d6ddad8b0d3a58f7b876d5c6fbe5b1babc5ba1c868f3aa127741672b210a686",
+      "destination": "models/heart_blue.glb",
+      "outputSha256": "532896fc95d88e89b9391a7df1989d2d72ea6ee436833d84be523b1d8c2bc845",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/hoop_angled_blue.gltf",
+      "sha256": "d72aacab1c99afcca9396d96fe151f7a5e7b9db7208a10a314da9a2ba4ed9f54",
+      "destination": "models/hoop_angled_blue.glb",
+      "outputSha256": "8708ac2b30be35f8bc39512926374b3ac16d49e6be35fb6e09a35112f8ca4649",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/hoop_blue.gltf",
+      "sha256": "53ce403f60fb7cf8cc2889e5465bd651ed3fde79d38a60bc7c94b78513f8511a",
+      "destination": "models/hoop_blue.glb",
+      "outputSha256": "71c396863640830a775ca1a0ad767c2f44388fc28e54807f0432a1e54068e11f",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/lever_floor_base_blue.gltf",
+      "sha256": "77a6bdd950c7117a3279fd26e276c50082a1fbbc2c922cf80b01ee2636bbcb1f",
+      "destination": "models/lever_floor_base_blue.glb",
+      "outputSha256": "4d39c44418015c46f5a793a3789c8c06df0e6c7a6a51efa5a7e970a790c14d9e",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/lever_wall_base_A_blue.gltf",
+      "sha256": "feca2ce73782714263ff07929bb44e1e23c41558c1f2300c7a79a5269e8e3dbb",
+      "destination": "models/lever_wall_base_A_blue.glb",
+      "outputSha256": "6a7fbf14333a404bba1bfb6b7434e84a52d1f3acc7a757fdd2a8113b4f5fad9f",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/lever_wall_base_B_blue.gltf",
+      "sha256": "879f764e26d37cbcaaa4c9ff4bc89c76b6365b2c77e548d3b8d1b0752fecc633",
+      "destination": "models/lever_wall_base_B_blue.glb",
+      "outputSha256": "0360622b4a95e569f5d24de3f712bc955b4f4f55044d245e9a2cee8413278e0c",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/pipe_180_A_blue.gltf",
+      "sha256": "3f9d818bce41ef0c5e6dce5a50fc5533b2a2c6ad3dbf7eeb7085fd87d301ad66",
+      "destination": "models/pipe_180_A_blue.glb",
+      "outputSha256": "1dadfdf1f06fcf1344d84b6122346bfdbb40bd1bc6ef31d4fe24f7dc38da9898",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/pipe_180_B_blue.gltf",
+      "sha256": "98a0674bc8cacc262e3dc861d501ce0ceb2711277160d1211b9344631f0dbeec",
+      "destination": "models/pipe_180_B_blue.glb",
+      "outputSha256": "7a116ed7afd302dbc9e2bd35faa9ce3ffa7e11e3c075cf6704b33ae3ccd2fc4b",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/pipe_90_A_blue.gltf",
+      "sha256": "a1a76bb7d7a8c7eb51b931275449ea90ef8f58dc22396ce2d8acbbfd0bdf11f8",
+      "destination": "models/pipe_90_A_blue.glb",
+      "outputSha256": "623b890501a5cd1c3d268141f669067720f33cde992fc4948ceb4b5e00f06db3",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/pipe_90_B_blue.gltf",
+      "sha256": "df1f0a29590812d32cfc8fc2075761bd4eb42ae7b3ee788bc47d45c6060da33d",
+      "destination": "models/pipe_90_B_blue.glb",
+      "outputSha256": "0a77634f157540b84eab2c0adcf9bc26ee600ba58c0b390099be030be0abe3f3",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/pipe_end_blue.gltf",
+      "sha256": "f1070ad99072dcc187ba11077633a7a05c02f4749eb1074a85fa57f57932fd18",
+      "destination": "models/pipe_end_blue.glb",
+      "outputSha256": "73f24f9e6175f5bd14ff43c14b28718672502f275b497fa4fc9e9672100a6234",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/pipe_straight_A_blue.gltf",
+      "sha256": "08281e03108f8bb86d37a13ec977cfe26bad5bcad1900a09100c89269624f47d",
+      "destination": "models/pipe_straight_A_blue.glb",
+      "outputSha256": "578288e766e3d99eb5e9deff2ee0eb4502c98f519d7b284291072f31a8ea4979",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/pipe_straight_B_blue.gltf",
+      "sha256": "171a18f70b4d59a9bc6f9ad1df5adf0b9ff751c16a66dc225d05e126461adfc0",
+      "destination": "models/pipe_straight_B_blue.glb",
+      "outputSha256": "74436659fe727a3a3304f137a12f79a05873823f0d72da1d2600e8ad853defb7",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_1x1x1_blue.gltf",
+      "sha256": "8507450c05a7c5f0b16ed942cc8f4217a455bdf5932b549cd3828da2f07c81ec",
+      "destination": "models/platform_1x1x1_blue.glb",
+      "outputSha256": "d032a126146dc72a966f209ed56d4cfc5c6e6fd3b79e52a5b66427966ba48086",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_2x2x1_blue.gltf",
+      "sha256": "9a8e54aef9abf016664f96c516fe32c511e106a7d596411210743f8b4dad1a54",
+      "destination": "models/platform_2x2x1_blue.glb",
+      "outputSha256": "8499d5acfd24c2161a586ecf0bc4d47d9ac8cafc2f998bf38f0c0484b45e24f8",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_2x2x2_blue.gltf",
+      "sha256": "8f8de0da7040de83f5caad0322e3e4abd085987841a4934e10b8af1c3ab085b3",
+      "destination": "models/platform_2x2x2_blue.glb",
+      "outputSha256": "0e71c48ff2b17d05af36ba2ef03b24c5f3eb388e45c86e6d4058530c981a0584",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_2x2x4_blue.gltf",
+      "sha256": "fc370d54b683f1de2f47ae52f9ae31be4a5fe5ae21edfe710756efa247c653cb",
+      "destination": "models/platform_2x2x4_blue.glb",
+      "outputSha256": "f16fd9400034481d0ca4b5edde1beb74234b1155706f7d3c3369d513824179ed",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_4x2x1_blue.gltf",
+      "sha256": "a33000af449daca76c7ee8b3b7fe200ae1de7efcf187b381137167a71c9e900c",
+      "destination": "models/platform_4x2x1_blue.glb",
+      "outputSha256": "132d41d4aa3880d5446b6c01029ea183636ccf2f3f29c09307d214f853ef897d",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_4x2x2_blue.gltf",
+      "sha256": "2e658621a5a2b20e4690dd88105595789a733848ace3d3e8023974679ee89dc5",
+      "destination": "models/platform_4x2x2_blue.glb",
+      "outputSha256": "b150098e420c59b62b66af13f9447c37c6885b6f4060553b34a1bccfa16936ea",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_4x2x4_blue.gltf",
+      "sha256": "c7f886e1e77fc954b8cf791058d083136eaa8409683310fd484bcb489e400889",
+      "destination": "models/platform_4x2x4_blue.glb",
+      "outputSha256": "e117a7326880c086b880a915c164f8d25676ea197475c2622bbbc2857acf317f",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_4x4x1_blue.gltf",
+      "sha256": "01b8767fb100e7ec7b0e597bd6754f110d8e48281a1a76c0e10cc2bf3521b617",
+      "destination": "models/platform_4x4x1_blue.glb",
+      "outputSha256": "ebf2a4eb5eb394cc6307597a0095440422f4433284d6831e0a16aece768cc6a4",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_4x4x2_blue.gltf",
+      "sha256": "2e40050d947ea412c3f6b46110f66a70fb51fa2a7f1df37aa2b8a7b3b96884e4",
+      "destination": "models/platform_4x4x2_blue.glb",
+      "outputSha256": "d81cefd7fc6a3a2a0a6184626787380bb51fb4e9752efe2a9f995923bc092b61",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_4x4x4_blue.gltf",
+      "sha256": "17c957a0b9e1de88bf98a364b9d000d2cdeef785b054d8ea16e58517cd7e5b9a",
+      "destination": "models/platform_4x4x4_blue.glb",
+      "outputSha256": "f7bbc65c72edfee923e01131c3681cad031bc561ee206f3e97c07e8a990f166f",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_6x2x1_blue.gltf",
+      "sha256": "5d397fc03e2ca836755c225a6e497df20e235c7795462ff00ade6173026ed00a",
+      "destination": "models/platform_6x2x1_blue.glb",
+      "outputSha256": "40f3a1c9f20a14bbb581e1850fd889cb902c6489ebd0e807fd02d29dba515605",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_6x2x2_blue.gltf",
+      "sha256": "24929bb58c7bb31b1624c7564ef8898914bded9a8d5932569eebdcf89a82da27",
+      "destination": "models/platform_6x2x2_blue.glb",
+      "outputSha256": "870d691c24029345afe283e7e5d61af191876e7f79019327c7f6e77836468f12",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_6x2x4_blue.gltf",
+      "sha256": "e9b119b9e73e6e02603878b44b469ada0ed19ab9e268298c8c0854a157b750d8",
+      "destination": "models/platform_6x2x4_blue.glb",
+      "outputSha256": "9b74669b9a5a02db8f70643999f7eb21bfe4511fbfead3fa67ed112f3c241052",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_6x6x1_blue.gltf",
+      "sha256": "f9738f2ef27077b846ba26887bc397e2325df71a8041825f2a6cbf7512f6edba",
+      "destination": "models/platform_6x6x1_blue.glb",
+      "outputSha256": "6e41fea1f56ce2ddc74dc3f15ec05f0f118a705fa999568ac81a530566124b80",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_6x6x2_blue.gltf",
+      "sha256": "d4cedee15251f0a5bde6dd4ab588382c508a8ac82825d356bf634315ac3995fb",
+      "destination": "models/platform_6x6x2_blue.glb",
+      "outputSha256": "bca9eb4605c0fd63b951f6fbde997b175041fa4d1c8bc79686c13ee3c2635cdc",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_6x6x4_blue.gltf",
+      "sha256": "2a19dbd40bf130b760f14e5cf0f809caea56e0b73bf5aa91c495942ff885e1ad",
+      "destination": "models/platform_6x6x4_blue.glb",
+      "outputSha256": "098d9b0a1f01764ececd36905af42c6dd857bf15d25d6212388c668f62ec13d7",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_arrow_2x2x1_blue.gltf",
+      "sha256": "1f6f00a6de1fbdad1db5ce926be634bfab5d4a9e24d3e2e404a40032ae4706ff",
+      "destination": "models/platform_arrow_2x2x1_blue.glb",
+      "outputSha256": "badde572bbb0c0d2ba1fbac73c5a986f80153e07fe66b09effb43bdeed375d11",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_arrow_4x4x1_blue.gltf",
+      "sha256": "5c79694e6c49f55314395ef5498ed576df897152b11aa775e28c830018bab432",
+      "destination": "models/platform_arrow_4x4x1_blue.glb",
+      "outputSha256": "4d5bbec0be089d9c4b15a53009fe86a038356847f65b5c52f01ccc2078632da3",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_decorative_1x1x1_blue.gltf",
+      "sha256": "aa542fd216fcf74f50d7eb915898e3cfc17f581f2e45238730667b8808760873",
+      "destination": "models/platform_decorative_1x1x1_blue.glb",
+      "outputSha256": "01dd75e8ece2a522b321b030b557b394f3f8d72ea095b847e613ecd83a0fb24f",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_decorative_2x2x2_blue.gltf",
+      "sha256": "6f52a9f0aa7e2e6ab8d94ee76f682997d2476cdc06c082c06b29fc2a10708937",
+      "destination": "models/platform_decorative_2x2x2_blue.glb",
+      "outputSha256": "80691b5605a97daa3bfacea0640416f08f136176bf5770027b0e907c5937d25b",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_hole_6x6x1_blue.gltf",
+      "sha256": "5f0ea1a5e7d06ba36438b07c94a5bf3ef70664512eb9931780f3af00a25ffea1",
+      "destination": "models/platform_hole_6x6x1_blue.glb",
+      "outputSha256": "fa36b8b3cc7a4263f65c09a3d07d6af1a11169f6a02346ff2eb3fbd1428dee46",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_slope_2x2x2_blue.gltf",
+      "sha256": "b2722fdd835f71e765da885a5707127a406953a2ce82ed080b992125d45b308f",
+      "destination": "models/platform_slope_2x2x2_blue.glb",
+      "outputSha256": "629bdde7e367021385b1a9216fec892e63067dc370f82a21ad10411c1ed66dc2",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_slope_2x4x4_blue.gltf",
+      "sha256": "8dd25eb0f24d962ac59ab79ed21a60000425bb68d6ab1d8cc96e6415212b7b92",
+      "destination": "models/platform_slope_2x4x4_blue.glb",
+      "outputSha256": "b3d78d9726ea00b4587690c50c1bd94c02d5b33b33d21e481b25b22d3f18a82b",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_slope_2x6x4_blue.gltf",
+      "sha256": "452722eb4a9f664a9390ab2fe6a5bdc3ca48f5356fd7bbfa2bff1ae5fbe3235c",
+      "destination": "models/platform_slope_2x6x4_blue.glb",
+      "outputSha256": "bf6879d728cfff8d7ca9cd17eab618495e6a1fed5cc73c8ad9be9d42811f1edf",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_slope_4x2x2_blue.gltf",
+      "sha256": "4335a95f2266423ceaafafc61200c31f111d884f7955b140347bf1a88c55107b",
+      "destination": "models/platform_slope_4x2x2_blue.glb",
+      "outputSha256": "db54f92eb84b36f1d5e5f9abf91be45a74c9398366bdef4bf07af6eeccacc29f",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_slope_4x4x4_blue.gltf",
+      "sha256": "5b312acb0071bcd2d1c5d55021126240872ec7099dd151dacd8bd22345a64507",
+      "destination": "models/platform_slope_4x4x4_blue.glb",
+      "outputSha256": "834c3f074a0b386b38405cd59e4874fa387490457c488596b1fc8d3214418933",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_slope_4x6x4_blue.gltf",
+      "sha256": "337409e7f8fb5a8ed21269c8fd0c7215d03f1588b6eadd4375c77804fdd933a8",
+      "destination": "models/platform_slope_4x6x4_blue.glb",
+      "outputSha256": "389c7c6a2618d8d018c8b980e553e0014e51b41a5835eab042b25a1b31d9ff5b",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_slope_6x2x2_blue.gltf",
+      "sha256": "cd552c3af7b5ccb0cd12302b9087345823c2bb0c479f23921f00f430a4c960ec",
+      "destination": "models/platform_slope_6x2x2_blue.glb",
+      "outputSha256": "9190384f608173d38b2c412312e08a8888b9710e0cb8ec194af1e389ffcad7ce",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_slope_6x4x4_blue.gltf",
+      "sha256": "56a33286d58cc294495d10a2593906ad2f1ec8c6f9e5465a003a2d0d9f4809eb",
+      "destination": "models/platform_slope_6x4x4_blue.glb",
+      "outputSha256": "d3301c4a7d2bf9ef061e13ca36be0eb7b55a469bf7605999fd200566f2bde742",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/platform_slope_6x6x4_blue.gltf",
+      "sha256": "2db490e005d46fb32bf30eed9107642a6d0124cd80936fb4e3dd68f793b97fb4",
+      "destination": "models/platform_slope_6x6x4_blue.glb",
+      "outputSha256": "dc71350370fc13373a2167974cea96becb4547b18350e2bcb42bbec7f69dbb62",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/power_blue.gltf",
+      "sha256": "eeeb66af6bf397367d3040d1bc86181e4a115c25a16cc8c7761fb729d7944b20",
+      "destination": "models/power_blue.glb",
+      "outputSha256": "6c41963bab523d1f25c1098be6b6294b4ad6499fe9ad8516d875b6a57045f5af",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/railing_corner_double_blue.gltf",
+      "sha256": "0135ade0a3aca9b351e08f4e74d828a5e67df7d9a1a286b1fcfc7d4b280326c0",
+      "destination": "models/railing_corner_double_blue.glb",
+      "outputSha256": "fe88b7739b4c703bf53820f770009e61a3ab6579ed927357826cb021ae9ed0dc",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/railing_corner_padded_blue.gltf",
+      "sha256": "81614915de1eaa6a4f2e44bc9b74856245e7ed1c60e808db6ba0ce111816f5ab",
+      "destination": "models/railing_corner_padded_blue.glb",
+      "outputSha256": "a7dadef3ad00ba69be6dea802a2de35c708733064b694562d10c35fbbfe92646",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/railing_corner_single_blue.gltf",
+      "sha256": "c0489352d730d37a85088247ecadd26f44f01ee326db35a0ad6eed64e4ee79c9",
+      "destination": "models/railing_corner_single_blue.glb",
+      "outputSha256": "ecb7348cff76cb4b70428218c3b062b69c93831bcd1d4bfbe0e7732216d433f4",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/railing_straight_double_blue.gltf",
+      "sha256": "bb6ff17edbacc538264a06c069471bbac77bc8224050cfdc3a07a97b65d1fbe3",
+      "destination": "models/railing_straight_double_blue.glb",
+      "outputSha256": "0d5afc5e266e688742d8dc71dddd19846e431ade8233a98a4a841189dd721e91",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/railing_straight_padded_blue.gltf",
+      "sha256": "6d4f843f12c29b2686c67e9bbcec69fa7be4f40f418d64c4f231e14ebeb13397",
+      "destination": "models/railing_straight_padded_blue.glb",
+      "outputSha256": "7808b3e396cd5168f279f2fc830c740e96784251bd8b09b8b93bd02cd90087ec",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/railing_straight_single_blue.gltf",
+      "sha256": "743df59f6f3dc12bca37280127521408a0f5586918ec391852a4c4e4bf7be920",
+      "destination": "models/railing_straight_single_blue.glb",
+      "outputSha256": "55f1a46ad567424b42588d5e4d73d57a389f43ac647ef09727a847e92a260b62",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/signage_arrow_stand_blue.gltf",
+      "sha256": "fd2558e57f8b371f2ea4d7f155ebf6e9e8d1094a7c4ba7cb634474689ef24662",
+      "destination": "models/signage_arrow_stand_blue.glb",
+      "outputSha256": "ca519cbfd29399725f6111167b8870ae57d75fc4bdbd067a9a519ae0b832cfba",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/signage_arrow_wall_blue.gltf",
+      "sha256": "00ef1517573840cab027f42365397046076074e106ccbbadc0ee4aa129ab55f1",
+      "destination": "models/signage_arrow_wall_blue.glb",
+      "outputSha256": "f4220eb0a7acbc12e100ad3dbabd05512b87c1c62cfef5df5ece515c3a20b5b7",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/signage_arrows_left_blue.gltf",
+      "sha256": "806581856e9fa4a8a1bcecdc290d8d634c5ca53e258c4c5e4e08bd064b4647b6",
+      "destination": "models/signage_arrows_left_blue.glb",
+      "outputSha256": "28870fe9152cd1ffd54311e0c6962a5e241532fb0aaef807d4086835beb127d8",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/signage_arrows_right_blue.gltf",
+      "sha256": "1961bc74d2936b17e02db1f1a4aff5054d1cc69b2436ddf73e7302f847923a4b",
+      "destination": "models/signage_arrows_right_blue.glb",
+      "outputSha256": "95e9f00da9cadbcc3e81f7b337893e6a2d419e47a6a4db1a3f9c0f8632cab689",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/spring_pad_blue.gltf",
+      "sha256": "b6513901f48786aae4f106dbc8f66dfd8da3767d2871ab31f3a9e0273ffb8181",
+      "destination": "models/spring_pad_blue.glb",
+      "outputSha256": "d3203083e2bef1658a65636e21d25875bded02a7fab05c97c36c12ecf9df5de1",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/blue/star_blue.gltf",
+      "sha256": "1b500c8166c27c8af740eae20d3539356ef101b205ce242e293bb15cab860800",
+      "destination": "models/star_blue.glb",
+      "outputSha256": "c8e6090e76ce6d32fb3c4e621a76cb57f263892a7759ea0c6f2b6e2b2b60559d",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/ball.gltf",
+      "sha256": "d151c3c9190979fc784ba47b06ff76bafbbcc49002beca674c5eaaebf9ea6c4c",
+      "destination": "models/ball.glb",
+      "outputSha256": "13c7e4d86b95f6969ebea6a05cb92df3a3ac898054ae1300c00f76a98806e0f1",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_1x1x1.gltf",
+      "sha256": "2880619e71e8eafec2b7375ead7d00e0e016e22c28819089390bf9be015b3bee",
+      "destination": "models/barrier_1x1x1.glb",
+      "outputSha256": "c5507b5cd9e8601d1b1c77528945dd5110965a1555107713937e3c1ed0c7cbf2",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_1x1x2.gltf",
+      "sha256": "9a84868b5b3aa4f81c7eaf881aae53b6481576238bc2ae99abaab2aae5ac2636",
+      "destination": "models/barrier_1x1x2.glb",
+      "outputSha256": "ce6197bc6c8f8bcf5a0cc3162be37527a1285e25a81bafec1f1f607615a287a0",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_1x1x4.gltf",
+      "sha256": "c68d12c27b1ab15093480b300724b1c08bd6e65458e065c6df71ed235edd51e8",
+      "destination": "models/barrier_1x1x4.glb",
+      "outputSha256": "69050fe1aee2f7e811364de96a8bd1d9293fa4b0127faed5ec8b52bd1a49afe5",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_2x1x1.gltf",
+      "sha256": "914c170139feef51688a365f9bc1b68b6e10adab9d05d2a6f85b6df2573dc5ef",
+      "destination": "models/barrier_2x1x1.glb",
+      "outputSha256": "e4fcd169b77ee729a78e7575f2cb1cdcb59dce18d2ca2de12da9c1cb128818f5",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_2x1x2.gltf",
+      "sha256": "8f43ea12c849815769b454086af7caac62401a44e803599e0ceea34c69a82135",
+      "destination": "models/barrier_2x1x2.glb",
+      "outputSha256": "6f8031b3d39e8c897ef06315eccd4ba50c78f240b96c97bee5cbde16a68eaf18",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_2x1x4.gltf",
+      "sha256": "1b774bc4c6eabe5d596b778f4eb52b6de522aca4491af650e263a58c50e096e7",
+      "destination": "models/barrier_2x1x4.glb",
+      "outputSha256": "1d66bcf1178552f6cfd9edd88d0091a4b00af5cd10a330883b50bf04aa77bec7",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_3x1x1.gltf",
+      "sha256": "45fe002d3ff218a313257070184ccfe67da268c0022216f64676d18d50d1bf3a",
+      "destination": "models/barrier_3x1x1.glb",
+      "outputSha256": "e4cbe2da30e35ecfa51fdb646d07b4d6f965084da686f12351c03ff73572841d",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_3x1x2.gltf",
+      "sha256": "3de80ff08fd1ff0ddecd8d535f3c124526e20966ee9974ee4009614b23aed29a",
+      "destination": "models/barrier_3x1x2.glb",
+      "outputSha256": "dee5664fce28eb5196eb4b81ae45684627bf448053240659c352ca80cbe21b32",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_3x1x4.gltf",
+      "sha256": "f81024fd1cd294a301b3e14084795252a8494e909213b42f0dd721f56d46fc44",
+      "destination": "models/barrier_3x1x4.glb",
+      "outputSha256": "6878c2698ce88ed466a86c17954a6c4a8f752f51889decf6d97e435035aaa022",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_4x1x1.gltf",
+      "sha256": "47179465996f7a9a7a87e8f34fbf243e3ae819deae8ac32a5e43ffb25b0204ab",
+      "destination": "models/barrier_4x1x1.glb",
+      "outputSha256": "e83a92b0436de4cc41b429e2d7a2ab8afc2eaf630623e9e7189db9affcd75e94",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_4x1x2.gltf",
+      "sha256": "9cca64ebee19c856b15c6bd3dd1e3e6b3b89bbf497ab82571dca4edc90608eba",
+      "destination": "models/barrier_4x1x2.glb",
+      "outputSha256": "97193d2ab786db52c86ff7e1f2620ac9a7526bf0bea4fc07e23f573b29b1b4ab",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/barrier_4x1x4.gltf",
+      "sha256": "adf1a65191f57fc0dd6f7186914523bb8b7647aca98bef979c305f41a129e927",
+      "destination": "models/barrier_4x1x4.glb",
+      "outputSha256": "6c62b70df431bff38ca9407af7fd29a63e471040a32477cd181db0b36f8f5e21",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/bomb.gltf",
+      "sha256": "3ebcf207c329ad4371e0315373f2c32d409e9f7e85a0e224978b1af6a4ee3898",
+      "destination": "models/bomb.glb",
+      "outputSha256": "329520a871b6a1cf527e2fa3606dc50b6e25bed651be28cdc0f428b29b3505bc",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/cone.gltf",
+      "sha256": "319fccaf7cfde2ef0d5f5db8d2a95949fdb1ebd847bf0903e1ea51df936e4614",
+      "destination": "models/cone.glb",
+      "outputSha256": "583240b8783bc70695df53270b159873462c3cf83c2844244561eabb172b8b96",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/floor_wood_1x1.gltf",
+      "sha256": "c93d8ffb94a4b2ed859ed2c67d066a5280effdb7621491f22d429af22b510b52",
+      "destination": "models/floor_wood_1x1.glb",
+      "outputSha256": "377c92021a8b22526c926c3dd3534cdd36f6b64a8517e774f141567fdc720e5c",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/floor_wood_2x2.gltf",
+      "sha256": "d2a83066d0bd894b81cad63cbdb2b63c64a74d5f7da7f276f73252d9242519f1",
+      "destination": "models/floor_wood_2x2.glb",
+      "outputSha256": "1b882fa78d8380f2c17df4b84ca15eaf404ffe777394ac468e5fc5b54fc8093d",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/floor_wood_2x6.gltf",
+      "sha256": "f8e73c0862f22bbbbf3582783abde4a272809107772ffe9283335477eca68c75",
+      "destination": "models/floor_wood_2x6.glb",
+      "outputSha256": "3323bba7c62a46ef730a8f550c6f74aee62434d78ab24a58958a4680b77afa77",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/floor_wood_4x4.gltf",
+      "sha256": "ff2e0748a76ac52c96b58d497b09f64c8de67e8851a0de73e5e2198973b92d0e",
+      "destination": "models/floor_wood_4x4.glb",
+      "outputSha256": "73c4de9163d354de3f088176abd6805a88bba8136d6781e1b05eee00266601a9",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/pillar_1x1x1.gltf",
+      "sha256": "b871426a8f4159eb64d898ea62882e3337281bfbc1880f6f366a6878a394bc0c",
+      "destination": "models/pillar_1x1x1.glb",
+      "outputSha256": "60fb26832279ff6465705227300279cfcec4b230e246cfd4e0cf49cf08131ee2",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/pillar_1x1x2.gltf",
+      "sha256": "3b1dd4c7d4fcad9209c0517ceaf9e32cb92e40cff5c32f2e3a77dbe4f41955c3",
+      "destination": "models/pillar_1x1x2.glb",
+      "outputSha256": "512dc266863f29ece0f4b0a4a7c263554ad3ad893782767a166c374a359fd96a",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/pillar_1x1x4.gltf",
+      "sha256": "784fbcd6681136d7e021e932a633649531b662abf149b8c873d70a465832ade4",
+      "destination": "models/pillar_1x1x4.glb",
+      "outputSha256": "6d0d62e95be7f67530ad8c2f4cb74e581dbc0f48ed6c33d6286c6e054e92ea14",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/pillar_1x1x8.gltf",
+      "sha256": "574dce8362b161c34d12fbc5ca85a7683c909884ebbb20b3eb10a925e2c8b7be",
+      "destination": "models/pillar_1x1x8.glb",
+      "outputSha256": "563f2d3532680dd0c56b8201becf563b0c7819abf51b840ca07898d839730e02",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/pillar_2x2x2.gltf",
+      "sha256": "2f888224fe6ad2fc41fc90508c1b181c5512815217ae499258689035356a1ad8",
+      "destination": "models/pillar_2x2x2.glb",
+      "outputSha256": "3efa665ace3ba75e15914c39f3363dc702085ec159b7c15c75fcfff606eb4d5a",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/pillar_2x2x4.gltf",
+      "sha256": "1e5b775384c91dfcc4e43ef10e9fd41b4d40e889fbc79c807dd2fa45ac9f96ac",
+      "destination": "models/pillar_2x2x4.glb",
+      "outputSha256": "10b5303e2b6f09e9922c0a14ee0de114e2f64fdd792ef2308ab8a21d7d54fe38",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/pillar_2x2x8.gltf",
+      "sha256": "3fd30db215d21dff973e911822923fb012e2cca77785a453717231d7f9c85e1e",
+      "destination": "models/pillar_2x2x8.glb",
+      "outputSha256": "f9f56a7f3f5bdd35b2e343c15745578dffb527cfa532b938598f213b52ed50f5",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/platform_wood_1x1x1.gltf",
+      "sha256": "0594788d83426da168ad511c6456841758e3260acb13a980e2c2236800bbc64d",
+      "destination": "models/platform_wood_1x1x1.glb",
+      "outputSha256": "b44d03ab9d055ebf6b71fc5891cd6795efd84b2671076975883403c266f2b722",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/sign.gltf",
+      "sha256": "7898eea8c245291a2c2beee11bf2f4cab138a1e3b7ecd4f9fd443ae8da2e0b5d",
+      "destination": "models/sign.glb",
+      "outputSha256": "049671a364f1e4ae7b23be158df9d0087d96bea3a7276d1d56efd2f8d418fc3d",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/signage_arrows_left.gltf",
+      "sha256": "6db1b89f2c54f8c86b726e8eb34c9ad8165f4d85f11fc57ec6d949fd6a943660",
+      "destination": "models/signage_arrows_left.glb",
+      "outputSha256": "f99bb516ae487962939c24f529717e6380e6c6d9ba5c9eec34397f0d46f34902",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/signage_arrows_right.gltf",
+      "sha256": "b1dc102f524f5294f83ad744112bf9427b9c3edeb3f70db7e9ecd890a83f6957",
+      "destination": "models/signage_arrows_right.glb",
+      "outputSha256": "958edf03cee12bebd3119a4819be03e5237a883c59bc490b0a9135ca4f11d20b",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/signage_finish.gltf",
+      "sha256": "aad42f1db9849bf1db538b38f12bad32465f32daf8e19f27ed0ebfe2c0d5751e",
+      "destination": "models/signage_finish.glb",
+      "outputSha256": "4f619ed8a64444170b3080224947d29de57fb4e63072e5704ec4a2052362eeb9",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/signage_finish_wide.gltf",
+      "sha256": "aa088fa3fc24da03f326a017cd11b1978f5b937336b3c0e4ae5527010041ddcf",
+      "destination": "models/signage_finish_wide.glb",
+      "outputSha256": "8d3451e6c678f25f127af88da6e7865207ba3b60530d77cb45960e6d320722b0",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/spring.gltf",
+      "sha256": "d407a80b408852f88c6bc894ef5e8b9c593188fa466d8f128abfc371214d6fee",
+      "destination": "models/spring.glb",
+      "outputSha256": "41190bbfc0625183e515586f92ade45caf22f9b10fbb3d090e62d9c827e53263",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/structure_A.gltf",
+      "sha256": "01aa9e7e59ff5b6d547efe4d266d32fbe0c9b412d85d5f5b39e619b054a60f4f",
+      "destination": "models/structure_A.glb",
+      "outputSha256": "d15a3fd5d47c41b47663370749081e3ae3f51926f6c92bfe5b5838ab1a5246bf",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/structure_B.gltf",
+      "sha256": "acb95558bbe13c10e386d58b054ee49c8f2004c734ae531d1f15e48c747a9bc6",
+      "destination": "models/structure_B.glb",
+      "outputSha256": "a95ac2e9d23f8f8df2890c7efb3f9f098a83f9d1249151e656e23dc4917be27b",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/structure_C.gltf",
+      "sha256": "86656de630f2124ffb273582a0eb77fe6ed3ab08ed7c1a8122fce5a0f3d7018c",
+      "destination": "models/structure_C.glb",
+      "outputSha256": "837dcb2c44cef935a00dcae1dacaa1c3f0ef0584e0da5e6ffe13243a5cc70b0e",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/strut_horizontal.gltf",
+      "sha256": "f6818aefb17635239e8481e04ca5fe31f71f3a6ab689cd69d8b77cccc977b975",
+      "destination": "models/strut_horizontal.glb",
+      "outputSha256": "6bcbd99814cb661916ae6608f9992cfb673a809d0d5b7d6e57117b6aa40524d8",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Platformer_Pack_1.0_FREE/Assets/gltf/neutral/strut_vertical.gltf",
+      "sha256": "52e465c4bcac694da33e1bcfade306e3019c192b7da633c779a2dd9e7ed3d70d",
+      "destination": "models/strut_vertical.glb",
+      "outputSha256": "ed87d33bffd9326e914e14d7702780077ab9ee92a38922eb1e8ddc369b5cd1be",
+      "animations": 0
+    }
+  ]
+}

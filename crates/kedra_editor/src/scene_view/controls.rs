@@ -12,23 +12,26 @@ pub(super) struct Controls {
 impl Controls {
     pub(super) fn mount(world: &mut World, view: &UiView) -> Result<Self, String> {
         let names = [
-            "views",
-            "select-menu",
-            "overlays",
-            "grid",
-            "lighting",
-            "select-tool",
+            "hand",
+            "move",
+            "rotate",
+            "scale",
+            "snap",
+            "settings",
             "orbit",
-            "zoom",
-            "pan",
             "frame",
             "projection",
         ];
         let mut nodes = BTreeMap::new();
-        for name in names.into_iter().chain(["navigation", "tool-rail"]) {
+        for name in names.into_iter().chain(["navigation", "transform-tools"]) {
             nodes.insert(name, view.element(name).map_err(|error| error.to_string())?);
         }
         let mut buttons = names.map(|name| nodes[name]).to_vec();
+        for name in ["projection-label"] {
+            if let Ok(entity) = view.element(name) {
+                nodes.insert(name, entity);
+            }
+        }
         for axis in super::orientation::Axis::ALL {
             let entity = view.element(axis.name()).map_err(|e| e.to_string())?;
             nodes.insert(axis.name(), entity);
@@ -65,11 +68,10 @@ impl Controls {
     pub(super) fn spatial_enabled(&self, world: &mut World, enabled: bool) {
         for (name, entity) in &self.nodes {
             if ![
-                "views",
-                "select-menu",
-                "overlays",
+                "settings",
                 "navigation",
-                "tool-rail",
+                "transform-tools",
+                "projection-label",
             ]
             .contains(name)
             {
@@ -95,9 +97,14 @@ impl Controls {
     pub(super) fn layout(&self, world: &mut World, _root: Entity, viewport: Entity, spatial: bool) {
         let size = kedra_ui::docking::rect(world, viewport).map_or(Vec2::ZERO, |rect| rect.size());
         for (name, hidden) in [
-            ("select-menu", size.x < 640.),
-            ("navigation", !spatial || size.x < 160. || size.y < 230.),
-            ("tool-rail", !spatial || size.x < 60. || size.y < 50.),
+            ("navigation", size.x < 46. || size.y < 38.),
+            (
+                "transform-tools",
+                !spatial || size.x < 190. || size.y < 120.,
+            ),
+            ("frame", !spatial || size.x < 190. || size.y < 120.),
+            ("orbit", !spatial || size.x < 160. || size.y < 282.),
+            ("projection", !spatial || size.x < 160. || size.y < 282.),
         ] {
             if let Some(entity) = self.entity(name) {
                 kedra_ui::docking::class(world, entity, "hidden", hidden);
@@ -130,20 +137,26 @@ mod tests {
                 UiGlobalTransform::default(),
             ))
             .id();
-        let select = world
-            .spawn(bevy_flair::style::components::ClassList::default())
-            .id();
         let nav = world
             .spawn(bevy_flair::style::components::ClassList::default())
             .id();
-        let rail = world
+        let orbit = world
+            .spawn(bevy_flair::style::components::ClassList::default())
+            .id();
+        let projection = world
             .spawn(bevy_flair::style::components::ClassList::default())
             .id();
         let controls = Controls {
             nodes: BTreeMap::from([
-                ("select-menu", select),
                 ("navigation", nav),
-                ("tool-rail", rail),
+                ("orbit", orbit),
+                ("projection", projection),
+                (
+                    "transform-tools",
+                    world
+                        .spawn(bevy_flair::style::components::ClassList::default())
+                        .id(),
+                ),
             ]),
             ..default()
         };
@@ -153,24 +166,38 @@ mod tests {
                 .get::<bevy_flair::style::components::ClassList>(entity)
                 .is_some_and(|list| list.contains("hidden"))
         };
-        assert!(hidden(&world, select));
         assert!(!hidden(&world, nav));
         world
             .get_mut::<ComputedNode>(viewport)
             .ok_or("Viewport")?
             .size = Vec2::new(240., 180.);
         controls.layout(&mut world, root, viewport, true);
-        assert!(hidden(&world, nav));
+        assert!(!hidden(&world, nav));
+        assert!(hidden(&world, orbit));
+        assert!(hidden(&world, projection));
+        world
+            .get_mut::<ComputedNode>(viewport)
+            .ok_or("Viewport")?
+            .size = Vec2::new(240., 100.);
+        controls.layout(&mut world, root, viewport, true);
+        assert!(!hidden(&world, nav));
+        assert!(hidden(&world, controls.nodes["transform-tools"]));
         world
             .get_mut::<ComputedNode>(viewport)
             .ok_or("Viewport")?
             .size = Vec2::new(1000., 550.);
         controls.layout(&mut world, root, viewport, true);
-        assert!(!hidden(&world, select));
         assert!(!hidden(&world, nav));
+        assert!(!hidden(&world, orbit));
+        assert!(!hidden(&world, projection));
         controls.layout(&mut world, root, viewport, false);
-        assert!(hidden(&world, nav));
-        assert!(hidden(&world, rail));
+        assert!(
+            !hidden(&world, nav),
+            "Settings remains available on nonspatial views"
+        );
+        assert!(hidden(&world, orbit));
+        assert!(hidden(&world, projection));
+        assert!(hidden(&world, controls.nodes["transform-tools"]));
         Ok(())
     }
 }

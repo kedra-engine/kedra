@@ -30,7 +30,7 @@ delivery. If build used a different `--profile`, pass that same profile to verif
 | Invalid metadata or unknown processor | Check the authored RON and exact processor type path. Initialization deliberately does not replace existing settings. |
 | Processing or dependency load failed | Inspect the named resource and its imports/references. Check the [admitted format and settings](supported-formats.md), not only its extension. |
 | Sources or inventory changed | Stop concurrent edits/generation and retry into a fresh output from a stable source snapshot. |
-| Manifest exceeds 64 KiB | Reduce the delivered inventory, for example by explicitly ignoring genuinely source-only data in your own tree. Do not raise reader limits or edit the generated marker. |
+| Manifest exceeds 16777216 bytes | The generated inventory exceeds its 16 MiB runtime budget. Review the delivery contents; do not edit the generated marker. This budget is separate from source-file growth policy. |
 
 Initialization may have written some missing sidecars before another source fails. Those
 successful assignments remain. Build failures do not rewrite authoring sources or existing

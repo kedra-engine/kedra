@@ -52,6 +52,7 @@ fn baseline(documents: &[PrefabDocument]) -> Result<SourceSnapshot> {
         })
         .collect::<kedra_scene::Result<Vec<_>>>()?;
     Ok(SourceSnapshot {
+        environments: Default::default(),
         namespace: "game".into(),
         generation: 4,
         documents,

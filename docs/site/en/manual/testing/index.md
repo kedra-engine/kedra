@@ -34,8 +34,8 @@ how those implementations work together rather than replacing their lower-level 
 For Kedra changes, follow [Tests and review](../../contributing/tests-and-review.md) and the
 [authoritative testing ownership map][testing-owner].
 
-Source-save API tests do not imply that editor Save or visual editing exists.
-The editor remains read-only for these workflows.
+Source-save API tests verify persistence contracts; editor interaction requires its own
+native scenarios with input and frames. Neither substitutes for physical-input acceptance.
 
 ## Put a regression at its owner
 

@@ -1,13 +1,17 @@
-# Read-only Scene View contract
+# Scene View contract
 
-Scene View projects admitted sources into isolated read-only views under
+Scene View projects admitted sources into owned preview views under
 [ADR 0017](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0017-read-only-scene-view.md)
 and
 [ADR 0018](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0018-scene-environment-and-preview-stages.md).
 See the [Manual](../../../manual/editor/scene-view.md) for preview setup and camera/selection
-instructions, and [controls](scene-view-controls.md) for control geometry and gesture leases.
-Native verification remains incomplete. Transform gizmos, Inspector editing,
-Save, animation playback, Play and project/plugin execution are not provided.
+instructions, and [controls](scene-view-controls.md) for control geometry and gesture leases. Native
+verification remains incomplete. The host-owned transform adapter previews a single spatial
+selection, then publishes through the ordinary source property/history path; see
+[ADR 0053](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0053-scene-transform-manipulators.md).
+Inspector edits and explicit source Save share that authoring authority. Move uses world axes;
+Rotate and Scale use local axes, with a central uniform Scale handle. Animation playback, Play and
+project/plugin execution are not provided.
 
 ## Admission and supported targets
 
@@ -34,6 +38,12 @@ nonfinite transforms, missing standard materials and external model parents fail
 No external model, private prototype or project code is bundled by this mechanism.
 
 ## Explicit delivery binding
+
+Resource-free graphs compile through `kedra_authoring_assets::compile_preview` without
+a project delivery. A dependency request in that mode refuses before publication.
+Initial preview and accepted-value refresh share this path. Supplying a delivery still
+requires the complete matching checks below. Document removal by source history retires
+its projection; Redo uses the same preparation path to restore it.
 
 The host verifies the complete delivery before startup and binds the project source root,
 namespace `game` and current `editor-desktop` profile explicitly with `--project-assets PATH`,

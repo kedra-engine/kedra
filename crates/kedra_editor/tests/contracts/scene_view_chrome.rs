@@ -44,40 +44,15 @@ fn scene_controls_are_reachable_native_targets_with_local_density_icons()
                 .map(|id| (id.0.as_str(), *entity))
         })
         .collect::<BTreeMap<_, _>>();
-    let toolbar = compiled
-        .source_entities()
-        .iter()
-        .find(|(_, entity)| **entity == elements["toolbar"])
-        .ok_or("Toolbar mapping missing")?
-        .0;
-    let graph = compiled.graph();
-    let children = graph.nodes[toolbar]
-        .children
-        .iter()
-        .map(|address| graph.nodes[address].name.as_str())
-        .collect::<Vec<_>>();
-    assert_eq!(
-        children,
-        [
-            "View menu",
-            "Select menu",
-            "Flexible space",
-            "Selection overlays",
-            "Grid and axes",
-            "Display and shading separation",
-            "Scene or editor lighting"
-        ]
-    );
+    assert!(!elements.contains_key("toolbar"));
     for name in [
-        "views",
-        "select-menu",
-        "overlays",
-        "grid",
-        "lighting",
-        "select-tool",
+        "hand",
+        "move",
+        "rotate",
+        "scale",
+        "snap",
+        "settings",
         "orbit",
-        "zoom",
-        "pan",
         "frame",
         "projection",
     ] {
@@ -86,7 +61,17 @@ fn scene_controls_are_reachable_native_targets_with_local_density_icons()
             .ok_or_else(|| format!("Missing functional target: {name}"))?;
         assert!(source.get::<UiButton>(entity).is_some(), "{name}");
         let viewport = elements["viewport"];
-        if ["orbit", "zoom", "pan", "frame", "projection", "select-tool"].contains(&name) {
+        if [
+            "move",
+            "rotate",
+            "scale",
+            "snap",
+            "orbit",
+            "frame",
+            "projection",
+        ]
+        .contains(&name)
+        {
             let mut ancestor = entity;
             loop {
                 ancestor = source
@@ -114,5 +99,30 @@ fn scene_controls_are_reachable_native_targets_with_local_density_icons()
             }
         }
     }
+    let transform_row = source
+        .get::<ChildOf>(elements["move"])
+        .ok_or("Move row missing")?
+        .parent();
+    let shared_panel = source
+        .get::<ChildOf>(transform_row)
+        .ok_or("Tool panel missing")?
+        .parent();
+    {
+        let name = "frame";
+        assert_eq!(
+            source
+                .get::<ChildOf>(elements[name])
+                .ok_or("Navigation panel missing")?
+                .parent(),
+            shared_panel
+        );
+    }
+    assert_eq!(
+        source
+            .get::<ChildOf>(elements["settings"])
+            .ok_or("Settings panel missing")?
+            .parent(),
+        shared_panel
+    );
     Ok(())
 }

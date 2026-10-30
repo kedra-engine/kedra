@@ -9,13 +9,15 @@ use bevy::input::{
 };
 use bevy::input_focus::{FocusCause, InputFocus};
 use std::collections::HashSet;
+#[cfg(test)]
+#[path = "scene_input/focus_tests.rs"]
+mod focus_tests;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Mode {
     Fly,
     Orbit,
     Pan,
-    Zoom,
 }
 struct Capture {
     view: ViewId,
@@ -334,6 +336,7 @@ pub(super) struct Input {
 }
 
 pub(super) fn install(app: &mut App) {
+    super::manipulation::install(app);
     app.init_resource::<Input>()
         .add_systems(Update, events.after(tick));
 }
@@ -341,7 +344,7 @@ pub(super) fn install(app: &mut App) {
 pub(super) fn diagnostics(world: &World, state: &EditorWorkspace) -> serde_json::Value {
     serde_json::json!({"gesture":state.gesture.is_some(),"pending_host":state.pending.is_some(),"menu_nodes":state.menu.len(),"measuring":state.measurements.is_some(),"preview_ready":super::input::preview_ready(state),"rendered":state.rendered,"revision":state.layout.revision(),"capture":world.get_resource::<Input>().and_then(|input|input.capture.as_ref()).map(|capture|serde_json::json!({"view":capture.view,"window":capture.window.to_bits()})),"viewports":state.panels.scenes.iter().map(|(view,scene)|serde_json::json!({"view":view,"rect":scene.area(world).map(|rect|[rect.min.x,rect.min.y,rect.max.x,rect.max.y]),"eligible_windows":state.surfaces.values().filter_map(|surface|eligible(world,state,*view,surface.window).map(|_|surface.window.to_bits().to_string())).collect::<Vec<_>>(),"pointer_windows":state.surfaces.values().filter_map(|surface|under_pointer(world,state,surface.window).filter(|(id,..)|id==view).map(|_|surface.window.to_bits().to_string())).collect::<Vec<_>>()})).collect::<Vec<_>>()})
 }
-fn eligible(
+pub(super) fn eligible(
     world: &World,
     state: &EditorWorkspace,
     view: ViewId,
@@ -362,6 +365,15 @@ fn eligible(
     }
     let host = state.layout.snapshot().host_of(group)?;
     let surface = state.surfaces.get(&host)?;
+    if world.iter_entities().any(|entity| {
+        entity.contains::<bevy::ui_widgets::ModalDialog>()
+            && std::iter::successors(Some(entity.id()), |id| {
+                world.get::<ChildOf>(*id).map(ChildOf::parent)
+            })
+            .any(|id| id == surface.root)
+    }) {
+        return None;
+    }
     if surface.window != window || surface.staged.is_some() || !world.get::<Window>(window)?.focused
     {
         return None;
@@ -392,6 +404,28 @@ fn under_pointer(
         .then_some((*view, camera, area, point))
     })
 }
+// Tool-panel focus does not replace the active document. Text editing still owns
+// printable keys, including F, and explicit viewport focus wins in split layouts.
+fn shortcut_view(world: &World, state: &EditorWorkspace) -> Option<ViewId> {
+    let focus = world.get_resource::<InputFocus>().and_then(InputFocus::get);
+    let mut ancestor = focus;
+    while let Some(entity) = ancestor {
+        if world.get::<bevy::text::EditableText>(entity).is_some()
+            || world
+                .get::<bevy::input_focus::tab_navigation::TabGroup>(entity)
+                .is_some_and(|group| group.modal)
+        {
+            return None;
+        }
+        ancestor = world.get::<ChildOf>(entity).map(ChildOf::parent);
+    }
+    state
+        .panels
+        .scenes
+        .iter()
+        .find_map(|(view, scene)| (focus == Some(scene.focus())).then_some(*view))
+        .or(state.content_view)
+}
 fn position(world: &World, window: Entity) -> Option<Vec2> {
     let sample = world.get_resource::<input::CursorSample>()?;
     (sample.window == Some(window)).then_some(sample.position)
@@ -421,6 +455,7 @@ fn release(world: &mut World, input: &mut Input) {
     input.keys.clear();
 }
 pub(super) fn cancel(world: &mut World) {
+    super::manipulation::cancel(world);
     crate::scene_view::camera_motion::cancel_window(world, None);
     if world.contains_resource::<Input>() {
         world.resource_scope(|world, mut input: Mut<Input>| release(world, &mut input));
@@ -454,6 +489,7 @@ fn events(
                 for window in &cancelled {
                     escape(world, &mut input, *window);
                 }
+                super::manipulation::maintain(world, &state, &cancelled);
                 if input.capture.as_ref().is_some_and(|capture| {
                     capture.revision != state.layout.revision()
                         || eligible(world, &state, capture.view, capture.window).is_none_or(
@@ -487,6 +523,14 @@ fn events(
                         continue;
                     }
                     if event.state == ButtonState::Released {
+                        if event.button == MouseButton::Left && super::manipulation::active(world) {
+                            if let Err(error) =
+                                super::manipulation::release(world, &mut state, event.window)
+                            {
+                                notice(world, &state, &error);
+                            }
+                            continue;
+                        }
                         if event.button == MouseButton::Left
                             && input
                                 .click
@@ -544,7 +588,7 @@ fn events(
                         }
                         continue;
                     }
-                    if input.capture.is_some() {
+                    if input.capture.is_some() || super::manipulation::active(world) {
                         continue;
                     }
                     let Some((view, camera, area, point)) =
@@ -562,12 +606,6 @@ fn events(
                         continue;
                     }
                     let mode = match (event.button, tool) {
-                        (MouseButton::Left, Some((super::scene_tools::Tool::Pan, _))) => {
-                            Some(Mode::Pan)
-                        }
-                        (MouseButton::Left, Some((super::scene_tools::Tool::Zoom, _))) => {
-                            Some(Mode::Zoom)
-                        }
                         (
                             MouseButton::Left,
                             Some((
@@ -594,6 +632,10 @@ fn events(
                         KeyCode::SuperRight,
                     ]);
                     if event.button == MouseButton::Left && !alt && !modified && tool.is_none() {
+                        if super::manipulation::press(world, &state, view, event.window, point) {
+                            input.click = None;
+                            continue;
+                        }
                         input.click = Some(Click {
                             view,
                             camera,
@@ -628,7 +670,7 @@ fn events(
                             }
                         });
                         camera::cancel(world, camera);
-                        if mode != Mode::Fly && mode != Mode::Zoom {
+                        if mode != Mode::Fly {
                             camera::start(world, camera, mode == Mode::Pan);
                         }
                         input.capture = Some(Capture {
@@ -663,6 +705,14 @@ fn events(
                     }
                 }
                 for event in &keys {
+                    if input.capture.is_none()
+                        && shortcut_view(world, &state)
+                            .and_then(|view| eligible(world, &state, view, event.window))
+                            .is_some()
+                        && super::manipulation::shortcut(world, event)
+                    {
+                        continue;
+                    }
                     if event.key_code == KeyCode::Escape && event.state.is_pressed() {
                         escape(world, &mut input, event.window);
                         continue;
@@ -688,12 +738,7 @@ fn events(
                             KeyCode::SuperRight,
                         ])
                     {
-                        let focused = world
-                            .get_resource::<InputFocus>()
-                            .and_then(|focus| focus.get());
-                        let target = state.panels.scenes.iter().find_map(|(view, scene)| {
-                            (focused == Some(scene.focus())).then_some(*view)
-                        });
+                        let target = shortcut_view(world, &state);
                         if let Some((camera, _)) =
                             target.and_then(|view| eligible(world, &state, view, event.window))
                             && let Err(error) =
@@ -704,6 +749,9 @@ fn events(
                     }
                 }
                 for event in &wheel {
+                    if super::manipulation::active(world) {
+                        continue;
+                    }
                     let amount = match event.unit {
                         MouseScrollUnit::Line => event.y,
                         MouseScrollUnit::Pixel => event.y / 40.,
@@ -712,22 +760,15 @@ fn events(
                         if capture.window == event.window && capture.mode == Mode::Fly {
                             camera::speed(world, capture.camera, amount);
                         }
-                    } else if let Some((view, camera, _, _)) =
+                    } else if let Some((view, camera, _, point)) =
                         under_pointer(world, &state, event.window)
+                        && super::scene_tools::at(world, &state.panels.scenes[&view], point)
+                            .is_none()
                     {
-                        let focused = world
-                            .get_resource::<InputFocus>()
-                            .and_then(|focus| focus.get());
-                        if focused == Some(state.panels.scenes[&view].focus())
-                            && position(world, event.window).is_some_and(|point| {
-                                super::scene_tools::at(world, &state.panels.scenes[&view], point)
-                                    .is_none()
-                            })
-                        {
-                            camera::zoom(world, camera, -amount);
-                        }
+                        camera::zoom(world, camera, amount);
                     }
                 }
+                super::manipulation::tick(world, &state);
                 if let Some(capture) = input.capture.as_mut() {
                     if let Some(mut demand) = world.get_resource_mut::<kedra_wakeup::WakeDemand>() {
                         demand.active();
@@ -760,8 +801,6 @@ fn events(
                             fast,
                             dt,
                         );
-                    } else if mode == Mode::Zoom {
-                        camera::zoom(world, camera, delta.y * 0.08);
                     } else {
                         let scale = world
                             .get::<Camera>(camera)

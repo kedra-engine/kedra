@@ -58,6 +58,7 @@ pub(super) fn supported(graph: &ResolvedGraph) -> Result<(), String> {
                     | "scene.primitive"
                     | "scene.surface"
                     | "scene.sun"
+                    | "scene.camera"
                     | "scene.model"
             ) && !kedra_ui::authored::supports_passive_component(key)
             {
@@ -182,6 +183,70 @@ pub(super) struct Projection {
     pub(super) models: BTreeMap<Entity, super::models::Instance>,
 }
 impl Projection {
+    /// Stage a complete spatial candidate before replacing visible source content.
+    /// The serving camera, render target and navigation controller retain identity.
+    pub(super) fn replace_spatial(
+        &mut self,
+        world: &mut World,
+        compiled: Arc<CompiledPrefab>,
+    ) -> Result<(), String> {
+        let mut candidate = Self::pending(self.layer);
+        if let Err(error) = candidate.mount(world, compiled) {
+            candidate.retire(world);
+            return Err(error);
+        }
+        let inspection = self
+            .inspection
+            .is_some_and(|e| world.get::<Visibility>(e) != Some(&Visibility::Hidden));
+        let result = (|| {
+            if let Some(stage) = super::stage::ready(world)? {
+                candidate.mount_stage(world, stage, inspection)?;
+            }
+            candidate.refresh_environment(world)?;
+            if self
+                .camera
+                .is_none_or(|camera| !world.entities().contains(camera))
+                || candidate.camera.is_none()
+                || candidate.owner.is_none()
+            {
+                return Err("Spatial replacement camera or owner is missing".into());
+            }
+            Ok::<_, String>(())
+        })();
+        if let Err(error) = result {
+            candidate.retire(world);
+            return Err(error);
+        }
+        if let (Some(old), Some(new)) = (self.grid, candidate.grid)
+            && let Some(value) = world.get::<Visibility>(old).copied()
+        {
+            world.entity_mut(new).insert(value);
+        }
+        let old_camera = self.camera.take().ok_or("Serving camera missing")?;
+        let new_camera = candidate
+            .camera
+            .replace(old_camera)
+            .ok_or("Candidate camera missing")?;
+        let bounds = world
+            .get::<super::camera::Navigation>(new_camera)
+            .and_then(|n| n.bounds);
+        if let Some(mut nav) = world.get_mut::<super::camera::Navigation>(old_camera) {
+            nav.bounds = bounds;
+        }
+        world
+            .entity_mut(old_camera)
+            .insert(ChildOf(candidate.owner.ok_or("Candidate owner missing")?));
+        world.despawn(new_camera);
+        candidate.target = self.target.take();
+        candidate.size = self.size;
+        candidate.epoch = self.epoch;
+        candidate.frames = self.frames;
+        candidate.readback = self.readback.take();
+        let environment = candidate.refresh_environment(world);
+        self.retire(world);
+        *self = candidate;
+        environment
+    }
     pub fn pending(layer: usize) -> Self {
         Self {
             nodes: BTreeMap::new(),
@@ -504,6 +569,36 @@ impl Projection {
             };
         }
         self.invalidate(world, camera, epoch);
+        Ok(())
+    }
+    pub(super) fn refresh_environment(&mut self, world: &mut World) -> Result<(), String> {
+        let Some(camera) = self.camera else {
+            return Ok(());
+        };
+        let value = self
+            .nodes
+            .values()
+            .find_map(|entity| world.get::<kedra_scene::environment::SceneEnvironment>(*entity))
+            .and_then(|environment| {
+                world
+                    .resource::<Assets<kedra_scene::environment::Environment>>()
+                    .get(&environment.asset)
+            })
+            .cloned();
+        if value == self.scene_environment {
+            return Ok(());
+        }
+        self.scene_environment = value;
+        let inspection = self.inspection.is_some_and(|entity| {
+            world
+                .get::<Visibility>(entity)
+                .is_some_and(|visibility| *visibility != Visibility::Hidden)
+        });
+        if !inspection {
+            kedra_scene::rendering::environment(world, camera, self.scene_environment.as_ref())
+                .map_err(|e| e.to_string())?;
+            self.source_changed(world)?;
+        }
         Ok(())
     }
     pub(super) fn source_changed(&mut self, world: &mut World) -> Result<(), String> {

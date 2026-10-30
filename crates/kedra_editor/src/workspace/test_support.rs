@@ -28,7 +28,12 @@ pub(super) fn project_manager(
 }
 
 pub(super) fn sources(world: &mut World) -> TestResult {
+    let icon = Handle::<Image>::Uuid(uuid::Uuid::new_v4(), std::marker::PhantomData);
+    world
+        .resource_mut::<Assets<Image>>()
+        .insert(icon.id(), Image::default())?;
     let documents: &[(&str, &[&str])] = &[
+        ("editor://prefabs/browser-icon.prefab.ron", &["icon"]),
         (
             "editor://prefabs/property-row.prefab.ron",
             &["label", "editor", "diagnostic"],
@@ -104,17 +109,18 @@ pub(super) fn sources(world: &mut World) -> TestResult {
                 "viewport",
                 "render",
                 "projection",
-                "select-menu",
+                "move",
+                "hand",
+                "rotate",
+                "scale",
+                "snap",
+                "settings",
                 "lighting",
-                "overlays",
-                "grid",
                 "views",
-                "select-tool",
                 "orbit",
-                "zoom",
-                "pan",
                 "frame",
                 "navigation",
+                "transform-tools",
                 "tool-rail",
                 "axis-x",
                 "axis-y",
@@ -226,7 +232,10 @@ pub(super) fn sources(world: &mut World) -> TestResult {
         doc.nodes[0]
             .components
             .insert("ui.classes".into(), ComponentData::ron(1, "(names:[])")?);
-        if *path == "editor://prefabs/button.prefab.ron" {
+        if matches!(
+            *path,
+            "editor://prefabs/button.prefab.ron" | "editor://prefabs/browser-icon.prefab.ron"
+        ) {
             doc.nodes[0]
                 .components
                 .insert("ui.button".into(), ComponentData::ron(1, "()")?);
@@ -251,6 +260,23 @@ pub(super) fn sources(world: &mut World) -> TestResult {
                     ComponentData::ron(1, &format!("(\"{key}\")"))?,
                 ),
             ]);
+            if *key == "icon" && *path == "editor://prefabs/browser-icon.prefab.ron" {
+                components.insert(
+                    "ui.image".into(),
+                    world.resource::<ComponentPolicies>().encode(
+                        "ui.image",
+                        &kedra_ui::authored::components::UiImage {
+                            variants: vec![kedra_ui::authored::components::UiImageDensity {
+                                density: 1.,
+                                image: icon.clone(),
+                            }],
+                            color: Color::WHITE,
+                        },
+                        &world.resource::<AppTypeRegistry>().read(),
+                        &BTreeMap::new(),
+                    )?,
+                );
+            }
             if *path == "editor://prefabs/hierarchy.prefab.ron" {
                 components.insert("ui.classes".into(), ComponentData::ron(1, "(names:[])")?);
             }

@@ -77,6 +77,29 @@ pub(super) struct Visit {
     pub scroll: f32,
 }
 impl Model {
+    pub(super) fn folder_changed(&mut self, change: &kedra_authoring_fs::entries::Change) {
+        use kedra_authoring_fs::entries::Change;
+        let update = |path: &mut PathBuf| match change {
+            Change::Rename { from, to } => {
+                if let Ok(suffix) = path.strip_prefix(from) {
+                    *path = to.join(suffix);
+                }
+            }
+            Change::Delete(from) => {
+                if path.starts_with(from) {
+                    *path = from.parent().unwrap_or_else(|| Path::new("")).to_owned();
+                }
+            }
+            Change::Create(_) => (),
+        };
+        update(&mut self.path);
+        for path in &mut self.history {
+            update(path);
+        }
+        self.visits.clear();
+        self.selected = None;
+        self.pending = None;
+    }
     pub fn remember(&mut self, scroll: f32) {
         if self.visits.len() >= MAX_HISTORY && !self.visits.contains_key(&self.path) {
             self.visits.clear();

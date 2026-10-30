@@ -21,12 +21,12 @@ impl Panel {
         let columns = if self.model.mode == model::Mode::List {
             1
         } else {
-            ((width - 16.) / 120.).floor().max(1.) as usize
+            ((width - 12.) / 84.).floor().max(1.) as usize
         };
         let height = if self.model.mode == model::Mode::List {
             22.
         } else {
-            104.
+            100.
         };
         let scroll = world.get::<ScrollPosition>(entries).map_or(0., |p| p.y);
         let count = self.model.visible().count();
@@ -73,7 +73,7 @@ impl Panel {
         let row_height = if self.model.mode == model::Mode::List {
             22
         } else {
-            104
+            100
         };
         inline(
             world,
@@ -108,7 +108,7 @@ impl Panel {
                 world,
                 row.root,
                 [
-                    ("left", format!("{}px", 8 + (index % window.columns) * 120)),
+                    ("left", format!("{}px", 8 + (index % window.columns) * 84)),
                     (
                         "top",
                         format!("{}px", 4 + (index / window.columns) * row_height),
@@ -120,7 +120,7 @@ impl Panel {
                             if self.model.mode == model::Mode::List {
                                 window.width.saturating_sub(16)
                             } else {
-                                112
+                                80
                             }
                         ),
                     ),
@@ -130,15 +130,6 @@ impl Panel {
                 .get_mut::<Text>(row.element("name").map_err(|e| e.to_string())?)
                 .ok_or("Source name missing")?
                 .0 = entry.name.to_string_lossy().into_owned();
-            if let Some(mut layout) =
-                world.get_mut::<TextLayout>(row.element("name").map_err(|e| e.to_string())?)
-            {
-                layout.linebreak = if self.model.mode == model::Mode::List {
-                    bevy::text::LineBreak::NoWrap
-                } else {
-                    bevy::text::LineBreak::WordOrCharacter
-                };
-            }
             let kind = if entry.kind == Kind::File {
                 entry
                     .name

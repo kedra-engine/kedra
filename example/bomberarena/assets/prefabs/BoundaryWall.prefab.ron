@@ -1,0 +1,21 @@
+(
+    version: 1,
+    id: "8c91ed39-dba6-46c7-9ba0-6dbff26b1004",
+    kind: Prefab,
+    title: "BoundaryWall",
+    root: "449ebf39-d7f2-43d7-a312-884962dd56c1",
+    base: None,
+    nodes: [
+        (
+            id: "449ebf39-d7f2-43d7-a312-884962dd56c1",
+            name: "BoundaryWall",
+            parent: None,
+            components: {
+                "scene.model": (version: 1, value: (scene:Path("game://models/barrier_4x1x1.glb#Scene0"))),
+            },
+        ),
+    ],
+    instances: [],
+    overrides: [],
+    ports: {},
+)

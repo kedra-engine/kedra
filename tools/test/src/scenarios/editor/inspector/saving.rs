@@ -22,7 +22,7 @@ fn clean(c: &Editor<'_>) -> Result<bool> {
         && c.state()?["documents"]["saving"] == false
         && c.state()?["documents"]["save_pending"] == false)
 }
-pub(super) fn run(c: &Editor<'_>, assets: &Path, inspector: &str, prefix: &str) -> Result<()> {
+pub(super) fn run(c: &Editor<'_>, assets: &Path, prefix: &str) -> Result<()> {
     let before = inventory(assets)?;
     let path = assets.join("Hud.prefab.ron");
     let field = input(c, prefix)?;
@@ -99,12 +99,12 @@ pub(super) fn run(c: &Editor<'_>, assets: &Path, inspector: &str, prefix: &str) 
         }
     }
     c.frame(field.window()?, "Source saved through Luau")?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("saved source Undo is dirty", || {
         Ok(c.current_document()?["dirty"] == true)
     })?;
-    c.menu(inspector, "Discard all unsaved source changes")?;
-    c.until("discard restores saved baseline", || {
+    c.main_menu("Redo")?;
+    c.until("Redo restores saved baseline", || {
         Ok(input(c, prefix)?.value() == "Saved through Luau")
     })?;
     check(
@@ -115,7 +115,7 @@ pub(super) fn run(c: &Editor<'_>, assets: &Path, inspector: &str, prefix: &str) 
     accept(c, &field, "Working change retained after conflict")?;
     let external = format!("{saved}\n// External writer changed these exact bytes.\n");
     std::fs::write(&path, &external)?;
-    c.menu(inspector, "Save active document")?;
+    c.main_menu("Save")?;
     c.until("external source conflict", || {
         Ok(c.state()?["documents"]["save_error"]
             .as_str()
@@ -133,7 +133,7 @@ pub(super) fn run(c: &Editor<'_>, assets: &Path, inspector: &str, prefix: &str) 
     // The external test actor explicitly restores the admitted file. The editor
     // offers no implicit overwrite/reconciliation decision and still holds the draft.
     std::fs::write(&path, &saved)?;
-    c.menu(inspector, "Save active document")?;
+    c.main_menu("Save")?;
     c.until("explicit Save after conflict resolution", || clean(c))?;
     check(
         std::fs::read_to_string(&path)?.contains("Working change retained after conflict"),

@@ -1,0 +1,488 @@
+(
+    version: 1,
+    id: "d8ec4331-e4f5-4b5a-b785-841718d61214",
+    kind: Prefab,
+    title: "Arena layout",
+    root: "2e921b89-e6c2-44ff-a64a-7f296f39d913",
+    base: None,
+    nodes: [
+        (
+            id: "2e921b89-e6c2-44ff-a64a-7f296f39d913",
+            name: "Arena layout",
+            parent: None,
+            components: {},
+        ),
+        (
+            id: "caf1f2bf-ba65-4724-bd53-14f9f9afc73e",
+            name: "Sand courtyard",
+            parent: Some((
+                instances: [],
+                node: "2e921b89-e6c2-44ff-a64a-7f296f39d913",
+            )),
+            components: {
+                "scene.primitive": (
+                    version: 1,
+                    value: Cuboid(size:(42.0,0.1,30.0)),
+                ),
+                "scene.surface": (
+                    version: 1,
+                    value: (color:Srgba((red:0.58,green:0.48,blue:0.33,alpha:1.0)),texture:None,metallic:0.0,roughness:0.95),
+                ),
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(0.0,-0.05,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+        (
+            id: "310555b4-0cd7-4ab4-8c67-d8e19ba8b61b",
+            name: "East west stone route",
+            parent: Some((
+                instances: [],
+                node: "2e921b89-e6c2-44ff-a64a-7f296f39d913",
+            )),
+            components: {
+                "scene.primitive": (
+                    version: 1,
+                    value: Cuboid(size:(42.0,0.02,2.0)),
+                ),
+                "scene.surface": (
+                    version: 1,
+                    value: (color:Srgba((red:0.43,green:0.42,blue:0.37,alpha:1.0)),texture:None,metallic:0.0,roughness:0.9),
+                ),
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(0.0,0.011,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+        (
+            id: "241d1903-260b-47ff-9f38-f536e2ad58cb",
+            name: "North south stone route",
+            parent: Some((
+                instances: [],
+                node: "2e921b89-e6c2-44ff-a64a-7f296f39d913",
+            )),
+            components: {
+                "scene.primitive": (
+                    version: 1,
+                    value: Cuboid(size:(2.0,0.02,30.0)),
+                ),
+                "scene.surface": (
+                    version: 1,
+                    value: (color:Srgba((red:0.43,green:0.42,blue:0.37,alpha:1.0)),texture:None,metallic:0.0,roughness:0.9),
+                ),
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(0.0,0.012,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+        (
+            id: "1040894a-a43d-4d08-8058-61a32972ad47",
+            name: "Northwest courtyard",
+            parent: Some((
+                instances: [],
+                node: "2e921b89-e6c2-44ff-a64a-7f296f39d913",
+            )),
+            components: {
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(-12.0,0.0,-8.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+        (
+            id: "61346ef4-2757-4498-aacf-1e4e177f0958",
+            name: "Northeast courtyard",
+            parent: Some((
+                instances: [],
+                node: "2e921b89-e6c2-44ff-a64a-7f296f39d913",
+            )),
+            components: {
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(12.0,0.0,-8.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+        (
+            id: "e43043f0-fa06-4011-b1b2-e1dab270d9db",
+            name: "Southwest courtyard",
+            parent: Some((
+                instances: [],
+                node: "2e921b89-e6c2-44ff-a64a-7f296f39d913",
+            )),
+            components: {
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(-12.0,0.0,8.0),rotation:(0.0,1.0,0.0,0.0),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+        (
+            id: "333e544d-e886-481f-88ac-423a033c4379",
+            name: "Southeast courtyard",
+            parent: Some((
+                instances: [],
+                node: "2e921b89-e6c2-44ff-a64a-7f296f39d913",
+            )),
+            components: {
+                "scene.transform": (
+                    version: 1,
+                    value: (translation:(12.0,0.0,8.0),rotation:(0.0,1.0,0.0,0.0),scale:(1.0,1.0,1.0)),
+                ),
+            },
+        ),
+    ],
+    instances: [
+        (
+            id: "bc600766-a536-4d84-ada1-2bd7a87bcf1c",
+            asset: "2bc1567e-ea21-4ca4-a80c-a55f31e8b458",
+            parent: (instances:[],node:"1040894a-a43d-4d08-8058-61a32972ad47"),
+            bindings: {},
+            overrides: [
+                RemoveNestedInstance("94147fe4-24be-497c-ada7-9971fed05da3"),
+            ],
+        ),
+        (
+            id: "0b696179-a647-4184-b928-5edc62e0b650",
+            asset: "2bc1567e-ea21-4ca4-a80c-a55f31e8b458",
+            parent: (instances:[],node:"61346ef4-2757-4498-aacf-1e4e177f0958"),
+            bindings: {},
+            overrides: [
+                RemoveNestedInstance("2944e73f-c980-4378-ae6b-f4f5bb874a7b"),
+            ],
+        ),
+        (
+            id: "d42adaaa-fff6-4459-8cbf-55f68e93c7c3",
+            asset: "2bc1567e-ea21-4ca4-a80c-a55f31e8b458",
+            parent: (instances:[],node:"e43043f0-fa06-4011-b1b2-e1dab270d9db"),
+            bindings: {},
+            overrides: [
+                RemoveNestedInstance("2944e73f-c980-4378-ae6b-f4f5bb874a7b"),
+            ],
+        ),
+        (
+            id: "5c2011e0-9b46-4c9d-aa88-f540314f5da3",
+            asset: "2bc1567e-ea21-4ca4-a80c-a55f31e8b458",
+            parent: (instances:[],node:"333e544d-e886-481f-88ac-423a033c4379"),
+            bindings: {},
+            overrides: [
+                RemoveNestedInstance("94147fe4-24be-497c-ada7-9971fed05da3"),
+            ],
+        ),
+        (
+            id: "819f7d9b-b5dd-473b-b7e7-5c4b2d17171c",
+            asset: "8c91ed39-dba6-46c7-9ba0-6dbff26b1004",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"449ebf39-d7f2-43d7-a312-884962dd56c1"),name:"North boundary"),
+                SetComponent(node:(instances:[],node:"449ebf39-d7f2-43d7-a312-884962dd56c1"),component:"scene.transform",data:(version:1,value:(translation:(0.0,0.01,-15.5),rotation:(0.0,0.0,0.0,1.0),scale:(11.0,1.2,1.0)))),
+            ],
+        ),
+        (
+            id: "a04246a5-4641-4507-bc1f-87fb50aeb649",
+            asset: "8c91ed39-dba6-46c7-9ba0-6dbff26b1004",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"449ebf39-d7f2-43d7-a312-884962dd56c1"),name:"South boundary"),
+                SetComponent(node:(instances:[],node:"449ebf39-d7f2-43d7-a312-884962dd56c1"),component:"scene.transform",data:(version:1,value:(translation:(0.0,0.01,15.5),rotation:(0.0,0.0,0.0,1.0),scale:(11.0,1.2,1.0)))),
+            ],
+        ),
+        (
+            id: "8ebb1a34-57d1-42d1-aead-41928c7a3bc2",
+            asset: "8c91ed39-dba6-46c7-9ba0-6dbff26b1004",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"449ebf39-d7f2-43d7-a312-884962dd56c1"),name:"West boundary"),
+                SetComponent(node:(instances:[],node:"449ebf39-d7f2-43d7-a312-884962dd56c1"),component:"scene.transform",data:(version:1,value:(translation:(-21.5,0.01,0.0),rotation:(0.0,0.70710677,0.0,0.70710677),scale:(7.5,1.2,1.0)))),
+            ],
+        ),
+        (
+            id: "2c9b2872-1761-481a-9744-b0893b27c3b8",
+            asset: "8c91ed39-dba6-46c7-9ba0-6dbff26b1004",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"449ebf39-d7f2-43d7-a312-884962dd56c1"),name:"East boundary"),
+                SetComponent(node:(instances:[],node:"449ebf39-d7f2-43d7-a312-884962dd56c1"),component:"scene.transform",data:(version:1,value:(translation:(21.5,0.01,0.0),rotation:(0.0,0.70710677,0.0,0.70710677),scale:(7.5,1.2,1.0)))),
+            ],
+        ),
+        (
+            id: "200e41a0-30d7-461a-8f94-b141414e9d68",
+            asset: "3ee775ce-08b4-4ce6-af11-9d21bc483c89",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),name:"Stone pillar NW"),
+                SetComponent(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),component:"scene.transform",data:(version:1,value:(translation:(-6.0,0.01,-6.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,0.7,1.0)))),
+            ],
+        ),
+        (
+            id: "98d817d4-e555-4e2b-8096-57d7dd2bbeec",
+            asset: "3ee775ce-08b4-4ce6-af11-9d21bc483c89",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),name:"Stone pillar N"),
+                SetComponent(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),component:"scene.transform",data:(version:1,value:(translation:(0.0,0.01,-8.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,0.7,1.0)))),
+            ],
+        ),
+        (
+            id: "5be58ad6-5e6a-4cc5-a9cf-badfe2a147b4",
+            asset: "3ee775ce-08b4-4ce6-af11-9d21bc483c89",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),name:"Stone pillar NE"),
+                SetComponent(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),component:"scene.transform",data:(version:1,value:(translation:(6.0,0.01,-6.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,0.7,1.0)))),
+            ],
+        ),
+        (
+            id: "c477a7a1-c8c7-4e15-a80e-ae107383fb86",
+            asset: "3ee775ce-08b4-4ce6-af11-9d21bc483c89",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),name:"Stone pillar W"),
+                SetComponent(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),component:"scene.transform",data:(version:1,value:(translation:(-6.0,0.01,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,0.7,1.0)))),
+            ],
+        ),
+        (
+            id: "fb20148d-cc0e-4c8d-9416-14ca26c4e2bf",
+            asset: "56c438ed-1b2f-475a-b01a-091eaa521fcd",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"9afd09cd-72c1-47dd-93dd-e86c2451ed72"),name:"Central domination marker"),
+                SetComponent(node:(instances:[],node:"9afd09cd-72c1-47dd-93dd-e86c2451ed72"),component:"scene.transform",data:(version:1,value:(translation:(0.0,0.01,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(2.5,0.06,2.5)))),
+            ],
+        ),
+        (
+            id: "b09b41be-af77-4bfc-a55d-6eb1533a0d01",
+            asset: "3ee775ce-08b4-4ce6-af11-9d21bc483c89",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),name:"Stone pillar E"),
+                SetComponent(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),component:"scene.transform",data:(version:1,value:(translation:(6.0,0.01,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,0.7,1.0)))),
+            ],
+        ),
+        (
+            id: "35ca7743-f9e4-40d5-afc1-3df9c0e91244",
+            asset: "3ee775ce-08b4-4ce6-af11-9d21bc483c89",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),name:"Stone pillar SW"),
+                SetComponent(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),component:"scene.transform",data:(version:1,value:(translation:(-6.0,0.01,6.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,0.7,1.0)))),
+            ],
+        ),
+        (
+            id: "e6cc308c-77fb-42d5-9644-b5d748fa52a9",
+            asset: "3ee775ce-08b4-4ce6-af11-9d21bc483c89",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),name:"Stone pillar S"),
+                SetComponent(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),component:"scene.transform",data:(version:1,value:(translation:(0.0,0.01,8.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,0.7,1.0)))),
+            ],
+        ),
+        (
+            id: "d421cd31-646d-402d-bef5-7da6794322e4",
+            asset: "3ee775ce-08b4-4ce6-af11-9d21bc483c89",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),name:"Stone pillar SE"),
+                SetComponent(node:(instances:[],node:"93aa38a0-174a-43c5-b7c2-f069d7c66b2a"),component:"scene.transform",data:(version:1,value:(translation:(6.0,0.01,6.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,0.7,1.0)))),
+            ],
+        ),
+        (
+            id: "02d7aca4-b2ef-45dd-be90-3223ab4bf3ba",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block N1"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(-2.0,0.01,-4.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "261e3cf4-2fa9-4e31-8c74-fc45db247406",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block N2"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(2.0,0.01,-4.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "2494e9a2-74ad-4df9-93d0-6bf4af3879dd",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block middle W"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(-4.0,0.01,0.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "e17b39ff-19ce-414d-aa53-bfbff4dc23e9",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block middle E"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(4.0,0.01,0.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "63dbe9e0-a692-499b-b705-a0d116adcfb9",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block S1"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(-2.0,0.01,4.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "4eecc632-be43-4f91-99be-f77f134f9e03",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block S2"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(2.0,0.01,4.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "5b235dd0-5ecc-416f-ba7b-7c381f1ab5c2",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block W1"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(-4.0,0.01,-2.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "a6c1b0c6-fa7a-44c9-8dc6-e2d603fe76ed",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block W2"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(-4.0,0.01,2.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "aae76b7e-6f71-4381-b54a-87ccf4e25e30",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block center N"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(0.0,0.01,-6.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "5d9577f5-40ce-4a5e-b406-c6f6dd99ce38",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block center S"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(0.0,0.01,6.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "1e879bdf-8f34-4109-81d5-fff9dfbcfc26",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block E1"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(4.0,0.01,-2.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "4c8128d0-fd1f-447c-9d12-cb591799bc63",
+            asset: "3a390a34-a17a-426c-9cc2-a74e250efeae",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),name:"Wood block E2"),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"translation",value:(4.0,0.01,2.0)),
+                SetField(node:(instances:[],node:"090c803f-f599-48be-9b7b-d2e0e159792b"),component:"scene.transform",version:1,path:"rotation",value:(0.0,0.0,0.0,1.0)),
+            ],
+        ),
+        (
+            id: "7a068e9d-c715-426e-8958-106e1768db4a",
+            asset: "bea5367c-cf7c-4a38-a6e4-626a04753b7a",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"92d0fcc0-1448-420d-a411-2279955bcea8"),name:"Spawn NW"),
+                SetComponent(node:(instances:[],node:"92d0fcc0-1448-420d-a411-2279955bcea8"),component:"scene.transform",data:(version:1,value:(translation:(-18.0,0.01,-12.0),rotation:(0.0,0.0,0.0,1.0),scale:(0.75,0.08,0.75)))),
+            ],
+        ),
+        (
+            id: "08bd8479-f9eb-4817-ae8c-15f059f4e346",
+            asset: "bea5367c-cf7c-4a38-a6e4-626a04753b7a",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"92d0fcc0-1448-420d-a411-2279955bcea8"),name:"Spawn NE"),
+                SetComponent(node:(instances:[],node:"92d0fcc0-1448-420d-a411-2279955bcea8"),component:"scene.transform",data:(version:1,value:(translation:(18.0,0.01,-12.0),rotation:(0.0,0.0,0.0,1.0),scale:(0.75,0.08,0.75)))),
+            ],
+        ),
+        (
+            id: "8d928364-b553-444c-ad4b-b77bd9e0d91d",
+            asset: "bea5367c-cf7c-4a38-a6e4-626a04753b7a",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"92d0fcc0-1448-420d-a411-2279955bcea8"),name:"Spawn SW"),
+                SetComponent(node:(instances:[],node:"92d0fcc0-1448-420d-a411-2279955bcea8"),component:"scene.transform",data:(version:1,value:(translation:(-18.0,0.01,12.0),rotation:(0.0,0.0,0.0,1.0),scale:(0.75,0.08,0.75)))),
+            ],
+        ),
+        (
+            id: "73e0b467-2069-42a0-a2c3-2f3130eca35b",
+            asset: "bea5367c-cf7c-4a38-a6e4-626a04753b7a",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+                RenameNode(node:(instances:[],node:"92d0fcc0-1448-420d-a411-2279955bcea8"),name:"Spawn SE"),
+                SetComponent(node:(instances:[],node:"92d0fcc0-1448-420d-a411-2279955bcea8"),component:"scene.transform",data:(version:1,value:(translation:(18.0,0.01,12.0),rotation:(0.0,0.0,0.0,1.0),scale:(0.75,0.08,0.75)))),
+            ],
+        ),
+        (
+            id: "e9e5c946-9421-44ca-b908-2da73ef002a4",
+            asset: "2a7bcaac-ee31-4453-95ce-38f1e6c87b40",
+            parent: (instances:[],node:"2e921b89-e6c2-44ff-a64a-7f296f39d913"),
+            bindings: {},
+            overrides: [
+            ],
+        ),
+    ],
+    overrides: [],
+    ports: {},
+)

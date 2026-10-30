@@ -12,6 +12,9 @@ description = "Owned passive static model preview and native bounds"
 layer = "editor"
 
 [dependencies]
+kedra_cache.workspace = true
+kedra_wakeup.workspace = true
+image.workspace = true
 bevy = { workspace = true, features = ["bevy_gltf", "bevy_pbr", "bevy_world_serialization"] }
 
 [lints]

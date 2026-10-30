@@ -337,7 +337,7 @@ pub(super) fn ui(c: &Editor<'_>, compound: bool) -> Result<Value> {
         compound_collections::run(c, &assets, &inspector, &hierarchy, &prefix)?;
     } else {
         caption::select_title(c, &hierarchy)?;
-        layout::run(c, &inspector, &prefix)?;
+        layout::run(c, &prefix)?;
         collections::run(c, &assets, &inspector, &prefix)?;
     }
     Ok(json!({"status":"passed","project":project,"frames":c.captures.borrow().clone()}))
@@ -428,7 +428,7 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
     )?;
     let search = c.node(&format!("{p}search"))?;
     c.frame(c.window()?, "locked property search")?;
-    c.menu(&inspector, "Float group")?;
+    c.menu(&inspector, "Float tab")?;
     c.until("floating Inspector", || {
         Ok(c.node(&search.id)?.window()? != c.window()?)
     })?;
@@ -456,11 +456,9 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
                 == json!([inspector]),
         )
     })?;
-    c.menu(&inspector, "Hide group")?;
+    c.menu(&inspector, "Close tab")?;
     c.until("hidden Inspector", || c.hidden(&inspector))?;
-    c.click("workspace/panels")?;
-    let show = c.find("Show Inspector", |n| n.caption() == "Show Inspector")?;
-    c.click(show.id.strip_suffix("/caption").unwrap_or(&show.id))?;
+    c.main_menu("Windows/Inspector")?;
     check(
         c.wait_node(&search.id)?.entity == search.entity
             && c.node(&field.id)?.entity == field.entity,
@@ -482,19 +480,19 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
         Ok(inputs(c, &p)?.iter().any(|n| n.value() == "Other source"))
     })?;
     c.menu(&inspector, "Use custom presentations")?;
-    transform::run(c, &inspector, &hierarchy, &p)?;
+    transform::run(c, &hierarchy, &p)?;
     check(
         inventory(&assets)? == before,
         "Read-only Inspector changed source bytes/sidecars",
     )?;
-    spatial::run(c, &assets, &inspector, &hierarchy, &p)?;
-    resources::run(c, &assets, &inspector, &hierarchy, &p)?;
+    spatial::run(c, &assets, &hierarchy, &p)?;
+    resources::run(c, &assets, &hierarchy, &p)?;
     let saved_spatial = inventory(&assets)?;
     caption::run(c, &inspector, &hierarchy, &p)?;
     check(
         inventory(&assets)? == saved_spatial,
         "Caption editing changed files before Save",
     )?;
-    saving::run(c, &assets, &inspector, &p)?;
+    saving::run(c, &assets, &p)?;
     Ok(json!({"status":"passed","project":project,"frames":c.captures.borrow().clone()}))
 }

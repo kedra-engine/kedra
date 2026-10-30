@@ -6,8 +6,9 @@ use uuid::Uuid;
 
 /// Published delivery marker, written only after all output is validated.
 pub const MANIFEST: &str = "kedra-assets.json";
-/// Maximum encoded delivery manifest size, shared by native readers and producers.
-pub const MAX_MANIFEST_BYTES: usize = 65_536;
+/// Maximum encoded delivery inventory (16 MiB), shared by readers and producers.
+/// This runtime allocation budget is independent of repository source-file limits.
+pub const MAX_MANIFEST_BYTES: usize = 16 * 1024 * 1024;
 /// Content checksum of an asset or its loader metadata.
 pub fn digest(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))

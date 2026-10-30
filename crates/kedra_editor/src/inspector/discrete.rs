@@ -82,6 +82,11 @@ impl Panel {
             return Ok(());
         }
         let result = (|| {
+            if crate::workspace::import_pending(world) {
+                return Err(
+                    "Finish the asset filesystem operation before editing properties.".into(),
+                );
+            }
             if self.has_drafts_except(
                 world,
                 kedra_inspector::collections::proposal_owner(world, event.entity),

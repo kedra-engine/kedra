@@ -23,6 +23,7 @@ fn native_caption_leaves_share_staged_authoring_and_source_history() -> TestResu
     let text = doc.serialize()?;
     let (scope, compiled) = source::admit(
         SourceSnapshot {
+            environments: Default::default(),
             namespace: "game".into(),
             generation: 1,
             documents: vec![SourceFile {
@@ -154,6 +155,7 @@ fn documents() -> Result<
     let text = doc.serialize()?;
     let (scope, compiled) = source::admit(
         SourceSnapshot {
+            environments: Default::default(),
             namespace: "game".into(),
             generation: 1,
             documents: vec![SourceFile {

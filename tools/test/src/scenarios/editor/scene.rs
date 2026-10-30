@@ -106,7 +106,7 @@ pub(super) fn run(c: &Editor<'_>, name: &str, project: &Path) -> Result<Value> {
     let view = &views["Composed.scene.ron"];
     let prefix = format!("panel/ViewId({view})/");
     let documents = c.state()?["documents"].clone();
-    c.menu(view, "Float active tab")?;
+    c.menu(view, "Float tab")?;
     c.until("floating preview", || {
         Ok(c.node(&format!("{prefix}render"))?.window()? != c.window()?)
     })?;

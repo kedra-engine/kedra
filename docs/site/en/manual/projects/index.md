@@ -63,7 +63,7 @@ Relative paths in this manifest are not relative to the terminal's working direc
 Project opening validates the manifest and the asset directory's location. It does not prove that
 every source document is valid or every asset is ready to render.
 
-When you open a supported source from the Asset Browser, the editor admits a read-only inventory
+When you open a supported source from the Asset Browser, the editor admits a source inventory
 into one project-owned source workspace. Document validation and reference checks happen at that
 stage. A malformed document elsewhere in the same inventory can therefore prevent admission,
 even after the project itself opened successfully.
@@ -76,7 +76,7 @@ permission to execute code. Successful source inspection is not evidence that Pl
 
 Move the complete project directory, keeping the manifest, relative asset directory and sidecars.
 The manifest's project UUID remains unchanged; the native location changes.
-Use **Open folder…** at the new location if a recent-project entry still points to the old one.
+Use **Open folder** at the new location if a recent-project entry still points to the old one.
 Recent-project history is local preference data, not a portable project index or backup.
 
 Copying a directory also copies its identities. This is useful for an unchanged working copy,

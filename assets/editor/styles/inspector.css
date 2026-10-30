@@ -10,3 +10,6 @@
 .inspector-panel .icon { display:flex; }
 .inspector-panel .hidden { display:none; }
 .inspector-scroll-host > .scrollbar { position:absolute; right:0px; top:0px; bottom:0px; }
+.component-section { position:relative; }
+.component-section > .property-heading { padding-right:30px; }
+.component-menu { position:absolute; right:0px; top:0px; width:26px; height:26px; }

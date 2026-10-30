@@ -42,6 +42,12 @@
 .dock-preview { position:absolute; border:1px solid var(--focus); background-color:#7950bc1a; }
 .dock-menu { position:absolute; width:224px; padding:6px; row-gap:4px; flex-direction:column; overflow-y:scroll; background-color:var(--menu); border:1px solid var(--border); box-shadow:0px 9px 20px #0000006b; }
 .dock-menu .button { width:100%; height:var(--section-height); min-height:var(--section-height); justify-content:start; }
+.dock-menu .button:hover, .dock-menu .button:focus { background-color:var(--hover); }
+.dock-menu .button:disabled, .dock-menu .button:disabled:hover, .dock-menu .button:disabled:focus { background-color:transparent; }
+.dock-menu .button:disabled .text { color:var(--disabled-text); }
+.menu-caption { flex-grow:1; }
+.menu-arrow { width:12px; flex-shrink:0; }
+.menu-separator { width:100%; height:1px; min-height:1px; flex-shrink:0; margin:3px 0px; background-color:var(--border); }
 .hidden { display:none; }
 .dock-guide { display:flex; position:absolute; width:28px; height:28px; align-items:center; justify-content:center; background-color:var(--menu); border:1px solid var(--frame-border); }
 .dock-guide.target { background-color:var(--accent); border-color:var(--focus); }
@@ -57,3 +63,4 @@
 .dock-tab.active.dragging .dock-tab-title, .dock-group.focused .dock-tab.active.dragging .dock-tab-title { color:#6b6b6b; }
 .dock-guide.hidden, .dock-insertion.hidden { display:none; }
 .dock-tab.dragging .dock-tab-close { visibility:hidden; }
+.drag-preview { position:absolute; background-color:var(--raised); border:1px solid var(--border); padding:4px 8px; max-width:320px; }

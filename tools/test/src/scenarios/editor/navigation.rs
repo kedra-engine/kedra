@@ -105,33 +105,28 @@ pub(super) fn run(c: &Editor<'_>, project: &Path, view: &str, other: &str) -> Re
         Ok(pose(c, view)?["translation"] != old["translation"])
     })?;
     record(c, view, &p, "dolly", &mut frames)?;
-    command(c, &p, "views", "Orthographic")?;
+    c.click(&format!("{p}projection"))?;
     c.until("orthographic projection", || {
         Ok(pose(c, view)?["orthographic"] == true)
     })?;
-    command(c, &p, "views", "Frame selection")?;
+    c.click(&format!("{p}frame"))?;
     record(c, view, &p, "orthographic-frame-selection", &mut frames)?;
-    for name in ["Front", "Back", "Left", "Right", "Top", "Bottom"] {
-        command(c, &p, "views", name)?;
-        record(c, view, &p, &format!("view-{name}"), &mut frames)?;
-    }
-    c.click(&format!("{p}grid"))?;
-    command(c, &p, "lighting", "Editor lighting")?;
+    command(c, &p, "settings", "Toggle grid")?;
+    command(c, &p, "settings", "Editor lighting")?;
     scene::ready(c, &p)?;
     record(c, view, &p, "inspection-no-grid", &mut frames)?;
-    c.click(&format!("{p}grid"))?;
-    command(c, &p, "lighting", "Scene lighting")?;
+    command(c, &p, "settings", "Toggle grid")?;
+    command(c, &p, "settings", "Scene lighting")?;
     scene::ready(c, &p)?;
-    for name in ["Perspective", "Front", "Frame all"] {
-        command(c, &p, "views", name)?;
-    }
-    geometry::toolbar(c, &p)?;
+    c.click(&format!("{p}projection"))?;
+    front(c, view, &p)?;
+    command(c, &p, "settings", "Frame all")?;
+    geometry::controls(c, &p)?;
     controls(c, view, &p, &mut frames)?;
-    for name in ["Front", "Frame all"] {
-        command(c, &p, "views", name)?;
-    }
+    front(c, view, &p)?;
+    command(c, &p, "settings", "Frame all")?;
     let unchanged = pose(c, view)?;
-    c.click(&format!("{p}views"))?;
+    c.click(&format!("{p}settings"))?;
     let point = c.node(&format!("{p}render"))?.center();
     c.move_to(point)?;
     c.input(window, json!({"kind":"wheel","delta":[0,80]}))?;
@@ -152,15 +147,24 @@ pub(super) fn run(c: &Editor<'_>, project: &Path, view: &str, other: &str) -> Re
         n.id.starts_with("browser/") && n.id.ends_with("/search")
     })?;
     c.field(&search.id, "WASD f")?;
+    let before_hover = pose(c, view)?;
     c.move_to(point)?;
     c.input(window, json!({"kind":"wheel","delta":[0,80]}))?;
+    c.until("hover dolly with search focus", || {
+        Ok(pose(c, view)?["translation"] != before_hover["translation"])
+    })?;
     check(
-        c.node(&search.id)?.value() == "WASD f" && pose(c, view)? == unchanged,
+        c.node(&search.id)?.value() == "WASD f",
         "Viewport hover stole field input",
     )?;
-    c.click(&search.id)?;
     c.key("select_all")?;
     c.key("backspace")?;
+    check(
+        c.node(&search.id)?.value().is_empty(),
+        "Hover wheel moved keyboard focus out of search",
+    )?;
+    front(c, view, &p)?;
+    command(c, &p, "settings", "Frame all")?;
     record(c, view, &p, "menu-and-field-precedence", &mut frames)?;
     let rect = c.node(&format!("{p}render"))?.rect;
     c.input(
@@ -177,7 +181,7 @@ pub(super) fn run(c: &Editor<'_>, project: &Path, view: &str, other: &str) -> Re
     c.click(&Editor::label(view))?;
     scene::ready(c, &p)?;
     check(pose(c, view)? == retained, "Tab switch changed camera")?;
-    c.menu(view, "Float active tab")?;
+    c.menu(view, "Float tab")?;
     c.until("floating viewport", || {
         Ok(c.node(&format!("{p}render"))?.window()? != window)
     })?;
@@ -197,6 +201,17 @@ pub(super) fn run(c: &Editor<'_>, project: &Path, view: &str, other: &str) -> Re
     Ok(
         json!({"status":"passed","frames":frames,"limitations":["Injected input, not physical OS input","RMB flight and MMB pan require dedicated acceptance"]}),
     )
+}
+
+fn front(c: &Editor<'_>, view: &str, p: &str) -> Result<()> {
+    // Move off Z first: clicking an already aligned axis selects its opposite.
+    for axis in ["x", "z"] {
+        c.click(&format!("{p}axis-{axis}"))?;
+        c.until("gizmo alignment settled", || {
+            Ok(pose(c, view)?["aligning"] == false)
+        })?;
+    }
+    Ok(())
 }
 
 fn controls(c: &Editor<'_>, view: &str, p: &str, frames: &mut Vec<Value>) -> Result<()> {
@@ -236,11 +251,8 @@ fn controls(c: &Editor<'_>, view: &str, p: &str, frames: &mut Vec<Value>) -> Res
             record(c, view, p, &format!("axis-{axis}-{side}"), frames)?;
         }
     }
-    for (name, changed) in [
-        ("orbit", "rotation"),
-        ("zoom", "translation"),
-        ("pan", "pivot"),
-    ] {
+    {
+        let (name, changed) = ("orbit", "rotation");
         let point = c.node(&format!("{p}{name}"))?.center();
         let before = pose(c, view)?;
         c.input(window, json!({"kind":"move","position":point}))?;
@@ -295,7 +307,8 @@ fn controls(c: &Editor<'_>, view: &str, p: &str, frames: &mut Vec<Value>) -> Res
         )?;
     }
     let before = pose(c, view)?;
-    c.click(&format!("{p}overlays"))?;
+    c.click(&format!("{p}settings"))?;
+    c.click("scene-menu/2")?;
     c.until(
         "hidden overlays",
         || Ok(pose(c, view)?["overlays"] == false),
@@ -305,7 +318,8 @@ fn controls(c: &Editor<'_>, view: &str, p: &str, frames: &mut Vec<Value>) -> Res
         "Overlay toggle changed selection",
     )?;
     record(c, view, p, "overlays-hidden", frames)?;
-    c.click(&format!("{p}overlays"))?;
+    c.click(&format!("{p}settings"))?;
+    c.click("scene-menu/2")?;
     c.until("restored overlays", || {
         Ok(pose(c, view)?["overlays"] == true)
     })?;
@@ -336,7 +350,7 @@ fn narrow(c: &Editor<'_>, view: &str, other: &str, p: &str, frames: &mut Vec<Val
     let floating = c.node(&format!("{p}viewport"))?.window()?;
     c.resize(floating, 480, 430, 2)?;
     scene::ready(c, p)?;
-    geometry::toolbar(c, p)?;
+    geometry::controls(c, p)?;
     record(c, view, p, "floating-480x360", frames)?;
     let point = c.node(&format!("{p}orbit"))?.center();
     // Integrated headers removed the duplicate tab row: a 320px native window
@@ -360,7 +374,7 @@ fn narrow(c: &Editor<'_>, view: &str, other: &str, p: &str, frames: &mut Vec<Val
     c.activate(floating)?;
     c.click(&Editor::label(view))?;
     scene::ready(c, p)?;
-    geometry::toolbar(c, p)?;
+    geometry::controls(c, p)?;
     let before = pose(c, view)?;
     c.input(floating, json!({"kind":"move","position":point}))?;
     c.input(floating, json!({"kind":"button","pressed":true}))?;
@@ -383,8 +397,8 @@ fn narrow(c: &Editor<'_>, view: &str, other: &str, p: &str, frames: &mut Vec<Val
     c.click(&Editor::label(view))?;
     c.resize(floating, 480, 430, 2)?;
     scene::ready(c, p)?;
-    geometry::toolbar(c, p)?;
-    c.click(&format!("{p}views"))?;
+    geometry::controls(c, p)?;
+    c.click(&format!("{p}settings"))?;
     c.wait_node("scene-menu/0")?;
     c.resize(floating, 320, 640, 2)?;
     c.until("320px floating scene", || {
@@ -392,7 +406,7 @@ fn narrow(c: &Editor<'_>, view: &str, other: &str, p: &str, frames: &mut Vec<Val
         Ok((n.rect[2] - n.rect[0] - 320.).abs() <= 1.)
     })?;
     c.frame(floating, "live-resize-menu")?;
-    let menu = geometry::menu(c, p, "views")?;
+    let menu = geometry::menu(c, p, "settings")?;
     frames.push(json!({"case":"floating-live-resize-menu","frame":c.frame(floating,"menu after live resize")?,"menu_geometry":menu}));
     c.input(floating, json!({"kind":"key","key":"escape"}))?;
     scene::ready(c, p)?;
@@ -414,34 +428,32 @@ fn narrow(c: &Editor<'_>, view: &str, other: &str, p: &str, frames: &mut Vec<Val
     Ok(())
 }
 fn menus(c: &Editor<'_>, view: &str, p: &str, case: &str, frames: &mut Vec<Value>) -> Result<()> {
-    let viewport = geometry::toolbar(c, p)?;
-    for control in ["lighting", "views"] {
+    let viewport = geometry::controls(c, p)?;
+    {
+        let control = "settings";
         c.click(&format!("{p}{control}"))?;
         c.wait_node("scene-menu/0")?;
         let m = geometry::menu(c, p, control)?;
         frames.push(json!({"case":format!("{case}-{control}"),"frame":c.frame(viewport.window()?,control)?,"menu_geometry":m}));
-        if control == "lighting" {
-            c.click("scene-menu/1")?;
+        {
+            c.click("scene-menu/5")?;
             c.until("editor lighting", || {
                 Ok(pose(c, view)?["editor_lighting"] == true)
             })?;
             scene::ready(c, p)?;
-            geometry::toolbar(c, p)?;
-            c.click(&format!("{p}lighting"))?;
+            geometry::controls(c, p)?;
+            c.click(&format!("{p}settings"))?;
             c.wait_node("scene-menu/0")?;
-            let m = geometry::menu(c, p, "lighting")?;
+            let m = geometry::menu(c, p, "settings")?;
             frames.push(json!({"case":format!("{case}-editor-lighting"),"frame":c.frame(viewport.window()?,"editor-lighting menu")?,"menu_geometry":m}));
-            c.click("scene-menu/0")?;
+            c.click("scene-menu/4")?;
             c.until("scene lighting", || {
                 Ok(pose(c, view)?["editor_lighting"] == false)
             })?;
             scene::ready(c, p)?;
-        } else {
-            c.input(viewport.window()?, json!({"kind":"key","key":"escape"}))?;
-            c.until("dismissed scene menu", || Ok(!c.present("scene-menu/0")?))?;
         }
     }
-    c.click(&format!("{p}grid"))?;
-    c.click(&format!("{p}grid"))?;
+    command(c, p, "settings", "Toggle grid")?;
+    command(c, p, "settings", "Toggle grid")?;
     Ok(())
 }

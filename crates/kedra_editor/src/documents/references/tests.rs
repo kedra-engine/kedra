@@ -38,6 +38,7 @@ fn typed_reference_candidates_preserve_symbolic_paths_and_reject_foreign_or_stal
         bytes: 0,
     });
     let snapshot = SourceSnapshot {
+        environments: Default::default(),
         namespace: "game".into(),
         generation: 1,
         documents: vec![SourceFile {

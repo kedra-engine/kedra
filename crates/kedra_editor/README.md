@@ -24,21 +24,31 @@ This is not a project runtime or Play implementation. See
 The proposed Scene/Game workflow and unselected execution/render
 backend are in [ADR 0046](../../docs/decisions/0046-scene-game-runtime-boundaries.md).
 
-The workspace has a read-only Assets browser with a lazy
-folder tree, Unicode search, virtualized grid/list and source document Open through
-one project-owned authoring workspace. Hierarchy displays composed source nodes,
-including nested prefabs, with search, expansion and shared document selection.
-Inspector follows shared logical asset/node selection with lock, search and shared
-reflected field presentations. `context` and `drag` expose source-backed selection
-and typed payloads to native consumers without granting authoring permission.
-Document tabs host the initial read-only
-Scene View for supported spatial/UI sources; PNG/static-GLB assets use separate
-asset-preview views. An explicit matching verified project delivery is required.
-Spatial camera navigation, grid/inspection controls and scoped opaque-mesh picking
-are implemented. Their native input acceptance remains separate from compilation.
-Supported Inspector fields and explicitly granted editor scripts share authoring
-transactions/Undo/Redo. Existing-document group Save is separate from accepting
-in-memory edits. General scene editing and gameplay project execution remain unavailable.
+The Assets browser supports explicit native file import via `kedra_import::ingest`. The production
+import dependency reuses source copying/metadata initialization instead of duplicating filesystem
+policy in the UI host. Import does not replace the runtime delivery. The browser provides a lazy
+folder tree, Unicode search, virtualized grid/list and source document Open through one
+project-owned authoring workspace. Hierarchy displays composed source nodes, including nested
+prefabs, with search, expansion and shared document selection. Content context menus own node
+creation, Rename/Delete and source Undo/Redo. Node drops reparent within the active source while
+preserving spatial world pose; unsupported cycles, singular transforms and shear refuse atomically.
+Inspector follows shared logical asset/node selection with lock, search and shared reflected field
+presentations. `context` and `drag` expose source-backed selection and typed payloads to native
+consumers without granting authoring permission. New scene/prefab selects an unused
+`.scene.ron`/`.prefab.ron` path inside the project's assets, then creates the document through
+common named history and publishes it before opening a clean tab. Subsequent edits require explicit
+Save, which publishes the complete document group and refreshes Assets. Undo/Redo preserves
+identities and never writes files; Undo after Save leaves a dirty removal for explicit Save. Source
+removal with sidecars requires a separate managed asset lifecycle and is refused. Document tabs host
+the Scene View for supported spatial/UI sources; PNG/static-GLB assets use separate asset-preview
+views. Resource-free documents need no project delivery; native asset references require an explicit
+matching verified project delivery. Spatial camera navigation, grid/inspection controls and scoped
+opaque-mesh picking are implemented. The viewport panel groups Move/Rotate/Scale and snapping icons;
+single-node drags preview before one source-history publication. Local rotation and axis/uniform
+scale preserve signed scale; Escape restores the baseline. Their native input acceptance remains
+separate from compilation. Supported Inspector fields and explicitly granted editor scripts share
+authoring transactions/Undo/Redo. Existing-document group Save is separate from accepting in-memory
+edits. General scene editing and gameplay project execution remain unavailable.
 
 The registry crate supplies this library, not the editor executable or the external
 `assets/editor` source/delivery. Assemble those through the source repository's

@@ -20,12 +20,11 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
         crate::project::inventory(&assets)? == before,
         "Script commit wrote source files before Save",
     )?;
-    let inspector = c.view("inspector")?;
     c.until("script publication", || {
         Ok(c.state()?["documents"]["can_undo"] == true)
     })?;
     c.frame(c.window()?, "Explicit two-document script commit")?;
-    c.menu(&inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("common batch Undo", || {
         let state = c.state()?;
         Ok(state["documents"]["can_undo"] == false && state["documents"]["can_redo"] == true)
@@ -34,7 +33,7 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
         c.current_document()?["dirty"] == false,
         "Undo to admitted content remained dirty",
     )?;
-    c.menu(&inspector, "Redo source edit")?;
+    c.main_menu("Redo")?;
     c.until("common batch Redo", || {
         Ok(c.current_document()?["dirty"] == true)
     })?;
@@ -72,7 +71,7 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
         )?;
     }
     c.frame(c.window()?, "Two-document Save acknowledged")?;
-    c.menu(&inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("saved group Undo", || {
         Ok(c.current_document()?["dirty"] == true)
     })?;
@@ -80,7 +79,7 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
         crate::project::inventory(&assets)? == after,
         "Undo wrote saved files",
     )?;
-    c.menu(&inspector, "Redo source edit")?;
+    c.main_menu("Redo")?;
     c.until("Redo to saved checkpoint", || {
         Ok(c.current_document()?["dirty"] == false)
     })?;

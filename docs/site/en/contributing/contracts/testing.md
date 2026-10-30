@@ -63,16 +63,20 @@ Product contracts, assembled acceptance and repository policy are separate respo
 
 | Capability | Primary contract owner | Assembled editor / native boundary |
 | --- | --- | --- |
+| Constrained transforms | `kedra_gizmo/tests/contracts.rs`: world/local conversion, rotation and signed/uniform scaling, snapping and rejected constraints | `scene-transform`: Move/Rotate/Scale drags, preview, Esc, single Undo/Redo and Save; floating-window prefab-instance override Save preserves the referenced prefab; Hand disables handles without source mutation; MMB/wheel retain navigation; compact control geometry |
+| Project-derived cache and static thumbnails | `kedra_cache/tests/contracts.rs`, `kedra_preview::thumbnails` | `document-creation`: generated pixels, close/reopen reuse and scene placement |
 | Projects/source paths | `kedra_project` | Startup/forms/Open |
+| Environment asset roots | `kedra_authoring::environment`, `kedra_authoring_fs`, `kedra_authoring_assets`, `kedra_import::ingest` | `environment-editing`: Create, root selection/assignment, invalid field rejection, selected-source Save, retained lighting and Undo |
 | Logical assets/shared selection/typed drag | `kedra_editor_context/tests/contracts` | Documents admission/activation, Inspector following/locking and native producer/drop lifecycle |
-| Documents/instances | `kedra_scene` | Documents, Hierarchy, Scene View |
-| Working changes/property candidates/save protocol | `kedra_authoring` | Transform/UiCaption source edits and existing-document Save |
-| Recoverable existing-source groups | `kedra_authoring_fs` | Documents group receipts/newer edits; native Save shortcut/menu; real recovery CLI in `apps/kedra/tests/save_recovery.rs` |
+| Documents/instances and hierarchy editing | `kedra_scene`, `kedra_editor::documents::structure` | `hierarchy-editing`: context presets, Rename/Delete, reparent, Undo/Redo and Save; Scene View readiness |
+| Working changes/property candidates/document creation/save protocol | `kedra_authoring` | Transform/UiCaption edits, New scene/prefab, common history and document Save; `document-creation` checks editor name entry and explicit Save |
+| Recoverable document groups/inventory | `kedra_authoring_fs` | Documents creation/group receipts/newer edits, removal/Redo/reopen; native Save shortcut/menu; real recovery CLI in `apps/kedra/tests/save_recovery.rs` |
+| Asset folder creation and file/folder rename/move/deletion | `kedra_authoring_fs/tests/contracts/folders.rs` | `workspace/folders` checks worker ownership and referenced deletion; browser tests own path/history rebasing; native menus/dialogs need real-input acceptance |
 | Runtime delivery/integrity | `kedra_assets` | Preview resource binding |
 | Native handle reconstruction | `kedra_assets/tests/contracts/references.rs` | Inspector picking/drops |
-| Source-matched resource admission | `kedra_authoring_assets` | Documents resource assignment and Scene View |
+| Source-matched resource admission/resource-free compilation | `kedra_authoring_assets` | Documents resource assignment and Scene View without/with a delivery |
 | Passive static model/bounds/subassets | `kedra_preview` | Scene View camera/frame/refresh; Inspector resource readiness |
-| Processing/publication | `kedra_import` | Browser/Open/preview |
+| Source ingestion/processing/publication | `kedra_import` | Browser Import/native-message routing; OS picker and physical drops need manual acceptance |
 | Dock topology/candidates | `kedra_docking` | Gestures/host coordination |
 | Retained UI/projection/input and field acknowledgment | `kedra_ui`, `kedra_desktop` | Dock/host/focus; independent diagnostic text field |
 | Retained docking hierarchy invalidation | `kedra_ui/tests/contracts/docking.rs` and `docking/headers.rs` | Editor and independent native projection; unchanged edge/order ticks, changed topology, retained input/content and rejection safety |
@@ -93,6 +97,7 @@ Product contracts, assembled acceptance and repository policy are separate respo
 | Scoped Luau profiling adapter | `kedra_script/tests/contracts/profiling` | Editor workload instrumentation; no recording authority |
 | Script Transform/UI adapters | `kedra_script_bevy/tests/contracts/` | Native switch Behavior/Sequence |
 | Editor styles/icons/authored sources | `kedra_editor/tests/contracts/` | Component corpus/editor geometry |
+| Unsaved-source exit confirmation | `kedra_editor::workspace::close_dialog`; `authored_sources` checks startup admission and dialog bindings | `exit-save`, `exit-discard`: dirty native close, visible choices, Cancel preserving working edits and source bytes, successful process exit with saved or unchanged sources |
 | Build/package/update | `kedra_build`, `kedra_update` | Installed distribution/update |
 | Repository/release policy | `xtask` (including `dependency-policy`), `tools/ci`, `tools/security` | Real scanners/distribution workflow |
 

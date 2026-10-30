@@ -2,6 +2,7 @@ use super::test_support::compiled;
 use super::*;
 use bevy::camera::visibility::RenderLayers;
 use kedra_scene::{composition::Catalog, document::PrefabDocument, reflection::ComponentPolicies};
+use std::collections::BTreeMap;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 #[test]
@@ -25,6 +26,9 @@ fn unchanged_selection_after_delayed_mount_publishes_marker_and_frame_selection_
         lifecycle: default(),
         elapsed: 0.,
         raw_model: false,
+        source_removed: false,
+        source_layer: 0,
+        requested_source: None,
     };
     let selected = compiled.graph().root.clone();
     // This is the production select boundary while tick is waiting for resources.

@@ -97,7 +97,8 @@ proof that it can be rendered in every editor view.
 
 ## Delivery and reader limits
 
-The exact serialized `kedra-assets.json` must fit 64 KiB. A data member may declare at most
+The exact serialized `kedra-assets.json` must fit its separate 16 MiB inventory budget.
+This is independent of repository source-file limits. A data member may declare at most
 256 MiB; a `.meta` member at most 64 KiB. The verified reader bounds reads before hashing,
 rejects undeclared resources and does not offer general filesystem directory enumeration.
 Native members must resolve to regular files inside the canonical delivery root; escaping

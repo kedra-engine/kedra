@@ -26,6 +26,7 @@ impl Fixture {
         });
         let text = document.serialize()?;
         let source = SourceSnapshot {
+            environments: Default::default(),
             namespace: "game".into(),
             generation: 0,
             index: None,

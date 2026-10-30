@@ -189,7 +189,7 @@ fn native_manifest_accepts_exact_byte_boundary_and_rejects_one_more_byte() {
         files: BTreeMap::new(),
     };
     let mut bytes = serde_json::to_vec_pretty(&manifest).unwrap();
-    bytes.resize(65_536, b' ');
+    bytes.resize(crate::delivery::MAX_MANIFEST_BYTES, b' ');
     std::fs::write(directory.path().join(MANIFEST), &bytes).unwrap();
     assert!(read_directory(directory.path(), "test").is_ok());
     bytes.push(b' ');

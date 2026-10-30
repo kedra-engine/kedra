@@ -228,8 +228,8 @@ fn run(cli: Cli) -> Result<(), String> {
     match cli.command {
         Some(Command::RecoverSave { source }) => {
             eprintln!("Recovering interrupted source Save: {}", source.display());
-            let receipt =
-                kedra_authoring_fs::recover_existing(&source).map_err(|error| error.to_string())?;
+            let receipt = kedra_authoring_fs::recover_documents(&source)
+                .map_err(|error| error.to_string())?;
             eprintln!(
                 "SUCCESS: {}",
                 if receipt.is_some() {

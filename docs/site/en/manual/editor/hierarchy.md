@@ -28,9 +28,26 @@ unchanged, with an inactive selection appearance. Collapsing a branch does not d
 a selected descendant. The panel displays visible rows on demand rather than omitting
 the tail of a large admitted graph.
 
-Instance roots have a link icon. Equal names inside repeated prefabs are not the same
-target: each selection includes its full nested instance scope. Ordinary branch icons
-and generic node icons do not identify a node as a mesh or imply component types.
+Instance roots have blue names and a link icon. Active selection uses the selection text color;
+inactive selection retains the prefab color. Equal names inside repeated prefabs are not the same
+target: each selection includes its full nested instance scope. Ordinary branch icons and generic
+node icons do not identify a node as a mesh or imply component types.
+
+## Create and manage nodes
+
+Right-click inside Hierarchy for **Create**: **Empty Node**, **3D Object → Cube /
+Sphere / Plane**, **Light → Directional Light**, or **Camera**. Right-clicking a row
+creates a child; empty space creates under the document root. Plane is a thin cuboid.
+Camera adds authored perspective settings; it does not replace Scene View's camera
+or enable the unimplemented Play workflow.
+
+Right-click a node for **Rename** (F2) or **Delete** (Delete key). Delete removes the
+selected subtrees; the document root cannot be deleted. Drag nodes onto another row
+to change their parent, or onto empty space to move them to the root. World position,
+rotation and scale are preserved; moves requiring shear or a zero-scale parent are
+rejected. Cross-document moves, sibling reordering and drag autoscroll are unavailable.
+
+Edits support **Undo/Redo** and remain in memory until **Save** (Ctrl/Cmd+S).
 
 ## Search and reveal
 
@@ -83,7 +100,6 @@ Failed Open preserves the previous document, tree and selection and identifies t
 tree in its diagnostic. A malformed source can reject admission before any tree exists;
 the editor does not substitute a default hierarchy.
 
-Read-only navigation cannot rename, create, delete, duplicate, reparent, drag nodes or
-unpack prefabs. There are no enabled structural node commands or Save. Effective graphs
+Duplicate and prefab unpacking are not implemented. Effective graphs
 are bounded to 4096 nodes by source composition; this is a rejection limit, not a promise
 that arbitrarily large files will load. See [composition](../scenes/composition.md).

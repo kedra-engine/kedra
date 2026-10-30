@@ -6,10 +6,68 @@ use kedra_scene::document::PrefabDocument;
 use std::{any::TypeId, collections::BTreeMap};
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
+#[test]
+fn authored_environment_revisions_keep_identity_and_require_exact_valid_source_bytes() -> TestResult
+{
+    let (mut source, mut delivery) = source();
+    let path = "day.environment.ron";
+    let old = "(version:1,background:Srgba((red:0.0,green:0.0,blue:0.0,alpha:1.0)),ambient_color:Srgba((red:1.0,green:1.0,blue:1.0,alpha:1.0)),ambient_brightness:20.0)";
+    let new = old.replace("20.0", "450.0");
+    let id = uuid::Uuid::new_v4();
+    source.assets.push(SourceAsset {
+        id: Some(id),
+        path: path.into(),
+        hash: digest(new.as_bytes()),
+        bytes: new.len() as u64,
+    });
+    source.environments.insert(path.into(), new.clone());
+    delivery.manifest.assets.push(AssetRecord {
+        id,
+        path: path.into(),
+        loader: "kedra_scene::environment::EnvironmentLoader".into(),
+    });
+    delivery.manifest.files.insert(
+        path.into(),
+        FileDigest {
+            bytes: old.len() as u64,
+            sha256: digest(old.as_bytes()),
+        },
+    );
+    let logical = AssetPath::parse("game://day.environment.ron");
+    let ty = TypeId::of::<kedra_scene::environment::Environment>();
+    assert!(delivery.accepts(&source, ty, &logical));
+    assert!(
+        delivery.matches(&delivery.source, &source).is_err(),
+        "Runtime delivery still requires published bytes"
+    );
+    delivery.matches_resources(&delivery.source, &source)?;
+    assert_eq!(
+        kedra_authoring_assets::environment_source(&source, path)?.ambient_brightness,
+        450.0
+    );
+    source.environments.insert(path.into(), old.into());
+    assert!(!delivery.accepts(&source, ty, &logical));
+    assert!(
+        delivery
+            .matches_resources(&delivery.source, &source)
+            .is_err()
+    );
+    source.environments.insert(path.into(), new);
+    source.assets[0].id = Some(uuid::Uuid::new_v4());
+    assert!(!delivery.accepts(&source, ty, &logical));
+    assert!(
+        delivery
+            .matches_resources(&delivery.source, &source)
+            .is_err()
+    );
+    Ok(())
+}
+
 fn source() -> (SourceSnapshot, Delivery) {
     let document = PrefabDocument::new("Source");
     let text = document.serialize().unwrap_or_else(|e| panic!("{e}"));
     let snapshot = SourceSnapshot {
+        environments: Default::default(),
         namespace: "game".into(),
         generation: 1,
         index: None,
@@ -135,5 +193,87 @@ fn delivery_binding_rejects_foreign_missing_and_stale_sources_without_mutation()
     delivery.manifest.assets.clear();
     assert!(delivery.matches(&delivery.source, &source).is_err());
     assert_eq!(source.documents[0].source, before);
+    Ok(())
+}
+
+#[test]
+fn resource_previews_survive_document_changes_but_reject_stale_dependencies_and_foreign_scope()
+-> TestResult {
+    let (mut source, mut delivery) = source();
+    let id = uuid::Uuid::new_v4();
+    let asset = SourceAsset {
+        id: Some(id),
+        path: "texture.png".into(),
+        hash: digest(b"texture"),
+        bytes: 7,
+    };
+    source.assets.push(asset.clone());
+    delivery.manifest.assets.push(AssetRecord {
+        id,
+        path: asset.path.clone(),
+        loader: "bevy_image::image_loader::ImageLoader".into(),
+    });
+    delivery.manifest.files.insert(
+        asset.path.clone(),
+        FileDigest {
+            bytes: asset.bytes,
+            sha256: asset.hash.clone(),
+        },
+    );
+    source.documents[0].hash = digest(b"saved edits");
+    assert!(delivery.matches(&delivery.source, &source).is_err());
+    delivery.matches_resources(&delivery.source, &source)?;
+    let document = PrefabDocument::new("New scene").serialize()?;
+    source.documents.push(SourceFile {
+        path: "new.scene.ron".into(),
+        hash: digest(document.as_bytes()),
+        source: document.clone(),
+    });
+    delivery.matches_resources(&delivery.source, &source)?;
+    assert_eq!(source.documents[1].source, document);
+    source.documents.clear();
+    delivery.matches_resources(&delivery.source, &source)?;
+    assert!(delivery.matches(&delivery.source, &source).is_err());
+    assert!(
+        delivery
+            .matches_resources(std::path::Path::new("foreign/assets"), &source)
+            .is_err()
+    );
+    source.namespace = "foreign".into();
+    assert!(
+        delivery
+            .matches_resources(&delivery.source, &source)
+            .is_err()
+    );
+    source.namespace = "game".into();
+    source.assets[0].hash = digest(b"changed texture");
+    assert!(
+        delivery
+            .matches_resources(&delivery.source, &source)
+            .is_err()
+    );
+    assert_eq!(source.assets[0].hash, digest(b"changed texture"));
+    source.assets[0] = asset.clone();
+    source.assets[0].bytes += 1;
+    assert!(
+        delivery
+            .matches_resources(&delivery.source, &source)
+            .is_err()
+    );
+    source.assets[0] = asset.clone();
+    source.assets[0].id = Some(uuid::Uuid::new_v4());
+    assert!(
+        delivery
+            .matches_resources(&delivery.source, &source)
+            .is_err()
+    );
+    source.assets.clear();
+    assert!(
+        delivery
+            .matches_resources(&delivery.source, &source)
+            .is_err()
+    );
+    assert!(source.assets.is_empty());
+    assert_eq!(delivery.manifest.files[&asset.path].sha256, asset.hash);
     Ok(())
 }

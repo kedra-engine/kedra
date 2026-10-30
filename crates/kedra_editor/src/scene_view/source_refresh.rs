@@ -1,6 +1,17 @@
 //! Accepted value reprojection retains cameras, owned assets and native source nodes.
 use super::*;
 impl View {
+    pub(crate) fn fail_source(&mut self, world: &mut World, graph: &Arc<ResolvedGraph>) {
+        self.retire(world);
+        self.compiled = None;
+        self.requested_source = Some(graph.clone());
+    }
+    pub(crate) fn refresh_environment(&mut self, world: &mut World) -> Result<(), String> {
+        if let Some(projection) = &mut self.projection {
+            projection.refresh_environment(world)?;
+        }
+        Ok(())
+    }
     #[cfg(any(debug_assertions, test))]
     pub(super) fn spatial_values(&self, world: &World) -> Vec<serde_json::Value> {
         let Some(projection) = &self.projection else {
@@ -34,7 +45,14 @@ impl View {
         graph: &Arc<ResolvedGraph>,
         source: &kedra_authoring::persistence::SourceSnapshot,
     ) -> Result<(), String> {
+        if self.source_removed {
+            self.prepare(world, graph, source, self.source_layer);
+            return Ok(());
+        }
         let Some(previous) = &self.compiled else {
+            if self.requested_source.as_deref() != Some(graph.as_ref()) {
+                self.prepare(world, graph, source, self.source_layer);
+            }
             return Ok(());
         };
         if previous.graph() == graph.as_ref() {
@@ -43,22 +61,17 @@ impl View {
             }
             return Ok(());
         }
-        let Some(projection) = &mut self.projection else {
-            return Ok(());
-        };
-        // This path only updates an unchanged spatial topology. Structural authoring
-        // requires a separately staged projection, not partial arbitrary hydration.
-        if previous.graph().nodes.keys().ne(graph.nodes.keys()) {
-            return Err("Source topology changed; reopen this Scene View.".into());
-        }
         let before = previous.graph();
-        if before.root != graph.root
+        let structural = before.nodes.keys().ne(graph.nodes.keys())
+            || before.root != graph.root
             || before.bindings != graph.bindings
             || before.ports != graph.ports
             || before.frames != graph.frames
             || before.aliases != graph.aliases
             || graph.nodes.iter().any(|(address, node)| {
-                let old = &before.nodes[address];
+                let Some(old) = before.nodes.get(address) else {
+                    return true;
+                };
                 old.name != node.name
                     || old.parent != node.parent
                     || old.children != node.children
@@ -68,36 +81,31 @@ impl View {
                         .iter()
                         .filter(|(key, _)| !refreshable(key))
                         .ne(node.components.iter().filter(|(key, _)| !refreshable(key)))
-            })
-        {
-            return Err(
-                "Only supported spatial and passive UI values can refresh this Scene View; reopen structural source changes."
-                    .into(),
-            );
+            });
+        let spatial = before
+            .nodes
+            .values()
+            .chain(graph.nodes.values())
+            .all(|node| !node.components.contains_key("ui.layout"));
+        if structural && !spatial {
+            self.prepare(world, graph, source, self.source_layer);
+            return Ok(());
         }
-        let delivery = world
-            .get_resource::<binding::Delivery>()
-            .ok_or("Scene delivery unavailable")?;
-        let registry = world.resource::<AppTypeRegistry>().clone();
-        let mut loader = binding::Loader {
-            server: world.resource::<AssetServer>().clone(),
-            source,
-            delivery,
-            error: None,
+        let Some(projection) = &mut self.projection else {
+            return Ok(());
         };
-        let compiled = Arc::new(
-            CompiledPrefab::compile(
-                (**graph).clone(),
-                &registry.read(),
-                world.resource::<ComponentPolicies>(),
-                &mut loader,
-                &BTreeMap::new(),
-            )
-            .map_err(|e| e.to_string())?,
-        );
-        if let Some(error) = loader.error {
-            return Err(error);
-        }
+        let registry = world.resource::<AppTypeRegistry>().clone();
+        let manager = world.resource::<crate::model::ProjectManager>();
+        let root = &manager.project.as_ref().ok_or("No project is open")?.assets;
+        let compiled = Arc::new(binding::compile_preview(
+            (**graph).clone(),
+            &registry.read(),
+            world.resource::<ComponentPolicies>(),
+            world.resource::<AssetServer>(),
+            source,
+            root,
+            world.get_resource::<binding::Delivery>(),
+        )?);
         if !compiled
             .asset_status(world.resource::<AssetServer>())
             .map_err(|error| error.to_string())?
@@ -121,6 +129,14 @@ impl View {
             return Ok(());
         }
         if projection.mounted() {
+            if structural {
+                projection.replace_spatial(world, compiled.clone())?;
+                self.marker.clear(world);
+                self.compiled = Some(compiled);
+                self.pending_source = None;
+                self.lifecycle.instantiated();
+                return Ok(());
+            }
             let mut changes = Vec::new();
             let ui = projection
                 .passive

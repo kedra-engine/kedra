@@ -21,10 +21,10 @@ If project paths or delivered resources are unfamiliar, first read
 - To load a document into a Bevy application, read [Loading and lifecycle](lifecycle.md).
 - To build source-editing tools, read [Source editing and Save](source-editing.md).
 
-The editor currently opens and inspects scene/prefab documents read-only. Hierarchy shows
-the composed nodes; Inspector follows source selection; Scene View projects supported
-content when matching resources are available. These views do not provide visual source
-editing, editor Save or Play. A preview is not execution of the project's gameplay.
+The editor supports scene/prefab creation, eligible Hierarchy edits, Inspector properties
+and Scene View transforms through shared source history and explicit Save.
+Scene View projects supported content when its resource prerequisites are met.
+Play remains unavailable: a preview does not execute the project's gameplay.
 
 For preview prerequisites, see
 [matching asset deliveries](../assets/pipeline.md#editor-previews-need-matching-sources).

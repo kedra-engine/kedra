@@ -13,9 +13,24 @@ provide validated transactions, history, Apply/Revert, complete Unpack and a Sav
 That library does not perform filesystem I/O or implement Play. The editor supports
 the documented [Inspector source edits](../editor/inspector.md), including Transform,
 primitive/surface/light parameters and embedded Luau UiCaption fields,
-with validated source history and guarded recoverable existing-source Save groups through
-`kedra_authoring_fs`. New-file publication
-and Play remain unavailable.
+with validated source history and guarded recoverable document Save groups through
+`kedra_authoring_fs`. [New scene](../editor/asset-browser.md#create-a-scene) uses the same
+history and separate Save. Play remains unavailable.
+
+With a scene or prefab active, Hierarchy's content context menu provides **Create →
+Empty Node**, primitive objects, directional light and authored camera settings.
+The clicked node becomes the parent; blank space targets the document root.
+Each action is one source Undo/Redo step; use Save to publish it. Spatial objects cannot
+be placed beneath UI nodes. Structural changes rebuild the document preview.
+
+Inspector's header **+** opens **Add component** for its current target; each component section's
+**…** offers **Remove component**. The list comes from registered source schemas. Adding requires a
+valid registered reflected default; components needing explicit initial data report that
+requirement. Each successful operation shares source Undo/Redo and explicit Save.
+
+To place a model, drag a GLB from Assets onto its parent node in Hierarchy. A matching
+project delivery is required. The model must declare a default scene or contain exactly
+one scene. The new child retains a source-qualified model reference and a Transform.
 
 Prerequisites: [document structure](index.md#document-fields) and
 [composition ownership](composition.md#apply-revert-and-unpack).

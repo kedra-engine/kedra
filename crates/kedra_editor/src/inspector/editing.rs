@@ -243,6 +243,12 @@ impl Panel {
         match event.outcome {
             TextFieldOutcome::Requested(request) => {
                 let result: Result<(), String> = (|| {
+                    if crate::workspace::import_pending(world) {
+                        return Err(
+                            "Finish the asset filesystem operation before editing properties."
+                                .into(),
+                        );
+                    }
                     if request.baseline() != binding.epoch
                         || !TextField::is_current(world, event.entity, &request)
                     {

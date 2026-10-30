@@ -11,8 +11,8 @@ and Scene View renders supported content when its resource prerequisites are met
 
 These panels coordinate around a source document session. Browser selection is not the
 same as opening a document, and source-node selection is not a persistent gameplay entity.
-The editor currently inspects documents read-only; its own authored UI does not mean that
-users can visually edit that UI or install project-defined editor windows.
+The editor edits supported source properties and structure through history and explicit
+Save. Its authored UI does not provide a public project-defined editor-window workflow.
 
 ## Runtime: services inside an application
 
@@ -37,8 +37,7 @@ its result through the protocol.
 
 For example, changing an instance override in a working document is a source operation;
 moving a live entity is not. The [source-editing guide](../scenes/source-editing.md)
-explains these APIs. They do not currently appear as visual editing or document Save in
-the editor.
+explains these APIs. The editor uses them for supported visual edits and document Save.
 
 ## Import and tools: preparing content and applications
 
@@ -60,7 +59,7 @@ Authored sources ── processing + verification ──> delivery
                                                   │
                                       composed scene → live instance
 
-Authored sources ── validated editor session ──> read-only editor projection
+Authored sources ── validated editor session ──> editor projection
                                                   ↑
                                      matching delivery for rendering
 ```
@@ -78,4 +77,4 @@ To try this route, follow [Getting started](../getting-started/index.md).
 For deeper concepts, choose [Projects](../projects/index.md) to organize content,
 [Assets](../assets/index.md) to prepare it, or [Scenes and prefabs](../scenes/index.md)
 to understand composition and instances. Use [Current capabilities](capabilities.md)
-to distinguish these working foundations from the planned editing loop.
+to distinguish supported authoring from planned runtime integration.

@@ -46,6 +46,19 @@ impl ValueMetadata for Metadata<'_> {
             .map(ToString::to_string)
     }
     fn asset_choices(&self, asset_type: std::any::TypeId) -> Vec<String> {
+        if asset_type == std::any::TypeId::of::<kedra_scene::environment::Environment>() {
+            let source = &self.source.scope.source;
+            return source
+                .environments
+                .keys()
+                .filter_map(|path| {
+                    let logical = format!("{}://{path}", source.namespace);
+                    let parsed = bevy::asset::AssetPath::try_parse(&logical).ok()?;
+                    kedra_authoring_assets::environments::accepts(source, &parsed)
+                        .then_some(logical)
+                })
+                .collect();
+        }
         let Some(delivery) = self.delivery else {
             return Vec::new();
         };

@@ -18,7 +18,7 @@ fn accept(c: &Editor<'_>, input: &Node, value: &str) -> Result<()> {
     c.input(input.window()?, json!({"kind":"key","key":"enter"}))?;
     Ok(())
 }
-pub(super) fn run(c: &Editor<'_>, inspector: &str, hierarchy: &str, prefix: &str) -> Result<()> {
+pub(super) fn run(c: &Editor<'_>, hierarchy: &str, prefix: &str) -> Result<()> {
     let root = c.find("Assets root", |node| {
         node.id.starts_with("browser/") && node.id.ends_with("/folder/0")
     })?;
@@ -95,6 +95,10 @@ pub(super) fn run(c: &Editor<'_>, inspector: &str, hierarchy: &str, prefix: &str
     scene::ready(c, &preview)?;
     c.frame(x.window()?, "accepted source Transform")?;
     check(
+        c.selection()? == selected,
+        "Transform acceptance cleared selection",
+    )?;
+    check(
         c.node(&x.id)?.entity == x.entity
             && c.node(&y.id)?.entity == y.entity
             && c.node(&z.id)?.entity == z.entity,
@@ -131,11 +135,15 @@ pub(super) fn run(c: &Editor<'_>, inspector: &str, hierarchy: &str, prefix: &str
         ("rotation", json!([0., 0., 0., 1.])),
         ("translation", json!([3., 1., 0.])),
     ] {
-        c.menu(inspector, "Undo source edit")?;
+        c.main_menu("Undo")?;
         c.until("source Undo reprojection", || {
             Ok(projected(c, view, &selected)?[part] == expected)
         })?;
         scene::ready(c, &preview)?;
+        check(
+            c.selection()? == selected,
+            format!("Undo {part} cleared selection"),
+        )?;
     }
     check(
         c.node(&x.id)?.value() == "3" && c.node(&x.id)?.entity == x.entity,
@@ -146,14 +154,23 @@ pub(super) fn run(c: &Editor<'_>, inspector: &str, hierarchy: &str, prefix: &str
         ("rotation", rotated),
         ("scale", json!([1., 1., 2.])),
     ] {
-        c.menu(inspector, "Redo source edit")?;
+        c.main_menu("Redo")?;
         c.until("source Redo reprojection", || {
             Ok(projected(c, view, &selected)?[part] == expected)
         })?;
         scene::ready(c, &preview)?;
+        check(
+            c.selection()? == selected,
+            format!("Redo {part} cleared selection"),
+        )?;
     }
     let final_camera = c.state()?["scene_views"][view].clone();
     c.input(c.window()?, json!({"kind":"close_window"}))?;
+    c.click("close-dialog/cancel")?;
+    check(
+        c.selection()? == selected,
+        "Exit cancellation cleared selection",
+    )?;
     check(
         c.node(&x.id)?.entity == x.entity,
         "Main-window Close discarded unsaved source changes",
@@ -169,8 +186,10 @@ pub(super) fn run(c: &Editor<'_>, inspector: &str, hierarchy: &str, prefix: &str
         "Document Redo rebuilt the source field",
     )?;
     c.frame(x.window()?, "source Transform Undo Redo")?;
-    c.menu(inspector, "Discard all unsaved source changes")?;
-    c.until("explicit source discard", || {
+    for _ in 0..3 {
+        c.main_menu("Undo")?;
+    }
+    c.until("source history restores baseline", || {
         Ok(
             projected(c, view, &selected)?["translation"] == json!([3., 1., 0.])
                 && c.state()?["documents"]["can_undo"] == false,

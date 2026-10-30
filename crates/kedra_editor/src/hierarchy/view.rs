@@ -218,6 +218,7 @@ impl Panel {
                 selected.as_ref() == Some(&row.address),
             );
             class(world, view.root, "context", context);
+            class(world, view.root, "prefab-instance", row.boundary);
             if row.children {
                 world
                     .entity_mut(toggle)

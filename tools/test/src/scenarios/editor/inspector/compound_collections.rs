@@ -61,10 +61,9 @@ fn accept(c: &Editor<'_>, field: &Node, value: &str) -> Result<()> {
 fn save(
     c: &Editor<'_>,
     assets: &Path,
-    inspector: &str,
     before: &std::collections::BTreeMap<std::path::PathBuf, String>,
 ) -> Result<()> {
-    c.menu(inspector, "Save active document")?;
+    c.main_menu("Save")?;
     c.until("compound collection Save", || {
         Ok(c.current_document()?["dirty"] == false
             && c.state()?["documents"]["saving"] == false
@@ -124,11 +123,11 @@ pub(super) fn run(
             && accepted["rendered_image"] == baseline["rendered_image"],
         "Density construction replaced/lost the real native image",
     )?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("density Undo", || {
         Ok(projected(c, "source_ui_images", &selected)? == baseline)
     })?;
-    c.menu(inspector, "Redo source edit")?;
+    c.main_menu("Redo")?;
     c.until("density Redo", || {
         Ok(projected(c, "source_ui_images", &selected)? == accepted)
     })?;
@@ -168,7 +167,7 @@ pub(super) fn run(
         "native image density collection and exact resource handles",
     )?;
     c.client.capture(c.window()?)?;
-    c.menu(inspector, "Float group")?;
+    c.menu(inspector, "Float tab")?;
     c.until("floating image density details", || {
         Ok(field(c, prefix, "ui.image", "density", "/value")?.window()? != c.window()?)
     })?;
@@ -196,7 +195,7 @@ pub(super) fn run(
     c.client.capture(window)?;
     c.menu(inspector, "Redock to main window")?;
     c.click("workspace/reset")?;
-    save(c, assets, inspector, &before)?;
+    save(c, assets, &before)?;
     check(
         std::fs::read_to_string(assets.join("Hud.prefab.ron"))?.contains("checker.png"),
         "Density Save lost symbolic image path",
@@ -254,11 +253,11 @@ pub(super) fn run(
         accepted["values"][0]["blur"] == "Px(8.0)",
         "Shadow blur did not reach native preview",
     )?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("shadow Undo", || {
         Ok(projected(c, "source_ui_shadows", &selected)? == before_blur)
     })?;
-    c.menu(inspector, "Redo source edit")?;
+    c.main_menu("Redo")?;
     c.until("shadow Redo", || {
         Ok(projected(c, "source_ui_shadows", &selected)? == accepted)
     })?;
@@ -268,7 +267,7 @@ pub(super) fn run(
     c.until("native shadow removal", || {
         Ok(projected(c, "source_ui_shadows", &selected)? == baseline)
     })?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("native shadow restoration", || {
         Ok(projected(c, "source_ui_shadows", &selected)? == accepted)
     })?;
@@ -281,7 +280,7 @@ pub(super) fn run(
     })?;
     c.frame(c.window()?, "native full-width shadow details")?;
     c.client.capture(c.window()?)?;
-    c.menu(inspector, "Float group")?;
+    c.menu(inspector, "Float tab")?;
     c.until("floating shadow details", || {
         Ok(field(c, prefix, "ui.shadow", "x_offset", "/amount/value")?.window()? != c.window()?)
     })?;
@@ -299,7 +298,7 @@ pub(super) fn run(
     c.client.capture(window)?;
     c.menu(inspector, "Redock to main window")?;
     c.click("workspace/reset")?;
-    save(c, assets, inspector, &inventory(assets)?)?;
+    save(c, assets, &inventory(assets)?)?;
     c.click(&format!("{prefix}close-search"))?;
     Ok(())
 }

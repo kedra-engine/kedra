@@ -1,0 +1,297 @@
+(
+    version: 1,
+    id: "571c5f89-b9e4-4bbf-8fbb-0ea1107772b8",
+    kind: Scene,
+    title: "Arena",
+    root: "a9a4ced1-2db3-4b31-a4a7-8f86e7016c6f",
+    base: None,
+    nodes: [
+        (
+            id: "a9a4ced1-2db3-4b31-a4a7-8f86e7016c6f",
+            name: "Arena",
+            parent: None,
+            components: {},
+        ),
+    ],
+    instances: [
+        (
+            id: "4427c497-8deb-4149-adaf-f8a7044a2d81",
+            asset: "d8ec4331-e4f5-4b5a-b785-841718d61214",
+            parent: (
+                instances: [],
+                node: "a9a4ced1-2db3-4b31-a4a7-8f86e7016c6f",
+            ),
+            bindings: {},
+            overrides: [],
+        ),
+    ],
+    overrides: [
+        AddNode((
+            id: "29a75a9c-6e59-4afc-9cdb-c0645c44ca4d",
+            name: "Camera",
+            parent: Some((
+                instances: [],
+                node: "a9a4ced1-2db3-4b31-a4a7-8f86e7016c6f",
+            )),
+            components: {},
+        )),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "29a75a9c-6e59-4afc-9cdb-c0645c44ca4d",
+            ),
+            component: "scene.transform",
+            data: (
+                version: 1,
+                value: (translation:(0.0,48.0,32.0),rotation:(-0.471858,0.0,0.0,0.881675),scale:(1.0,1.0,1.0)),
+            ),
+        ),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "29a75a9c-6e59-4afc-9cdb-c0645c44ca4d",
+            ),
+            component: "scene.camera",
+            data: (
+                version: 1,
+                value: (fov:0.7853982,near:0.1,far:1000.0),
+            ),
+        ),
+        AddNode((
+            id: "a9c8a4b4-a205-440b-89cf-9d2a7ea77189",
+            name: "Directional light",
+            parent: Some((
+                instances: [],
+                node: "a9a4ced1-2db3-4b31-a4a7-8f86e7016c6f",
+            )),
+            components: {},
+        )),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "a9c8a4b4-a205-440b-89cf-9d2a7ea77189",
+            ),
+            component: "scene.sun",
+            data: (
+                version: 1,
+                value: (color:LinearRgba((red:1.0,green:0.88,blue:0.72,alpha:1.0)),illuminance:12000.0),
+            ),
+        ),
+        AddNode((
+            id: "c1fd43f6-9895-4408-8cb3-d2350189f267",
+            name: "Arena foundation",
+            parent: Some((
+                instances: [],
+                node: "a9a4ced1-2db3-4b31-a4a7-8f86e7016c6f",
+            )),
+            components: {},
+        )),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "c1fd43f6-9895-4408-8cb3-d2350189f267",
+            ),
+            component: "scene.primitive",
+            data: (
+                version: 1,
+                value: Cuboid(size:(44.0,0.4,32.0)),
+            ),
+        ),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "c1fd43f6-9895-4408-8cb3-d2350189f267",
+            ),
+            component: "scene.surface",
+            data: (
+                version: 1,
+                value: (color:Srgba((red:0.27,green:0.30,blue:0.33,alpha:1.0)),texture:None,metallic:0.0,roughness:0.9),
+            ),
+        ),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "a9a4ced1-2db3-4b31-a4a7-8f86e7016c6f",
+            ),
+            component: "scene.environment",
+            data: (
+                version: 1,
+                value: (asset:Path("game://scenes/arena.environment.ron")),
+            ),
+        ),
+        ReparentNode(
+            node: (
+                instances: [],
+                node: "a9c8a4b4-a205-440b-89cf-9d2a7ea77189",
+            ),
+            parent: (
+                instances: [],
+                node: "c1fd43f6-9895-4408-8cb3-d2350189f267",
+            ),
+        ),
+        ReparentNode(
+            node: (
+                instances: [],
+                node: "a9c8a4b4-a205-440b-89cf-9d2a7ea77189",
+            ),
+            parent: (
+                instances: [],
+                node: "a9a4ced1-2db3-4b31-a4a7-8f86e7016c6f",
+            ),
+        ),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "a9c8a4b4-a205-440b-89cf-9d2a7ea77189",
+            ),
+            component: "scene.transform",
+            data: (
+                version: 1,
+                value: (translation:(0.0,0.0,0.0),rotation:(-0.4776683,-0.25592807,-0.14776012,0.82734567),scale:(0.9999999,0.99999994,1.0000001)),
+            ),
+        ),
+        ReparentNode(
+            node: (
+                instances: [
+                    "4427c497-8deb-4149-adaf-f8a7044a2d81",
+                ],
+                node: "310555b4-0cd7-4ab4-8c67-d8e19ba8b61b",
+            ),
+            parent: (
+                instances: [
+                    "4427c497-8deb-4149-adaf-f8a7044a2d81",
+                ],
+                node: "241d1903-260b-47ff-9f38-f536e2ad58cb",
+            ),
+        ),
+        ReparentNode(
+            node: (
+                instances: [
+                    "4427c497-8deb-4149-adaf-f8a7044a2d81",
+                ],
+                node: "310555b4-0cd7-4ab4-8c67-d8e19ba8b61b",
+            ),
+            parent: (
+                instances: [
+                    "4427c497-8deb-4149-adaf-f8a7044a2d81",
+                ],
+                node: "2e921b89-e6c2-44ff-a64a-7f296f39d913",
+            ),
+        ),
+        SetComponent(
+            node: (
+                instances: [
+                    "4427c497-8deb-4149-adaf-f8a7044a2d81",
+                ],
+                node: "310555b4-0cd7-4ab4-8c67-d8e19ba8b61b",
+            ),
+            component: "scene.transform",
+            data: (
+                version: 1,
+                value: (translation:(0.0,0.011,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
+            ),
+        ),
+        AddNode((
+            id: "a96142a8-c2b4-416f-8385-cfef41eaa414",
+            name: "arch_tall_blue",
+            parent: Some((
+                instances: [],
+                node: "a9a4ced1-2db3-4b31-a4a7-8f86e7016c6f",
+            )),
+            components: {},
+        )),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "a96142a8-c2b4-416f-8385-cfef41eaa414",
+            ),
+            component: "scene.transform",
+            data: (
+                version: 1,
+                value: (translation:(0.0,0.0,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
+            ),
+        ),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "a96142a8-c2b4-416f-8385-cfef41eaa414",
+            ),
+            component: "scene.model",
+            data: (
+                version: 1,
+                value: (scene:Path("game://models/arch_tall_blue.glb#Scene0")),
+            ),
+        ),
+        RemoveNode((
+            instances: [],
+            node: "a96142a8-c2b4-416f-8385-cfef41eaa414",
+        )),
+        AddNode((
+            id: "4709be91-cf88-459e-94a0-fd91096da9ff",
+            name: "arch_tall_blue",
+            parent: Some((
+                instances: [],
+                node: "a9a4ced1-2db3-4b31-a4a7-8f86e7016c6f",
+            )),
+            components: {},
+        )),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "4709be91-cf88-459e-94a0-fd91096da9ff",
+            ),
+            component: "scene.transform",
+            data: (
+                version: 1,
+                value: (translation:(0.0,0.0,0.0),rotation:(0.0,0.0,0.0,1.0),scale:(1.0,1.0,1.0)),
+            ),
+        ),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "4709be91-cf88-459e-94a0-fd91096da9ff",
+            ),
+            component: "scene.model",
+            data: (
+                version: 1,
+                value: (scene:Path("game://models/arch_tall_blue.glb#Scene0")),
+            ),
+        ),
+        RemoveNode((
+            instances: [],
+            node: "4709be91-cf88-459e-94a0-fd91096da9ff",
+        )),
+        ReparentNode(
+            node: (
+                instances: [],
+                node: "c1fd43f6-9895-4408-8cb3-d2350189f267",
+            ),
+            parent: (
+                instances: [],
+                node: "a9c8a4b4-a205-440b-89cf-9d2a7ea77189",
+            ),
+        ),
+        ReparentNode(
+            node: (
+                instances: [],
+                node: "c1fd43f6-9895-4408-8cb3-d2350189f267",
+            ),
+            parent: (
+                instances: [],
+                node: "a9a4ced1-2db3-4b31-a4a7-8f86e7016c6f",
+            ),
+        ),
+        SetComponent(
+            node: (
+                instances: [],
+                node: "c1fd43f6-9895-4408-8cb3-d2350189f267",
+            ),
+            component: "scene.transform",
+            data: (
+                version: 1,
+                value: (translation:(-0.0000000037252903,-0.25,0.0),rotation:(-0.000000007450579,-0.0000000055879283,-0.000000003725294,1.0),scale:(0.9999999,1.0,1.0000001)),
+            ),
+        ),
+    ],
+    ports: {},
+)

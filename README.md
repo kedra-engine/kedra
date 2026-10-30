@@ -32,6 +32,10 @@ automatically integrates with Kedra's tools.
 
 ## Current status
 
+Binary assets use Git LFS. Install Git LFS before cloning; for an existing checkout,
+run `git lfs install` and `git lfs pull` before building. See the
+[storage policy](docs/decisions/0049-binary-assets-in-lfs.md).
+
 **Early development: the foundations of the environment are being built.**
 Kedra is not yet ready to serve as a complete game-development workflow, and its
 APIs and source formats are not stable.
@@ -39,9 +43,19 @@ APIs and source formats are not stable.
 The repository currently provides:
 
 - Project creation/opening and a native editor shell with dockable panels and
-  floating windows. The read-only Asset Browser supports source-folder navigation
+  floating windows. New scene/prefab publishes a source before opening its clean tab;
+  subsequent edits use common Undo/Redo and explicit Save. Resource-free scenes can be viewed
+  without a project asset delivery. The Asset Browser supports source-folder navigation
   and selection, folder search, grid/list and read-only scene/prefab document Open.
-  Hierarchy displays composed source nodes with read-only navigation and selection.
+  Explicit Import copies external files through a native picker with fresh metadata;
+  native drop routing requires backend file events and drag coordinates. Import does
+  not rebuild runtime deliveries; physical OS integration remains under verification.
+  Assets also supports folder creation and file/folder rename, move and deletion
+  with dependency validation
+  and retained deletion recovery copies, separate from document Save/Undo.
+  Hierarchy displays composed source nodes with navigation and selection. Its content
+  context menu creates empty nodes, primitives, directional lights and authored camera
+  settings; Rename, Delete and drag/reparent use the common source history.
   Read-only Scene View renders supported spatial/UI documents and previews
   PNG/static-GLB assets with an explicit matching delivery. Spatial navigation and
   scoped opaque-mesh selection are implemented. Inspector follows source selection,
@@ -75,7 +89,8 @@ The repository currently provides:
 - Rust unit/integration tests and local native UI scenarios with real frames/input.
 
 **Not yet implemented:** general visual scene/document editing,
-new-document publication, gameplay project-code execution or a complete game runtime/Play workflow.
+individual-asset rename/move/delete and automatic delivery refresh, gameplay project-code execution
+or a complete game runtime/Play workflow.
 The next milestone combines scene/prefab editing, an editable component inspector
 and source-owned Save. In-application Play follows, then project-defined inspectors
 and editor windows. See the [roadmap](docs/roadmap.md) for scope and completion criteria.

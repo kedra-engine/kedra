@@ -1,0 +1,282 @@
+{
+  "archive": "KayKit_Adventurers_2.0_FREE.zip",
+  "archiveSha256": "abe48f4763fba0896bab486ee9e6d08ca6b5b3884b9601f235c8847ae94dc479",
+  "creator": "Kay Lousberg",
+  "license": "CC0-1.0",
+  "conversion": "gltf-pipeline 4.3.1; separateTextures=true; keepUnusedElements=true",
+  "assets": [
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Animations/gltf/Rig_Medium/Rig_Medium_General.glb",
+      "sha256": "5f725c0f745f36078c7238968cd5c04843cbc6260689eb6e7f5e2bbd7ffdd7ad",
+      "destination": "models/adventurers/animations/Rig_Medium_General.glb",
+      "outputSha256": "a8a794b9b155ffd9399d3f45123f8baa69f329c253ba0c7daee3442869bc961b",
+      "animations": 15
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Animations/gltf/Rig_Medium/Rig_Medium_MovementBasic.glb",
+      "sha256": "11422afd50abf7e8c92ea107e2e0bc94abd38023d6d15f55ad580347efbfa29e",
+      "destination": "models/adventurers/animations/Rig_Medium_MovementBasic.glb",
+      "outputSha256": "6847113a303ea250be02ff2587c96a742dbb888121c18fad06b73fd44a70da93",
+      "animations": 11
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/arrow_bow.gltf",
+      "sha256": "db8d6c4bcf7f6119703565220770241a4d98047f22dcd011e66557cb7df795c1",
+      "destination": "models/adventurers/accessories/arrow_bow.glb",
+      "outputSha256": "1a240e7d2daca847836c72fa16244b527904eb91f12d4ef9d5566870b8e2fc24",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/arrow_bow_bundle.gltf",
+      "sha256": "bdff6b1f573110f1704d4e33201600bba6140c7d750f928ebf6037feb1c16b24",
+      "destination": "models/adventurers/accessories/arrow_bow_bundle.glb",
+      "outputSha256": "11066bfd1a10a1e0dad8785264d91d33d21eb93a2509e07c3ad755d1a49b6091",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/arrow_crossbow.gltf",
+      "sha256": "c409839e791bce9801614434e4b27dec80bc880d478de8fe9fee6b0c1fdb8efc",
+      "destination": "models/adventurers/accessories/arrow_crossbow.glb",
+      "outputSha256": "aaa4f4a394584c234b83f951b78d5b02fa777e330b479095e759c08bebbca7f0",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/arrow_crossbow_bundle.gltf",
+      "sha256": "e247770b53fcf0a93b7f83f3542633fcf072e7666bf2b06507685d183b66a4b7",
+      "destination": "models/adventurers/accessories/arrow_crossbow_bundle.glb",
+      "outputSha256": "1b778b2614f92e59f1f51ba2f18cfc007344bf27808ad97a77bcb2cc0dee6669",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/axe_1handed.gltf",
+      "sha256": "43796b063aa9501cc79cf11e801b98ce0c218022dea850e7b6b33387dd4b89da",
+      "destination": "models/adventurers/accessories/axe_1handed.glb",
+      "outputSha256": "953e4fbac23166dd7fb25a527545968b1ed7567f3f1f5f2dd7d32d019cd4f650",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/axe_2handed.gltf",
+      "sha256": "8fb5b782848f66a3a7170f4c5da723e1441671938d7434ecc3dd417cebaf4fff",
+      "destination": "models/adventurers/accessories/axe_2handed.glb",
+      "outputSha256": "2cb8c5b7d26dcffd3a3d37ae742e68e8d4cf6db61dcd25a5716c9c068aafb531",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/bow.gltf",
+      "sha256": "de978d50afcc66ba30edb42e8d040bf932ae7308942b1b4e1400d252ccb8e1fb",
+      "destination": "models/adventurers/accessories/bow.glb",
+      "outputSha256": "432f300b9a8d547c561b400f939cd1545cc5c3be5c56234746a83b2f7b9e1504",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/bow_withString.gltf",
+      "sha256": "c55e025638cfbdac33e117a83abac8d01b8d7056a0f7514c72daf937512de932",
+      "destination": "models/adventurers/accessories/bow_withString.glb",
+      "outputSha256": "bd1ca7195184325c48c1021e7445d586d23e094de539937337619206d3f5e4a4",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/crossbow_1handed.gltf",
+      "sha256": "27622db91dbc2d8deaf89636462cc66291f902c22cc4a5a30411ebde4dd6a2cd",
+      "destination": "models/adventurers/accessories/crossbow_1handed.glb",
+      "outputSha256": "b558962208e49a368b1a893d5a902ac11a6e522f1806fe757df8c1d74680edc1",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/crossbow_2handed.gltf",
+      "sha256": "accce97dcde54ddb83b6512f616b7a5f5892aad28a7405b518116ec864725a81",
+      "destination": "models/adventurers/accessories/crossbow_2handed.glb",
+      "outputSha256": "3c9ec88107cd78f21bbc431b336c505fc1b767301d520f5e7ba4bc207eaf5139",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/dagger.gltf",
+      "sha256": "db324dd13443d48b736fe4dba5e24090f4b476dd8d9ee53cf7c6718f00c47e1a",
+      "destination": "models/adventurers/accessories/dagger.glb",
+      "outputSha256": "9a944fab60b33d0e818b11ee8154c1c3d4c854116f633342e59ae64a9674f7fb",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/mug_empty.gltf",
+      "sha256": "7d4331bf03be5944efcd58833c65f0bc0c8aa1344e60263fdc701ca68523b294",
+      "destination": "models/adventurers/accessories/mug_empty.glb",
+      "outputSha256": "958f178ffe4bd1ac462496be399d62c4ee163887aa2380c1b71ad006553113ea",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/mug_full.gltf",
+      "sha256": "2b5c1b1c8905c7d595517ff3253e31dfd3edac70ff77180bf9dcf27a0da6168b",
+      "destination": "models/adventurers/accessories/mug_full.glb",
+      "outputSha256": "8cf5263b642a7525e8d64c8bcfca2203d5344451cf74c20dab4270ba906ba423",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/quiver.gltf",
+      "sha256": "543c2abf89eee3bf8a3e1a4d066fd47e105c65b318c3f48e0dbc20dfb027dcf4",
+      "destination": "models/adventurers/accessories/quiver.glb",
+      "outputSha256": "7eb2bc1f289e6e95e96a86e9bfb55803627bdd43d8208bf586988a7b39eb3abc",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/shield_badge.gltf",
+      "sha256": "0c506e4a76c5ef50f7908f5d8c1242315fb3d2f8b6281ff10909cf11785a5ae5",
+      "destination": "models/adventurers/accessories/shield_badge.glb",
+      "outputSha256": "df54cbea0a02b71a98c596710115ca436c25c42009cf3ace9f2e67093f841810",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/shield_badge_color.gltf",
+      "sha256": "b59019f054055c5c1356a8c75a93a064f334180183112ab374526000ea6c9f2a",
+      "destination": "models/adventurers/accessories/shield_badge_color.glb",
+      "outputSha256": "436ed75088eee7ff2a4a3c361d0622c94ca62058fff212f4b92c7f4676bd61dc",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/shield_round.gltf",
+      "sha256": "dd052a109d5a003fa7ebe4641c31e89a5189ad8d606ee8fc969d05e2d99dab38",
+      "destination": "models/adventurers/accessories/shield_round.glb",
+      "outputSha256": "2f41943878482cf68a0e4571b3573ad30aa0ac0caf15ac317414641ba2280fe3",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/shield_round_barbarian.gltf",
+      "sha256": "eebdae322d2611854c4fa6befb29d9a32e0367c495b817212f8431f02ab46a1e",
+      "destination": "models/adventurers/accessories/shield_round_barbarian.glb",
+      "outputSha256": "f29b0e59bc5de7e87627b73bf645b0a430f3f93522a9668df7b5de378765d17b",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/shield_round_color.gltf",
+      "sha256": "491b2cc1f36bbc0b38fa41f81b2ca10160b9ae6526ea3ced0109708ac7d9d750",
+      "destination": "models/adventurers/accessories/shield_round_color.glb",
+      "outputSha256": "ea55cc7f2b5a957ae8ec2c8a6c07a8dfda549dcfb501c8fc96770e3bf81917cf",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/shield_spikes.gltf",
+      "sha256": "5f89b2e927fc6a5d4308e829e9c931e3c095ea70ad759cfdfe6005ac4e33814d",
+      "destination": "models/adventurers/accessories/shield_spikes.glb",
+      "outputSha256": "b24578909e820cd2fb6942d2de0bb529efd226fcca09805d0c62bcb27389d630",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/shield_spikes_color.gltf",
+      "sha256": "6cf480cbba5dccd7d930b36b8ff80e63ba9ced4d834d7bb1ce6c3ba46736b8b2",
+      "destination": "models/adventurers/accessories/shield_spikes_color.glb",
+      "outputSha256": "b501f53c74f3011a3f2ee61f7f1b73ed72a599abb3c0a0fda08a5e0d1231527f",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/shield_square.gltf",
+      "sha256": "7d70e034e5af0cde3a6e8b2cc53da46af01f6981c79917ad0c6501a7f5c87d16",
+      "destination": "models/adventurers/accessories/shield_square.glb",
+      "outputSha256": "3a84e3956d12a5a4f2c39d9ac6f5a49fc94c140604e1865b6b9e9126ea6d4309",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/shield_square_color.gltf",
+      "sha256": "93fdc2c3b16fe39bcce37961e287cd17101721a98ddbd2bd94cac8bcda85826b",
+      "destination": "models/adventurers/accessories/shield_square_color.glb",
+      "outputSha256": "f92b09e7949240218fb93579089bc37b772c64550687b03a85e7e11607c2258d",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/smokebomb.gltf",
+      "sha256": "a962c42961a6b929f338646d112fc3a3f21cc90bf5b0288fdd0cd3209f4999a1",
+      "destination": "models/adventurers/accessories/smokebomb.glb",
+      "outputSha256": "0b6fac6e2c569c8d055124060bad284f09880a8d89751ccaf75f371188b54cd6",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/spellbook_closed.gltf",
+      "sha256": "8a9f1798d2e0f8a14cb7ed8880dc82af43f1b277b31bbecd5ae1b8ffb93b865a",
+      "destination": "models/adventurers/accessories/spellbook_closed.glb",
+      "outputSha256": "bf669bdc9bd773d0116eb74de0d34de0d123cce6f9d77bf6e3414696fff7177c",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/spellbook_open.gltf",
+      "sha256": "7f09fb14db28de6fcc323706ab0add72ed1d6824e33164c3fa21d50c1a8aa4c2",
+      "destination": "models/adventurers/accessories/spellbook_open.glb",
+      "outputSha256": "5ac5b23ddeae58cd6f084803d478f8b660bc8a9b81a052b863c8cb4fbd575903",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/staff.gltf",
+      "sha256": "25646537632555f2a4e5ae90320bce251bbc5af541e8897960ad4514122110b9",
+      "destination": "models/adventurers/accessories/staff.glb",
+      "outputSha256": "a2f1f10cffbe7524074724487c46874dca62adb9ebf407f4abed3064875bfd4c",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/sword_1handed.gltf",
+      "sha256": "2a6074d46c3e337f84f0295d0ea862b116fec7d816db8d027d75a464311228b6",
+      "destination": "models/adventurers/accessories/sword_1handed.glb",
+      "outputSha256": "8c912a4d4fb74312811bf7e01e8e90d4f9182cb44e41852dde7ef937766e17f6",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/sword_2handed.gltf",
+      "sha256": "42ffb9b49e928763fe21fd928675402ebccd3750ccd89bcec8d186e12c6fdccd",
+      "destination": "models/adventurers/accessories/sword_2handed.glb",
+      "outputSha256": "16ecdbbf210af831374a453af64d215100f844d00906ffb2aef3a47d3461b22b",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/sword_2handed_color.gltf",
+      "sha256": "3ba61390f950b12824d7d626cff32393a831e6655bf985e47ff716b39cff15f7",
+      "destination": "models/adventurers/accessories/sword_2handed_color.glb",
+      "outputSha256": "fe12f07a926df55fb69e261e62dbdee2d4ad1bbbeb0e7365bc4cd9fd7bbc0545",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Assets/gltf/wand.gltf",
+      "sha256": "6392f619655a0869a5255dc9702e50027c72c19de6b17b3eecec1492bfd2a800",
+      "destination": "models/adventurers/accessories/wand.glb",
+      "outputSha256": "185546c4bd3f9fe71724c7ed62b3a88749871f021188af8ed42d6994dd659331",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Characters/gltf/Barbarian.glb",
+      "sha256": "d37824a1d6e8e8af57ef9ae4a87e9271c3986210fbc432fb44670749a577ccac",
+      "destination": "models/adventurers/characters/Barbarian.glb",
+      "outputSha256": "916b0e138b0c914900eed874c3a147ffafb22f89625d7de141b99ccff32cd796",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Characters/gltf/Knight.glb",
+      "sha256": "e484370733824a0740683e7f6040aae0d20e5efd4107dde1175d6a2ad7e2f199",
+      "destination": "models/adventurers/characters/Knight.glb",
+      "outputSha256": "d96047e05f11771b9a8328dd665157c6e07c65c8503fbf788daa815d2692aec9",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Characters/gltf/Mage.glb",
+      "sha256": "1f7d891bde50b879c70965f155b7b765b166dc3f8518e5abb86c0002f191a26e",
+      "destination": "models/adventurers/characters/Mage.glb",
+      "outputSha256": "f8b9feeccbe4621f1810abe123795d2c31139b04712c68e0bff756d79df5272c",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Characters/gltf/Ranger.glb",
+      "sha256": "3a0b0166b9d61d58dcaaa739c3cc0538be46e00d2928dd5cb513d9a41770d2e9",
+      "destination": "models/adventurers/characters/Ranger.glb",
+      "outputSha256": "c0f176320b469ba160333cbe24b8bb37df532bda9d615e4321596542e70aa149",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Characters/gltf/Rogue.glb",
+      "sha256": "cae5d9b2f08d53f7b4ab2617d9f42f021c546eb10920455fdcd82a110867fae4",
+      "destination": "models/adventurers/characters/Rogue.glb",
+      "outputSha256": "27febf143800fa47e002e55cf3e4108790fc5169d832de33e58f9e417d0f3d76",
+      "animations": 0
+    },
+    {
+      "source": "KayKit_Adventurers_2.0_FREE/Characters/gltf/Rogue_Hooded.glb",
+      "sha256": "e8f3233c6db190506fbef3ad855683e6cb8bd7350de637d923e14a08aef088dc",
+      "destination": "models/adventurers/characters/Rogue_Hooded.glb",
+      "outputSha256": "2a6ca5431695d1d69468d45636f0f320c10c4ebbf732bc302d7b72b9c79012d1",
+      "animations": 0
+    }
+  ]
+}

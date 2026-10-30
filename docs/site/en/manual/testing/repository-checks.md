@@ -44,7 +44,7 @@ The task runs eight ordered stages and stops after the first failure:
 
 | Stage | What is checked |
 | --- | --- |
-| File growth policy | Git inventory, including tracked ignored files; 1000 lines / 64 KiB |
+| File growth policy | Git inventory, including tracked ignored files; authored text: 1000 lines / 64 KiB; binary assets: hydrated Git LFS |
 | Dependency architecture | Workspace layer edges, package licenses and lint inheritance |
 | Dependency exception policy | Reviewed advisory identities, expiry, restricted callers and exact duplicate waivers |
 | Rust formatting | `cargo fmt --all -- --check`; no formatting writes |

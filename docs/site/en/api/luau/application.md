@@ -108,7 +108,7 @@ Snapshots are owned data; table edits do not update UI or prove a frame was pres
 | `focus_window` | None; explicitly requests and acknowledges native activation |
 | `close_window` | None |
 | `modifier` | `modifier: "shift" \| "control" \| "alt" \| "super"`, `pressed: boolean` |
-| `button` | `pressed: boolean` (primary pointer button) |
+| `button` | `pressed: boolean`, optional `button: "left" \| "right" \| "middle"` (defaults to left) |
 | `click` | Either `element: string` or `position: Point` |
 | `move` | `position: Point` |
 | `drag` | `from: Point`, `to: Point` |

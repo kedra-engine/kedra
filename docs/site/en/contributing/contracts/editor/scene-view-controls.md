@@ -1,6 +1,6 @@
 # Scene View controls contract
 
-C-select/C-narrow controls are implemented within the read-only
+C-select/C-narrow controls inform the retained
 [Scene View](scene-view.md) boundary of
 [ADR 0017](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0017-read-only-scene-view.md).
 Accessibility, gesture quality and native hardware checks remain incomplete. For commands and
@@ -17,42 +17,29 @@ Previous A/B work-strip studies are not targets. Preserve
 [canonical Figma provenance](../ui/design-provenance.md#scene-view-and-proposed-editing) and
 [artwork sources/licenses](https://github.com/kedra-engine/kedra/blob/main/assets/README.md#scene-view-icons).
 The illustration is a diagram, not a runtime frame or mesh-pixel baseline: the implementation
-must render actual admitted project contents. Move/Rotate/Scale, transform handles, source
-editing, Save, Play, multi-selection and marquee remain excluded.
+must render actual admitted project contents. Single-node Move/Rotate/Scale use the source
+gesture lifecycle in ADR 0053; source Save remains a separate command. Play, group
+transforms and marquee remain excluded.
 
 ## Retained layout and geometry
 
 Reuse the dock header and single group ellipsis; source title stays in the document tab.
-No second header, permanent World/units labels or settings action is added. Projection
+No second header or permanent World/units labels are added. Projection
 and lighting are scoped commands. Existing Inter typography, semantic colors, focus,
 control radii, Flat/Quiet widgets and popup placement remain authoritative.
 
-The accepted reference requires a 38px toolbar with 6px padding, Quiet View/Select at left
-and 22px Flat eye/grid targets at right with 2px spacing, then a 10px separator and 22px sun
-target. The left canvas rail
-is 38px wide at left 8px/top 12px, with 6px padding and a selected 22px selection target.
-The 96px orientation control anchors right 12px/top 8px; a right-aligned 22px navigation
-strip sits below it at 4px distance. The strip contains Zoom, Pan, 4px separator, Frame
-selection, 4px separator and Projection, with 2px adjacent gaps (separation A).
-
-Current authored spacing does not fully match that reference. `scene-view.css` declares
-a 2px toolbar column gap and a `scene-shading-gap` spacer of `var(--space)`; `tokens.css`
-defines `--space: 4px`. With the prefab's grid/spacer/sun sibling order, the spacer is 4px
-and total grid-to-sun separation is 8px (2 + 4 + 2), not the accepted 10px requirement.
-The navigation strip currently has 4px row gaps plus explicit 4px spacer nodes, not the
-accepted 2px adjacent gaps. See the current
+The viewport fills the document content without a separate toolbar. Its control panel anchors right
+12px/top 8px. It contains the 96px orientation control, the 96×22 projection button, and one 166px
+strip of seven 22px Hand/Move/Rotate/Scale/Snap/Frame selection/Settings icon buttons with 2px gaps
+and one shared background. The vertical groups have 4px gaps. Grid visibility and lighting are
+selected through Settings. See the
 [Scene View CSS](https://github.com/kedra-engine/kedra/blob/main/assets/editor/styles/scene-view.css),
 [tokens](https://github.com/kedra-engine/kedra/blob/main/assets/editor/styles/tokens.css) and
 [source prefab](https://github.com/kedra-engine/kedra/blob/main/assets/editor/prefabs/source-document.prefab.ron).
-The implementation must still meet the accepted reference. Existing source-order/density and
-native geometry checks do not assert these separator or adjacent-gap values; the spacing
-discrepancies also need verification in rendered frames.
-
-`controls::layout` hides Select below measured content width 640px while Clear selection
-remains in View. Navigation hides for nonspatial targets, width below 160px or height below
-230px; the tool rail hides below 60px width or 50px height. Targets stay inside the canvas
-without toolbar wrapping; clipped controls must not intercept scene input. Commands remain
-available through View rather than unreachable targets. Readiness/failure diagnostics remain
+`controls::layout` hides the orientation disc and projection button below 282px height.
+Spatial tools remain visible down to 190×120. Settings remains available in nonspatial
+and smaller views down to 46×38. Targets stay inside the canvas without wrapping;
+clipped controls must not intercept scene input. Readiness/failure diagnostics remain
 visible and actionable; no permanent canvas labels, help/status footer or second chrome.
 
 Exact local icons retain density metadata and 1×–4× packages: 16px controls, 21px endpoints,
@@ -66,18 +53,19 @@ not a frozen perspective screenshot. The scene-fixture illustration is not impor
 ## Commands, state and camera motion
 
 Existing popup infrastructure, selection coordinator, camera commands and PanOrbit motion
-are reused; artwork does not imply additional capability. View exposes framing, six standard
-views, explicit Perspective/Orthographic and Clear selection. Select exposes Clear selection,
-not unsupported Select all. The left selection tool only focuses the canvas. Eye changes
-per-view spatial/UI bounds display, not source visibility, picking, selection, grid or bounds
-used for framing. Grid controls one-source-unit reference grid/axes. Sun reflects explicit
-Scene/Editor lighting, with view-local replacement, not additive lighting.
+are reused; artwork does not imply additional capability. The hand disables transforms;
+Move/Rotate/Scale select editing modes, and Snap toggles relative increments. Frame selection
+has its own button. Settings offers Frame all, Clear selection, Toggle selection outlines,
+Toggle grid and Scene/Editor lighting. Outlines do not alter source visibility, picking or
+framing bounds. Grid uses one-source-unit spacing. Lighting is view-local replacement,
+not additive lighting. Orientation endpoints select standard views; the projection button
+toggles Perspective/Orthographic.
 
 The orientation widget follows actual camera rotation, including flight/other commands.
 Signed endpoints and depth order remain distinguishable; Y-up Top has screen-up −Z. Disc
 or endpoint drag orbits the retained pivot. Endpoint click aligns; repeated requested side
 flips to the opposite, including during an unfinished turn. Hits follow rendered endpoint
-positions/depth, not stale static geometry. Zoom/Pan are LMB-drag controls, not fake clicks;
+positions/depth, not stale static geometry. Pan uses MMB dragging and zoom uses the wheel;
 Frame selection reports unavailable bounds and Projection preserves apparent pivot scale.
 
 Pointer alignment uses 200ms cubic-Bezier `(0.77, 0, 0.175, 1)`. Bevy owns the easing solver
@@ -93,11 +81,15 @@ dependency or runtime-to-editor edge is introduced.
 The ready, visible, focused viewport in its owning native window acquires a navigation lease
 scoped to view, camera, window and layout revision. Hover alone cannot acquire keyboard focus.
 RMB flight owns relative motion, WASD/QE, Shift speed and bounded wheel-speed adjustment;
-cursor lock/hide lasts only for the lease and restores prior cursor options. Alt+LMB orbit,
-MMB pan, focused wheel navigation and focused `F` retain the same ownership boundaries.
+cursor lock/hide lasts only for the lease and restores prior cursor options. Alt+LMB orbit
+and MMB pan retain the same ownership boundaries. Wheel navigation targets the visible ready
+viewport under the pointer without acquiring keyboard focus. `F` targets the explicitly
+focused viewport or the active content view, including after Hierarchy selection; editable
+text and modal focus suppress it. Window, layout, menu and readiness gates still apply.
 The viewport container owns input, not its decorative fitted image child.
 
-Menus, fields, host creation and docking gestures block acquisition. A control consumes its
+Menus, host creation and docking gestures block acquisition. Text fields retain keyboard
+input while wheel navigation over the viewport leaves their focus intact. A control consumes its
 initiating LMB so it cannot also pick through or start docking. Release, Escape, focus loss,
 menu opening, tab switch, resize/layout revision, host transfer, hidden/retired view and
 workspace retirement cancel capture and clear locally owned keys. Another window cannot
@@ -115,7 +107,7 @@ Frame selection's bounds even while overlays are hidden.
 ## Accessibility and acceptance
 
 Functional targets require accessible labels, keyboard focus and visible focus states.
-Click commands remain reachable through keyboard/View; existing keyboard camera navigation
+Click commands require keyboard reachability; existing keyboard camera navigation
 must not require dragging small targets. Implementation does not certify screen readers,
 gesture quality, OS capture or physical input.
 

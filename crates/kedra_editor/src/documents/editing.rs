@@ -15,6 +15,7 @@ pub(crate) struct PreparedChange {
     pub(super) compiled: BTreeMap<DocumentId, Arc<CompiledPrefab>>,
     pub(super) expected: BTreeMap<DocumentId, u64>,
     pub(super) reset_scope: bool,
+    replacement: Option<Workspace>,
 }
 
 /// Exact source destination and revision guard for one validated property batch.
@@ -131,6 +132,7 @@ impl Documents {
             compiled: prepared.compiled,
             expected: expected.clone(),
             reset_scope: false,
+            replacement: None,
         })
     }
     pub(crate) fn prepare_history(
@@ -139,6 +141,9 @@ impl Documents {
         types: &TypeRegistry,
         policies: &ComponentPolicies,
     ) -> Result<PreparedChange, String> {
+        if self.creating() {
+            return Err("Finish scene creation before Undo/Redo.".into());
+        }
         let scope = self.scope.as_ref().ok_or("No source workspace is open")?;
         let prepared = kedra_authoring::changes::history(scope, redo, types, policies)?;
         Ok(PreparedChange {
@@ -146,9 +151,13 @@ impl Documents {
             compiled: prepared.compiled,
             expected: self.revisions(),
             reset_scope: false,
+            replacement: None,
         })
     }
     pub(crate) fn can_history(&self, redo: bool) -> bool {
+        if let Some(path) = self.selected_environment() {
+            return self.environments.can_history(&path, redo);
+        }
         self.scope.as_ref().is_some_and(|scope| {
             if redo {
                 scope.working.can_redo()
@@ -162,16 +171,20 @@ impl Documents {
         types: &TypeRegistry,
         policies: &ComponentPolicies,
     ) -> Result<PreparedChange, String> {
+        if self.creating() {
+            return Err("Finish scene creation before discarding sources.".into());
+        }
         let scope = self.scope.as_ref().ok_or("Source workspace unavailable")?;
-        if scope.pending().is_some() {
+        if self.save_pending() || self.save_busy() {
             return Err("Resolve the pending Save before discarding sources.".into());
         }
         let (baseline, compiled) = source::admit(scope.source.clone(), types, policies)?;
         Ok(PreparedChange {
-            working: baseline.working,
+            working: baseline.working.clone(),
             compiled,
             expected: self.revisions(),
             reset_scope: true,
+            replacement: Some(baseline),
         })
     }
     /// Check before native acknowledgment; no systems run between this and publish.
@@ -182,6 +195,16 @@ impl Documents {
         let Some(scope) = &mut self.scope else {
             return;
         };
+        if let Some(replacement) = change.replacement {
+            self.environments = default();
+            *scope = replacement;
+            self.paths = scope
+                .working
+                .documents()
+                .keys()
+                .filter_map(|id| scope.path(*id).map(|path| (PathBuf::from(path), *id)))
+                .collect();
+        }
         scope.working = change.working;
         if change.reset_scope {
             self.scope_identity = default();

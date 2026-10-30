@@ -29,6 +29,9 @@ impl Documents {
             .is_ok()
     }
     pub(crate) fn select_asset(&mut self, world: &World, root: PathBuf, path: String) {
+        if self.creating() {
+            return;
+        }
         if self.scope.is_some() {
             self.select_asset_path(&path);
             return;

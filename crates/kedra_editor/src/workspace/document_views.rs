@@ -1,6 +1,7 @@
 //! Read-only source document tabs use ordinary docking, never another tab system.
 use super::*;
 use kedra_docking::model::{Edge, Node, View};
+mod restore;
 
 /// Reconcile only published group activations, including candidate commits that
 /// bypass `apply`. Tool focus alone never changes the content target.
@@ -122,13 +123,21 @@ pub(super) fn content_destination(state: &EditorWorkspace) -> Destination {
 }
 
 pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
+    let context = state
+        .documents
+        .creating()
+        .then(|| super::history_context::capture(world, state));
+    state.documents.poll_creation(world);
+    super::document_create::poll(world, state);
     let requests: Vec<_> = state
         .panels
         .browsers
         .iter_mut()
         .filter_map(|(id, browser)| browser.take_open().map(|path| (*id, path)))
         .collect();
+    let explicit_open = !requests.is_empty();
     for (origin, path) in requests {
+        state.panels.restoring_source = None;
         let root = world
             .resource::<crate::model::ProjectManager>()
             .project
@@ -141,11 +150,15 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
             }
         }
     }
+    if !explicit_open {
+        restore::poll(world, state);
+    }
     if let Some(ready) = state.documents.poll() {
         let path = ready.path.clone();
         match publish(world, state, ready) {
             Err(error) => state.documents.error = Some(error),
             Ok(()) => {
+                state.panels.restoring_source = None;
                 if let Some(browser) = state
                     .documents
                     .origin
@@ -169,6 +182,7 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
         match super::asset_views::publish(world, state, path.clone()) {
             Err(error) => state.documents.error = Some(error),
             Ok(()) => {
+                state.panels.restoring_source = None;
                 if let Some(browser) = state
                     .documents
                     .origin
@@ -189,6 +203,11 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
         }
     }
     if let Some(error) = state.documents.error.take() {
+        if let Some(view) = state.panels.restoring_source.take()
+            && let Some(scene) = state.panels.scenes.get_mut(&view)
+        {
+            scene.message(world, &error, true);
+        }
         state.documents.failure = Some(error.clone());
         if let Some(browser) = state
             .documents
@@ -198,6 +217,9 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
             browser.message(format!("Cannot open source: {error}"));
         }
         notice(world, state, &error);
+    }
+    if let Some(context) = context {
+        super::history_context::accepted(world, state, context);
     }
 }
 fn publish(
@@ -300,6 +322,7 @@ fn publish(
     state.layout = candidate;
     state.titles.insert(id, title);
     state.documents.published(ready, id, selected);
+    state.panels.restore_sources.remove(&id);
     if let Some(scene) = state.panels.scenes.get_mut(&id)
         && let Some(source) = state.documents.scene_source()
         && let Some(opened) = state

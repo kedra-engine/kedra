@@ -4,6 +4,8 @@ use fs_transaction::{ChangeSet, FileOp, Journal, Storage, exec::block_on};
 
 const LIMIT: u64 = 16 * 1024 * 1024;
 #[cfg(test)]
+mod inventory_tests;
+#[cfg(test)]
 mod tests;
 pub(super) struct Session {
     pub root: PathBuf,
@@ -40,7 +42,7 @@ impl Session {
             journal,
         })
     }
-    fn pending(&self) -> Result<Option<CommitRequest>, SaveError> {
+    pub(super) fn pending(&self) -> Result<Option<CommitRequest>, SaveError> {
         match std::fs::symlink_metadata(&self.intent) {
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
             Err(error) => Err(uncertain(error)),
@@ -49,7 +51,7 @@ impl Session {
                 .map_err(uncertain),
         }
     }
-    fn journal_present(&self) -> Result<bool, SaveError> {
+    pub(super) fn journal_present(&self) -> Result<bool, SaveError> {
         match std::fs::symlink_metadata(self.journal.path_in(&self.root)) {
             Ok(_) => Ok(true),
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
@@ -133,6 +135,9 @@ fn pin_sidecars(root: &Path, request: &CommitRequest) -> Result<CommitRequest, S
     Ok(pinned)
 }
 fn admit(request: &CommitRequest) -> Result<(), SaveError> {
+    admit_profile(request, false)
+}
+fn admit_profile(request: &CommitRequest, new_document: bool) -> Result<(), SaveError> {
     if request.files.is_empty()
         || request.files.len() > 128
         || request.checks.len() > 8192
@@ -153,25 +158,33 @@ fn admit(request: &CommitRequest) -> Result<(), SaveError> {
         let id = file
             .document
             .ok_or_else(|| refused("Save cannot write a catalog"))?;
-        let text = file
+        let doc = file
             .source
-            .as_ref()
-            .ok_or_else(|| refused("Save cannot delete a source"))?;
-        let doc = PrefabDocument::parse(text).map_err(refused)?;
-        let suffix = match doc.kind {
-            kedra_scene::document::DocumentKind::Prefab => ".prefab.ron",
-            kedra_scene::document::DocumentKind::Scene => ".scene.ron",
-        };
+            .as_deref()
+            .map(PrefabDocument::parse)
+            .transpose()
+            .map_err(refused)?;
+        let suffix_matches = doc.as_ref().map_or_else(
+            || file.path.ends_with(".scene.ron") || file.path.ends_with(".prefab.ron"),
+            |doc| {
+                file.path.ends_with(match doc.kind {
+                    kedra_scene::document::DocumentKind::Prefab => ".prefab.ron",
+                    kedra_scene::document::DocumentKind::Scene => ".scene.ron",
+                })
+            },
+        );
         if !paths.insert(&file.path)
             || !ids.insert(id)
-            || doc.id != id
-            || file.expected_hash.is_none()
-            || !request.expected_sources.contains(&file.path)
+            || id.0.is_nil()
+            || doc.as_ref().is_some_and(|doc| doc.id != id)
+            || (!new_document && (file.expected_hash.is_none() || file.source.is_none()))
+            || (file.expected_hash.is_none() && file.source.is_none())
+            || request.expected_sources.contains(&file.path) != file.expected_hash.is_some()
             || !request
                 .checks
                 .iter()
                 .any(|check| check.path == file.path && check.expected_hash == file.expected_hash)
-            || !file.path.ends_with(suffix)
+            || !suffix_matches
         {
             return Err(refused(
                 "Save requires unique admitted identities, paths and exact existing-source preconditions",
@@ -211,8 +224,94 @@ pub fn read_guard(root: &Path, pending: Option<&CommitRequest>) -> Result<File, 
 /// Ordinary filesystem readers are not isolated; Kedra admission uses read_guard.
 pub fn commit_existing(root: &Path, request: &CommitRequest) -> Result<Receipt, SaveError> {
     admit(request)?;
+    commit(root, request, None)
+}
+/// Publish a coupled document group, including creations and history removals.
+/// Uses the same lease, exact request, interruption journal and receipt protocol as
+/// existing Save. New names use exclusive creation. Catalogs, sidecar changes and
+/// directory creation are refused; target parent directories must already exist.
+/// An uncertain result must be retried with the identical request or explicitly recovered.
+pub fn commit_documents(root: &Path, request: &CommitRequest) -> Result<Receipt, SaveError> {
+    admit_profile(request, true)?;
+    commit(root, request, None)
+}
+/// Save one existing environment source through the ordinary source lease,
+/// conflict checks, sidecar pinning and interruption journal. This never creates
+/// a new identity or publishes a runtime delivery. Retry uncertain outcomes with
+/// the identical request; explicit recovery uses `recover_documents`.
+pub fn commit_environment(
+    root: &Path,
+    request: &CommitRequest,
+    baseline: &kedra_authoring::persistence::SourceAsset,
+) -> Result<Receipt, SaveError> {
+    admit_environment(request)?;
+    if request.files[0].path != baseline.path
+        || request.files[0].expected_hash.as_ref() != Some(&baseline.hash)
+    {
+        return Err(refused(
+            "Environment identity baseline differs from the Save request",
+        ));
+    }
+    commit(root, request, Some(baseline))
+}
+fn admit_environment(request: &CommitRequest) -> Result<(), SaveError> {
+    if request.files.len() != 1
+        || request.checks.len() > 8192
+        || request.expected_sources.len() > 128
+    {
+        return Err(refused("Environment Save requires one existing source"));
+    }
+    request
+        .expected_generation
+        .checked_add(1)
+        .ok_or_else(|| refused("Save generation exhausted"))?;
+    let file = &request.files[0];
+    portable(&file.path)?;
+    if file.document.is_some()
+        || !file.path.ends_with(".environment.ron")
+        || file.expected_hash.is_none()
+        || !request
+            .checks
+            .iter()
+            .any(|check| check.path == file.path && check.expected_hash == file.expected_hash)
+    {
+        return Err(refused(
+            "Environment Save requires exact existing-source preconditions",
+        ));
+    }
+    kedra_scene::environment::Environment::parse(
+        file.source
+            .as_deref()
+            .ok_or_else(|| refused("Environment deletion is not a Save operation"))?,
+    )
+    .map_err(refused)?;
+    Ok(())
+}
+fn commit(
+    root: &Path,
+    request: &CommitRequest,
+    environment: Option<&kedra_authoring::persistence::SourceAsset>,
+) -> Result<Receipt, SaveError> {
     let session = Session::new(root)?;
     let _lease = lease(&session.root, false)?;
+    if let Some(baseline) = environment {
+        let file = &request.files[0];
+        let saved = file.source.as_deref().map(content_hash);
+        let actual = optional_hash(&session.root.join(&file.path))?;
+        let expected = if actual == saved {
+            saved.as_deref()
+        } else {
+            file.expected_hash.as_deref()
+        }
+        .ok_or_else(|| refused("Environment source disappeared"))?;
+        crate::source::check_inventory(&session.root, Path::new(&file.path), expected, baseline.id)
+            .map_err(refused)?;
+        if baseline.id.is_none()
+            && std::fs::symlink_metadata(session.root.join(format!("{}.meta", file.path))).is_ok()
+        {
+            return Err(refused("Environment sidecar appeared after admission"));
+        }
+    }
     if let Some(pending) = session.pending()? {
         if !same(request, &pending)? {
             return Err(uncertain("Another Save request requires recovery"));
@@ -231,17 +330,18 @@ pub fn commit_existing(root: &Path, request: &CommitRequest) -> Result<Receipt, 
     let mut old = 0;
     let mut new = 0;
     for file in &request.files {
-        let actual = hash(&session.root.join(&file.path))?;
+        let actual = optional_hash(&session.root.join(&file.path))?;
         let saved = file.source.as_deref().map(content_hash);
-        if Some(&actual) == file.expected_hash.as_ref() && Some(&actual) != saved.as_ref() {
+        if actual == file.expected_hash && actual != saved {
             old += 1;
-        } else if Some(&actual) != file.expected_hash.as_ref() {
+        } else if actual != file.expected_hash {
             new += 1;
         }
-        if std::fs::metadata(session.root.join(&file.path))
-            .map_err(refused)?
-            .permissions()
-            .readonly()
+        if actual.is_some()
+            && std::fs::metadata(session.root.join(&file.path))
+                .map_err(refused)?
+                .permissions()
+                .readonly()
         {
             return Err(refused("Source is read-only"));
         }
@@ -254,7 +354,9 @@ pub fn commit_existing(root: &Path, request: &CommitRequest) -> Result<Receipt, 
     if old == 0 {
         for file in &request.files {
             let path = session.root.join(&file.path);
-            sync_existing_file(&path).map_err(uncertain)?;
+            if file.source.is_some() {
+                sync_existing_file(&path).map_err(uncertain)?;
+            }
             sync_directory(
                 path.parent()
                     .ok_or_else(|| uncertain("Source parent missing"))?,
@@ -294,7 +396,7 @@ pub fn commit_existing(root: &Path, request: &CommitRequest) -> Result<Receipt, 
 /// Explicitly authorize completion of the pinned interrupted Save, without loading
 /// project code or restoring unsaved editor history. Conflicts preserve recovery
 /// records and external bytes. No records means no work. Never called by Open.
-pub fn recover_existing(root: &Path) -> Result<Option<Receipt>, SaveError> {
+pub fn recover_documents(root: &Path) -> Result<Option<Receipt>, SaveError> {
     let session = Session::new(root)?;
     let _lease = lease(&session.root, false)?;
     let Some(request) = session.pending()? else {
@@ -303,7 +405,12 @@ pub fn recover_existing(root: &Path) -> Result<Option<Receipt>, SaveError> {
         }
         return Ok(None);
     };
-    admit(&request).map_err(|error| uncertain(error.message))?;
+    if request.files.iter().any(|file| file.document.is_none()) {
+        admit_environment(&request)
+    } else {
+        admit_profile(&request, true)
+    }
+    .map_err(|error| uncertain(error.message))?;
     publish(&session, &request, true)
         .map(Some)
         .map_err(|mut error| {
@@ -335,6 +442,13 @@ fn publish(
                                     .is_some_and(|text| text.as_bytes() == bytes)
                         })
                 }
+                FileOp::Remove { path } => {
+                    !paths.insert(path)
+                        || !request
+                            .files
+                            .iter()
+                            .any(|file| Path::new(&file.path) == path && file.source.is_none())
+                }
                 _ => true,
             })
         {
@@ -346,12 +460,14 @@ fn publish(
     }
     let mut changes = ChangeSet::new();
     for file in &request.files {
-        let source = file
-            .source
-            .as_ref()
-            .ok_or_else(|| uncertain("Saved source missing"))?;
-        if hash(&session.root.join(&file.path))? != content_hash(source) {
-            changes.write(&file.path, source.as_bytes());
+        if optional_hash(&session.root.join(&file.path))?
+            != file.source.as_deref().map(content_hash)
+        {
+            if let Some(source) = &file.source {
+                changes.write(&file.path, source.as_bytes());
+            } else {
+                changes.remove(&file.path);
+            }
         }
     }
     validate(&session.root, request).map_err(|error| uncertain(error.message))?;
@@ -362,7 +478,8 @@ fn publish(
         && let Err(error) = block_on(session.journal.apply(&changes, &backend, &session.root))
     {
         let restored = request.files.iter().all(|file| {
-            hash(&session.root.join(&file.path)).ok().as_ref() == file.expected_hash.as_ref()
+            optional_hash(&session.root.join(&file.path))
+                .is_ok_and(|hash| hash == file.expected_hash)
         });
         if !recovering
             && !matches!(error, fs_transaction::Error::Torn { .. })
@@ -376,12 +493,9 @@ fn publish(
     }
     validate(&session.root, request).map_err(|error| uncertain(error.message))?;
     for file in &request.files {
-        if hash(&session.root.join(&file.path)).map_err(|error| uncertain(error.message))?
-            != file
-                .source
-                .as_deref()
-                .map(content_hash)
-                .ok_or_else(|| uncertain("Saved source missing"))?
+        if optional_hash(&session.root.join(&file.path))
+            .map_err(|error| uncertain(error.message))?
+            != file.source.as_deref().map(content_hash)
         {
             return Err(uncertain("Saved group changed before acknowledgment"));
         }

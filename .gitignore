@@ -1,4 +1,5 @@
 /target/
+**/.kedra/cache/
 /.codebase-index/index/
 /opencode.json
 /opencode.jsonc

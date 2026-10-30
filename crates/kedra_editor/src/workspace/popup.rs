@@ -3,10 +3,56 @@ use bevy::prelude::*;
 
 #[derive(Component)]
 pub(super) struct DockPopup;
+pub(super) fn separator(world: &mut World, parent: Entity) {
+    world.spawn((
+        Node::default(),
+        ChildOf(parent),
+        bevy::picking::Pickable::IGNORE,
+        bevy_flair::style::components::ClassList::new("menu-separator"),
+    ));
+}
+pub(super) fn branch_indicator(world: &mut World, parent: Entity, caption: Entity) {
+    kedra_ui::docking::class(world, caption, "menu-caption", true);
+    world.spawn((
+        Text::new("›"),
+        Node::default(),
+        ChildOf(parent),
+        bevy::picking::Pickable::IGNORE,
+        bevy_flair::style::components::ClassList::new("text menu-arrow"),
+    ));
+}
+pub(super) fn cascade_closed(
+    event: On<kedra_ui::popup::cascade::Closed>,
+    parents: Query<&ChildOf>,
+    mut state: Option<ResMut<super::EditorWorkspace>>,
+    mut commands: Commands,
+) {
+    let Some(state) = state.as_mut() else {
+        return;
+    };
+    let owned = std::iter::once(event.entity)
+        .chain(parents.iter_ancestors(event.entity))
+        .find(|e| state.menu.contains(e));
+    if let Some(owned) = owned {
+        state.menu.retain(|e| *e != owned);
+        if owned != event.entity {
+            commands.entity(owned).try_despawn();
+        }
+    }
+}
 
 pub(super) fn attach(world: &mut World, anchor: Entity) -> Result<Entity, String> {
     let menu = kedra_ui::popup::attach(world, anchor, "dock-menu", "dock-menu")?;
     world.entity_mut(menu).insert(DockPopup);
+    Ok(menu)
+}
+pub(super) fn attach_at(
+    world: &mut World,
+    anchor: Entity,
+    position: Vec2,
+) -> Result<kedra_ui::popup::PointMenu, String> {
+    let menu = kedra_ui::popup::attach_at(world, anchor, position, "dock-menu", "dock-menu")?;
+    world.entity_mut(menu.root).insert(DockPopup);
     Ok(menu)
 }
 
@@ -16,8 +62,15 @@ pub(super) fn menu_event(
     mut event: On<bevy::ui_widgets::MenuEvent>,
     parents: Query<&ChildOf>,
     popups: Query<(), With<DockPopup>>,
+    cascading: Query<(), With<kedra_ui::popup::cascade::Cascade>>,
     mut commands: Commands,
 ) {
+    if std::iter::once(event.source)
+        .chain(parents.iter_ancestors(event.source))
+        .any(|entity| cascading.contains(entity))
+    {
+        return;
+    }
     let popup = std::iter::once(event.source)
         .chain(parents.iter_ancestors(event.source))
         .find(|entity| popups.contains(*entity));

@@ -17,6 +17,15 @@ pub(super) fn pick(
     point: Vec2,
     area: Rect,
 ) -> Result<Option<NodeAddress>, String> {
+    let ray = ray(world, projection, point, area)?;
+    cast(world, projection, ray)
+}
+pub(super) fn ray(
+    world: &World,
+    projection: &Projection,
+    point: Vec2,
+    area: Rect,
+) -> Result<Ray3d, String> {
     let camera = projection.camera().ok_or("Projection camera missing")?;
     let camera_data = world.get::<Camera>(camera).ok_or("Camera retired")?;
     let size = camera_data
@@ -26,19 +35,56 @@ pub(super) fn pick(
     let transform = world
         .get::<GlobalTransform>(camera)
         .ok_or("Camera transform missing")?;
-    let ray = camera_data
+    camera_data
         .viewport_to_world(transform, position)
-        .map_err(|error| error.to_string())?;
-    cast(world, projection, ray)
+        .map_err(|error| error.to_string())
+}
+pub(super) fn placement(
+    world: &mut World,
+    projection: &Projection,
+    point: Vec2,
+    area: Rect,
+) -> Result<Vec3, String> {
+    let ray = ray(world, projection, point, area)?;
+    if let Some((_, distance)) = hit(world, projection, ray)? {
+        return Ok(ray.get_point(distance));
+    }
+    ray.intersect_plane(Vec3::ZERO, InfinitePlane3d::new(Vec3::Y))
+        .map(|distance| ray.get_point(distance))
+        .ok_or("Pointer does not intersect a placement surface".into())
 }
 pub(super) fn cast(
     world: &mut World,
     projection: &Projection,
     ray: Ray3d,
 ) -> Result<Option<NodeAddress>, String> {
+    let Some((mut entity, _)) = hit(world, projection, ray)? else {
+        return Ok(None);
+    };
+    for _ in 0..4096 {
+        if let Some((address, _)) = projection
+            .nodes
+            .iter()
+            .find(|(_, mapped)| **mapped == entity)
+        {
+            return Ok(Some(address.clone()));
+        }
+        let Some(parent) = world.get::<ChildOf>(entity) else {
+            break;
+        };
+        entity = parent.parent();
+    }
+    Err("Native hit has no source address in this projection".into())
+}
+fn hit(
+    world: &mut World,
+    projection: &Projection,
+    ray: Ray3d,
+) -> Result<Option<(Entity, f32)>, String> {
     let mut eligible = HashSet::new();
     for entity in world.iter_entities() {
         if entity.contains::<Mesh3d>()
+            && !entity.contains::<PlacementPreview>()
             && entity
                 .get::<InheritedVisibility>()
                 .is_some_and(|visibility| visibility.get())
@@ -70,27 +116,13 @@ pub(super) fn cast(
                         .with_filter(&|entity| eligible.contains(&entity)),
                 )
                 .first()
-                .map(|(entity, _)| *entity)
+                .map(|(entity, hit)| (*entity, hit.distance))
         })
         .map_err(|error| error.to_string())?;
-    let Some(mut entity) = hit else {
-        return Ok(None);
-    };
-    for _ in 0..4096 {
-        if let Some((address, _)) = projection
-            .nodes
-            .iter()
-            .find(|(_, mapped)| **mapped == entity)
-        {
-            return Ok(Some(address.clone()));
-        }
-        let Some(parent) = world.get::<ChildOf>(entity) else {
-            break;
-        };
-        entity = parent.parent();
-    }
-    Err("Native hit has no source address in this projection".into())
+    Ok(hit)
 }
+#[derive(Component)]
+pub(crate) struct PlacementPreview;
 
 #[derive(Default)]
 pub(super) struct Marker {
@@ -185,8 +217,11 @@ impl Marker {
                     .spawn((
                         Gizmo {
                             handle: handle.clone(),
+                            line_config: bevy::gizmos::config::GizmoLineConfig {
+                                width: 3.,
+                                ..default()
+                            },
                             depth_bias: -0.001,
-                            ..default()
                         },
                         RenderLayers::layer(projection.layer()),
                     ))
@@ -197,7 +232,9 @@ impl Marker {
         self.set_visible(world, !self.hidden);
         // A failed measurement must not poison the cache for an unchanged
         // selection; publish the cache only after marker/bounds publication.
-        self.selected = selected.cloned();
+        // Imported model descendants may arrive after the source node was selected.
+        // An empty measurement is not a completed marker: retry until geometry exists.
+        self.selected = selected.filter(|_| bounds.is_some()).cloned();
         Ok(())
     }
     pub(super) fn clear(&mut self, world: &mut World) {

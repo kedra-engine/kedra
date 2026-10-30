@@ -1,0 +1,4 @@
+# Local authoring leases, recovery copies and transaction state.
+assets.kedra-save.*
+.kedra-deleted-*/
+.kedra-converted-*/
