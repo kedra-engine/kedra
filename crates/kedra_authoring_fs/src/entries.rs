@@ -1,5 +1,6 @@
 //! Explicit source-entry operations share the source writer lease and admission reader.
 use crate::{directories, group::Session, lease, source};
+mod storage;
 use kedra_authoring::persistence::SourceSnapshot;
 use std::{
     fs,
@@ -214,7 +215,7 @@ fn suffix(path: &Path) -> &str {
     }
 }
 fn move_entry(session: &Session, from: &Path, to: &Path, metadata: bool) -> Result<(), String> {
-    use fs_transaction::{ChangeSet, StdFs, exec::block_on};
+    use fs_transaction::{ChangeSet, exec::block_on};
     // One native directory rename already carries its whole subtree atomically.
     if !metadata {
         return fs::rename(session.root.join(from), to).map_err(|e| e.to_string());
@@ -248,5 +249,10 @@ fn move_entry(session: &Session, from: &Path, to: &Path, metadata: bool) -> Resu
         changes.expect_absent(to);
         changes.rename(from, to);
     }
-    block_on(session.journal.apply(&changes, &StdFs, parent)).map_err(|e| e.to_string())
+    block_on(
+        session
+            .journal
+            .apply(&changes, &storage::EntryStorage, parent),
+    )
+    .map_err(|e| e.to_string())
 }

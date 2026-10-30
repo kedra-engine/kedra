@@ -77,6 +77,10 @@ before mutation; the editor checks its current baseline and compiles dependencie
 `kedra_authoring::source::reconcile`. No alternate path registry or transaction engine is
 introduced. Rename also moves between existing directories, preserving bytes and sidecar UUIDs.
 File/sidecar pairs use the existing `fs-transaction` journal; directory moves use one native rename.
+The entry storage adapter delegates transaction I/O to `StdFs`, but uses Save's
+write-capable file flush on Windows: upstream 0.4.0 opens read-only handles that
+cannot call `FlushFileBuffers`. Directory-flush limitations remain unchanged;
+no journal format, rollback algorithm or relaxed durability mode is introduced.
 Moves into the source itself or its descendants, and file-type changes, refuse.
 Existing destinations, root mutation, linked paths and pending Save recovery refuse.
 

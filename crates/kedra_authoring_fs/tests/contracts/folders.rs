@@ -29,6 +29,10 @@ fn file_moves_preserve_identity_and_pair_metadata_through_delete() -> TestResult
         .is_err()
     );
     assert_eq!(fs::read_to_string(root.join("original.txt.meta"))?, meta);
+    assert_eq!(
+        fs::read_to_string(root.join("original.txt"))?,
+        "retained bytes"
+    );
     assert!(!root.join("nested/日本語.txt").exists());
     let moved = apply(&root, "game", &change, |_, after| Ok(after))?;
     assert_eq!(moved.assets[0].id, original.assets[0].id);
@@ -55,6 +59,14 @@ fn file_moves_preserve_identity_and_pair_metadata_through_delete() -> TestResult
     assert_eq!(
         fs::read_to_string(root.join("collision.txt.meta"))?,
         "reserved"
+    );
+    assert_eq!(
+        fs::read_to_string(root.join("nested/日本語.txt.meta"))?,
+        meta
+    );
+    assert_eq!(
+        fs::read_to_string(root.join("nested/日本語.txt"))?,
+        "retained bytes"
     );
     fs::remove_file(root.join("collision.txt.meta"))?;
     apply(
