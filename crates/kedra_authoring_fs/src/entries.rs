@@ -221,12 +221,14 @@ fn move_entry(session: &Session, from: &Path, to: &Path, metadata: bool) -> Resu
     }
     // A file and its sidecar are a coupled operation: reuse the existing maintained
     // journal/rollback engine. An interrupted journal blocks all ordinary admission.
-    let mut builder = fs::DirBuilder::new();
+    let builder = fs::DirBuilder::new();
     #[cfg(unix)]
-    {
+    let builder = {
         use std::os::unix::fs::DirBuilderExt;
+        let mut builder = builder;
         builder.mode(0o700);
-    }
+        builder
+    };
     match builder.create(&session.staging) {
         Ok(()) => (),
         Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => (),
