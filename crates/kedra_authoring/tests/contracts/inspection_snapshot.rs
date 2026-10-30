@@ -10,6 +10,7 @@ fn successful_admission_returns_matching_compilation_and_failure_returns_none()
     let document = PrefabDocument::new("Source-owned inspection");
     let source = ron::to_string(&document)?;
     let snapshot = SourceSnapshot {
+        environments: Default::default(),
         namespace: "game".into(),
         generation: 1,
         documents: vec![SourceFile {

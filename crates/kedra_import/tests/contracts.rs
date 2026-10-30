@@ -5,6 +5,8 @@ mod admission;
 mod delivery;
 #[path = "contracts/environments.rs"]
 mod environments;
+#[path = "contracts/ingest.rs"]
+mod ingest;
 #[path = "contracts/models.rs"]
 mod models;
 #[path = "contracts/nonregular.rs"]

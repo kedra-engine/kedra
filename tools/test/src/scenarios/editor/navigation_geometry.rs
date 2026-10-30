@@ -3,32 +3,30 @@ use super::support::*;
 use kedra_test::Result;
 use serde_json::{Value, json};
 
-pub(super) fn toolbar(c: &Editor<'_>, p: &str) -> Result<Node> {
+pub(super) fn controls(c: &Editor<'_>, p: &str) -> Result<Node> {
     let viewport = c.node(&format!("{p}viewport"))?;
-    let bar = c.node(&format!("{p}toolbar"))?;
-    near(bar.rect[3] - bar.rect[1], 38., 1.)?;
-    near(bar.rect[3], viewport.rect[1], 1.)?;
-    let mut targets = Vec::new();
-    for name in ["views", "overlays", "grid", "lighting"] {
+    check(
+        !c.present(&format!("{p}toolbar"))?,
+        "Scene retains a separate toolbar",
+    )?;
+    {
+        let name = "settings";
         let n = c.node(&format!("{p}{name}"))?;
         check(
             n.window == viewport.window,
-            "Toolbar control belongs to another window",
+            "Settings belongs to another window",
         )?;
         check(
-            bar.rect[0] <= n.rect[0] && n.rect[0] < n.rect[2] && n.rect[2] <= bar.rect[2],
-            "Toolbar target escaped horizontal bounds",
+            viewport.rect[0] <= n.rect[0]
+                && n.rect[0] < n.rect[2]
+                && n.rect[2] <= viewport.rect[2]
+                && viewport.rect[1] <= n.rect[1]
+                && n.rect[3] <= viewport.rect[3],
+            "Settings escaped the viewport",
         )?;
-        // Current accepted shared Flat controls are 22px (scene-view.md),
-        // centered in the unchanged 38px toolbar; the old Python 26px check predates it.
-        near(n.rect[1] - bar.rect[1], 8., 1.)?;
+        near(n.rect[2] - n.rect[0], 22., 1.)?;
         near(n.rect[3] - n.rect[1], 22., 1.)?;
-        targets.push(n.rect);
     }
-    check(
-        targets.windows(2).all(|w| w[0][2] <= w[1][0]),
-        "Scene toolbar targets overlap",
-    )?;
     let [x, y, r, b] = viewport.rect;
     if r - x < 640. {
         check(
@@ -36,7 +34,7 @@ pub(super) fn toolbar(c: &Editor<'_>, p: &str) -> Result<Node> {
             "Narrow layout retains Select",
         )?;
     }
-    if r - x >= 160. && b - y >= 230. {
+    if r - x >= 160. && b - y >= 282. {
         let orbit = c.node(&format!("{p}orbit"))?;
         for (a, b) in [
             (orbit.rect[2] - orbit.rect[0], 96.),
@@ -46,7 +44,19 @@ pub(super) fn toolbar(c: &Editor<'_>, p: &str) -> Result<Node> {
         ] {
             near(a, b, 1.)?;
         }
-        for name in ["zoom", "pan", "frame", "projection", "select-tool"] {
+    } else {
+        for name in ["orbit", "projection"] {
+            check(
+                !c.present(&format!("{p}{name}"))?,
+                "Short canvas retains orientation controls",
+            )?;
+        }
+    }
+    if r - x >= 190. && b - y >= 120. {
+        for name in ["move", "rotate", "scale", "snap", "frame", "projection"] {
+            if name == "projection" && b - y < 282. {
+                continue;
+            }
             let n = c.node(&format!("{p}{name}"))?;
             check(
                 n.window == viewport.window
@@ -56,11 +66,24 @@ pub(super) fn toolbar(c: &Editor<'_>, p: &str) -> Result<Node> {
                     && n.rect[3] <= b,
                 "Scene navigation target escaped viewport",
             )?;
-            near(n.rect[2] - n.rect[0], 22., 1.)?;
+            near(
+                n.rect[2] - n.rect[0],
+                if name == "projection" { 96. } else { 22. },
+                1.,
+            )?;
             near(n.rect[3] - n.rect[1], 22., 1.)?;
         }
     } else {
-        for name in ["orbit", "zoom", "pan", "frame", "projection"] {
+        for name in [
+            "hand",
+            "orbit",
+            "move",
+            "rotate",
+            "scale",
+            "snap",
+            "frame",
+            "projection",
+        ] {
             check(
                 !c.present(&format!("{p}{name}"))?,
                 "Short canvas retains hidden navigation target",

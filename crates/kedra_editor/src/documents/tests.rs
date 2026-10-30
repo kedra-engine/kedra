@@ -61,6 +61,7 @@ fn selection_is_scoped_validated_and_independent_of_document_activation() -> Tes
     documents.scope = Some(
         source::admit(
             kedra_authoring::persistence::SourceSnapshot {
+                environments: Default::default(),
                 namespace: "game".into(),
                 generation: 0,
                 documents: files,

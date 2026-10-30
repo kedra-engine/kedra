@@ -12,6 +12,9 @@ description = "Project lifecycle and retained dockable native editor workspace"
 layer = "editor"
 
 [dependencies]
+kedra_gizmo.workspace = true
+kedra_cache.workspace = true
+kedra_import.workspace = true
 kedra_wakeup = { workspace = true, features = ["native"] }
 kedra_authoring_assets.workspace = true
 kedra_preview.workspace = true
@@ -48,7 +51,6 @@ rfd = { version = "=0.17.2", default-features = false, features = ["xdg-portal",
 
 [dev-dependencies]
 image.workspace = true
-kedra_import.workspace = true
 
 [lints]
 workspace = true

@@ -486,9 +486,16 @@ impl Catalog {
                 }
                 Operation::RenameNode { node, name } => graph.node_mut(node)?.name = name.clone(),
                 Operation::ReparentNode { node, parent } => {
-                    if node.instances != parent.instances {
+                    let instance_root = graph
+                        .frames
+                        .get(&node.instances)
+                        .and_then(|id| graph.sources.get(id))
+                        .is_some_and(|source| {
+                            source.root == node.node && !node.instances.is_empty()
+                        });
+                    if node.instances != parent.instances && !instance_root {
                         return Err(failure(
-                            "Unpack before reparenting across a prefab boundary",
+                            "Move the whole prefab instance; internal nodes cannot cross its boundary",
                         ));
                     }
                     if *node == graph.root {

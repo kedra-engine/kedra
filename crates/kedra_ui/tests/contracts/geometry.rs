@@ -2,6 +2,56 @@
 use bevy::{math::Affine2, prelude::*};
 
 #[test]
+fn point_menu_uses_click_position_at_each_scale_and_rejects_unavailable_layout()
+-> Result<(), String> {
+    for scale in [1., 0.5] {
+        let mut world = World::new();
+        let parent = world
+            .spawn((
+                Node::default(),
+                ComputedNode {
+                    size: Vec2::new(400., 60.) / scale,
+                    inverse_scale_factor: scale,
+                    ..default()
+                },
+                UiGlobalTransform::from(Affine2::from_translation(Vec2::new(300., 150.) / scale)),
+            ))
+            .id();
+        let point = kedra_ui::popup::attach_at(
+            &mut world,
+            parent,
+            Vec2::new(170., 140.),
+            "menu",
+            "context",
+        )?;
+        let node = world
+            .get::<Node>(point.root)
+            .ok_or("position node missing")?;
+        assert_eq!(node.left, Val::Px(70.));
+        assert_eq!(node.top, Val::Px(20.));
+        assert_eq!(
+            world.get::<ChildOf>(point.menu).map(ChildOf::parent),
+            Some(point.root)
+        );
+        assert!(world.get::<OverrideClip>(point.menu).is_some());
+        let count = world.entities().count_spawned();
+        assert!(
+            kedra_ui::popup::attach_at(&mut world, parent, Vec2::NAN, "menu", "context").is_err()
+        );
+        assert_eq!(world.entities().count_spawned(), count);
+        world.despawn(parent);
+        assert!(!world.entities().contains(point.root));
+        assert!(!world.entities().contains(point.menu));
+        let count = world.entities().count_spawned();
+        assert!(
+            kedra_ui::popup::attach_at(&mut world, parent, Vec2::ZERO, "menu", "context").is_err()
+        );
+        assert_eq!(world.entities().count_spawned(), count);
+    }
+    Ok(())
+}
+
+#[test]
 fn native_ui_04_bounds_transform_corners_before_converting_physical_to_logical()
 -> Result<(), &'static str> {
     for scale in [1., 0.5, 1. / 3.] {

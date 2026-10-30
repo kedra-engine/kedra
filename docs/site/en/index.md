@@ -15,9 +15,9 @@ For deeper concepts, read [Projects](manual/projects/index.md) for identity and 
 [Assets](manual/assets/index.md) for sources and deliveries, and
 [Scenes and prefabs](manual/scenes/index.md) for documents and composition.
 The twelve manual sections cover the available tools, not a complete game-creation workflow.
-Editor previews remain read-only projections. The documented Inspector controls
-support source edits and existing-document Save; general document editing and Play
-are not available.
+The editor supports document creation, eligible Hierarchy/Inspector edits, Scene View
+transforms, Undo/Redo and explicit source Save. Previews are not gameplay; Play remains
+unavailable.
 
 Use the [Glossary](manual/glossary.md) to distinguish shared terms across the chapters.
 

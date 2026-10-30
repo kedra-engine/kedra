@@ -38,6 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
       - uses: dorny/paths-filter@v4
         id: paths
@@ -56,6 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
       - name: Resolve pinned Rust toolchain
         run: rustup show active-toolchain
@@ -118,6 +120,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
       - name: Resolve pinned Rust toolchain
         run: rustup show active-toolchain
@@ -193,6 +196,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
       - name: Pinned Rust and LLVM tooling
         run: rustup component add llvm-tools-preview
@@ -237,6 +241,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
       - name: Resolve pinned Rust toolchain
         run: rustup show active-toolchain
@@ -257,6 +262,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
       - uses: jdx/mise-action@v5
         with:
@@ -314,6 +320,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
           fetch-depth: 0
       - uses: jdx/mise-action@v5
@@ -337,6 +344,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
       - uses: actions/setup-python@v7
         with:
@@ -355,6 +363,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
       - name: Require selected checks and verify intentional skips
         env:
@@ -384,6 +393,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           ref: ${{ github.sha }}
           persist-credentials: false
       - name: Verify the scheduler-approved source is still current main

@@ -45,6 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
       - uses: actions/setup-python@v7
         with:
@@ -87,6 +88,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          lfs: true
           ref: ${{ needs.preflight.outputs.source }}
           persist-credentials: false
       - uses: actions/setup-python@v7

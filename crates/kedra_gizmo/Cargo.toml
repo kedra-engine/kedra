@@ -1,0 +1,18 @@
+[package]
+name = "kedra_gizmo"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Viewport-independent constrained transform manipulation"
+
+[package.metadata.kedra]
+layer = "runtime"
+
+[dependencies]
+bevy = { workspace = true, features = ["bevy_gizmos"] }
+
+[lints]
+workspace = true

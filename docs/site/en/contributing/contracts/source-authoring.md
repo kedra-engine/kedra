@@ -7,6 +7,12 @@ visual editing, editor Save, Play or a filesystem writer.
 
 ## Working documents and history
 
+`SourceEdit::add_node` and `add_component` let native tools stage structural additions
+in the same isolated lease as property edits. Nodes receive persistent IDs before commit;
+component additions refuse existing keys and validate the complete typed candidate.
+Dropping a lease publishes nothing. Editor object presets use these operations rather
+than modifying live preview entities or maintaining a separate history.
+
 `kedra_authoring::workspace::WorkingSet` owns one mutable source per document identity,
 monotonic revisions, acknowledged saved revisions and transaction history. It never owns a
 captured gameplay World. Opening a duplicate identity must not replace a working document.
@@ -117,6 +123,12 @@ not silently select a different filename. Preserve Unicode and spaces. `assign_p
 an unused path for a new document, not a managed rename, and is forbidden during pending Save.
 `assign_new_path` may derive an unused path from a nonempty supported title.
 
+`source::create_document` combines a named working-set creation transaction with exact
+path reservation and complete compilation on one isolated workspace candidate. Failure
+preserves history, paths and sources. Undo/Redo keeps the document identity and reservation;
+it never performs I/O. `WorkingSet::is_dirty` includes removed saved documents, including
+Undo of a creation after Save.
+
 An admitted catalog must contain exactly the declared documents. Namespace-qualified source
 paths and supported UUID addresses are accepted, but two references resolving to one document
 are rejected. Proposed saved catalogs use sorted namespace-qualified source paths. Persistent
@@ -147,6 +159,13 @@ in-memory request does not itself perform I/O. The separate `kedra_authoring_fs`
 implements guarded recoverable replacement of an existing document group. Its
 `prepare_existing_save` profile pins the complete group while preserving admitted inventory/catalog.
 Full canonical `prepare_save` still needs a writer supporting catalog/inventory changes.
+
+The index-free `prepare_document_save` profile and filesystem `commit_documents` extend
+document groups with creation and source-history removal while leaving runtime catalogs
+and sidecars unchanged. Exact absence is an explicit precondition/receipt. Parent
+directories must exist and removal with a sidecar refuses. The same journal, retry and
+acknowledgment rules apply; see [ADR 0047][creation]. Full canonical catalog publication
+remains outside this filesystem profile.
 
 ## Lost responses, refusal and receipts
 
@@ -209,3 +228,4 @@ cargo test -p kedra_authoring --locked
 [protocol]: https://github.com/kedra-engine/kedra/blob/main/crates/kedra_authoring/tests/contracts/persistence_protocol.rs
 [paths]: https://github.com/kedra-engine/kedra/blob/main/crates/kedra_authoring/tests/contracts/native_paths.rs
 [testing]: testing.md
+[creation]: https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0047-document-creation-and-history-save.md

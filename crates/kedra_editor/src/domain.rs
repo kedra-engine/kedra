@@ -197,7 +197,7 @@ pub(crate) fn entry_intent(
         PathBuf::from(&form.directory)
     };
     if !directory.is_absolute() {
-        return Err("Enter an absolute directory path or use Browse….".into());
+        return Err("Enter an absolute directory path or use Browse.".into());
     }
     match form.mode {
         Some(EntryMode::Create) => {

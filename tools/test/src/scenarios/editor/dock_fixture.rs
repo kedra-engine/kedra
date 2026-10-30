@@ -139,6 +139,8 @@ pub(super) fn run(root: &Path, output: &Path, delivery: &Path) -> Result<Value> 
                 .env("KEDRA_DOCK_TRACE", "1")
                 .arg("--remote-artifacts")
                 .arg(&artifacts);
+            #[cfg(target_os = "linux")]
+            command.env_remove("WAYLAND_DISPLAY");
             let mut native = NativeProcess::spawn(&mut command, &private)?;
             let client = native.connect()?;
             let c = Editor::new(&client, root, &artifacts, &private, None, "dock.state");
@@ -342,19 +344,26 @@ fn scenarios(dock: &Dock<'_>) -> Result<()> {
     )?;
     c.click(&overflow.id)?;
     c.wait_node("dock-menu")?;
-    for caption in [
-        "Maximize group",
-        "Panel with a very long title that does not fit its tab",
+    for (branch, caption) in [
+        ("Layout", "Maximize group"),
+        (
+            "Tabs",
+            "Panel with a very long title that does not fit its tab",
+        ),
     ] {
-        check(
-            c.nodes()?.iter().any(|n| n.caption() == caption),
-            "Overflow omitted original full title/action",
-        )?;
+        let entry = c.find(branch, |n| {
+            n.id.starts_with("dock-menu/") && n.caption() == branch
+        })?;
+        c.click(entry.id.strip_suffix("/caption").unwrap_or(&entry.id))?;
+        let action = c.find("overflow full title/action", |n| {
+            n.id.starts_with("dock-menu/") && n.caption() == caption
+        })?;
+        check(action.enabled, "Overflow title/action is disabled")?;
     }
     c.key("escape")?;
     dock.checkpoint("overflow actions", None)?;
     dock.reset(1200, 800)?;
-    c.menu(child, "Float active tab")?;
+    c.menu(child, "Float tab")?;
     c.until("native float transfer", || {
         Ok(array(&c.client.observe()?["windows"])?.len() == 2
             && dock.fixture()?["pending"] == false
@@ -506,7 +515,7 @@ fn mechanics(dock: &Dock<'_>, a: &str, b: &str, child: &str, d: &str) -> Result<
         }
     }
     dock.reset(1200, 800)?;
-    c.menu(child, "Float active tab")?;
+    c.menu(child, "Float tab")?;
     c.until("floating close setup", || {
         Ok(dock.fixture()?["pending"] == false
             && c.node(&Editor::label(child))?.window()? != c.window()?)
@@ -515,7 +524,7 @@ fn mechanics(dock: &Dock<'_>, a: &str, b: &str, child: &str, d: &str) -> Result<
     check(c.hidden(child)?, "Close did not hide floating source view")?;
     dock.reset(1200, 800)?;
     c.client.scenario("dock.drafts", Value::Null)?;
-    c.menu(child, "Float active tab")?;
+    c.menu(child, "Float tab")?;
     c.until("floating keyboard field", || {
         Ok(dock.fixture()?["pending"] == false
             && c.optional("fixture.C/draft")?

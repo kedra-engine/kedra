@@ -147,6 +147,7 @@ fn asset_rig_failure_retires_a_previously_ready_projection() -> TestResult {
     let (mut app, mut view) = fixture();
     let camera = spatial(app.world_mut(), &mut view)?;
     let source = kedra_authoring::persistence::SourceSnapshot {
+        environments: Default::default(),
         namespace: "game".into(),
         generation: 1,
         index: None,

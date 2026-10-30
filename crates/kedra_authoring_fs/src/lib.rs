@@ -13,7 +13,10 @@ use std::{
 mod group;
 pub mod source;
 mod storage;
-pub use group::{commit_existing, read_guard, recover_existing};
+pub use group::{
+    commit_documents, commit_environment, commit_existing, read_guard, recover_documents,
+};
+pub mod entries;
 
 /// Save failure classification: only a definite refusal permits releasing pinned bytes.
 #[derive(Debug)]
@@ -85,6 +88,13 @@ fn hash(path: &Path) -> Result<String, SaveError> {
     // Asset checks include arbitrary binary bytes, not only UTF-8 documents.
     Ok(format!("{:x}", Sha256::digest(&data)))
 }
+fn optional_hash(path: &Path) -> Result<Option<String>, SaveError> {
+    match std::fs::symlink_metadata(path) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(refused(error)),
+        Ok(_) => hash(path).map(Some),
+    }
+}
 fn validate(root: &Path, request: &CommitRequest) -> Result<(), SaveError> {
     let mut actual = BTreeSet::new();
     let mut members = BTreeSet::new();
@@ -132,17 +142,43 @@ fn validate(root: &Path, request: &CommitRequest) -> Result<(), SaveError> {
             }
         }
     }
-    let expected: BTreeSet<_> = request.expected_sources.iter().cloned().collect();
-    let expected_members: BTreeSet<_> = request
+    let mut expected: BTreeSet<_> = request.expected_sources.iter().cloned().collect();
+    let mut expected_members: BTreeSet<_> = request
         .checks
         .iter()
         .filter(|check| check.expected_hash.is_some())
         .filter(|check| !check.path.ends_with(".meta"))
         .map(|check| check.path.clone())
         .collect();
+    if expected.len() != request.expected_sources.len() {
+        return Err(refused("Duplicate source inventory precondition"));
+    }
+    for file in request
+        .files
+        .iter()
+        .filter(|file| file.expected_hash.is_none())
+    {
+        if sidecars.contains(&format!("{}.meta", file.path)) {
+            return Err(refused("New document target has an existing sidecar"));
+        }
+        if actual.contains(&file.path) {
+            expected.insert(file.path.clone());
+            expected_members.insert(file.path.clone());
+        }
+    }
+    for file in request.files.iter().filter(|file| file.source.is_none()) {
+        if sidecars.contains(&format!("{}.meta", file.path)) {
+            return Err(refused(
+                "Document removal with a sidecar requires managed asset deletion",
+            ));
+        }
+        if !actual.contains(&file.path) {
+            expected.remove(&file.path);
+            expected_members.remove(&file.path);
+        }
+    }
     if request.checks.len() > 8192
         || expected.len() > 128
-        || expected.len() != request.expected_sources.len()
         || actual != expected
         || members != expected_members
         || sidecars
@@ -194,11 +230,47 @@ fn validate(root: &Path, request: &CommitRequest) -> Result<(), SaveError> {
         return Err(refused("Incomplete Save source preconditions"));
     }
     for file in &request.files {
+        if (file.expected_hash.is_none() || file.source.is_none())
+            && optional_hash(&root.join(&file.path))?.is_none()
+        {
+            continue;
+        }
         let bytes = storage::read_bounded(&root.join(&file.path), 65_536).map_err(refused)?;
+        if file.document.is_none() && file.path.ends_with(".environment.ron") {
+            kedra_scene::environment::Environment::parse(
+                std::str::from_utf8(&bytes).map_err(refused)?,
+            )
+            .map_err(refused)?;
+            continue;
+        }
         let document = PrefabDocument::parse(std::str::from_utf8(&bytes).map_err(refused)?)
             .map_err(refused)?;
         if Some(document.id) != file.document {
             return Err(refused("Save cannot replace an existing document identity"));
+        }
+    }
+    let mut identities = BTreeSet::new();
+    for path in &actual {
+        if request.files.iter().any(|file| &file.path == path) {
+            continue;
+        }
+        let bytes = storage::read_bounded(&root.join(path), 65_536).map_err(refused)?;
+        let doc = PrefabDocument::parse(std::str::from_utf8(&bytes).map_err(refused)?)
+            .map_err(refused)?;
+        if !identities.insert(doc.id) {
+            return Err(refused("Duplicate document identity in source inventory"));
+        }
+    }
+    for file in request
+        .files
+        .iter()
+        .filter(|file| file.source.is_some() && file.document.is_some())
+    {
+        if !identities.insert(
+            file.document
+                .ok_or_else(|| refused("Document identity missing"))?,
+        ) {
+            return Err(refused("Document identity collides with another source"));
         }
     }
     Ok(())

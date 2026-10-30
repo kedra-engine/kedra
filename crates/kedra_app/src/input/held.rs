@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 #[derive(Resource, Default)]
 pub(super) struct HeldInputs {
     owner: Option<Entity>,
-    mouse: bool,
+    mouse: Option<MouseButton>,
     keys: Vec<KeyboardInput>,
     external_mouse: HashSet<(Entity, MouseButton)>,
     external_keys: HashMap<(Entity, KeyCode), Key>,
@@ -32,7 +32,7 @@ impl HeldInputs {
         }
     }
     pub(super) fn mouse_held(&self) -> bool {
-        self.mouse
+        self.mouse.is_some()
     }
     pub(super) fn key_held(&self, code: KeyCode) -> bool {
         self.keys.iter().any(|key| key.key_code == code)
@@ -76,7 +76,9 @@ impl HeldInputs {
             .owner
             .filter(|owner| world.get::<Window>(*owner).is_none())
         {
-            let _ = self.button(world, owner, false);
+            if let Some(button) = self.mouse {
+                let _ = self.button(world, owner, button, false);
+            }
             for mut key in self.keys.clone() {
                 key.state = ButtonState::Released;
                 self.key(world, key);
@@ -85,7 +87,7 @@ impl HeldInputs {
         }
     }
     fn clear_owner(&mut self) {
-        if !self.mouse && self.keys.is_empty() {
+        if self.mouse.is_none() && self.keys.is_empty() {
             self.owner = None;
         }
     }
@@ -93,41 +95,40 @@ impl HeldInputs {
         &mut self,
         world: &mut World,
         window: Entity,
+        button: MouseButton,
         down: bool,
     ) -> Result<(), String> {
         if down {
             self.validate_window(window)?;
-            if self.mouse {
+            if self.mouse == Some(button) {
                 return Ok(());
             }
-            if self
-                .external_mouse
-                .iter()
-                .any(|(_, button)| *button == MouseButton::Left)
+            if self.mouse.is_some() {
+                return Err(
+                    "Release the injected pointer hold before pressing another button".into(),
+                );
+            }
+            if self.external_mouse.iter().any(|(_, held)| *held == button)
                 || world
                     .get_resource::<ButtonInput<MouseButton>>()
-                    .is_some_and(|input| input.pressed(MouseButton::Left))
+                    .is_some_and(|input| input.pressed(button))
             {
-                return Err("Left pointer button is already held outside the input adapter".into());
+                return Err("Pointer button is already held outside the input adapter".into());
             }
             self.owner = Some(window);
-            self.mouse = true;
+            self.mouse = Some(button);
         } else {
-            if !self.mouse {
+            if self.mouse != Some(button) {
                 return Ok(());
             }
-            self.mouse = false;
+            self.mouse = None;
             self.clear_owner();
-            if self
-                .external_mouse
-                .iter()
-                .any(|(_, button)| *button == MouseButton::Left)
-            {
+            if self.external_mouse.iter().any(|(_, held)| *held == button) {
                 return Ok(());
             }
         }
         let event = MouseButtonInput {
-            button: MouseButton::Left,
+            button,
             state: if down {
                 ButtonState::Pressed
             } else {

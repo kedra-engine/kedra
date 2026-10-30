@@ -5,6 +5,7 @@
 //! or newer edits. No filesystem writer or remote transport is implicitly installed.
 pub mod changes;
 pub mod editing;
+pub mod environment;
 pub mod inspection;
 pub mod overrides;
 pub mod persistence;

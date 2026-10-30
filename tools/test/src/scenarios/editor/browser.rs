@@ -138,12 +138,16 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
     c.until("tree fixture retired", || {
         has_text(c, "count", &format!("{count}/{count} items"))
     })?;
-    let disabled = control(c, "new")?;
-    check(!disabled.enabled, "Unsupported New command is enabled")?;
-    c.move_to(disabled.center())?;
-    c.until("disabled command reason", || {
-        has_text(c, "tooltip", "New is unavailable")
+    c.menu(&c.view("assets")?, "Create")?;
+    let scene = c.find("Scene creation command", |n| {
+        n.id.starts_with("dock-menu/") && n.caption() == "Scene"
     })?;
+    check(scene.enabled, "New scene command is unavailable")?;
+    let import = c.find("Import files", |n| {
+        n.id.starts_with("dock-menu/") && n.caption() == "Import files"
+    })?;
+    check(import.enabled, "Source import command is unavailable")?;
+    c.key("escape")?;
     check(
         !has_text(c, "name", "hidden.meta")?,
         "Sidecar exposed as independent source",
@@ -193,7 +197,7 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
         n.id.ends_with("/tooltip") && n.caption() == "Straße.txt"
     })?;
     let label = c.find("selected file label", |n| {
-        n.id.ends_with("/name") && n.caption() == "Straße.txt"
+        n.id.starts_with("browser/") && n.id.ends_with("/name") && n.caption() == "Straße.txt"
     })?;
     let tile = c
         .nodes()?
@@ -369,7 +373,7 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
     let admitted = documents(c)?;
     let browser = c.view("assets")?;
     let search_node = control(c, "search")?;
-    c.menu(&browser, "Float group")?;
+    c.menu(&browser, "Float tab")?;
     c.until("floating browser", || {
         Ok(array(&c.client.observe()?["windows"])?.len() == 2)
     })?;
@@ -388,11 +392,9 @@ pub(super) fn run(c: &Editor<'_>) -> Result<Value> {
     c.until("isolated Assets group", || {
         Ok(c.state()?["layout"]["nodes"][c.group(&browser)?]["Group"]["tabs"] == json!([browser]))
     })?;
-    c.menu(&browser, "Hide group")?;
+    c.menu(&browser, "Close tab")?;
     c.until("hidden browser", || c.hidden(&browser))?;
-    c.click("workspace/panels")?;
-    let show = c.find("Show Assets", |n| n.caption() == "Show Assets")?;
-    c.click(show.id.strip_suffix("/caption").unwrap_or(&show.id))?;
+    c.main_menu("Windows/Assets")?;
     check(
         c.wait_node(&search_node.id)?.entity == search_node.entity,
         "Reopen reconstructed search field",

@@ -186,7 +186,9 @@ pub enum Operation {
         /// New source name.
         name: String,
     },
-    /// Move within a prefab boundary; cross-boundary moves require unpacking.
+    /// Move within a prefab boundary, or move an entire nested instance root.
+    /// Internal nodes cannot cross their instance boundary. Root moves retain
+    /// the complete instance scope, source references and overrides; cycles fail.
     ReparentNode {
         /// Target source node.
         node: NodeAddress,

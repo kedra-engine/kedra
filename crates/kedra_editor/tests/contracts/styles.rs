@@ -9,6 +9,8 @@ use std::{
     time::{Duration, Instant},
 };
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+#[path = "styles/asset_tiles.rs"]
+mod asset_tiles;
 #[path = "styles/compact.rs"]
 mod compact;
 #[path = "styles/inspector.rs"]
@@ -77,7 +79,7 @@ fn stylesheet(source: String) -> Result<(App, Entity)> {
 }
 
 #[test]
-fn scene_toolbar_stays_fixed_and_navigation_restores_after_hidden_state() -> Result<()> {
+fn scene_tool_strip_keeps_square_targets_and_restores_after_hidden_state() -> Result<()> {
     let (mut app, root) = stylesheet(format!(
         "{}\n{}\n{}\n.theme {{ --control-height:22px; --space:4px; }}",
         include_str!("../../../../assets/editor/styles/controls.css"),
@@ -89,7 +91,7 @@ fn scene_toolbar_stays_fixed_and_navigation_restores_after_hidden_state() -> Res
         .world_mut()
         .spawn((
             Node::default(),
-            ClassList::new("scene-toolbar"),
+            ClassList::new("scene-navigation-strip"),
             ChildOf(root),
         ))
         .id();
@@ -105,7 +107,7 @@ fn scene_toolbar_stays_fixed_and_navigation_restores_after_hidden_state() -> Res
         .world_mut()
         .spawn((
             Node::default(),
-            ClassList::new("button quiet scene-menu scene-view-menu"),
+            ClassList::new("button flat"),
             ChildOf(toolbar),
         ))
         .id();
@@ -117,12 +119,12 @@ fn scene_toolbar_stays_fixed_and_navigation_restores_after_hidden_state() -> Res
             ChildOf(root),
         ))
         .id();
-    let rail = app
+    let tools = app
         .world_mut()
         .spawn((
             Node::default(),
-            ClassList::new("scene-tool-rail hidden"),
-            ChildOf(root),
+            ClassList::new("scene-transform-tools"),
+            ChildOf(navigation),
         ))
         .id();
     frames(&mut app);
@@ -131,11 +133,6 @@ fn scene_toolbar_stays_fixed_and_navigation_restores_after_hidden_state() -> Res
         node.flex_wrap,
         FlexWrap::NoWrap,
         "The selected design keeps commands on one row, using View in narrow docks"
-    );
-    assert!(matches!(node.height, Val::Px(height) if height > 0.));
-    assert_eq!(
-        node.min_height, node.height,
-        "Toolbar must not collapse under content pressure"
     );
     let node = app
         .world()
@@ -164,11 +161,11 @@ fn scene_toolbar_stays_fixed_and_navigation_restores_after_hidden_state() -> Res
         "Diagnostics belong to the canvas, not a window-relative top offset"
     );
     for hidden in [true, false, true, false] {
-        for target in [navigation, rail, menu] {
+        for target in [navigation, menu, tools] {
             kedra_ui::docking::class(app.world_mut(), target, "hidden", hidden);
         }
         frames(&mut app);
-        for target in [navigation, rail, menu] {
+        for target in [navigation, menu, tools] {
             assert_eq!(
                 app.world()
                     .get::<Node>(target)

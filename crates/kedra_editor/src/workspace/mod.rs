@@ -2,19 +2,32 @@
 //! resource lifecycle remain separate owners, joined only at validated boundaries.
 #[cfg(test)]
 mod activation_tests;
+mod asset_import;
+pub(crate) mod folders;
+pub(crate) fn import_pending(world: &World) -> bool {
+    asset_import::pending(world) || folders::pending(world)
+}
 mod asset_views;
+mod component_menu;
+pub(crate) use component_menu::bind_component as component_control;
+mod close_dialog;
+mod document_create;
+mod document_menu;
 mod document_views;
 pub(crate) mod edit_scripts;
 mod feedback;
 #[cfg(debug_assertions)]
 pub(crate) mod fixture;
 mod headers;
+pub(crate) mod hierarchy_menu;
 #[cfg(test)]
 mod hierarchy_tests;
 mod history_context;
 mod hit;
 mod hosts;
 mod input;
+mod manipulation;
+mod model_drop;
 mod panels;
 mod popup;
 mod preset;
@@ -26,6 +39,7 @@ mod scene_tools;
 mod scrolling;
 mod settlement;
 mod source_history;
+mod thumbnails;
 
 pub(crate) fn bind_scene_controls(
     world: &mut World,
@@ -38,18 +52,21 @@ pub(crate) fn bind_scene_controls(
             "projection",
             Action::SceneCommand(id, crate::scene_view::camera::Command::Projection),
         ),
+        ("settings", Action::SceneMenu(id)),
+        ("hand", Action::SceneTransform(None)),
         (
-            "lighting",
-            Action::SceneMenu(id, scene_menu::Kind::Lighting),
+            "move",
+            Action::SceneTransform(Some(manipulation::Mode::Move)),
         ),
-        ("grid", Action::SceneGrid(id)),
-        ("views", Action::SceneMenu(id, scene_menu::Kind::Views)),
         (
-            "select-menu",
-            Action::SceneMenu(id, scene_menu::Kind::Selection),
+            "rotate",
+            Action::SceneTransform(Some(manipulation::Mode::Rotate)),
         ),
-        ("select-tool", Action::SceneFocus(id)),
-        ("overlays", Action::SceneOverlays(id)),
+        (
+            "scale",
+            Action::SceneTransform(Some(manipulation::Mode::Scale)),
+        ),
+        ("snap", Action::SceneSnap),
         (
             "frame",
             Action::SceneCommand(id, crate::scene_view::camera::Command::FrameSelection),
@@ -57,17 +74,22 @@ pub(crate) fn bind_scene_controls(
     ] {
         let entity = view.element(name).map_err(|error| error.to_string())?;
         world.entity_mut(entity).insert(action);
+        let label = match name {
+            "projection" => "Toggle perspective or orthographic projection",
+            "settings" => "View settings",
+            "frame" => "Frame selection",
+            "move" => "Move (W)",
+            "hand" => "Disable transform tool",
+            "rotate" => "Rotate locally (E)",
+            "scale" => "Scale locally (R)",
+            "snap" => "Toggle snapping",
+            _ => "Framing and standard views",
+        };
+        world
+            .entity_mut(entity)
+            .insert(kedra_ui::tooltip::Tooltip(label.into()));
         if let Some(mut node) = world.get_mut::<bevy::a11y::AccessibilityNode>(entity) {
-            node.set_label(match name {
-                "projection" => "Toggle perspective or orthographic projection",
-                "lighting" => "Choose scene or editor lighting",
-                "grid" => "Toggle grid and axes",
-                "select-menu" => "Selection commands",
-                "select-tool" => "Select objects",
-                "overlays" => "Toggle selection overlays",
-                "frame" => "Frame selection",
-                _ => "Framing and standard views",
-            });
+            node.set_label(label);
         }
     }
     scene_tools::bind(world, view, id)
@@ -78,7 +100,9 @@ impl EditorWorkspace {
     }
     #[cfg(debug_assertions)]
     pub(crate) fn navigation_input(&self, world: &World) -> serde_json::Value {
-        scene_input::diagnostics(world, self)
+        let mut value = scene_input::diagnostics(world, self);
+        value["manipulator"] = manipulation::diagnostics(world);
+        value
     }
     #[cfg(debug_assertions)]
     pub(crate) fn scene_state(&self, world: &World) -> serde_json::Value {
@@ -171,13 +195,14 @@ pub(crate) fn install(app: &mut App) {
         .init_resource::<input::CursorSample>()
         .add_observer(input::activate)
         .add_observer(popup::menu_event)
+        .add_observer(popup::cascade_closed)
         .add_systems(
             Update,
             (hosts::requests, input::cursor, tick, scrolling::wheel)
                 .chain()
                 .after(crate::views::hydrate),
         )
-        .add_systems(Last, storage::save_on_exit);
+        .add_systems(Last, (storage::save_on_exit, thumbnails::drain));
 }
 
 pub(crate) fn bind(world: &mut World, view: &UiView) -> Result<(), String> {
@@ -243,33 +268,42 @@ pub(crate) fn bind(world: &mut World, view: &UiView) -> Result<(), String> {
         redraw(world, &mut state)
     })
 }
-pub(crate) fn bind_header(world: &mut World, view: &UiView) {
-    for (key, action) in [
-        ("editor.panels", input::Action::Panels),
-        ("editor.project-menu", input::Action::Panels),
-        ("editor.project-chevron", input::Action::Panels),
-        ("editor.reset", input::Action::Reset),
-    ] {
-        if let Ok(entity) = view.element(key) {
-            world.entity_mut(entity).insert(action);
+pub(crate) use headers::bind_header;
+pub(crate) fn drag_label(world: &World, payload: &crate::drag::DragPayload) -> String {
+    match payload {
+        crate::drag::DragPayload::Assets(assets) => {
+            if assets.len() == 1 {
+                assets[0]
+                    .path()
+                    .rsplit('/')
+                    .next()
+                    .unwrap_or(assets[0].path())
+                    .into()
+            } else {
+                format!("{} assets", assets.len())
+            }
+        }
+        crate::drag::DragPayload::Nodes(nodes) => {
+            if nodes.len() == 1 {
+                world
+                    .get_resource::<EditorWorkspace>()
+                    .and_then(|s| s.documents.opened.get(&nodes[0].document))
+                    .and_then(|d| d.graph.nodes.get(&nodes[0].node))
+                    .map(|n| n.name.clone())
+                    .unwrap_or_else(|| "Node".into())
+            } else {
+                format!("{} nodes", nodes.len())
+            }
         }
     }
-    // Observation identities belong to the command, not its previous toolbar row.
-    let panels = if cfg!(target_os = "macos") {
-        "editor.project-menu"
-    } else {
-        "editor.panels"
-    };
-    for (key, identity) in [
-        (panels, "workspace/panels"),
-        ("editor.reset", "workspace/reset"),
-    ] {
-        if let Ok(entity) = view.element(key) {
-            world
-                .entity_mut(entity)
-                .insert(kedra_ui::ElementId::new(identity));
-        }
-    }
+}
+pub(crate) fn drag_surface(world: &World, window: Entity) -> Option<Entity> {
+    world
+        .get_resource::<EditorWorkspace>()?
+        .surfaces
+        .values()
+        .find(|surface| surface.window == window)
+        .map(|surface| surface.root)
 }
 fn load_skin(world: &World) -> Result<Arc<Skin>, String> {
     Ok(Arc::new(Skin {
@@ -316,7 +350,10 @@ fn bind_root(world: &mut World, window: Entity, root: Entity) -> Result<(), Stri
         measurements: None,
         preferred: BTreeMap::new(),
         last_divider: None,
-        panels: panels::State::default(),
+        panels: panels::State {
+            scene_layer: thumbnails::reserved_layer(world),
+            ..default()
+        },
         documents: crate::documents::Documents::default(),
         focused_group: None,
         content_view: None,
@@ -327,6 +364,11 @@ fn bind_root(world: &mut World, window: Entity, root: Entity) -> Result<(), Stri
 }
 
 pub(crate) fn retire(world: &mut World) {
+    if let Some(sources) = world.get_resource::<kedra_authoring_assets::environments::Sources>()
+        && let Err(error) = sources.publish(None)
+    {
+        crate::views::fail(world, error);
+    }
     scene_input::cancel(world);
     // The startup surface lifecycle owns the root/window. Removing the logical
     // binding does not despawn feature content or claim document-close approval.
@@ -354,6 +396,22 @@ pub(crate) fn browser_action(
         if state.layout.snapshot().location(id).is_none() {
             return;
         }
+        if import_pending(world) {
+            notice(world, &state, "Finish importing assets first.");
+            return;
+        }
+        if let crate::asset_browser::Action::Folder(mode, target) = action {
+            if state
+                .panels
+                .browsers
+                .get(&id)
+                .is_some_and(|panel| panel.current(&path, generation))
+                && let Err(error) = folders::open(world, &mut state, id, mode, target)
+            {
+                notice(world, &state, &error);
+            }
+            return;
+        }
         if let Some(panel) = state.panels.browsers.get_mut(&id) {
             match panel.dispatch(world, id, path, generation, action) {
                 Err(error) => crate::views::fail(world, error),
@@ -378,6 +436,16 @@ pub(crate) fn hierarchy_action(world: &mut World, binding: crate::hierarchy::Bin
         return;
     }
     world.resource_scope(|world, mut state: Mut<EditorWorkspace>| {
+        // Native Button activation may arrive on secondary release after the
+        // context menu opened on press. The popup owns input until dismissal;
+        // the underlying row must not select, toggle or reclaim keyboard focus.
+        if state
+            .menu
+            .iter()
+            .any(|menu| world.get_entity(*menu).is_ok())
+        {
+            return;
+        }
         if state.layout.snapshot().location(binding.view).is_none() {
             return;
         }
@@ -434,6 +502,27 @@ fn inspector_visible(state: &EditorWorkspace, view: ViewId) -> bool {
             && snapshot.host_of(group).and_then(|host| snapshot.hosts.get(&host)).is_some_and(|host| host.maximized.is_none_or(|max| max == group))
     })
 }
+pub(crate) fn browser_visible(state: &EditorWorkspace, view: ViewId) -> bool {
+    inspector_visible(state, view) && state.panels.browsers.contains_key(&view)
+}
+pub(crate) fn browser_entry_path(
+    world: &World,
+    view: ViewId,
+    path: &std::path::Path,
+    generation: u64,
+    action: &crate::asset_browser::Action,
+    folder: bool,
+) -> Option<std::path::PathBuf> {
+    let state = world.get_resource::<EditorWorkspace>()?;
+    if !browser_visible(state, view) {
+        return None;
+    }
+    state
+        .panels
+        .browsers
+        .get(&view)?
+        .entry_path(path, generation, action, folder)
+}
 pub(crate) fn select_context(
     world: &mut World,
     items: Vec<kedra_editor_context::SelectionItem>,
@@ -470,6 +559,11 @@ pub(crate) fn property_input(world: &mut World, event: kedra_ui::fields::TextFie
     let Some(view) = world
         .get::<crate::inspector::editing::SourceField>(event.entity)
         .map(|binding| binding.view)
+        .or_else(|| {
+            world
+                .get::<crate::inspector::environment::Binding>(event.entity)
+                .map(|binding| binding.view)
+        })
     else {
         return;
     };
@@ -481,6 +575,16 @@ pub(crate) fn property_input(world: &mut World, event: kedra_ui::fields::TextFie
             return;
         }
         if let kedra_ui::fields::TextFieldOutcome::HistoryRequested { redo } = event.outcome {
+            if world
+                .get::<crate::inspector::environment::Binding>(event.entity)
+                .is_some()
+            {
+                let state = &mut *state;
+                if let Some(panel) = state.panels.inspectors.get_mut(&view) {
+                    let _ = panel.environment_input(world, &mut state.documents, event);
+                }
+                return;
+            }
             if state
                 .panels
                 .inspectors
@@ -499,7 +603,14 @@ pub(crate) fn property_input(world: &mut World, event: kedra_ui::fields::TextFie
         let state = &mut *state;
         let capture = history_context::capture(world, state);
         if let Some(panel) = state.panels.inspectors.get_mut(&view)
-            && let Err(error) = panel.property_input(world, &mut state.documents, event)
+            && let Err(error) = if world
+                .get::<crate::inspector::environment::Binding>(event.entity)
+                .is_some()
+            {
+                panel.environment_input(world, &mut state.documents, event)
+            } else {
+                panel.property_input(world, &mut state.documents, event)
+            }
         {
             crate::views::fail(world, error);
         }
@@ -519,6 +630,11 @@ pub(crate) fn property_control(world: &mut World, event: kedra_inspector::contro
     let Some(view) = world
         .get::<crate::inspector::discrete::SourceControl>(event.entity)
         .map(|source| source.view)
+        .or_else(|| {
+            world
+                .get::<crate::inspector::environment::Binding>(event.entity)
+                .map(|binding| binding.view)
+        })
     else {
         return;
     };
@@ -532,7 +648,15 @@ pub(crate) fn property_control(world: &mut World, event: kedra_inspector::contro
         let state = &mut *state;
         let capture = history_context::capture(world, state);
         if let Some(panel) = state.panels.inspectors.get_mut(&view)
-            && let Err(error) = panel.property_control(world, &mut state.documents, event)
+            && let Err(error) = if world
+                .get::<crate::inspector::environment::Binding>(event.entity)
+                .is_some()
+            {
+                panel.environment_control(world, &mut state.documents, event);
+                Ok(())
+            } else {
+                panel.property_control(world, &mut state.documents, event)
+            }
         {
             crate::views::fail(world, error);
         }
@@ -631,7 +755,18 @@ fn tick(world: &mut World) {
                     panel.end_edit_groups(world);
                 }
                 notice(world, &state, &message);
+                for (id, browser) in &mut state.panels.browsers {
+                    browser.action(world, *id, crate::asset_browser::Action::Refresh)?;
+                }
             }
+            if let Some(root) = world
+                .get_resource::<crate::model::ProjectManager>()
+                .and_then(|manager| manager.project.as_ref())
+                .map(|project| project.assets.clone())
+            {
+                state.documents.advance_save_all(world, root)?;
+            }
+            source_history::sync_controls(world, &state);
             for (view, title) in state.documents.source_titles() {
                 if state.titles.get(&view) != Some(&title) {
                     state.titles.insert(view, title);
@@ -643,6 +778,7 @@ fn tick(world: &mut World) {
             if state.rendered != Some(state.layout.revision()) {
                 redraw(world, &mut state)?;
             }
+            component_menu::sync_docks(world, &state)?;
             if state.gesture.is_none() {
                 state.renderer.constrain(world, state.layout.snapshot());
             }

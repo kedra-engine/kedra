@@ -3,34 +3,26 @@ use std::fs;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test]
-fn manifest_growth_is_rejected_before_public_output_and_smaller_delivery_roundtrips() -> Result<()>
-{
+fn large_asset_inventory_roundtrips_without_source_file_size_limits() -> Result<()> {
     let temp = tempfile::tempdir()?;
     let source = temp.path().join("source");
     fs::create_dir(&source)?;
-    for n in 0..160 {
+    for n in 0..256 {
         fs::write(source.join(format!("data-{n:03}.txt")), "data")?;
     }
     kedra_import::initialize(&source, |_| {})?;
     let before = fs::read(source.join("data-000.txt.meta"))?;
-    let output = temp.path().join("too-large");
-    let error = kedra_import::build(&source, &output, "game", "game", |_| {})
-        .err()
-        .ok_or("oversized manifest was published")?;
-    assert!(
-        error.contains("manifest") && error.contains("64 KiB"),
-        "{error}"
-    );
-    assert!(!output.exists());
+    let output = temp.path().join("delivery");
+    kedra_import::build(&source, &output, "game", "game", |_| {})?;
+    let marker = output.join(kedra_assets::delivery::MANIFEST);
+    assert!(fs::metadata(&marker)?.len() > 65_536);
+    let (_, manifest) = kedra_assets::delivery::read_directory(&output, "game")?;
+    assert_eq!(manifest.assets.len(), 256);
     assert_eq!(fs::read(source.join("data-000.txt.meta"))?, before);
-    for n in 150..160 {
-        fs::remove_file(source.join(format!("data-{n:03}.txt")))?;
-        fs::remove_file(source.join(format!("data-{n:03}.txt.meta")))?;
-    }
-    let smaller = temp.path().join("smaller");
-    kedra_import::build(&source, &smaller, "game", "game", |_| {})?;
-    let (_, manifest) = kedra_assets::delivery::read_directory(&smaller, "game")?;
-    assert_eq!(manifest.assets.len(), 150);
+    let published = fs::read(&marker)?;
+    assert!(kedra_import::build(&source, &output, "game", "game", |_| {}).is_err());
+    assert_eq!(fs::read(&marker)?, published);
+    assert_eq!(fs::read(source.join("data-000.txt.meta"))?, before);
     Ok(())
 }
 

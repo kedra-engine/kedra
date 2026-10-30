@@ -15,6 +15,9 @@ pub(crate) struct Target {
     pub node: NodeAddress,
 }
 impl Documents {
+    pub(crate) fn root_target(&self, document: DocumentId) -> Option<Target> {
+        self.target(document, self.compiled.get(&document)?.graph().root.clone())
+    }
     pub(crate) fn refresh_inspection(
         &mut self,
         types: &TypeRegistry,

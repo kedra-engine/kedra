@@ -18,6 +18,8 @@ separator before matching them, including Bevy-resolved relative CSS imports and
 UUID references on Windows. This does not permit traversal or absolute paths;
 backslashes remain invalid delivery references on Unix.
 
+Delivery manifests have a separate 16 MiB inventory budget, shared by producers
+and readers; repository source-file growth limits do not apply to generated inventories.
 Reads stop at the declared size plus one byte before hashing. Declarations are
 limited to 256 MiB per data member and 64 KiB per metadata member. Native filesystem
 members (including the manifest) must be regular files inside the canonical root;

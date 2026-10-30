@@ -20,6 +20,8 @@ use held::HeldInputs;
 const ACTIVATION_TIMEOUT: Duration = Duration::from_secs(8);
 
 #[cfg(test)]
+mod click_tests;
+#[cfg(test)]
 #[path = "input_tests.rs"]
 mod lifecycle_tests;
 #[cfg(test)]
@@ -60,7 +62,7 @@ enum Step {
     FocusWindow,
     AwaitFocus(Duration),
     Move(Vec2),
-    Button(bool),
+    Button(MouseButton, bool),
     Wheel(Vec2),
     Keys(Vec<KeyboardInput>),
     CloseWindow,
@@ -94,10 +96,14 @@ enum Input {
     },
     Button {
         pressed: bool,
+        #[serde(default)]
+        button: PointerButton,
     },
     Click {
         element: Option<String>,
         position: Option<[f32; 2]>,
+        #[serde(default)]
+        button: PointerButton,
     },
     Move {
         position: [f32; 2],
@@ -115,6 +121,23 @@ enum Input {
     Text {
         text: String,
     },
+}
+#[derive(Default, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum PointerButton {
+    #[default]
+    Left,
+    Right,
+    Middle,
+}
+impl From<PointerButton> for MouseButton {
+    fn from(button: PointerButton) -> Self {
+        match button {
+            PointerButton::Left => Self::Left,
+            PointerButton::Right => Self::Right,
+            PointerButton::Middle => Self::Middle,
+        }
+    }
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -165,7 +188,7 @@ pub(crate) fn request(In(value): In<Option<Value>>, world: &mut World) -> BrpRes
     match &request.input {
         Input::Move { .. }
         | Input::Wheel { .. }
-        | Input::Button { pressed: false }
+        | Input::Button { pressed: false, .. }
         | Input::Modifier { pressed: false, .. } => {}
         _ => held.validate_window(window).map_err(crate::invalid)?,
     }
@@ -203,10 +226,14 @@ pub(crate) fn request(In(value): In<Option<Value>>, world: &mut World) -> BrpRes
                 window,
             }]));
         }
-        Input::Button { pressed } => {
-            steps.push_back(Step::Button(pressed));
+        Input::Button { pressed, button } => {
+            steps.push_back(Step::Button(button.into(), pressed));
         }
-        Input::Click { element, position } => {
+        Input::Click {
+            element,
+            position,
+            button,
+        } => {
             if held.mouse_held() {
                 return Err(crate::invalid(
                     "Release the injected pointer hold before clicking",
@@ -219,7 +246,12 @@ pub(crate) fn request(In(value): In<Option<Value>>, world: &mut World) -> BrpRes
                 (None, Some(at)) => point(world, window, at).map_err(crate::invalid)?,
                 _ => return Err(crate::invalid("Provide exactly one of element or position")),
             };
-            steps.extend([Step::Move(at), Step::Button(true), Step::Button(false)]);
+            let button = MouseButton::from(button);
+            steps.extend([
+                Step::Move(at),
+                Step::Button(button, true),
+                Step::Button(button, false),
+            ]);
         }
         Input::Move { position } => steps.push_back(Step::Move(
             point(world, window, position).map_err(crate::invalid)?,
@@ -232,11 +264,11 @@ pub(crate) fn request(In(value): In<Option<Value>>, world: &mut World) -> BrpRes
             }
             let from = point(world, window, from).map_err(crate::invalid)?;
             let to = point(world, window, to).map_err(crate::invalid)?;
-            steps.extend([Step::Move(from), Step::Button(true)]);
+            steps.extend([Step::Move(from), Step::Button(MouseButton::Left, true)]);
             for n in 1..=8 {
                 steps.push_back(Step::Move(from.lerp(to, n as f32 / 8.)));
             }
-            steps.push_back(Step::Button(false));
+            steps.push_back(Step::Button(MouseButton::Left, false));
         }
         Input::Wheel { delta } => {
             if !delta.iter().all(|v| v.is_finite() && v.abs() <= 10000.) {
@@ -506,8 +538,8 @@ fn inject(world: &mut World) {
                     world.write_message(event.clone());
                     world.write_message(WindowEvent::CursorMoved(event));
                 }
-                Step::Button(down) => {
-                    if let Err(error) = held.button(world, window, down) {
+                Step::Button(button, down) => {
+                    if let Err(error) = held.button(world, window, button, down) {
                         fail(world, &mut queue, error);
                     }
                 }

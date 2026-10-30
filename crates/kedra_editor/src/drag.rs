@@ -10,6 +10,7 @@ use bevy::{
 };
 pub use kedra_editor_context::DragPayload;
 use kedra_editor_context::SelectionItem;
+mod feedback;
 #[cfg(test)]
 mod tests;
 #[derive(Component)]
@@ -25,10 +26,20 @@ pub(crate) struct ContextTarget(pub kedra_docking::model::ViewId);
 pub(crate) fn install(app: &mut App) {
     app.add_message::<PointerInput>()
         .add_systems(Update, pointer_cancel)
+        .add_systems(PostUpdate, feedback::update)
         .add_observer(node_start)
         .add_observer(end)
         .add_observer(cancel)
         .add_observer(context_drop);
+}
+pub(crate) fn active(world: &mut World) -> Option<(Entity, DragPayload)> {
+    let owners: Vec<_> = world
+        .query_filtered::<Entity, With<Dragged>>()
+        .iter(world)
+        .collect();
+    owners
+        .into_iter()
+        .find_map(|owner| payload(world, owner).map(|payload| (owner, payload)))
 }
 /// Begin a native tool drag with already admitted logical references. This captures
 /// no authoring grant; retired UI owners and unavailable payloads refuse atomically.

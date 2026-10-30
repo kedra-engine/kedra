@@ -1,0 +1,21 @@
+(
+    version: 1,
+    id: "bea5367c-cf7c-4a38-a6e4-626a04753b7a",
+    kind: Prefab,
+    title: "SpawnPad",
+    root: "92d0fcc0-1448-420d-a411-2279955bcea8",
+    base: None,
+    nodes: [
+        (
+            id: "92d0fcc0-1448-420d-a411-2279955bcea8",
+            name: "SpawnPad",
+            parent: None,
+            components: {
+                "scene.model": (version: 1, value: (scene:Path("game://models/platform_2x2x1_blue.glb#Scene0"))),
+            },
+        ),
+    ],
+    instances: [],
+    overrides: [],
+    ports: {},
+)

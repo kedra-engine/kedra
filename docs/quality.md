@@ -19,9 +19,11 @@ evidence categories. Thin utilities use real invocations, not upstream-tool self
   This includes minimal scene/asset/UI libraries and shipping diagnostic-absence
   tests in the unoptimized, debug-assertions-disabled `release-boundary` profile.
   Each Cargo process is checked separately; a later success cannot hide a failure.
-- File growth: 1000 lines per authored UTF-8 file and 64 KiB per repository file,
+- File growth: 1000 lines and 64 KiB per authored UTF-8 file,
   including comments/blank lines. Byte limits also catch compressed one-line code.
-  Images have no path, extension or directory exemption from the byte limit.
+  Binary assets must use Git LFS and be hydrated; their object bytes are outside
+  the authored-text budget. Text cannot bypass the gate through LFS attributes.
+  See [ADR 0049](decisions/0049-binary-assets-in-lfs.md).
 - Dependency license/advisory/source policy via cargo-deny; Gitleaks secret scanning.
 - Markdown lint through rumdl and local links through Lychee.
 - Documentation-site frozen install/audit, EN/RU page pairs, VitePress build,

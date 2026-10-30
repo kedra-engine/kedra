@@ -6,6 +6,7 @@ use kedra_scene::{
     document::PrefabDocument,
     spatial::{Primitive, Surface},
 };
+use std::collections::BTreeMap;
 
 struct NoLoad;
 impl LoadFromPath for NoLoad {
@@ -99,6 +100,9 @@ pub(super) fn empty(world: &mut World) -> View {
         lifecycle: default(),
         elapsed: 0.,
         raw_model: false,
+        source_removed: false,
+        source_layer: 0,
+        requested_source: None,
     }
 }
 

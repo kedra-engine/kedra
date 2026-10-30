@@ -5,7 +5,7 @@ use bevy::{prelude::*, reflect::TypeRegistry};
 
 /// Bounded native primitive specification; consumers materialize native Bevy meshes.
 #[derive(Component, Clone, Reflect)]
-#[reflect(Component)]
+#[reflect(Component, Default)]
 pub enum Primitive {
     /// Positive full extents in local scene units.
     Cuboid {
@@ -18,11 +18,16 @@ pub enum Primitive {
         radius: f32,
     },
 }
+impl Default for Primitive {
+    fn default() -> Self {
+        Self::Cuboid { size: Vec3::ONE }
+    }
+}
 
 /// Opaque standard-surface data, separate from hooked renderer components.
 /// Texture handles retain native dependency/subasset semantics. No live material is saved.
 #[derive(Component, Clone, Reflect)]
-#[reflect(Component)]
+#[reflect(Component, Default)]
 pub struct Surface {
     /// Linear or sRGB native color; all channels must be finite and within 0..=1.
     pub color: Color,
@@ -33,16 +38,34 @@ pub struct Surface {
     /// Native perceptual roughness in 0..=1.
     pub roughness: f32,
 }
+impl Default for Surface {
+    fn default() -> Self {
+        Self {
+            color: Color::srgb(0.8, 0.8, 0.8),
+            texture: None,
+            metallic: 0.,
+            roughness: 0.7,
+        }
+    }
+}
 
 /// Directional illumination, interpreted along the node's native local -Z axis.
 /// Shadows are deferred; inserting this source data executes no renderer hooks.
 #[derive(Component, Clone, Reflect)]
-#[reflect(Component)]
+#[reflect(Component, Default)]
 pub struct Sun {
     /// Finite color channels in 0..=1.
     pub color: Color,
     /// Illuminance in lux, 0..=1000000.
     pub illuminance: f32,
+}
+impl Default for Sun {
+    fn default() -> Self {
+        Self {
+            color: Color::WHITE,
+            illuminance: 10000.,
+        }
+    }
 }
 
 /// A static native model scene. A viewer must not activate imported cameras,
@@ -52,6 +75,46 @@ pub struct Sun {
 pub struct Model {
     /// Native scene subasset, for example `game://ship.glb#Scene0`.
     pub scene: Handle<WorldAsset>,
+}
+
+/// Authored perspective camera settings. This inert component owns no window or
+/// render target; hosts choose when to activate a camera. Scene View keeps its
+/// navigation camera independent of authored cameras.
+#[derive(Component, Clone, Reflect)]
+#[reflect(Component, Default)]
+pub struct SceneCamera {
+    /// Vertical field of view in radians, strictly between 0 and pi.
+    pub fov: f32,
+    /// Positive near clipping distance, smaller than `far`.
+    pub near: f32,
+    /// Far clipping distance, finite and at most 1000000 scene units.
+    pub far: f32,
+}
+impl Default for SceneCamera {
+    fn default() -> Self {
+        Self {
+            fov: std::f32::consts::FRAC_PI_4,
+            near: 0.1,
+            far: 1000.,
+        }
+    }
+}
+fn camera(value: &dyn PartialReflect) -> Result<()> {
+    let v = SceneCamera::from_reflect(value).ok_or_else(|| failure("invalid camera"))?;
+    if !v.fov.is_finite()
+        || !(0.0..std::f32::consts::PI).contains(&v.fov)
+        || v.fov == 0.
+        || !v.near.is_finite()
+        || !v.far.is_finite()
+        || v.near <= 0.
+        || v.far <= v.near
+        || v.far > 1_000_000.
+    {
+        return Err(failure(
+            "camera requires a finite field of view in (0, pi) and 0 < near < far <= 1000000",
+        ));
+    }
+    Ok(())
 }
 
 fn color(value: Color) -> bool {
@@ -118,7 +181,8 @@ fn sun(value: &dyn PartialReflect) -> Result<()> {
 
 /// Register version-1 spatial data in the existing policy/Bevy registry.
 /// Call once per policy set; duplicate registration returns an error. These
-/// schemas have concrete renderer consumers but add no projection or simulation.
+/// schemas have authoring/preview consumers but add no projection or simulation;
+/// authored camera activation remains host-owned.
 /// Invalid dimensions, transforms or lighting fail compilation before live writes.
 pub fn register(types: &mut TypeRegistry, policies: &mut ComponentPolicies) -> Result<()> {
     policies.register::<crate::environment::SceneEnvironment>(
@@ -131,6 +195,7 @@ pub fn register(types: &mut TypeRegistry, policies: &mut ComponentPolicies) -> R
     policies.register::<Primitive>(types, "scene.primitive", 1, primitive)?;
     policies.register::<Surface>(types, "scene.surface", 1, surface)?;
     policies.register::<Sun>(types, "scene.sun", 1, sun)?;
+    policies.register::<SceneCamera>(types, "scene.camera", 1, camera)?;
     policies.register::<Model>(types, "scene.model", 1, |_| Ok(()))
 }
 
@@ -143,6 +208,24 @@ mod tests {
         let mut policies = ComponentPolicies::default();
         register(&mut types, &mut policies)?;
         assert!(register(&mut types, &mut policies).is_err());
+        assert!(camera(&SceneCamera::default()).is_ok());
+        for invalid in [
+            SceneCamera {
+                fov: f32::NAN,
+                ..default()
+            },
+            SceneCamera {
+                near: 0.,
+                ..default()
+            },
+            SceneCamera {
+                near: 10.,
+                far: 1.,
+                ..default()
+            },
+        ] {
+            assert!(camera(&invalid).is_err());
+        }
         assert!(primitive(&Primitive::Sphere { radius: 0. }).is_err());
         assert!(
             primitive(&Primitive::Cuboid {

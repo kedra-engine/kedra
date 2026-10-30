@@ -1,4 +1,6 @@
 //! Window-aware gestures, candidate measurement and native control bindings.
+#[path = "dock_keyboard.rs"]
+mod keyboard;
 #[path = "dock_menu.rs"]
 mod menu;
 use super::*;
@@ -18,15 +20,26 @@ pub(super) fn preview_ready(state: &EditorWorkspace) -> bool {
         .is_some_and(|measurement| measurement.ready >= 3)
 }
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone)]
 pub(super) enum Action {
+    BrowserCreate(ViewId, kedra_scene::document::DocumentKind),
+    EnvironmentCreate(ViewId),
+    BrowserImport(ViewId),
+    Submenu(Vec<kedra_ui::popup::Entry<Action>>),
+    Folder(ViewId, super::folders::Mode, Option<std::path::PathBuf>),
+    Node(super::hierarchy_menu::Command),
+    Component(crate::documents::components::ComponentCommand),
+    ComponentMenu(crate::documents::components::ComponentCommand),
+    Components(ViewId, bool),
     SourceHistory(bool),
-    DiscardSources,
     SaveSource,
+    SaveAll,
+    Exit,
     Panels,
     Reset,
     Float(NodeId),
     FloatView(ViewId),
+    CloseView(ViewId),
     Maximize(NodeId),
     Redock(NodeId),
     Hide(NodeId),
@@ -42,13 +55,13 @@ pub(super) enum Action {
     InspectorRaw(ViewId),
     InspectorDetails(ViewId),
     SceneCommand(ViewId, crate::scene_view::camera::Command),
-    SceneMenu(ViewId, super::scene_menu::Kind),
-    SceneProjection(ViewId, bool),
+    SceneMenu(ViewId),
+    SceneTransform(Option<super::manipulation::Mode>),
+    SceneSnap,
     SceneGrid(ViewId),
     SceneLight(ViewId, bool),
     SceneClear(ViewId),
     SceneOverlays(ViewId),
-    SceneFocus(ViewId),
     SceneAxis(ViewId, crate::scene_view::orientation::Axis),
 }
 #[derive(Resource, Default)]
@@ -114,7 +127,7 @@ pub(super) fn activate(
         return;
     }
     let control = controls.get(event.entity).ok().copied();
-    let action = actions.get(event.entity).ok().copied();
+    let action = actions.get(event.entity).ok().cloned();
     if control.is_none() && action.is_none() {
         return;
     }
@@ -161,13 +174,73 @@ fn dispatch(world: &mut World, control: Option<Control>, action: Option<Action>,
                 }
             }
             if let Some(action) = action {
-                dismiss(world, &mut state);
+                let anchor = if matches!(action, Action::Components(_, _)) {
+                    state
+                        .menu
+                        .first()
+                        .and_then(|menu| world.get::<ChildOf>(*menu))
+                        .map(ChildOf::parent)
+                        .unwrap_or(anchor)
+                } else {
+                    anchor
+                };
+                if !matches!(action, Action::Submenu(_)) {
+                    dismiss(world, &mut state);
+                }
                 match action {
+                    Action::Submenu(entries) => {
+                        super::document_menu::open(world, anchor, entries)?;
+                    }
+                    Action::BrowserCreate(view, kind) => {
+                        if !inspector_visible(&state, view)
+                            || !state.panels.browsers.contains_key(&view)
+                        {
+                            return Err("Asset Browser is no longer visible.".into());
+                        }
+                        state.documents.origin = Some(view);
+                        super::source_history::new_document(world, &mut state, kind)?;
+                    }
+                    Action::BrowserImport(view) => {
+                        super::asset_import::choose(world, &mut state, view)
+                    }
+                    Action::EnvironmentCreate(view) => {
+                        super::document_create::open_environment(world, &state, view)?;
+                    }
+                    Action::Folder(view, mode, target) => {
+                        super::folders::open(world, &mut state, view, mode, target)?
+                    }
+                    Action::Components(view, add) => {
+                        super::component_menu::open(world, &mut state, anchor, view, add)?
+                    }
+                    Action::Component(command) => {
+                        super::source_history::component(world, &mut state, &command)?
+                    }
+                    Action::ComponentMenu(command) => {
+                        let menu = popup::attach(world, anchor)?;
+                        state.menu.push(menu);
+                        super::document_menu::populate(
+                            world,
+                            menu,
+                            "component-menu",
+                            vec![kedra_ui::popup::Entry::Command {
+                                label: "Remove component".into(),
+                                command: Action::Component(command),
+                            }],
+                        )?;
+                    }
+                    Action::Node(command) => {
+                        super::hierarchy_menu::dispatch(world, &mut state, command)?
+                    }
                     Action::SourceHistory(redo) => {
                         super::source_history::apply(world, &mut state, redo)?
                     }
-                    Action::DiscardSources => super::source_history::discard(world, &mut state)?,
                     Action::SaveSource => super::source_history::save(world, &mut state)?,
+                    Action::SaveAll => super::source_history::save_all(world, &mut state)?,
+                    Action::Exit => {
+                        world.write_message(bevy::window::WindowCloseRequested {
+                            window: state.window,
+                        });
+                    }
                     Action::SceneCommand(view, command) => {
                         super::scene_input::cancel(world);
                         if let Some(camera) = state
@@ -179,12 +252,11 @@ fn dispatch(world: &mut World, control: Option<Control>, action: Option<Action>,
                             crate::scene_view::camera::command(world, camera, command)?;
                         }
                     }
-                    Action::SceneMenu(view, kind) => {
-                        super::scene_menu::open(world, &mut state, view, anchor, kind)?;
+                    Action::SceneMenu(view) => {
+                        super::scene_menu::open(world, &mut state, view, anchor)?;
                     }
-                    Action::SceneProjection(view, orthographic) => {
-                        super::scene_tools::projection(world, &state, view, orthographic)?;
-                    }
+                    Action::SceneTransform(mode) => super::manipulation::select(world, mode),
+                    Action::SceneSnap => super::manipulation::toggle_snap(world),
                     Action::SceneGrid(view) => {
                         if let Some(scene) = state.panels.scenes.get_mut(&view) {
                             scene.grid(world);
@@ -198,11 +270,6 @@ fn dispatch(world: &mut World, control: Option<Control>, action: Option<Action>,
                             scene.toggle_overlays(world);
                         }
                     }
-                    Action::SceneFocus(view) => {
-                        if let Some(scene) = state.panels.scenes.get(&view) {
-                            scene.focus_canvas(world);
-                        }
-                    }
                     Action::SceneAxis(view, axis) => {
                         super::scene_tools::align(world, &state, view, axis)?;
                     }
@@ -212,6 +279,7 @@ fn dispatch(world: &mut World, control: Option<Control>, action: Option<Action>,
                         }
                     }
                     Action::Panels => menu(world, &mut state, None, anchor)?,
+                    Action::CloseView(view) => apply(world, &mut state, Command::Hide(view))?,
                     Action::Reset => {
                         cancel(world, &mut state);
                         panels::reset(world, &mut state)?;
@@ -352,7 +420,9 @@ pub(super) fn dismiss(world: &mut World, state: &mut EditorWorkspace) {
         focus.set(owner, bevy::input_focus::FocusCause::Navigated);
     }
     for root in state.menu.drain(..) {
-        world.despawn(root);
+        if let Ok(entity) = world.get_entity_mut(root) {
+            entity.despawn();
+        }
     }
 }
 
@@ -382,11 +452,20 @@ pub(super) fn tick(world: &mut World, state: &mut EditorWorkspace) -> Result<(),
     state
         .menu
         .retain(|entity| world.entities().contains(*entity));
-    keyboard(world, state)?;
+    keyboard::keyboard(world, state)?;
     let keys = world.resource::<ButtonInput<KeyCode>>();
     if keys.just_pressed(KeyCode::Escape) {
         cancel(world, state);
-        dismiss(world, state);
+        // Cascades handle Escape through focused native input, one level at a time.
+        // Do not also dismiss their surviving parent in this polling handler.
+        if world
+            .query::<&kedra_ui::popup::cascade::Cascade>()
+            .iter(world)
+            .next()
+            .is_none()
+        {
+            dismiss(world, state);
+        }
         return Ok(());
     }
     if state.pending.is_some() {
@@ -724,104 +803,11 @@ pub(super) fn selected_view(state: &EditorWorkspace, selection: Selection) -> Op
         },
     }
 }
-fn keyboard(world: &mut World, state: &mut EditorWorkspace) -> Result<(), String> {
-    let focus = world.resource::<bevy::input_focus::InputFocus>().get();
-    if let Some(divider) = focus
-        .and_then(|entity| world.get::<Divider>(entity))
-        .copied()
-    {
-        let keys = world.resource::<ButtonInput<KeyCode>>();
-        let delta = if keys.any_just_pressed([KeyCode::ArrowRight, KeyCode::ArrowDown]) {
-            0.02
-        } else if keys.any_just_pressed([KeyCode::ArrowLeft, KeyCode::ArrowUp]) {
-            -0.02
-        } else {
-            0.
-        };
-        if delta != 0.
-            && let Some(Node::Split {
-                fraction,
-                axis,
-                first,
-                second,
-            }) = state.layout.snapshot().nodes.get(&divider.split)
-        {
-            let bounds = state
-                .renderer
-                .group(divider.split)
-                .and_then(|root| rect(world, root))
-                .ok_or("Divider bounds are unavailable")?;
-            let a = state
-                .renderer
-                .minimum(world, state.layout.snapshot(), *first);
-            let b = state
-                .renderer
-                .minimum(world, state.layout.snapshot(), *second);
-            let size = (if *axis == Axis::Horizontal {
-                bounds.width()
-            } else {
-                bounds.height()
-            }) - state.renderer.divider_size(world, divider.split, *axis);
-            let (min, max) = if *axis == Axis::Horizontal {
-                (a.x / size, 1. - b.x / size)
-            } else {
-                (a.y / size, 1. - b.y / size)
-            };
-            if min < max {
-                let fraction = (fraction + delta).clamp(min.max(0.001), max.min(0.999));
-                apply(
-                    world,
-                    state,
-                    Command::Resize {
-                        split: divider.split,
-                        fraction,
-                    },
-                )?;
-            }
-        }
-        return Ok(());
-    }
-    let view = focus
-        .and_then(|entity| world.get::<Control>(entity))
-        .and_then(|control| match control {
-            Control::Tab(view) => Some(*view),
-            _ => None,
-        });
-    let Some(view) = view else {
-        return Ok(());
-    };
-    let Some((group, index)) = state.layout.snapshot().location(view) else {
-        return Ok(());
-    };
-    let Some(Node::Group { tabs, .. }) = state.layout.snapshot().nodes.get(&group) else {
-        return Ok(());
-    };
-    let keys = world.resource::<ButtonInput<KeyCode>>();
-    let next = if keys.just_pressed(KeyCode::ArrowRight) {
-        Some((index + 1) % tabs.len())
-    } else if keys.just_pressed(KeyCode::ArrowLeft) {
-        Some((index + tabs.len() - 1) % tabs.len())
-    } else if keys.just_pressed(KeyCode::Home) {
-        Some(0)
-    } else if keys.just_pressed(KeyCode::End) {
-        Some(tabs.len() - 1)
-    } else {
-        None
-    };
-    if let Some(next) = next {
-        let view = tabs[next];
-        apply(world, state, Command::Activate(view))?;
-        if let Some(label) = state.renderer.label(view) {
-            world
-                .resource_mut::<bevy::input_focus::InputFocus>()
-                .set(label, bevy::input_focus::FocusCause::Navigated);
-        }
-    }
-    Ok(())
-}
 pub(super) fn cancel(world: &mut World, state: &mut EditorWorkspace) {
     super::feedback::clear(world, state);
     state.gesture = None;
+    // A cancelled gesture is not the first click of a preferred-ratio reset.
+    state.last_divider = None;
     clear_measurement(world, state);
     state.rendered = None;
 }

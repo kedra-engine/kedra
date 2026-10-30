@@ -2,8 +2,8 @@
 
 Source sessions implement part of
 [ADR 0012](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0012-document-sessions-and-selection.md),
-with in-memory Transform/UiCaption editing/history, but without general editing,
-settlement or new-document publication. Existing-source group Save is described below. See
+with in-memory Transform/UiCaption editing/history, New scene/prefab and document-group Save,
+but without general visual editing or automatic field settlement. See
 [Editor workspace](../../../manual/editor/index.md) for Open, tabs and external changes.
 
 ## Authority and identity
@@ -99,6 +99,35 @@ paths and labels remain intact. These handles authorize neither rendering nor Sa
 
 ## Asynchronous Open and replacement
 
+New scene/prefab collects a filename in an editor-owned modal scoped to the current Assets folder, then
+uses `source::create_document` on an isolated candidate of the current workspace. It
+publishes one named history entry and opens through the ordinary document-view path.
+Existing document history is retained. Cancellation and invalid paths publish nothing.
+Save is separate. Creation completion belongs to its owning Documents/project lifetime;
+pending creation blocks Open, history/discard and project close. Undo/Redo retains UUIDs
+and paths; removed sources stop participating in Hierarchy and preview. Discard restores
+the acknowledged workspace and its path reservations. See [ADR 0047][creation].
+
+Hierarchy's content context menu offers empty nodes, primitives, directional lights
+and authored perspective-camera settings for an active source.
+Each preset stages a child and its registered components through `SourceEdit` and commits
+one history entry. The selected node is the parent; UI parents refuse spatial children.
+Undo/Redo preserves child identity, and only explicit Save publishes bytes. Structural
+preview changes restart the ordinary preparation/readiness lifecycle; supported property
+changes retain the existing in-place refresh path.
+
+Inspector's header Add control and per-component Remove menus discover commands from the source schema
+registrations and the retained Inspector target, including locked targets. Commands pin
+the scope and revision inventory; stale commands refuse without source changes. Addition
+uses Bevy `ReflectDefault` and the schema validator, not an editor-maintained type list.
+A type without a registered default requires an explicit initial value and currently
+reports that requirement instead of inventing resource handles or component data.
+
+Dropping one admitted GLB from Assets on a Hierarchy node stages a model child with a
+Transform in one source transaction. Native GLTF metadata supplies its default scene
+(or sole scene); ambiguous multi-scene files refuse. The original parent and revisions
+remain pinned while metadata loads. Delivery membership is rechecked before publication.
+
 Browser selection/focus does not activate a document. Explicit Open passes the exact relative
 locator to the project coordinator. Repeated Open requests for the same pending locator share
 its request. A later request for another locator replaces the document to activate. Discovery
@@ -127,23 +156,30 @@ source validity. PNG/static-GLB Open uses raw-asset views, not invented document
 activating those views clears the active source target. [Hierarchy](hierarchy.md) and
 [Inspector](inspector.md) consume the same scoped source selection without needing a frame.
 
-Hide/Close retains accepted sources and descriptors, reachable through Panels or Open. Mixed
+Hide/Close retains accepted sources and descriptors, reachable through Windows or Open. Mixed
 floating-host Close retains hidden source views and all shared working documents. Transform
 drafts remain retained in Inspector; source history refuses unresolved drafts. Main-window
-Close is vetoed before desktop close admission while input or unsaved sources remain.
-The explicit **Discard all unsaved source changes** menu action restores the admitted
-source baseline without rereading/writing disk, clears history and retires all field/scope bindings.
+Close is gated before desktop close admission while input or unsaved sources remain.
+The close dialog offers **Save and exit**, **Exit without saving** and **Cancel**.
+Save waits for source publication; drafts must first be accepted or cancelled.
+Exit without saving restores the acknowledged source baseline without rereading/writing
+disk, clears history and retires field/scope bindings. Pending publication blocks discard.
 Automatic blur settlement or crash recovery is not implied by this close policy.
-Restart restores inactive placeholders only: preferences do not supply trusted document content
-or automatically admit stored paths. Reopen through Assets validates the current scope and
-reuses the descriptor. Unsaved-session recovery, external merge and gameplay execution are
+Restart restores descriptors; visible source tabs request ordinary current-inventory
+admission automatically, and inactive tabs request it when selected. Preferences supply
+locators, never trusted content. A failed attempt displays its error without a retry loop;
+explicit Open through Assets can retry using the same descriptor.
+Unsaved-session recovery, external merge and gameplay execution are
 not implemented. Interrupted authorized Save groups require explicit recovery before Open.
 
 ## Save ownership
 
-`documents::saving` pins `prepare_existing_save` for the active source and runs the
-separate `kedra_authoring_fs` writer on the IO pool. Source inventory and catalog remain
-unchanged; the profile refuses new/deleted files and pins complete coupled groups.
+`documents::saving` pins `prepare_document_save` for the active source and runs
+`kedra_authoring_fs::commit_documents` on the IO pool. Complete coupled groups may include
+new sources and source-history removals. Runtime catalogs and sidecars remain untouched;
+removal with an existing sidecar refuses. Parents must already exist. New names publish
+exclusively. Inventory changes need an index-free source scope. The authoring library's
+separate `prepare_existing_save` profile retains its inventory-preserving contract.
 All Inspector drafts must be settled explicitly. Save does not grant Luau filesystem access.
 
 The writer checks complete inventory/hash preconditions, preserves permissions and uses
@@ -155,7 +191,8 @@ working revisions stay dirty. The original renderer-delivery admission stays pin
 
 Known refusal releases the operation. An uncertain outcome retains exact pending bytes and
 blocks discard/close; Retry Save reconciles the same request, including already-published
-bytes. Save does not build assets or clear source history. Admission holds a shared lease
+bytes/absence. Save refreshes Assets but does not build assets or clear source history.
+Dirty-state/close checks include removed saved documents. Admission holds a shared lease
 and refuses unfinished groups. After restart use `kedra recover-save <source-root>`;
 Open never writes recovery data. See
 [ADR 0039](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0039-existing-source-save-groups.md).
@@ -163,6 +200,8 @@ See [Save instructions](../../../manual/editor/inspector.md#save-active-document
 [ADR 0037](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0037-existing-document-save.md).
 
 ## Owners and verification
+
+[creation]: https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0047-document-creation-and-history-save.md
 
 Production owners are
 [`documents/mod.rs`](https://github.com/kedra-engine/kedra/blob/main/crates/kedra_editor/src/documents/mod.rs),

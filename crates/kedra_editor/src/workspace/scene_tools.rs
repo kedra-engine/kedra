@@ -3,34 +3,6 @@
 use super::*;
 use crate::scene_view::orientation::Axis;
 
-pub(super) fn projection(
-    world: &mut World,
-    state: &EditorWorkspace,
-    view: ViewId,
-    orthographic: bool,
-) -> Result<(), String> {
-    super::scene_input::cancel(world);
-    if let Some(camera) = state
-        .panels
-        .scenes
-        .get(&view)
-        .and_then(|scene| scene.navigation(world))
-    {
-        let current = matches!(
-            world.get::<bevy::camera::Projection>(camera),
-            Some(bevy::camera::Projection::Orthographic(_))
-        );
-        if current != orthographic {
-            crate::scene_view::camera::command(
-                world,
-                camera,
-                crate::scene_view::camera::Command::Projection,
-            )?;
-        }
-    }
-    Ok(())
-}
-
 pub(super) fn align(
     world: &mut World,
     state: &EditorWorkspace,
@@ -52,8 +24,6 @@ pub(super) fn align(
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(super) enum Tool {
     Orbit,
-    Pan,
-    Zoom,
     Axis(Axis),
     Block,
 }
@@ -125,14 +95,10 @@ pub(super) fn at(
         return Some(target);
     }
     for (name, tool) in [
-        ("zoom", Tool::Zoom),
-        ("pan", Tool::Pan),
         ("orbit", Tool::Orbit),
         ("frame", Tool::Block),
         ("projection", Tool::Block),
-        ("select-tool", Tool::Block),
         ("navigation", Tool::Block),
-        ("tool-rail", Tool::Block),
     ] {
         if let Some(entity) = scene.control(name)
             && hit::visible_at(world, entity, point, 0.)
@@ -149,13 +115,12 @@ pub(super) fn at(
 pub(super) struct DragControl;
 
 pub(super) fn bind(world: &mut World, view: &UiView, id: ViewId) -> Result<(), String> {
-    for (name, label) in [
-        ("orbit", "Drag to orbit view"),
-        ("zoom", "Drag to zoom view"),
-        ("pan", "Drag to pan view"),
-    ] {
+    {
+        let (name, label) = ("orbit", "Drag to orbit view");
         let entity = view.element(name).map_err(|e| e.to_string())?;
-        world.entity_mut(entity).insert(DragControl);
+        world
+            .entity_mut(entity)
+            .insert((DragControl, kedra_ui::tooltip::Tooltip(label.into())));
         if let Some(mut node) = world.get_mut::<bevy::a11y::AccessibilityNode>(entity) {
             node.set_label(label);
         }

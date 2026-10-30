@@ -68,7 +68,7 @@ pub(super) fn run(c: &Editor<'_>, assets: &Path, inspector: &str, prefix: &str) 
         c.node(&field.id)?.entity == field.entity && c.node(&field.id)?.value() == "Кедра-日本語",
         "Reorder replaced or rebound the moved input",
     )?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("reorder source Undo", || {
         Ok(projected(c, view, &selected)?["classes"] == json!(["hud-title", "Кедра-日本語"]))
     })?;
@@ -77,7 +77,7 @@ pub(super) fn run(c: &Editor<'_>, assets: &Path, inspector: &str, prefix: &str) 
             && c.node(&field.id)?.focused
             && value(c, prefix, "Кедра-日本語")?.id == field.id)
     })?;
-    c.menu(inspector, "Redo source edit")?;
+    c.main_menu("Redo")?;
     c.until("reorder source Redo", || {
         Ok(projected(c, view, &selected)?["classes"] == json!(["Кедра-日本語", "hud-title"]))
     })?;
@@ -93,14 +93,14 @@ pub(super) fn run(c: &Editor<'_>, assets: &Path, inspector: &str, prefix: &str) 
     c.until("immediate selected item removal", || {
         Ok(projected(c, view, &selected)?["classes"] == json!(["hud-title"]))
     })?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("removal Undo restores selected item and focus", || {
         Ok(
             projected(c, view, &selected)?["classes"] == json!(["hud-title", "Кедра-日本語"])
                 && value(c, prefix, "Кедра-日本語")?.focused,
         )
     })?;
-    c.menu(inspector, "Redo source edit")?;
+    c.main_menu("Redo")?;
     c.until("removal Redo retains survivor", || {
         Ok(projected(c, view, &selected)?["classes"] == json!(["hud-title"]))
     })?;
@@ -122,17 +122,16 @@ pub(super) fn run(c: &Editor<'_>, assets: &Path, inspector: &str, prefix: &str) 
         projected(c, view, &selected)?["classes"] == json!(["hud-title", "class"]),
         "Invalid class changed source",
     )?;
-    c.menu(inspector, "Hide group")?;
+    c.menu(inspector, "Close tab")?;
     c.until("hidden invalid class", || c.hidden(inspector))?;
     c.input(c.window()?, json!({"kind":"key","key":"save"}))?;
     c.input(c.window()?, json!({"kind":"close_window"}))?;
+    c.click("close-dialog/cancel")?;
     check(
         inventory(assets)? == before,
         "Hidden invalid class was saved or discarded",
     )?;
-    c.click("workspace/panels")?;
-    let show = c.find("Show Inspector", |node| node.caption() == "Show Inspector")?;
-    c.click(show.id.strip_suffix("/caption").unwrap_or(&show.id))?;
+    c.main_menu("Windows/Inspector")?;
     c.click("workspace/reset")?;
     check(
         c.wait_node(&invalid.id)?.entity == invalid.entity
@@ -158,7 +157,7 @@ pub(super) fn run(c: &Editor<'_>, assets: &Path, inspector: &str, prefix: &str) 
     )?;
     c.client.capture(c.window()?)?;
     let retained = value(c, prefix, "Кедра-日本語")?;
-    c.menu(inspector, "Float group")?;
+    c.menu(inspector, "Float tab")?;
     c.until("floating compact array", || {
         Ok(c.node(&retained.id)?.window()? != c.window()?)
     })?;
@@ -179,7 +178,7 @@ pub(super) fn run(c: &Editor<'_>, assets: &Path, inspector: &str, prefix: &str) 
     c.until("redocked compact array", || {
         Ok(c.node(&retained.id)?.window()? == c.window()?)
     })?;
-    c.menu(inspector, "Save active document")?;
+    c.main_menu("Save")?;
     c.until("direct collection Save", || {
         Ok(c.current_document()?["dirty"] == false
             && c.state()?["documents"]["save_pending"] == false
@@ -203,11 +202,11 @@ pub(super) fn run(c: &Editor<'_>, assets: &Path, inspector: &str, prefix: &str) 
             )?;
         }
     }
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("saved collection Undo", || {
         Ok(c.current_document()?["dirty"] == true)
     })?;
-    c.menu(inspector, "Discard all unsaved source changes")?;
+    c.main_menu("Redo")?;
     c.until("saved collection baseline", || {
         Ok(projected(c, view, &selected)?["classes"] == json!(["Кедра-日本語", "hud-title"]))
     })?;

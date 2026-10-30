@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 /// Reusable environment. Version 1 supports solid background and ambient light.
 /// Skyboxes/IBL are deliberately not accepted until native dependency preparation
 /// and view isolation are verified. No exposure, lights or entity graph lives here.
-#[derive(Asset, TypePath, Clone, Debug, Serialize, Deserialize)]
+#[derive(Asset, Reflect, Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Environment {
     /// Exact source schema version, currently 1.

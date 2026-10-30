@@ -13,7 +13,7 @@ For delivery details, see [Process and verify assets](../assets/pipeline.md).
 
 1. In Projects, select **New project**.
 2. Enter **Project name**, for example `My Game`.
-3. Set **Location** to an existing parent directory, using **Browse…** or entering its path.
+3. Set **Location** to an existing parent directory, using **Browse** or entering its path.
 4. Review the destination shown under **Create new folder**: the parent plus the project name.
 5. Select **Create & open**.
 
@@ -21,6 +21,15 @@ For example, selecting an existing `Projects` parent and the name `My Game` crea
 `Projects/My Game/kedra.toml` and an empty `Projects/My Game/assets/`.
 The editor enters the project workspace; there are no game sources or starter scene to inspect yet.
 See [Projects](index.md#the-project-manifest) for the resulting structure and manifest fields.
+
+To create the first scene, select **Create → Scene** in Assets or **New scene** in the panel menu.
+Use **Create → Prefab** with a `.prefab.ron` filename to create a prefab through the same workflow.
+Choose an unused filename ending in `.scene.ron` inside this project's `assets/` directory,
+for example `Arena.scene.ron`. The editor name form uses the current Assets folder;
+**Create** publishes the source before opening its clean tab.
+Subsequent edits require Ctrl/Cmd+S. The document can be reopened through Assets after
+restarting the editor. Empty scenes need no project asset delivery.
+See [scene creation and history](../editor/asset-browser.md#create-a-scene).
 
 Names retain Unicode, including names such as `Кедра 日本語`. They must fit within 160 UTF-8 bytes,
 not 160 characters. Empty names, surrounding whitespace, trailing dots, control characters,
@@ -33,9 +42,9 @@ Form validation checks availability but does not reserve the name; creation chec
 
 ## Open an existing project
 
-1. In Projects, select **Open folder…**.
+1. In Projects, select **Open folder**.
 2. Set **Project folder** to the directory containing `kedra.toml`, not to the manifest itself
-   or to its `assets/` child. You can use **Browse…**.
+   or to its `assets/` child. You can use **Browse**.
 3. Select **Open project**.
 
 The entry forms accept an absolute native directory path. They also expand `~` or `~/…`

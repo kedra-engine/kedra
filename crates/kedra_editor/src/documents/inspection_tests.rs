@@ -29,6 +29,7 @@ fn working_source_refresh_updates_locked_panel_controls_and_retires_removed_comp
     let text = document.serialize()?;
     let (scope, compiled) = source::admit(
         SourceSnapshot {
+            environments: Default::default(),
             namespace: "game".into(),
             generation: 1,
             documents: vec![SourceFile {
@@ -154,6 +155,7 @@ fn current_inspection_tracks_accepted_property_history_without_reopening_or_savi
     let text = document.serialize()?;
     let (scope, compiled) = source::admit(
         SourceSnapshot {
+            environments: Default::default(),
             namespace: "game".into(),
             generation: 1,
             documents: vec![SourceFile {
@@ -271,6 +273,7 @@ fn rejected_inspection_refresh_preserves_cache_sources_and_history_without_stale
     let text = document.serialize()?;
     let (scope, compiled) = source::admit(
         SourceSnapshot {
+            environments: Default::default(),
             namespace: "game".into(),
             generation: 1,
             documents: vec![SourceFile {
@@ -360,6 +363,7 @@ fn source_values_are_inspectable_without_rendering_and_missing_or_foreign_target
     );
     let text = document.serialize()?;
     let source = SourceSnapshot {
+        environments: Default::default(),
         namespace: "game".into(),
         generation: 1,
         documents: vec![SourceFile {
@@ -478,6 +482,7 @@ fn nested_field_overrides_keep_effective_values_and_field_level_source_provenanc
         }],
     });
     let source = SourceSnapshot {
+        environments: Default::default(),
         namespace: "game".into(),
         generation: 1,
         documents: [("child.prefab.ron", &child), ("parent.prefab.ron", &parent)]
@@ -602,6 +607,7 @@ fn optional_source_ports_are_not_presented_as_authored_none_or_runtime_entity_id
     );
     let text = document.serialize()?;
     let source = SourceSnapshot {
+        environments: Default::default(),
         namespace: "game".into(),
         generation: 1,
         documents: vec![SourceFile {

@@ -3,6 +3,80 @@ use super::*;
 use kedra_scene::document::Operation;
 
 impl SourceEdit {
+    /// Stage a child in the receiving document, including beneath a composed parent.
+    /// A fresh persistent ID is allocated once; commit/Undo/Redo retain it. Invalid
+    /// parents, stale leases or compilation failures leave the candidate unchanged.
+    /// Dropping this lease never publishes the returned node or writes files.
+    pub fn add_node(
+        &mut self,
+        documents: &Workspace,
+        parent: &SourceNode,
+        name: &str,
+        types: &TypeRegistry,
+        policies: &ComponentPolicies,
+    ) -> Result<SourceNode, String> {
+        if name.trim().is_empty() || name.len() > 1024 || name.chars().any(char::is_control) {
+            return Err(
+                "Node name must be nonempty, without control characters, and at most 1024 bytes"
+                    .into(),
+            );
+        }
+        let id = kedra_scene::document::NodeId::new();
+        self.structure(
+            documents,
+            parent,
+            Operation::AddNode(kedra_scene::document::Node {
+                id,
+                name: name.into(),
+                parent: Some(parent.address.clone()),
+                components: BTreeMap::new(),
+            }),
+            types,
+            policies,
+        )?;
+        Ok(SourceNode {
+            document: parent.document,
+            address: id.into(),
+            name: name.into(),
+        })
+    }
+
+    /// Add one registered component to an existing candidate node. Existing keys
+    /// refuse rather than replacing values. The complete typed catalog validates
+    /// versions, fields and references before staging; failure changes neither
+    /// candidate nor working state. Publication and Save remain separate.
+    pub fn add_component(
+        &mut self,
+        documents: &Workspace,
+        node: &SourceNode,
+        component: &str,
+        data: kedra_scene::document::ComponentData,
+        types: &TypeRegistry,
+        policies: &ComponentPolicies,
+    ) -> Result<(), String> {
+        if component.is_empty() || component.len() > 256 {
+            return Err("Component key requires 1..=256 bytes".into());
+        }
+        let compiled = self.compile(documents, types, policies)?;
+        let source = compiled
+            .get(&node.document)
+            .and_then(|prefab| prefab.graph().nodes.get(&node.address))
+            .ok_or("Edit node unavailable")?;
+        if source.components.contains_key(component) {
+            return Err("Component already exists on this node".into());
+        }
+        self.structure(
+            documents,
+            node,
+            Operation::SetComponent {
+                node: node.address.clone(),
+                component: component.into(),
+                data,
+            },
+            types,
+            policies,
+        )
+    }
     fn structure(
         &mut self,
         documents: &Workspace,
@@ -46,7 +120,8 @@ impl SourceEdit {
             policies,
         )
     }
-    /// Stage a move within one document/composition boundary. Cycles refuse.
+    /// Stage a move within one document: local nodes stay within their composition
+    /// boundary; complete nested instance roots may change parents. Cycles refuse.
     pub fn reparent(
         &mut self,
         documents: &Workspace,

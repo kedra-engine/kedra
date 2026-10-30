@@ -54,13 +54,28 @@ folder/tile sources use project tokens, not screenshot imagery. Exact UI-KIT SVG
 | `browser-filter.svg` | `38:440` |
 | `browser-search.svg` | `10:2419` |
 | `browser-folder.svg` | `10:2423`, regular slot |
+| `browser-folder-preview.svg` | `10:2423`, exact vector; native 54px processing for the tile preview slot |
 | `browser-folder-selected.svg` | `10:2423`, selected slot |
 
 Folder/search slots preserve composition exports without replacing older startup assets.
-Dynamic reference previews are not fake bundled thumbnails; source tiles use truthful type badges.
+Dynamic reference previews are not bundled thumbnails. PNG/static-GLTF tiles use
+generated cached snapshots; unsupported types retain truthful type badges.
 See [Asset Browser](../../../manual/editor/asset-browser.md).
 
 ## Headers and update indicator
+
+Scene View's existing viewport panel hosts Move, Rotate, Scale and step snapping as icon-only
+controls. `scene-move.svg`, `scene-rotate.svg`, `scene-scale.svg` and `scene-snap.svg`
+adapt Lucide's `move`, `rotate-3d`, `scaling` and `magnet`
+SVGs (16px output, Kedra neutral stroke), with 1x–4x packages and the retained
+`assets/editor/icons/LICENSE-lucide.txt` ISC notice. Sources:
+<https://github.com/lucide-icons/lucide/blob/main/icons/move.svg> and
+<https://github.com/lucide-icons/lucide/blob/main/icons/magnet.svg>.
+Rotation and scale sources: <https://github.com/lucide-icons/lucide/blob/main/icons/rotate-3d.svg>
+and <https://github.com/lucide-icons/lucide/blob/main/icons/scaling.svg>.
+Unity's [Tools Overlay](https://docs.unity3d.com/6000.0/Documentation/Manual/PositioningGameObjects.html)
+and Blender's [object tools](https://docs.blender.org/manual/en/latest/scene_layout/object/tools/toolbar.html)
+inform the compact tool-mode organization; their artwork is not bundled.
 
 The [shared header](window-chrome.md) uses the unified family. `toolbar-play.svg`,
 `toolbar-pause.svg`, `toolbar-stop.svg` export `10:2387`, `10:2390`, `10:2393` with 1x–4x

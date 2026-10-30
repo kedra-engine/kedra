@@ -2,6 +2,67 @@
 use super::*;
 
 #[test]
+fn menu_hover_is_visible_and_disabled_items_never_gain_a_fill() -> Result<()> {
+    let tokens = include_str!("../../../../../assets/editor/styles/tokens.css")
+        .lines()
+        .filter(|line| !line.starts_with("@font-face"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let (mut app, theme) = stylesheet(format!(
+        "{}\n{}\n{}",
+        tokens,
+        include_str!("../../../../../assets/editor/styles/controls.css"),
+        include_str!("../../../../../assets/editor/styles/docking.css")
+    ))?;
+    let menu = app
+        .world_mut()
+        .spawn((Node::default(), ClassList::new("dock-menu"), ChildOf(theme)))
+        .id();
+    let item = app
+        .world_mut()
+        .spawn((
+            Node::default(),
+            ClassList::new("button"),
+            bevy::picking::hover::Hovered(false),
+            ChildOf(menu),
+        ))
+        .id();
+    for (hovered, disabled, filled) in [
+        (false, false, false),
+        (true, false, true),
+        (true, true, false),
+        (false, true, false),
+        (true, false, true),
+        (false, false, false),
+    ] {
+        app.world_mut()
+            .entity_mut(item)
+            .insert(bevy::picking::hover::Hovered(hovered));
+        if disabled {
+            app.world_mut()
+                .entity_mut(item)
+                .insert(bevy::ui::InteractionDisabled);
+        } else {
+            app.world_mut()
+                .entity_mut(item)
+                .remove::<bevy::ui::InteractionDisabled>();
+        }
+        frames(&mut app);
+        let fill = app
+            .world()
+            .get::<BackgroundColor>(item)
+            .ok_or("Menu fill missing")?
+            .0;
+        assert_eq!(
+            fill.alpha() > 0.,
+            filled,
+            "hovered={hovered}, disabled={disabled}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn loading_recovery_actions_fit_the_minimum_native_client_size() -> Result<()> {
     use bevy::{
         ecs::system::SystemState,

@@ -103,6 +103,21 @@ fn startup_sources_compile_with_loading_bindings_and_editor_surface() -> Result<
     )?;
     assert_eq!(compiled.len(), sources.catalog.documents.len());
 
+    // Exit confirmation must be admitted at startup, before any dirty close request.
+    let close = sources.document("editor://prefabs/close-dialog.prefab.ron")?;
+    let snapshot = compiled
+        .get(&close.id)
+        .ok_or("Exit dialog compilation missing")?;
+    let keys = snapshot
+        .source_entities()
+        .values()
+        .filter_map(|entity| snapshot.authoring_world().get::<ElementId>(*entity))
+        .map(|id| id.0.as_str())
+        .collect::<Vec<_>>();
+    for key in ["sources", "error", "actions"] {
+        assert!(keys.contains(&key), "Exit dialog binding missing: {key}");
+    }
+
     let section = sources.document("editor://prefabs/property-section.prefab.ron")?;
     let section = compiled
         .get(&section.id)

@@ -32,7 +32,7 @@ automatically make every value of that type usable in documents or visible in th
   and a Save protocol for tools that integrate the Rust APIs.
 - **Application services:** explicit scene startup, opt-in Luau execution and debug-only
   application observation, input injection and renderer capture.
-- **A native editor and external tools:** a read-only content workspace today, plus
+- **A native editor and external tools:** source editing with history and explicit Save, plus
   separate application build, packaging and explicit launch tooling.
 
 Applications can combine these services as needed. The host—the Rust application

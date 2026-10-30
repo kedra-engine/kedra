@@ -1,16 +1,23 @@
 //! Assembled editor behavior acceptance; no scenario language or test registry.
 mod browser;
+mod creation;
 mod dock_fixture;
 mod docking;
 mod edit_scripts;
+mod environment_editing;
+mod exit_confirmation;
+mod folders;
 mod hierarchy;
+mod hierarchy_editing;
 mod inspector;
+mod manipulation;
 mod navigation;
 mod navigation_geometry;
 mod scene;
 mod scripting;
 mod startup;
 mod support;
+mod thumbnails;
 mod workspace;
 use kedra_test::{Result, process::NativeProcess};
 use serde_json::{Value, json};
@@ -25,7 +32,13 @@ pub(crate) fn run(root: &Path, output: &Path, only: Option<&str>) -> Result<()> 
         "luau",
         "editor-scripts",
         "browser",
+        "document-creation",
+        "asset-folders",
         "hierarchy",
+        "hierarchy-editing",
+        "environment-editing",
+        "exit-save",
+        "exit-discard",
         "inspector",
         "inspector-ui",
         "inspector-collections",
@@ -35,6 +48,7 @@ pub(crate) fn run(root: &Path, output: &Path, only: Option<&str>) -> Result<()> 
         "docking-states",
         "scene-view",
         "scene-navigation",
+        "scene-transform",
         "inspector-fixture",
         "dock-fixture",
     ];
@@ -156,6 +170,9 @@ pub(crate) fn run(root: &Path, output: &Path, only: Option<&str>) -> Result<()> 
                 command
             };
             command.current_dir(root);
+            // Match ensure_desktop's X11 contract even in a Wayland login session.
+            #[cfg(target_os = "linux")]
+            command.env_remove("WAYLAND_DISPLAY");
             if name == "editor-scripts" {
                 command.args([
                     "--editor-script",
@@ -185,8 +202,14 @@ pub(crate) fn run(root: &Path, output: &Path, only: Option<&str>) -> Result<()> 
                     "luau" => scripting::run(&c)?,
                     "editor-scripts" => edit_scripts::run(&c)?,
                     "browser" => browser::run(&c)?,
+                    "document-creation" => creation::run(&c)?,
+                    "hierarchy-editing" => hierarchy_editing::run(&c)?,
+                    "environment-editing" => environment_editing::run(&c)?,
+                    "exit-save" | "exit-discard" => exit_confirmation::run(&c)?,
+                    "asset-folders" => folders::run(&c)?,
                     "hierarchy" => hierarchy::run(&c, &mut hierarchy_phases)?,
                     "inspector" => inspector::run(&c)?,
+                    "scene-transform" => manipulation::run(&c)?,
                     "inspector-ui" => inspector::ui(&c, false)?,
                     "inspector-collections" => inspector::ui(&c, true)?,
                     "workspace" | "window-chrome" | "docking" | "docking-states" => {
@@ -220,10 +243,14 @@ pub(crate) fn run(root: &Path, output: &Path, only: Option<&str>) -> Result<()> 
             }
             captures = c.captures.borrow().clone();
             let mut data = execution?;
-            native.finish(|| {
-                let _ = client.input(client.window()?, json!({"kind":"close_window"}));
-                Ok(())
-            })?;
+            if matches!(name, "exit-save" | "exit-discard") {
+                exit_confirmation::finish(&c, native, name == "exit-save")?;
+            } else {
+                native.finish(|| {
+                    let _ = client.input(client.window()?, json!({"kind":"close_window"}));
+                    Ok(())
+                })?;
+            }
             if name == "docking" {
                 let private = directory.join("restore-session");
                 let artifacts = private.join("frames");
@@ -241,6 +268,8 @@ pub(crate) fn run(root: &Path, output: &Path, only: Option<&str>) -> Result<()> 
                     .arg(&artifacts)
                     .arg("--state-directory")
                     .arg(&state);
+                #[cfg(target_os = "linux")]
+                command.env_remove("WAYLAND_DISPLAY");
                 let mut restored = NativeProcess::spawn(&mut command, &private)?;
                 let client = restored.connect()?;
                 let check = Editor::new(

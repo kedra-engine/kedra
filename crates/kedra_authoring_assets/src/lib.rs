@@ -1,10 +1,13 @@
 //! Source-matched native asset admission shared by authoring tools. No widgets,
 //! viewport ownership, implicit builds or source publication authority is installed.
 use bevy::world_serialization::WorldAsset;
+mod compilation;
+pub mod environments;
 use bevy::{
     asset::{AssetPath, LoadFromPath, UntypedHandle},
     prelude::*,
 };
+pub use compilation::compile_preview;
 use kedra_assets::delivery::Manifest;
 use kedra_authoring::persistence::SourceSnapshot;
 use std::{
@@ -22,7 +25,9 @@ pub struct Delivery {
 }
 impl Delivery {
     /// Match native type and exact published identity in the existing inventory.
-    /// File suffixes alone never establish an asset's native type.
+    /// File suffixes alone never establish an asset's native type. Admitted
+    /// environment roots may have authored revisions; preview hosts must call
+    /// `refresh_environment` before materialization, including after native loads.
     pub fn accepts(&self, source: &SourceSnapshot, type_id: TypeId, path: &AssetPath<'_>) -> bool {
         let loader = if type_id == TypeId::of::<Image>() {
             "bevy_image::image_loader::ImageLoader"
@@ -57,21 +62,42 @@ impl Delivery {
                 source.assets.iter().any(|asset| {
                     asset.path == record.path
                         && asset.id == Some(record.id)
-                        && self.manifest.files.get(&asset.path).is_some_and(|file| {
-                            file.sha256 == asset.hash && file.bytes == asset.bytes
-                        })
+                        && ((type_id == TypeId::of::<kedra_scene::environment::Environment>()
+                            && environment_source(source, &asset.path).is_ok())
+                            || self.manifest.files.get(&asset.path).is_some_and(|file| {
+                                file.sha256 == asset.hash && file.bytes == asset.bytes
+                            }))
                 })
             })
     }
     /// Check complete identity/content correspondence without writing, building or
     /// loading assets. A mismatch leaves sources and delivery unchanged.
     pub fn matches(&self, root: &Path, source: &SourceSnapshot) -> Result<(), String> {
+        self.matches_inventory(root, source, true)
+    }
+    /// Match the source scope and every delivered non-document resource, retaining
+    /// identity and byte checks for indirect dependencies such as GLTF textures.
+    /// Validated environment source roots may differ from their delivered bytes;
+    /// their current values are applied with `refresh_environment` before rendering.
+    /// Scene/prefab source edits, additions and removals do not invalidate passive
+    /// resource previews. This does not authorize document compilation: use `matches`
+    /// for that, and `accepts` for each native resource request. No assets are loaded
+    /// or mutated; stale, missing or foreign resources return an error.
+    pub fn matches_resources(&self, root: &Path, source: &SourceSnapshot) -> Result<(), String> {
+        self.matches_inventory(root, source, false)
+    }
+    fn matches_inventory(
+        &self,
+        root: &Path,
+        source: &SourceSnapshot,
+        documents: bool,
+    ) -> Result<(), String> {
         if root != self.source || source.namespace != "game" {
             return Err("Scene View delivery belongs to a different project/source scope. Relaunch with --project-assets for this project.".into());
         }
         // The first profile supports byte-preserving document and image deliveries.
         // Processed resources need source provenance before support can be claimed.
-        for document in &source.documents {
+        for document in source.documents.iter().filter(|_| documents) {
             let id = kedra_scene::document::PrefabDocument::parse(&document.source)
                 .map_err(|e| e.to_string())?
                 .id
@@ -94,6 +120,19 @@ impl Delivery {
             }
         }
         for asset in &self.manifest.assets {
+            if !documents && asset.loader == "kedra_scene::assets::DocumentLoader" {
+                continue;
+            }
+            if !documents
+                && asset.loader == "kedra_scene::environment::EnvironmentLoader"
+                && source
+                    .assets
+                    .iter()
+                    .any(|input| input.path == asset.path && input.id == Some(asset.id))
+                && environment_source(source, &asset.path).is_ok()
+            {
+                continue;
+            }
             if source
                 .documents
                 .iter()
@@ -108,7 +147,7 @@ impl Delivery {
                         .manifest
                         .files
                         .get(&asset.path)
-                        .is_some_and(|file| file.sha256 == input.hash)
+                        .is_some_and(|file| file.sha256 == input.hash && file.bytes == input.bytes)
             }) {
                 return Err(format!(
                     "Scene View delivery asset differs from the admitted inventory: {}. This profile requires byte-preserving resources; processed resources need source provenance.",
@@ -118,6 +157,66 @@ impl Delivery {
         }
         Ok(())
     }
+}
+
+/// Read a validated environment from the admitted source catalog. This is a
+/// bounded authored root, not an imported binary: identity stays in `assets`,
+/// and bytes must match its hash/length before the native schema is decoded.
+pub fn environment_source(
+    source: &SourceSnapshot,
+    path: &str,
+) -> Result<kedra_scene::environment::Environment, String> {
+    let asset = source
+        .assets
+        .iter()
+        .find(|asset| asset.path == path)
+        .ok_or("Environment is outside the admitted source catalog")?;
+    let text = source
+        .environments
+        .get(path)
+        .ok_or("Environment source unavailable")?;
+    if !path.ends_with(".environment.ron")
+        || asset.hash != kedra_authoring::persistence::content_hash(text)
+        || asset.bytes != text.len() as u64
+    {
+        return Err("Environment content differs from the admitted source catalog".into());
+    }
+    kedra_scene::environment::Environment::parse(text).map_err(|e| e.to_string())
+}
+
+/// Overlay an already loaded editor-preview environment with its accepted source
+/// value. The existing source catalog and AssetServer resolve the logical path;
+/// no handle registry, filesystem read or runtime delivery mutation is introduced.
+/// Call before preview materialization each update so a completed native load
+/// cannot replace the author's working value. Returns false while it is not loaded.
+pub fn refresh_environment(
+    world: &mut World,
+    source: &SourceSnapshot,
+    path: &str,
+    value: &kedra_scene::environment::Environment,
+) -> Result<bool, String> {
+    environment_source(source, path)?;
+    value.validate().map_err(|e| e.to_string())?;
+    let logical = format!("{}://{path}", source.namespace);
+    let Some(handle) = world
+        .get_resource::<AssetServer>()
+        .ok_or("Environment preview requires AssetServer")?
+        .get_handle::<kedra_scene::environment::Environment>(logical)
+    else {
+        return Ok(false);
+    };
+    let mut assets = world
+        .get_resource_mut::<Assets<kedra_scene::environment::Environment>>()
+        .ok_or("Environment preview assets are not installed")?;
+    if assets.get(&handle).is_none() {
+        return Ok(false);
+    }
+    if assets.get(&handle) != Some(value) {
+        assets
+            .insert(handle.id(), value.clone())
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(true)
 }
 
 /// Source-limited native loading; imported model cameras/lights/animations stay off.
@@ -140,6 +239,14 @@ impl LoadFromPath for Loader<'_> {
     ) -> UntypedHandle {
         let text = path.to_string();
         let valid = self.delivery.accepts(self.source, type_id, &path);
+        if type_id == TypeId::of::<kedra_scene::environment::Environment>()
+            && environments::accepts(self.source, &path)
+        {
+            return self
+                .server
+                .load::<kedra_scene::environment::Environment>(path)
+                .untyped();
+        }
         if valid && type_id == TypeId::of::<WorldAsset>() {
             self.server
                 .load_builder()

@@ -22,7 +22,6 @@ fn accept(c: &Editor<'_>, node: &Node, text: &str) -> Result<()> {
 pub(super) fn run(
     c: &Editor<'_>,
     assets: &std::path::Path,
-    inspector: &str,
     hierarchy: &str,
     prefix: &str,
 ) -> Result<()> {
@@ -58,7 +57,7 @@ pub(super) fn run(
         Ok(projected(c, view, &selected)?["mesh_half_extents"] == json!([0.5, 0.5, 0.5]))
     })?;
     for _ in 0..2 {
-        c.menu(inspector, "Undo source edit")?;
+        c.main_menu("Undo")?;
     }
     c.until("variant Undo restores payload", || {
         Ok(projected(c, view, &selected)? == original)
@@ -131,7 +130,7 @@ pub(super) fn run(
         "Palette review capture escaped the native session",
     )?;
     for _ in 0..3 {
-        c.menu(inspector, "Undo source edit")?;
+        c.main_menu("Undo")?;
     }
     c.until("palette Undo", || {
         Ok(projected(c, view, &selected)?["material"]["rgba"] == json!([0., 1., 0., 1.]))
@@ -173,13 +172,13 @@ pub(super) fn run(
         c.input(input.window()?, json!({"kind":"key","key":"escape"}))?;
     }
     for _ in 0..3 {
-        c.menu(inspector, "Undo source edit")?;
+        c.main_menu("Undo")?;
     }
     c.until("spatial source Undo", || {
         Ok(projected(c, view, &selected)? == original)
     })?;
     for _ in 0..3 {
-        c.menu(inspector, "Redo source edit")?;
+        c.main_menu("Redo")?;
     }
     c.until("spatial source Redo", || {
         Ok(projected(c, view, &selected)? == accepted)
@@ -223,8 +222,8 @@ pub(super) fn run(
     c.until("new source change after Save", || {
         Ok(projected(c, view, &selected)?["material"]["roughness"] == 0.25)
     })?;
-    c.menu(inspector, "Discard all unsaved source changes")?;
-    c.until("spatial saved-baseline discard", || {
+    c.main_menu("Undo")?;
+    c.until("spatial saved-baseline restored", || {
         Ok(projected(c, view, &selected)? == accepted)
     })?;
     check(

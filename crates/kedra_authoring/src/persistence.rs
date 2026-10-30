@@ -31,6 +31,10 @@ pub struct SourceFile {
 #[serde(deny_unknown_fields)]
 /// Atomic host-supplied source baseline, independent of working copies or gameplay.
 pub struct SourceSnapshot {
+    /// Bounded original environment sources, keyed by paths in `assets`.
+    /// Hosts retain invalid text for diagnostics; admission verifies content hashes.
+    #[serde(default)]
+    pub environments: BTreeMap<String, String>,
     /// Explicit installed Bevy source namespace used in persisted asset references.
     pub namespace: String,
     /// Host workspace generation used for compare-and-swap commits.
@@ -438,7 +442,7 @@ impl Workspace {
         policies: &ComponentPolicies,
         loader: &mut dyn LoadFromPath,
     ) -> Result<&CommitRequest> {
-        self.prepare(selected, types, policies, loader, true)
+        self.prepare(selected, types, policies, loader, true, false)
     }
     /// Pin an existing document's complete coupled save group, preserving inventory/catalog.
     /// This profile authorizes neither creation/deletion nor splitting a coupled save group.
@@ -450,7 +454,35 @@ impl Workspace {
         policies: &ComponentPolicies,
         loader: &mut dyn LoadFromPath,
     ) -> Result<&CommitRequest> {
-        self.prepare(Some(selected), types, policies, loader, false)
+        self.prepare(Some(selected), types, policies, loader, false, false)
+    }
+    /// Pin a complete coupled document group, including creation and removal from
+    /// source history. Paths retain their identities; managed moves are not supported.
+    /// Inventory changes require an index-free source scope. The host must publish
+    /// exact bytes/absence and acknowledge the complete correlated receipt.
+    pub fn prepare_document_save(
+        &mut self,
+        selected: DocumentId,
+        types: &TypeRegistry,
+        policies: &ComponentPolicies,
+        loader: &mut dyn LoadFromPath,
+    ) -> Result<&CommitRequest> {
+        let mut candidate = self.clone();
+        let request = candidate.prepare(Some(selected), types, policies, loader, false, true)?;
+        if self.source.index.is_some()
+            && request
+                .files
+                .iter()
+                .any(|file| file.expected_hash.is_none() || file.source.is_none())
+        {
+            return Err(failure(
+                "Document inventory changes require an index-free source scope",
+            ));
+        }
+        self.pending = candidate.pending;
+        self.pending
+            .as_ref()
+            .ok_or_else(|| failure("save request missing"))
     }
     fn prepare(
         &mut self,
@@ -459,6 +491,7 @@ impl Workspace {
         policies: &ComponentPolicies,
         loader: &mut dyn LoadFromPath,
         canonical_catalog: bool,
+        new_document: bool,
     ) -> Result<&CommitRequest> {
         if self.diagnostic.is_some() {
             return Err(failure(
@@ -490,7 +523,7 @@ impl Workspace {
                     )
                 })
                 .collect();
-            if current != admitted {
+            if !new_document && current != admitted {
                 return Err(failure(
                     "existing-source Save requires the unchanged admitted source inventory",
                 ));
@@ -501,7 +534,9 @@ impl Workspace {
         let snapshots = compile_catalog(&working, types, policies, loader)?;
         let mut group: BTreeSet<_> = match selected {
             Some(id) => {
-                if !working.documents.contains_key(&id) {
+                if !working.documents.contains_key(&id)
+                    && !(new_document && self.working.saved.contains_key(&id))
+                {
                     return Err(failure("document missing"));
                 }
                 self.working.save_group(id)
@@ -511,6 +546,7 @@ impl Workspace {
                 .documents
                 .keys()
                 .copied()
+                .chain(self.working.saved.keys().copied())
                 .filter(|id| self.working.dirty(*id))
                 .collect(),
         };
@@ -518,6 +554,9 @@ impl Workspace {
             let before = group.len();
             for id in group.clone() {
                 group.extend(self.working.save_group(id));
+                if !working.documents.contains_key(&id) {
+                    continue;
+                }
                 group.extend(
                     working
                         .resolve(id)?
@@ -544,9 +583,6 @@ impl Workspace {
         }
         let mut files = Vec::new();
         for id in group {
-            let document = self.working.documents.get(&id).ok_or_else(|| {
-                failure("document deletion requires a managed delete transaction")
-            })?;
             if !self.working.dirty(id) {
                 continue;
             }
@@ -556,6 +592,22 @@ impl Workspace {
                 .ok_or_else(|| failure("assign a source path before Save"))?
                 .clone();
             let original = self.source.documents.iter().find(|file| file.path == path);
+            let Some(document) = self.working.documents.get(&id) else {
+                if !new_document {
+                    return Err(failure("document deletion requires document Save"));
+                }
+                let original =
+                    original.ok_or_else(|| failure("Removed document baseline missing"))?;
+                committed.documents.remove(&id);
+                files.push(CommitFile {
+                    document: Some(id),
+                    path,
+                    revision: self.working.clock,
+                    expected_hash: Some(original.hash.clone()),
+                    source: None,
+                });
+                continue;
+            };
             let source = document.document.serialize()?;
             // Validate the exact proposed bytes, including pretty-print expansion.
             PrefabDocument::parse(&source)?;
@@ -625,6 +677,14 @@ impl Workspace {
             path: "catalog.prefabs.ron".into(),
             expected_hash: self.source.index.as_ref().map(|index| index.hash.clone()),
         });
+        for file in &files {
+            if !checks.iter().any(|check| check.path == file.path) {
+                checks.push(FileCheck {
+                    path: file.path.clone(),
+                    expected_hash: file.expected_hash.clone(),
+                });
+            }
+        }
         self.pending = Some(CommitRequest {
             operation: Uuid::new_v4(),
             expected_generation: self.source.generation,

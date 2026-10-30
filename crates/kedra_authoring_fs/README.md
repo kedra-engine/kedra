@@ -1,6 +1,6 @@
 # kedra_authoring_fs
 
-Authoring-layer filesystem adapter for an existing document group's Save request. The
+Authoring-layer filesystem adapter for a document group's Save request. The
 editor is its real consumer; runtime, native fields, Luau and the transport-independent
 `kedra_authoring` crate do not acquire filesystem write authority.
 
@@ -9,7 +9,20 @@ It rejects catalog writes, creation and deletion. The host uses `prepare_existin
 the unchanged admitted inventory without generating or rewriting a source catalog.
 The full `prepare_save` protocol remains available for other explicitly implemented writers.
 
+`commit_documents` accepts complete document groups with creation/replacement/removal,
+prepared by `prepare_document_save`. New paths publish exclusively. Parents must exist;
+catalogs and sidecar writes remain unsupported. Removal of a source with an existing
+sidecar refuses. Exact retries and recovery use the same request/receipt and lease.
+Undo/Redo acts on working sources, never directly on this writer. See
+[ADR 0047](../../docs/decisions/0047-document-creation-and-history-save.md).
+
 ## Publication and conflicts
+
+`commit_environment(root, request, baseline)` replaces one existing `.environment.ron`
+asset using the same lease, journal, exact retry and recovery. The `SourceAsset`
+baseline pins its identity under the writer lease. Environment validation replaces
+document parsing for this operation; its sidecar is preserved. The caller acknowledges
+the receipt through `kedra_authoring::environment::Edits`, updating the source inventory.
 
 The writer reuses native parsing, `walkdir`, SHA-256, standard File locking,
 `tempfile` replacement and pinned `fs-transaction` 0.4.0 journal/rollback/replay.
@@ -23,7 +36,8 @@ Kedra owns bounded request admission and exact-byte grants, not another journal 
   it contains no document state or persistent lookup identities.
 - A private sibling staging directory preserves the original permissions and keeps
   crash-orphaned temporary bytes outside authored inventory. Bytes are synced before
-  replacement. The
+  replacement. Removal rollback backups also remain in this private directory, through
+  the pinned transaction library's exact operation-bound backup names. The
   original read-only source is never made writable. Sidecars/catalogs are not touched.
 - `tempfile::persist` atomically replaces each existing name on the same filesystem.
   File flushes open with write access on Windows, without truncation or permission changes;
@@ -44,7 +58,7 @@ need separate acceptance. Simultaneous visibility to arbitrary filesystem reader
 
 `read_guard(root, pending)` holds the shared admission lease. An interrupted group
 blocks normal admission; only its exact pinned Save may inspect it for retry. Open
-never writes recovery data. `recover_existing(root)` explicitly rolls the saved intent
+never writes recovery data. `recover_documents(root)` explicitly rolls the saved intent
 forward; the native command is `kedra recover-save <source-root>`. Foreign/changed
 bytes, sidecar preconditions and journal operations outside the request refuse replay.
 Recovery files live beside the root and must remain paired with it. The private staging
@@ -53,6 +67,29 @@ directory can retain crash-orphaned source bytes; automatic pruning is not provi
 The editor additionally reuses its existing complete admission reader to verify asset
 identity/sidecars before writing. Save updates the acknowledged source baseline, not
 the original verified renderer-delivery provenance, and does not rebuild assets.
+
+## Asset folders
+
+`entries::apply` provides explicit folder Create and file/folder Rename/Delete under the
+same exclusive source lease as Save. It uses directory operations, recovery directories and
+the existing bounded source reader. The callback admits the complete proposed inventory
+before mutation; the editor checks its current baseline and compiles dependencies through
+`kedra_authoring::source::reconcile`. No alternate path registry or transaction engine is
+introduced. Rename also moves between existing directories, preserving bytes and sidecar UUIDs.
+File/sidecar pairs use the existing `fs-transaction` journal; directory moves use one native rename.
+Moves into the source itself or its descendants, and file-type changes, refuse.
+Existing destinations, root mutation, linked paths and pending Save recovery refuse.
+
+Delete detaches the entry into a retained `.kedra-deleted-*` sibling of
+the asset root. This recovery copy is outside the runtime/source inventory; automatic
+cleanup and in-editor restoration are not implemented. Entry operations are immediate
+filesystem edits, separate from document Save and document Undo/Redo. They do not rewrite
+logical references, explicit catalogs or immutable deliveries; admission refuses changes
+that would break source dependencies. Case-only renames can require an intermediate name
+on case-insensitive filesystems. The existing advisory/non-hostile-writer limits apply.
+An interrupted file/sidecar transaction blocks ordinary source admission. Its journal
+has no document Save intent: `recover-save` refuses it, preserving records for explicit
+filesystem inspection. Automatic entry-transaction restart recovery is not implemented.
 
 ## Verification
 

@@ -50,7 +50,7 @@ errors. These contracts are better starting points than copying a nearby host ca
 | `kedra_project` | `authoring` | Project identity, validation, safe creation and separate recent preferences |
 | `kedra_authoring` | `authoring` | Working revisions, overrides and source-save protocol |
 | `kedra_import` | `import` | Processing/admission and fresh delivery publication |
-| `kedra_editor` | `editor` | Project startup, read-only document/tools integration and host coordination |
+| `kedra_editor` | `editor` | Project startup, source-editing tools, preview and host coordination |
 | `kedra_desktop` | `editor` | Native window/camera/UI-root ownership and acknowledged auxiliary surfaces |
 | `kedra_inspector` | `editor` | Consumer-neutral reflected values and presentations |
 | `kedra_build` | `tooling` | Application assembly, package verification and explicit standalone launch |

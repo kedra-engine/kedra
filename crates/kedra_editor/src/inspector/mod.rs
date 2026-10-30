@@ -1,6 +1,7 @@
 //! Dockable source target adaptation; generic value editors live in kedra_inspector.
 pub(crate) mod discrete;
 pub(crate) mod editing;
+pub(crate) mod environment;
 pub(crate) mod history;
 mod input;
 pub(crate) mod metadata;
@@ -49,6 +50,7 @@ pub(crate) struct Panel {
     pending_history: Option<history::Pending>,
 }
 pub(crate) fn install(app: &mut App) {
+    app.register_type::<Option<Handle<kedra_scene::environment::Environment>>>();
     app.add_plugins(kedra_inspector_luau::InspectorLuauPlugin);
     app.add_plugins(kedra_inspector::controls::InspectorControlsPlugin);
     discrete::install(app);
@@ -147,6 +149,7 @@ impl Panel {
         for ty in [
             std::any::TypeId::of::<Handle<bevy_flair::style::StyleSheet>>(),
             std::any::TypeId::of::<Handle<kedra_scene::environment::Environment>>(),
+            std::any::TypeId::of::<Option<Handle<kedra_scene::environment::Environment>>>(),
             std::any::TypeId::of::<Handle<bevy::world_serialization::WorldAsset>>(),
         ] {
             editors.register_type(

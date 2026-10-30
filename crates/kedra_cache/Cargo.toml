@@ -1,0 +1,22 @@
+[package]
+name = "kedra_cache"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Shared disposable project cache over verified content-addressed storage"
+
+[package.metadata.kedra]
+layer = "core"
+
+[dependencies]
+cacache = { version = "=13.0.0", default-features = false }
+sha2.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

@@ -14,6 +14,28 @@ compiler-generated components merely because they exist in a preview.
 
 ## Read a selected node
 
+To assign lighting, select the scene asset in Assets or its root in Hierarchy.
+The **Environment** field is present even when no profile is assigned. Open its
+picker and choose a project `.environment.ron` asset; save the scene with Ctrl/Cmd+S.
+Save follows the selected scene asset even when a different document tab is active.
+To create a profile, use **Create → Environment** in the Assets context menu, then
+edit and save the selected profile in Inspector. New profiles are available in the
+scene picker immediately, without rebuilding a runtime delivery.
+
+Selecting a Scene/Prefab asset in Assets inspects its composed root without requiring
+a document tab to be activated. Selecting an existing `.environment.ron` asset
+shows its Environment root in the same Inspector: background color, ambient color,
+ambient brightness and schema version. Version must remain `1`; colors must be finite
+normalized values and brightness must be between `0` and `1000000`.
+
+Environment text fields accept with Enter; invalid values keep their draft and
+diagnostic. Accepted changes use source Undo/Redo and remain in memory until
+Ctrl/Cmd+S or **Save**. The header's `*` marks unsaved changes.
+Switching selection does not discard accepted changes; unresolved drafts retain the
+previous Inspector target. Scene lighting updates from the shared working profile;
+**Editor lighting** continues to use the editor's independent studio environment.
+Save preserves the asset identity and does not rebuild a runtime delivery.
+
 The header shows the selected node's name. Component sections use registered
 source keys or a built-in presentation title, with nested properties exposed through disclosures.
 Expand a component/value tree to inspect its fields; collapse it to reduce clutter.
@@ -51,10 +73,11 @@ View without resetting the preview camera. A changed target does not silently di
 a draft: Inspector retains that context until Enter/Escape. Hide/float retains its inputs.
 Tab and pointer blur end the gesture; they do not force invalid text into the source.
 
-**Changes remain in memory until Save.** Main-window Close is blocked while changes/drafts
-or an unresolved Save remain. The menu's **Discard all unsaved source changes**
-explicitly restores the latest acknowledged source baseline, clears history and retires drafts;
-it does not reread or write files. Forced termination/crash recovery is not supported.
+**Changes remain in memory until Save.** Closing with unsaved work opens a dialog with
+**Save and exit**, **Exit without saving** and **Cancel**. Unaccepted drafts must be
+settled before saving; unresolved publication must be retried before discarding.
+Exit without saving restores the latest acknowledged source baseline and retires drafts.
+Forced termination/crash recovery of unsaved edits is not supported.
 
 ## Edit primitive, surface and light values
 
@@ -140,8 +163,9 @@ broader native acceptance.
 
 ## Save active document
 
-Use **Save active document** in the panel/ Panels menu, or **Cmd/Ctrl+S**, including
-while a settled property input owns focus. Save writes accepted working changes, never
+Use **Save** in the main menu or header, or **Cmd/Ctrl+S**, including
+while a settled property input owns focus. **Save All** / **Cmd/Ctrl+Shift+S** saves dirty
+documents and environment assets, stopping on the first refusal. Save writes accepted working changes, never
 a pending draft or live preview state. Accept with Enter or cancel with Escape first.
 The active document receives the write, not a different target retained by a locked Inspector.
 An asterisk marks unsaved source revisions; progress and errors appear in workspace feedback.
@@ -241,7 +265,9 @@ The current presentation limits are depth 32, 128 collection entries, 2048 disco
 rows per rebuild and 4096 Unicode scalar values per value preview. Truncation does not
 modify sources and is not a complete copyable value. Filtering shares these limits.
 
-There are no enabled Add component, Reset, Apply/Revert, asset picker/location,
-general reflected-field editing or Save actions. To understand the distinction
-between source-editing APIs and editor capabilities, read
+The header **+** opens Add component; a component section's **…** offers Remove component.
+These operations, reference pickers and source Save are
+available for eligible targets. Unsupported reflected fields remain read-only;
+the editor does not expose the full authoring API's prefab Apply/Revert workflow.
+For source transaction and persistence boundaries, read
 [Source editing and Save](../scenes/source-editing.md).

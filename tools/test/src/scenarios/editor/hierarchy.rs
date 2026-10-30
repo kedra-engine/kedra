@@ -207,7 +207,7 @@ fn behavior(c: &Editor<'_>) -> Result<Value> {
         c.selection()? == saved,
         "Document switch lost scoped selection",
     )?;
-    c.menu(&view, "Float group")?;
+    c.menu(&view, "Float tab")?;
     c.until("floating hierarchy", || {
         Ok(c.node(&field.id)?.window()? != c.window()?)
     })?;
@@ -220,17 +220,15 @@ fn behavior(c: &Editor<'_>) -> Result<Value> {
     )?;
     c.menu(&view, "Redock to main window")?;
     // Redock may merge into any eligible main group. Restore the authored preset
-    // before Hide group so this assertion hides only Hierarchy, not its sources.
+    // before closing the Hierarchy tab, keeping its source views visible.
     c.click("workspace/reset")?;
     c.until("isolated Hierarchy group", || {
         Ok(c.state()?["layout"]["nodes"][c.group(&view)?]["Group"]["tabs"] == json!([view]))
     })?;
-    c.menu(&view, "Hide group")?;
+    c.menu(&view, "Close tab")?;
     c.until("hidden hierarchy", || c.hidden(&view))?;
     check(c.selection()? == saved, "Hide lost source selection")?;
-    c.click("workspace/panels")?;
-    let show = c.find("Show Hierarchy", |n| n.caption() == "Show Hierarchy")?;
-    c.click(show.id.strip_suffix("/caption").unwrap_or(&show.id))?;
+    c.main_menu("Windows/Hierarchy")?;
     check(
         c.wait_node(&field.id)?.entity == field.entity && c.node(&field.id)?.value() == "STRASSE",
         "Reopen lost search identity/value",
@@ -266,7 +264,7 @@ fn usability(c: &Editor<'_>) -> Result<Value> {
         "Default design has persistent UUID footer",
     )?;
     c.click(&Editor::label(&view))?;
-    c.menu(&view, "Float active tab")?;
+    c.menu(&view, "Float tab")?;
     c.until("floating hierarchy", || {
         Ok(c.node(&Editor::label(&view))?.window()? != c.window()?)
     })?;

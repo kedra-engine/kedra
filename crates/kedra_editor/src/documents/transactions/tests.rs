@@ -54,6 +54,7 @@ fn setup() -> Result<(App, DocumentId, DocumentId), Box<dyn std::error::Error>> 
         .collect::<kedra_scene::Result<Vec<_>>>()?;
     let (scope, compiled) = source::admit(
         SourceSnapshot {
+            environments: Default::default(),
             namespace: "game".into(),
             generation: 1,
             documents: files,

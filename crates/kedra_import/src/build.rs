@@ -60,9 +60,13 @@ fn paths(root: &Path) -> Result<Vec<PathBuf>, String> {
 }
 
 fn encode_manifest(manifest: &Manifest) -> Result<Vec<u8>, String> {
-    let bytes = serde_json::to_vec_pretty(manifest).map_err(|e| e.to_string())?;
+    // Delivery metadata is a machine-readable artifact. Spend its bounded byte
+    // budget on inventory data, while retaining the reader's exact size limit.
+    let bytes = serde_json::to_vec(manifest).map_err(|e| e.to_string())?;
     if bytes.len() > MAX_MANIFEST_BYTES {
-        return Err("Asset delivery manifest exceeds 64 KiB; delivery was not published".into());
+        return Err(format!(
+            "Asset delivery manifest exceeds {MAX_MANIFEST_BYTES} bytes; delivery was not published"
+        ));
     }
     Ok(bytes)
 }

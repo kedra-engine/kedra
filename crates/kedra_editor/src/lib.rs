@@ -177,6 +177,7 @@ pub fn run(
             .into(),
         manifest.clone(),
     );
+    kedra_authoring_assets::environments::install(&mut app, "game");
     app.add_plugins(
         DefaultPlugins
             .set(bevy::log::LogPlugin {

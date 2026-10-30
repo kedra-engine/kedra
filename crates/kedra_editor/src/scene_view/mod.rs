@@ -13,13 +13,15 @@ mod canvas_tests;
 #[cfg(test)]
 mod control_tests;
 mod controls;
-mod gpu;
+use kedra_preview::gpu;
 mod lifecycle;
+mod manipulation;
 pub(crate) mod orientation;
 #[cfg(test)]
 mod orientation_tests;
 mod projection;
 mod selection;
+pub(crate) use selection::PlacementPreview;
 #[cfg(test)]
 mod selection_tests;
 mod source_refresh;
@@ -36,7 +38,10 @@ use kedra_docking::model::ViewId;
 use kedra_scene::{
     composition::ResolvedGraph, instance::CompiledPrefab, reflection::ComponentPolicies,
 };
-use std::{collections::BTreeMap, sync::Arc};
+use std::sync::Arc;
+
+#[derive(Component)]
+pub(crate) struct Viewport;
 
 pub(crate) fn install(app: &mut App) {
     gpu::install(app);
@@ -70,6 +75,9 @@ pub(crate) struct View {
     lifecycle: lifecycle::Lifecycle,
     elapsed: f32,
     raw_model: bool,
+    source_removed: bool,
+    source_layer: usize,
+    requested_source: Option<Arc<ResolvedGraph>>,
 }
 impl View {
     pub(crate) fn align(
@@ -103,7 +111,7 @@ impl View {
                 view.element("viewport")
                     .map_err(|error| error.to_string())?,
             )
-            .insert(bevy::input_focus::tab_navigation::TabIndex(0));
+            .insert((bevy::input_focus::tab_navigation::TabIndex(0), Viewport));
         world
             .entity_mut(view.element("render").map_err(|error| error.to_string())?)
             .insert(bevy::picking::Pickable::IGNORE);
@@ -125,6 +133,9 @@ impl View {
             lifecycle: default(),
             elapsed: 0.,
             raw_model: false,
+            source_removed: false,
+            source_layer: 0,
+            requested_source: None,
         };
         result.controls_enabled(world, false);
         Ok(result)
@@ -140,31 +151,24 @@ impl View {
         self.compiled = None;
         self.elapsed = 0.;
         self.raw_model = false;
+        self.source_removed = false;
+        self.source_layer = layer;
+        self.requested_source = Some(graph.clone());
         let result = (|| {
             self.lifecycle.begin()?;
             projection::supported(graph)?;
-            let delivery=world.get_resource::<binding::Delivery>().ok_or("Scene View needs a verified delivery. Build assets with --namespace game, then relaunch this project with --project-assets PATH. Open never builds assets.")?;
             let manager = world.resource::<crate::model::ProjectManager>();
             let root = &manager.project.as_ref().ok_or("No project is open")?.assets;
-            delivery.matches(root, source)?;
             let registry = world.resource::<AppTypeRegistry>().clone();
-            let mut loader = binding::Loader {
-                server: world.resource::<AssetServer>().clone(),
-                source,
-                delivery,
-                error: None,
-            };
-            let compiled = CompiledPrefab::compile(
+            let compiled = binding::compile_preview(
                 (**graph).clone(),
                 &registry.read(),
                 world.resource::<ComponentPolicies>(),
-                &mut loader,
-                &BTreeMap::new(),
-            )
-            .map_err(|e| e.to_string())?;
-            if let Some(error) = loader.error {
-                return Err(error);
-            }
+                world.resource::<AssetServer>(),
+                source,
+                root,
+                world.get_resource::<binding::Delivery>(),
+            )?;
             self.compiled = Some(Arc::new(compiled));
             self.projection = Some(projection::Projection::pending(layer));
             Ok::<_, String>(())
@@ -183,6 +187,14 @@ impl View {
             value.0 = text.into();
         }
         kedra_ui::docking::class(world, self.information, "hidden", false);
+    }
+    pub(crate) fn remove_source(&mut self, world: &mut World) {
+        if !self.source_removed {
+            self.retire(world);
+            self.compiled = None;
+            self.source_removed = true;
+            self.message(world, "Document removed", false);
+        }
     }
     pub fn tick(&mut self, world: &mut World, visible: bool, dpr: f32) -> Result<(), String> {
         // Readiness is not inactivity. A serving viewport must keep its normal
@@ -276,7 +288,12 @@ impl View {
             .graph()
             .nodes
             .values()
-            .any(|node| node.components.keys().any(|key| key.starts_with("scene.")));
+            .any(|node| node.components.keys().any(|key| key.starts_with("scene.")))
+            || !compiled
+                .graph()
+                .nodes
+                .values()
+                .any(|node| node.components.contains_key("ui.layout"));
         let stage = if spatial_source {
             let Some(stage) = stage::ready(world)? else {
                 self.elapsed += world
@@ -313,17 +330,16 @@ impl View {
                 Some(bevy::camera::Projection::Orthographic(_))
             );
             self.controls.selected(world, "projection", orthographic);
-            let inspection = projection.inspection.is_some_and(|entity| {
-                world.get::<Visibility>(entity) == Some(&Visibility::Inherited)
-            });
-            self.controls.selected(world, "lighting", inspection);
-            self.controls.selected(
-                world,
-                "grid",
-                projection.grid.is_some_and(|entity| {
-                    world.get::<Visibility>(entity) != Some(&Visibility::Hidden)
-                }),
-            );
+            if let Some(entity) = self.controls.entity("projection-label")
+                && let Some(mut text) = world.get_mut::<Text>(entity)
+            {
+                text.0 = if orthographic {
+                    "Orthographic"
+                } else {
+                    "Perspective"
+                }
+                .into();
+            }
         }
         if projection.frame_ready(world) {
             self.lifecycle.frame();
@@ -367,6 +383,24 @@ impl View {
         let area = self.area(world).ok_or("Viewport geometry missing")?;
         selection::pick(world, projection, point, area)
     }
+    pub(crate) fn placement(
+        &self,
+        world: &mut World,
+        point: Vec2,
+    ) -> Result<(Vec3, usize), String> {
+        let projection = self.projection.as_ref().ok_or("Projection missing")?;
+        if self.navigation(world).is_none() {
+            return Err("Scene View is not ready".into());
+        }
+        let area = self
+            .area(world)
+            .filter(|area| area.contains(point))
+            .ok_or("Pointer outside Scene View")?;
+        Ok((
+            selection::placement(world, projection, point, area)?,
+            projection.layer(),
+        ))
+    }
     pub(crate) fn select(
         &mut self,
         world: &mut World,
@@ -405,16 +439,6 @@ impl View {
     pub(crate) fn toggle_overlays(&mut self, world: &mut World) {
         if self.lifecycle.phase == lifecycle::Phase::Ready {
             self.marker.set_visible(world, !self.marker.is_visible());
-            self.controls
-                .selected(world, "overlays", self.marker.is_visible());
-        }
-    }
-    pub(crate) fn focus_canvas(&self, world: &mut World) {
-        if self.lifecycle.phase != lifecycle::Phase::Ready {
-            return;
-        }
-        if let Some(mut focus) = world.get_resource_mut::<bevy::input_focus::InputFocus>() {
-            focus.set(self.viewport, bevy::input_focus::FocusCause::Pressed);
         }
     }
     pub(crate) fn light(&mut self, world: &mut World, enabled: bool) {
@@ -457,6 +481,7 @@ impl View {
             "orthographic": orthographic,
             "overlays": self.marker.is_visible(),
             "editor_lighting": editor_lighting,
+            "ambient_brightness": world.get::<AmbientLight>(camera).map(|light| light.brightness),
             "aligning": camera_motion::active(world, camera),
             "source_spatial": self.spatial_values(world),
             "source_transforms": self.projection.as_ref().map(|projection| projection.nodes.iter().filter_map(|(address, entity)| {

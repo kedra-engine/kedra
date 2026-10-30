@@ -3,6 +3,34 @@ use bevy::render::view::screenshot::{Captured, CapturedScreenshots, Capturing, S
 use std::sync::{Mutex, mpsc};
 
 #[test]
+fn spatial_replacement_retains_navigation_and_target_and_retires_old_content()
+-> Result<(), Box<dyn std::error::Error>> {
+    use bevy::asset::AssetApp;
+    let mut app = App::new();
+    app.add_plugins((MinimalPlugins, bevy::asset::AssetPlugin::default()))
+        .init_asset::<kedra_scene::document::PrefabDocument>();
+    let compiled = crate::scene_view::test_support::compiled(app.world_mut())?;
+    let mut projection = Projection::pending(1);
+    projection.mount(app.world_mut(), compiled.clone())?;
+    let camera = projection.camera().ok_or("camera")?;
+    let pose = Transform::from_xyz(19., 13., 7.);
+    app.world_mut().entity_mut(camera).insert(pose);
+    let viewport = app.world_mut().spawn_empty().id();
+    projection.update(app.world_mut(), viewport, Vec2::new(200., 100.), true)?;
+    let target = projection.target.clone();
+    let owner = projection.owner.ok_or("owner")?;
+    projection.replace_spatial(app.world_mut(), compiled)?;
+    assert_eq!(projection.camera(), Some(camera));
+    assert_eq!(app.world().get::<Transform>(camera), Some(&pose));
+    assert_eq!(projection.target, target);
+    assert!(!app.world().entities().contains(owner));
+    assert!(app.world().entities().contains(camera));
+    projection.retire(app.world_mut());
+    assert!(!app.world().entities().contains(camera));
+    Ok(())
+}
+
+#[test]
 fn unextracted_scene_request_cancellation_reclaims_recipient_and_image_immediately() {
     let mut world = World::new();
     world.init_resource::<Assets<Image>>();

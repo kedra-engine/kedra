@@ -19,8 +19,9 @@ APIs and source formats are unstable.
 You can create or open a project, browse its sources, open supported scenes and prefabs,
 and inspect their hierarchy and component values. With an explicit matching asset delivery,
 Scene View can render supported spatial/UI documents and preview PNG and static-GLB assets.
-These are read-only workflows: moving the preview camera or selecting an object does not
-edit the document, and a rendered preview does not run the project's gameplay.
+Supported source properties, hierarchy and transforms are editable with Undo/Redo and
+explicit Save. Camera movement and selection alone do not edit sources; a rendered
+preview does not run the project's gameplay.
 
 Visual scene editing, editable document fields, document Save in the editor, project-code
 loading and Play are not implemented. Existing Rust source-editing, build and scripting
@@ -44,7 +45,7 @@ learning its crate layout; this manual introduces the user-facing model before A
 Imagine a scene that contains two instances of a reusable cuboid prefab. The project holds
 the scene and prefab sources, plus the texture they reference. Asset tools prepare a
 delivery that an application can load. The scene system resolves the prefab instances into
-ordinary Bevy entities; the editor presents a separate read-only view of supported content.
+ordinary Bevy entities; the editor presents a separate source-backed view of supported content.
 
 The two instances can share a prefab source without sharing live entity handles. Inspecting
 one instance does not rewrite the prefab. This separation is central to Kedra's model:

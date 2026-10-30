@@ -39,7 +39,7 @@ separate from your usual editor preferences:
 cargo run --locked -p kedra -- --assets target/documentation/examples/getting-started/editor-delivery --state-directory target/documentation/examples/getting-started/editor-state
 ```
 
-After startup verification, the **Projects** window offers **Open folder…** and
+After startup verification, the **Projects** window offers **Open folder** and
 **New project**. There is no splash window. Project preparation can enter the workspace
 directly or briefly show a loading window; neither path skips validation.
 
@@ -49,8 +49,8 @@ then the platform's bundled location relative to the executable, not the working
 or authoring checkout. Portable/development builds use adjacent `assets`; macOS app bundles
 use `Contents/Resources/assets`, and Linux `usr/bin` layouts use `usr/lib/<executable>/assets`.
 
-1. Select **Open folder…**.
-2. Use **Browse…** to choose `tests/fixtures/test_project` inside your checkout.
+1. Select **Open folder**.
+2. Use **Browse** to choose `tests/fixtures/test_project` inside your checkout.
    Select the directory containing `kedra.toml`, not `assets/` or the manifest file.
 3. If typing **Project folder**, enter its absolute native path. Relative text such as
    `tests/fixtures/test_project` is not accepted by this form.

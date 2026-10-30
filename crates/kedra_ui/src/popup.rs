@@ -2,12 +2,85 @@
 use bevy::prelude::*;
 use bevy::ui_widgets::popover::{Popover, PopoverAlign, PopoverPlacement, PopoverSide};
 use bevy_flair::{prelude::InlineStyle, style::components::ClassList};
+pub mod cascade;
+mod entries;
+pub use entries::{Entry, from_paths};
 
 /// An owned native anchored surface. Despawning its anchor retires the surface.
 #[derive(Component)]
 pub struct AnchoredMenu;
 const MARGIN: f32 = 4.;
 const GAP: f32 = 4.;
+
+/// A pointer-anchored menu and its owned positioning node. Consumers put menu
+/// items under `menu` and retire `root` to remove both. The original parent owns
+/// the lifetime; native Popover still performs viewport edge flipping.
+pub struct PointMenu {
+    /// Owned positioning node; despawn this to close the menu.
+    pub root: Entity,
+    /// Native menu surface for item children.
+    pub menu: Entity,
+}
+
+/// Mount a context menu at a logical pointer position in the parent's render target.
+/// Valid finite layout and a live parent are required; failure allocates nothing.
+/// Unlike a toolbar menu, its first placement starts at the pointer's left edge.
+pub fn attach_at(
+    world: &mut World,
+    parent: Entity,
+    position: Vec2,
+    class: &str,
+    scope: &str,
+) -> Result<PointMenu, String> {
+    let node = world
+        .get::<ComputedNode>(parent)
+        .ok_or("Context menu parent has no layout")?;
+    let transform = world
+        .get::<UiGlobalTransform>(parent)
+        .ok_or("Context menu parent has no transform")?;
+    let scale = node.inverse_scale_factor();
+    let local = (transform
+        .affine()
+        .inverse()
+        .transform_point2(position / scale)
+        + node.size() / 2.
+        - node.border().min_inset)
+        * scale;
+    if !position.is_finite() || !local.is_finite() || scale <= 0. || node.size().min_element() <= 0.
+    {
+        return Err("Context menu position is unavailable".into());
+    }
+    let root = world
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(local.x),
+                top: Val::Px(local.y),
+                width: Val::Px(1.),
+                height: Val::Px(1.),
+                ..default()
+            },
+            bevy::picking::Pickable::IGNORE,
+            OverrideClip,
+            ChildOf(parent),
+        ))
+        .id();
+    let menu = attach(world, root, class, scope)?;
+    world.entity_mut(menu).insert(Popover {
+        positions: [PopoverSide::Bottom, PopoverSide::Top]
+            .into_iter()
+            .flat_map(|side| {
+                [PopoverAlign::Start, PopoverAlign::End].map(|align| PopoverPlacement {
+                    side,
+                    align,
+                    gap: 0.,
+                })
+            })
+            .collect(),
+        window_margin: MARGIN,
+    });
+    Ok(PointMenu { root, menu })
+}
 
 /// Mount hidden until renderer geometry permits native menu focus. No actions,
 /// source authority or external state are installed. A retired anchor allocates nothing.
@@ -57,6 +130,7 @@ type PopupLayout = (
     &'static ComputedUiRenderTargetInfo,
     &'static mut InlineStyle,
     &'static mut Visibility,
+    Option<&'static cascade::Submenu>,
 );
 
 /// Installed once by the native authored-UI host; also usable by explicit UI hosts.
@@ -67,7 +141,8 @@ pub(crate) fn constrain(
     mut menus: Query<PopupLayout, With<AnchoredMenu>>,
     anchors: Query<(&ComputedNode, &UiGlobalTransform), Without<AnchoredMenu>>,
 ) {
-    for (entity, computed, native, parent, target, mut style, mut visibility) in &mut menus {
+    for (entity, computed, native, parent, target, mut style, mut visibility, submenu) in &mut menus
+    {
         let Ok((node, transform)) = anchors.get(parent.parent()) else {
             continue;
         };
@@ -76,10 +151,17 @@ pub(crate) fn constrain(
             continue;
         }
         let [x0, y0, x1, y1] = crate::logical_rect(node, transform);
-        let maximum = limits(
-            Rect::from_corners(Vec2::new(x0, y0), Vec2::new(x1, y1)),
-            viewport,
-        );
+        let maximum = if submenu.is_some() {
+            Vec2::new(
+                (viewport.x - x1).max(x0).max(0.) - MARGIN,
+                viewport.y - 2. * MARGIN,
+            )
+        } else {
+            limits(
+                Rect::from_corners(Vec2::new(x0, y0), Vec2::new(x1, y1)),
+                viewport,
+            )
+        };
         let mut next = style.clone();
         next.set("max-width", format!("{}px", maximum.x));
         next.set("max-height", format!("{}px", maximum.y));

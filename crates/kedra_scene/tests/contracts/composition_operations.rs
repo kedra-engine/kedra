@@ -3,6 +3,57 @@ use kedra_scene::{composition::Catalog, document::*};
 use std::collections::BTreeMap;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+#[test]
+fn whole_instance_reparent_keeps_scope_and_rejects_internal_escape_and_cycles() -> Result<()> {
+    let (prefab, child, _) = fixture()?;
+    let (mut scene, parent, _) = fixture()?;
+    let instance = InstanceId::new();
+    scene.instances.push(NestedInstance {
+        id: instance,
+        asset: prefab.id,
+        parent: scene.root.into(),
+        bindings: BTreeMap::new(),
+        overrides: vec![],
+    });
+    let address = NodeAddress {
+        instances: vec![instance],
+        node: prefab.root,
+    };
+    let nested_child = NodeAddress {
+        instances: vec![instance],
+        node: child,
+    };
+    let mut catalog = Catalog::default();
+    catalog.insert(prefab.clone())?;
+    catalog.insert(scene.clone())?;
+    let original = catalog.resolve(scene.id)?;
+    scene.overrides.push(Operation::ReparentNode {
+        node: address.clone(),
+        parent: parent.into(),
+    });
+    catalog.documents.insert(scene.id, scene.clone());
+    let moved = catalog.resolve(scene.id)?;
+    assert_eq!(moved.nodes[&address].parent, Some(parent.into()));
+    assert_eq!(moved.nodes[&nested_child], original.nodes[&nested_child]);
+    assert_eq!(moved.frames, original.frames);
+    assert_eq!(catalog.documents[&prefab.id], prefab);
+    for (node, parent) in [
+        (nested_child.clone(), scene.root.into()),
+        (address.clone(), nested_child),
+        (address.clone(), address),
+    ] {
+        let mut invalid = scene.clone();
+        invalid
+            .overrides
+            .push(Operation::ReparentNode { node, parent });
+        catalog.documents.insert(scene.id, invalid.clone());
+        assert!(catalog.resolve(scene.id).is_err());
+        assert_eq!(catalog.documents[&scene.id], invalid);
+        assert_eq!(catalog.documents[&prefab.id], prefab);
+    }
+    Ok(())
+}
+
 fn fixture() -> Result<(PrefabDocument, NodeId, NodeId)> {
     let mut document = PrefabDocument::new("Operations");
     document.nodes[0]

@@ -26,9 +26,13 @@
 .hierarchy-row .browser-folder { flex-grow:1; flex-basis:0px; min-width:0px; justify-content:start; column-gap:6px; overflow:clip; }
 .hierarchy-row .browser-folder .text { min-width:0px; overflow:clip; }
 .hierarchy-row.context .text { color:var(--muted); }
+.hierarchy-row.prefab-instance .text { color:var(--prefab-text); }
+.hierarchy-row.prefab-instance:hover .text, .hierarchy-row.prefab-instance.row-hover .text { color:var(--on-accent); }
 .hierarchy-row.selected .text { color:var(--on-accent); }
 .hierarchy.inactive .hierarchy-row.selected .text { color:var(--text); }
+.hierarchy.inactive .hierarchy-row.prefab-instance.selected .text { color:var(--prefab-text); }
 .hierarchy-message { width:100%; padding:8px; max-height:96px; flex-shrink:0; overflow-y:scroll; }
 .hierarchy-status { width:100%; padding:6px 8px; height:44px; flex-shrink:0; overflow-y:scroll; overflow-x:clip; background-color:var(--header); }
 .hierarchy-hint { position:absolute; left:8px; right:8px; bottom:8px; max-height:96px; padding:8px; border:1px solid var(--border); border-radius:var(--control-radius); background-color:var(--field); overflow:clip; }
 .hierarchy .hidden { display:none; }
+.hierarchy .drop-target { outline-width:2px; outline-offset:-2px; outline-color:var(--focus); }

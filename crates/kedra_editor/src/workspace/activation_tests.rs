@@ -79,6 +79,47 @@ impl Fixture {
 }
 
 #[test]
+fn restored_missing_source_fails_once_without_replacing_admitted_documents() -> TestResult {
+    let mut f = Fixture::new()?;
+    let missing = ViewId::new();
+    f.command(Command::Open {
+        id: missing,
+        view: View {
+            kind: "document".into(),
+            restore_key: Some("missing.scene.ron".into()),
+        },
+        destination: Destination::Tabs {
+            group: f.group(f.b),
+            index: 2,
+        },
+    })?;
+    f.app
+        .world_mut()
+        .resource_scope(|world, mut state: Mut<EditorWorkspace>| {
+            panels::mount(world, &mut state)?;
+            document_views::poll(world, &mut state);
+            assert!(state.documents.failure.take().is_some());
+            assert!(!state.documents.opening());
+            assert!(!state.panels.restore_sources.contains_key(&missing));
+            let opened: Vec<_> = state.documents.opened.keys().copied().collect();
+            document_views::poll(world, &mut state);
+            assert!(
+                state.documents.failure.is_none(),
+                "Failed restoration must not retry every frame"
+            );
+            assert_eq!(
+                state.documents.opened.keys().copied().collect::<Vec<_>>(),
+                opened
+            );
+            assert!(state.layout.snapshot().views.contains_key(&missing));
+            Ok::<_, String>(())
+        })?;
+    f.command(Command::Activate(f.a))?;
+    assert_eq!(f.state().documents.active, Some(f.first.id));
+    Ok(())
+}
+
+#[test]
 fn closing_active_document_activates_visible_sibling_and_last_close_clears_authority() -> TestResult
 {
     let mut f = Fixture::new()?;

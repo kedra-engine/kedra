@@ -39,6 +39,11 @@ pub struct ComponentPolicy {
 /// Explicit schema allowlist; all construction, reflection and mapping remain Bevy-owned.
 pub struct ComponentPolicies(pub(crate) BTreeMap<String, ComponentPolicy>);
 impl ComponentPolicies {
+    /// Enumerate registered authorable schemas in stable key order. This grants no
+    /// live-world insertion authority; candidates still require typed validation.
+    pub fn iter(&self) -> impl Iterator<Item = &ComponentPolicy> {
+        self.0.values()
+    }
     /// Encode a reflected source value with symbolic references, rejecting ephemeral handles.
     pub fn encode_value(
         &self,

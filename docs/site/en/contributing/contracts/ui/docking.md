@@ -32,7 +32,8 @@ its close slot, with a separate marker. Identity ghosts keep a stable pointer of
 source; unavailable targets give a reason without a false destination preview.
 
 The single Flat `…` menu supplies maximize/restore, float group/active tab, hide, floating redock
-and complete tab titles. Rails scroll horizontally; focused labels use Left/Right/Home/End.
+and complete tab titles in the **Tabs** submenu for multi-tab groups. Rails scroll
+horizontally; focused labels use Left/Right/Home/End.
 Splitters support pointer/arrow resize and Space/Enter/double-click preferred-ratio reset.
 Escape cancels drag/resize previews. Maximize changes projection, not topology or retained content.
 

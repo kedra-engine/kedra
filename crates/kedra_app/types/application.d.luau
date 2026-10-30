@@ -33,9 +33,9 @@ export type Key = "enter" | "escape" | "tab" | "shift_tab" | "space"
 export type Input = {kind: "close_window"}
     | {kind: "focus_window"}
     | {kind: "modifier", modifier: "shift" | "control" | "alt" | "super", pressed: boolean}
-    | {kind: "button", pressed: boolean}
-    | {kind: "click", element: string}
-    | {kind: "click", position: Point}
+    | {kind: "button", pressed: boolean, button: ("left" | "right" | "middle")?}
+    | {kind: "click", element: string, button: ("left" | "right" | "middle")?}
+    | {kind: "click", position: Point, button: ("left" | "right" | "middle")?}
     | {kind: "move", position: Point}
     | {kind: "drag", from: Point, to: Point}
     | {kind: "wheel", delta: Point}

@@ -2,6 +2,7 @@
 //! projects and the editor. Uses shared scene data without a renderer, window or
 //! editor dependency.
 mod build;
+pub mod ingest;
 pub mod processors;
 mod verification;
 use bevy::prelude::*;

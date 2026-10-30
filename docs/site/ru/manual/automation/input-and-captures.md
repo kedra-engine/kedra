@@ -44,6 +44,8 @@
 {"kind":"move","position":[60,90]}
 {"kind":"button","pressed":true}
 {"kind":"button","pressed":false}
+{"kind":"button","button":"middle","pressed":true}
+{"kind":"button","button":"middle","pressed":false}
 {"kind":"modifier","modifier":"shift","pressed":true}
 {"kind":"modifier","modifier":"shift","pressed":false}
 {"kind":"drag","from":[40,80],"to":[160,120]}

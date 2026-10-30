@@ -3,6 +3,38 @@ use super::*;
 use kedra_docking::{model::Node, snapshot::Snapshot};
 use kedra_ui::docking::HeaderDestination;
 
+pub(crate) fn bind_header(world: &mut World, view: &UiView) {
+    for (key, action) in [
+        ("editor.panels", input::Action::Panels),
+        ("editor.save", input::Action::SaveSource),
+        ("editor.reset", input::Action::Reset),
+    ] {
+        if let Ok(entity) = view.element(key) {
+            world.entity_mut(entity).insert(action);
+        }
+    }
+    if let Ok(entity) = view.element("editor.project-menu") {
+        world.entity_mut(entity).remove::<(
+            bevy::ui_widgets::Button,
+            bevy::input_focus::tab_navigation::TabIndex,
+        )>();
+        kedra_ui::docking::class(world, entity, "project-label", true);
+    }
+    if let Ok(entity) = view.element("editor.project-chevron") {
+        kedra_ui::docking::class(world, entity, "hidden", true);
+    }
+    for (key, identity) in [
+        ("editor.panels", "workspace/panels"),
+        ("editor.reset", "workspace/reset"),
+    ] {
+        if let Ok(entity) = view.element(key) {
+            world
+                .entity_mut(entity)
+                .insert(kedra_ui::ElementId::new(identity));
+        }
+    }
+}
+
 pub(super) fn committed(
     world: &mut World,
     state: &EditorWorkspace,

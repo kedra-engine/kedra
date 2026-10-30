@@ -4,6 +4,140 @@ use bevy::tasks::block_on;
 use kedra_authoring::properties::PropertyEdit;
 use kedra_scene::document::{ComponentData, PrefabDocument};
 type TestResult = Result<(), Box<dyn std::error::Error>>;
+#[test]
+fn save_all_covers_independent_documents_without_changing_selection_and_stops_on_refusal()
+-> TestResult {
+    for refuse in [false, true] {
+        let Fixture {
+            app,
+            mut documents,
+            root,
+            directory: _directory,
+            ..
+        } = fixture_with_peer(true)?;
+        let active = documents.active;
+        let registry = app.world().resource::<AppTypeRegistry>().clone();
+        let types = registry.read();
+        let policies = app.world().resource::<ComponentPolicies>();
+        for path in ["game://source.prefab.ron", "game://peer.prefab.ron"] {
+            let mut edit = documents.begin_edit("Rename", &[path.into()])?;
+            let scope = documents.scope.as_ref().ok_or("scope")?;
+            let node = edit.nodes(scope, path)?.remove(0);
+            edit.rename(scope, &node, "Accepted name", &types, policies)?;
+            documents.commit_edit(&mut edit, &types, policies)?;
+        }
+        let before: Vec<_> = ["source.prefab.ron", "peer.prefab.ron"]
+            .iter()
+            .map(|p| std::fs::read(root.join(p)))
+            .collect::<Result<_, _>>()?;
+        if refuse {
+            std::fs::write(root.join("source.prefab.ron"), "foreign bytes")?;
+        }
+        documents.begin_save_all(app.world(), root.clone())?;
+        while documents.save_busy() {
+            finish(&mut documents)?;
+            documents.advance_save_all(app.world(), root.clone())?;
+        }
+        assert_eq!(documents.active, active);
+        if refuse {
+            assert!(documents.save_error().is_some());
+            assert!(!documents.update_clean());
+            assert_eq!(
+                std::fs::read(root.join("source.prefab.ron"))?,
+                b"foreign bytes"
+            );
+            assert_eq!(std::fs::read(root.join("peer.prefab.ron"))?, before[1]);
+        } else {
+            assert!(documents.update_clean());
+            for path in ["source.prefab.ron", "peer.prefab.ron"] {
+                let saved = PrefabDocument::parse(&std::fs::read_to_string(root.join(path))?)?;
+                let mut catalog = kedra_scene::composition::Catalog::default();
+                catalog.insert(saved.clone())?;
+                assert_eq!(
+                    catalog.resolve(saved.id)?.nodes[&saved.root.into()].name,
+                    "Accepted name"
+                );
+            }
+        }
+    }
+    Ok(())
+}
+#[test]
+fn new_scene_save_reopen_and_history_removal_share_the_existing_document_coordinator() -> TestResult
+{
+    creation_save(
+        kedra_scene::document::DocumentKind::Scene,
+        "Arena.scene.ron",
+    )
+}
+#[test]
+fn new_prefab_save_reopen_and_history_removal_share_the_existing_document_coordinator() -> TestResult
+{
+    creation_save(
+        kedra_scene::document::DocumentKind::Prefab,
+        "Bomb.prefab.ron",
+    )
+}
+fn creation_save(kind: kedra_scene::document::DocumentKind, path: &str) -> TestResult {
+    let Fixture {
+        app,
+        mut documents,
+        root,
+        directory: _directory,
+        ..
+    } = fixture()?;
+    let original = std::fs::read(root.join("source.prefab.ron"))?;
+    let registry = app.world().resource::<AppTypeRegistry>().clone();
+    let types = registry.read();
+    let policies = app.world().resource::<ComponentPolicies>();
+    let mut scene = PrefabDocument::new("Arena");
+    scene.kind = kind;
+    let id = scene.id;
+    let compiled = source::create_document(
+        documents.scope.as_mut().ok_or("scope")?,
+        scene,
+        path.into(),
+        &types,
+        policies,
+    )?;
+    documents.compiled = compiled;
+    documents.compiled_revisions = documents.revisions();
+    documents.active = Some(id);
+    documents.begin_save(app.world(), root.clone())?;
+    let message = finish(&mut documents)?;
+    assert!(
+        !documents.save_pending() && documents.update_clean(),
+        "{message}"
+    );
+    let saved = std::fs::read_to_string(root.join(path))?;
+    assert_eq!(PrefabDocument::parse(&saved)?.kind, kind);
+    let (reopened, _) = source::admit(source_files::read(&root, "game")?, &types, policies)?;
+    assert_eq!(reopened.path(id), Some(path));
+    assert!(!reopened.working.is_dirty());
+    let change = documents.prepare_history(false, &types, policies)?;
+    documents.publish_change(change);
+    assert!(!documents.contains(id));
+    assert!(!documents.update_clean());
+    assert!(documents.can_save());
+    assert_eq!(
+        std::fs::read_to_string(root.join(path))?,
+        saved,
+        "Undo must not write files"
+    );
+    documents.begin_save(app.world(), root.clone())?;
+    let message = finish(&mut documents)?;
+    assert!(documents.update_clean(), "{message}");
+    assert!(!root.join(path).exists());
+    let change = documents.prepare_history(true, &types, policies)?;
+    documents.publish_change(change);
+    assert!(documents.can_save());
+    documents.begin_save(app.world(), root.clone())?;
+    let message = finish(&mut documents)?;
+    assert!(documents.update_clean(), "{message}");
+    assert_eq!(std::fs::read_to_string(root.join(path))?, saved);
+    assert_eq!(std::fs::read(root.join("source.prefab.ron"))?, original);
+    Ok(())
+}
 struct Fixture {
     app: App,
     documents: Documents,

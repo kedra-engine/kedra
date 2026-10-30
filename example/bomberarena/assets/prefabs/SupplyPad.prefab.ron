@@ -1,0 +1,21 @@
+(
+    version: 1,
+    id: "8dda087d-d0e9-4777-8b57-0e70ccba2233",
+    kind: Prefab,
+    title: "SupplyPad",
+    root: "9d42c916-a94d-4110-854a-152ada3bbdf2",
+    base: None,
+    nodes: [
+        (
+            id: "9d42c916-a94d-4110-854a-152ada3bbdf2",
+            name: "SupplyPad",
+            parent: None,
+            components: {
+                "scene.model": (version: 1, value: (scene:Path("game://models/platform_2x2x1_blue.glb#Scene0"))),
+            },
+        ),
+    ],
+    instances: [],
+    overrides: [],
+    ports: {},
+)

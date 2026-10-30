@@ -114,7 +114,8 @@ pub(crate) fn zoom(world: &mut World, camera: Entity, amount: f32) {
     super::camera_motion::cancel(world, camera);
     if let Some(mut controller) = world.get_mut::<PanOrbitCamera>(camera) {
         controller.start_zoom(None);
-        controller.send_zoom_input(amount.clamp(-100., 100.));
+        // Host input is in wheel notches; native PanOrbit consumes pixel-scale deltas.
+        controller.send_zoom_input((amount * 60.).clamp(-300., 300.));
     }
 }
 pub(crate) fn fly(world: &mut World, camera: Entity, delta: Vec2, axis: Vec3, fast: bool, dt: f32) {

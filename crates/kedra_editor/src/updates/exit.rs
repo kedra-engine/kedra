@@ -26,7 +26,7 @@ pub(super) fn ready(world: &mut World) -> Result<(), String> {
     let workspace = world
         .get_resource::<crate::workspace::EditorWorkspace>()
         .ok_or("Editor workspace is unavailable; restart was not authorized")?;
-    if !workspace.update_ready() {
+    if !workspace.update_ready() || crate::workspace::import_pending(world) {
         return Err("Finish source operations and save changes before updating; this editor cannot save dirty documents yet".into());
     }
     Ok(())

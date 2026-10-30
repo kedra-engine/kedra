@@ -1,0 +1,21 @@
+(
+    version: 1,
+    id: "3ee775ce-08b4-4ce6-af11-9d21bc483c89",
+    kind: Prefab,
+    title: "StonePillar",
+    root: "93aa38a0-174a-43c5-b7c2-f069d7c66b2a",
+    base: None,
+    nodes: [
+        (
+            id: "93aa38a0-174a-43c5-b7c2-f069d7c66b2a",
+            name: "StonePillar",
+            parent: None,
+            components: {
+                "scene.model": (version: 1, value: (scene:Path("game://models/pillar_2x2x2.glb#Scene0"))),
+            },
+        ),
+    ],
+    instances: [],
+    overrides: [],
+    ports: {},
+)

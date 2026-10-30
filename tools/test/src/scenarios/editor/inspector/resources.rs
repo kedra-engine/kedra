@@ -56,7 +56,6 @@ fn pick(c: &Editor<'_>, well: &Node, query: &str, path: &str) -> Result<()> {
 pub(super) fn run(
     c: &Editor<'_>,
     assets: &std::path::Path,
-    inspector: &str,
     hierarchy: &str,
     prefix: &str,
 ) -> Result<()> {
@@ -103,13 +102,13 @@ pub(super) fn run(
         c.node(&model.id)?.value() == "game://ship.glb#Scene0",
         "Model no-op changed its exact native label",
     )?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     select(c, hierarchy, "Composed spatial scene")?;
     c.until("model no-op preserves environment Undo", || {
         Ok(well(c, prefix, "scene.environment")?.value() == "game://day.environment.ron")
     })?;
     check(
-        c.state()?["documents"]["can_undo"] == false,
+        c.current_document()?["dirty"] == false,
         "Same-path model assignment consumed source history",
     )?;
     select(c, hierarchy, "Generated two-material model")?;
@@ -134,15 +133,15 @@ pub(super) fn run(
         "single magenta model replaces cyan/yellow forest",
     )?;
     c.client.capture(c.window()?)?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("model replacement Undo restores original forest", || {
         Ok(projected_model()? == original_model)
     })?;
-    c.menu(inspector, "Redo source edit")?;
+    c.main_menu("Redo")?;
     c.until("model replacement Redo restores magenta forest", || {
         Ok(magenta_model(&projected_model()?))
     })?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("model history returns to original forest", || {
         Ok(projected_model()? == original_model)
     })?;
@@ -151,7 +150,7 @@ pub(super) fn run(
         "bare Asset Browser model resolves its one native scene",
         || Ok(magenta_model(&projected_model()?)),
     )?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("model drop Undo restores original forest", || {
         Ok(projected_model()? == original_model)
     })?;
@@ -167,15 +166,15 @@ pub(super) fn run(
     c.until("optional Clear", || {
         Ok(c.node(&texture.id)?.value() == "None")
     })?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("Clear Undo", || {
         Ok(c.node(&texture.id)?.value() == "game://checker.png")
     })?;
-    c.menu(inspector, "Undo source edit")?;
+    c.main_menu("Undo")?;
     c.until("texture assignment Undo", || {
-        Ok(c.node(&texture.id)?.value() == "None" && c.state()?["documents"]["can_undo"] == false)
+        Ok(c.node(&texture.id)?.value() == "None" && c.current_document()?["dirty"] == false)
     })?;
-    drops::run(c, inspector, &texture)?;
+    drops::run(c, &texture)?;
     for key in ["translation", "rotation", "pivot"] {
         check(
             c.state()?["scene_views"][view][key] == camera[key],

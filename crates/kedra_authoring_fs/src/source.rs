@@ -68,7 +68,11 @@ pub fn read_for_save(
     pending: Option<&CommitRequest>,
 ) -> Result<SourceSnapshot, String> {
     let _guard = crate::read_guard(root, pending).map_err(|error| error.to_string())?;
+    read_unlocked(root, namespace)
+}
+pub(crate) fn read_unlocked(root: &Path, namespace: &str) -> Result<SourceSnapshot, String> {
     let mut snapshot = SourceSnapshot {
+        environments: Default::default(),
         namespace: namespace.into(),
         generation: 1,
         documents: Vec::new(),
@@ -126,7 +130,11 @@ pub fn read_for_save(
         let data = bytes(
             root,
             entry.path(),
-            if document { 65_536 } else { 8 * 1024 * 1024 },
+            if document || path.ends_with(".environment.ron") {
+                65_536
+            } else {
+                8 * 1024 * 1024
+            },
         )?;
         total = total.saturating_add(data.len());
         if total > 64 * 1024 * 1024 {
@@ -174,6 +182,12 @@ pub fn read_for_save(
                 source,
             });
         } else {
+            if path.ends_with(".environment.ron") {
+                snapshot.environments.insert(
+                    path.clone(),
+                    String::from_utf8(data.clone()).map_err(|error| error.to_string())?,
+                );
+            }
             snapshot.assets.push(SourceAsset {
                 id,
                 path,

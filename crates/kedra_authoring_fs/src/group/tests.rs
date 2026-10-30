@@ -93,7 +93,7 @@ fn coupled_sources_publish_with_one_receipt_and_shared_admission_excludes_writer
         std::fs::read_to_string(root.join(&file.path)).ok().as_ref() == file.source.as_ref()
     }));
     commit_existing(&root, &request)?;
-    assert!(recover_existing(&root)?.is_none());
+    assert!(recover_documents(&root)?.is_none());
     assert!(!root.join("catalog.prefabs.ron").exists());
     Ok(())
 }
@@ -110,7 +110,7 @@ fn interrupted_group_blocks_admission_and_recovers_exact_intent_without_rewritin
     foreign.operation = uuid::Uuid::new_v4();
     assert!(read_guard(&root, Some(&foreign)).is_err());
     assert!(commit_existing(&root, &foreign).is_err());
-    let receipt = recover_existing(&root)?.ok_or("recovery")?;
+    let receipt = recover_documents(&root)?.ok_or("recovery")?;
     assert_eq!(receipt.operation, request.operation);
     assert_eq!(receipt.files.len(), 2);
     assert!(request.files.iter().all(|file| {
@@ -121,7 +121,7 @@ fn interrupted_group_blocks_admission_and_recovers_exact_intent_without_rewritin
         std::fs::read_to_string(root.join("入口.prefab.ron.meta"))?,
         "Preserve sidecar bytes"
     );
-    assert!(recover_existing(&root)?.is_none());
+    assert!(recover_documents(&root)?.is_none());
     read_guard(&root, None)?;
     Ok(())
 }
@@ -176,7 +176,7 @@ fn recovery_conflicts_or_foreign_journal_operations_preserve_all_observed_bytes_
             .iter()
             .map(|file| std::fs::read(root.join(&file.path)))
             .collect::<Result<_, _>>()?;
-        let error = recover_existing(&root)
+        let error = recover_documents(&root)
             .err()
             .ok_or("recovery must refuse")?;
         if case == "oversized_ops" {
@@ -290,7 +290,7 @@ fn guarded_port_refusal_rolls_back_an_earlier_replacement_without_changing_permi
         );
     }
     assert!(session.intent.exists());
-    recover_existing(&root)?.ok_or("recover retained intent")?;
+    recover_documents(&root)?.ok_or("recover retained intent")?;
     assert!(request.files.iter().all(|file| {
         std::fs::read_to_string(root.join(&file.path)).ok().as_ref() == file.source.as_ref()
     }));

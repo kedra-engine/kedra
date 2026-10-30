@@ -39,7 +39,7 @@ cargo run --locked -p kedra -- assets verify target/documentation/examples/getti
 cargo run --locked -p kedra -- --assets target/documentation/examples/getting-started/editor-delivery --state-directory target/documentation/examples/getting-started/editor-state
 ```
 
-После проверки ресурсов окно **Projects** предлагает **Open folder…** и **New project**.
+После проверки ресурсов окно **Projects** предлагает **Open folder** и **New project**.
 Заставки нет. Подготовка проекта может сразу открыть рабочее пространство или ненадолго
 показать окно загрузки; ни один из вариантов не пропускает валидацию.
 
@@ -49,8 +49,8 @@ cargo run --locked -p kedra -- --assets target/documentation/examples/getting-st
 исходники. Переносимые/разрабатываемые сборки используют соседний `assets`; app bundle macOS —
 `Contents/Resources/assets`, а расположение Linux `usr/bin` — `usr/lib/<executable>/assets`.
 
-1. Нажмите **Open folder…**.
-2. Через **Browse…** выберите `tests/fixtures/test_project` внутри своего репозитория.
+1. Нажмите **Open folder**.
+2. Через **Browse** выберите `tests/fixtures/test_project` внутри своего репозитория.
    Нужен каталог с `kedra.toml`, а не `assets/` или сам файл манифеста.
 3. Если заполняете **Project folder** вручную, введите абсолютный нативный путь.
    Относительный текст вроде `tests/fixtures/test_project` эта форма не принимает.

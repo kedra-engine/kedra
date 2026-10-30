@@ -48,9 +48,7 @@ impl Panel {
                     }
                 )
             })
-            .unwrap_or_else(|| {
-                "Read-only sources · New/Import unavailable: source writing is not connected".into()
-            });
+            .unwrap_or_default();
         self.text(world, "status", selection)?;
         self.text(
             world,
@@ -78,8 +76,6 @@ impl Panel {
                 "up",
                 self.model.loading || self.model.path.as_os_str().is_empty(),
             ),
-            ("new", true),
-            ("import", true),
         ] {
             disable(world, self.element(key)?, disabled);
         }

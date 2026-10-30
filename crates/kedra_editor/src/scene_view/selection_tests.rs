@@ -10,6 +10,31 @@ use kedra_scene::document::{InstanceId, NodeAddress, NodeId};
 type Result = std::result::Result<(), String>;
 
 #[test]
+fn selected_model_publishes_marker_when_native_geometry_arrives() -> Result {
+    let mut world = World::new();
+    world.init_resource::<Assets<Mesh>>();
+    world.init_resource::<Assets<GizmoAsset>>();
+    let root = world.spawn(Transform::from_xyz(4., 0., 0.)).id();
+    let address: NodeAddress = NodeId::new().into();
+    let mut projection = projection::Projection::pending(1);
+    projection.nodes.insert(address.clone(), root);
+    let mut marker = selection::Marker::default();
+    marker.update(&mut world, &projection, Some(&address))?;
+    assert!(world.resource::<Assets<GizmoAsset>>().is_empty());
+    let mesh = world.resource_mut::<Assets<Mesh>>().add(Cuboid::default());
+    world.spawn((Mesh3d(mesh), Transform::IDENTITY, ChildOf(root)));
+    marker.update(&mut world, &projection, Some(&address))?;
+    assert_eq!(world.resource::<Assets<GizmoAsset>>().len(), 1);
+    marker.update(&mut world, &projection, None)?;
+    assert!(world.resource::<Assets<GizmoAsset>>().is_empty());
+    marker.update(&mut world, &projection, Some(&address))?;
+    marker.clear(&mut world);
+    assert!(world.resource::<Assets<GizmoAsset>>().is_empty());
+    assert!(world.entities().contains(root));
+    Ok(())
+}
+
+#[test]
 fn failed_bounds_measurement_does_not_cache_unchanged_selection() -> Result {
     let mut world = World::new();
     world.init_resource::<Assets<Mesh>>();

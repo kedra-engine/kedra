@@ -62,6 +62,9 @@ impl Plugin for AuthoredUiPlugin {
         }
         app.add_systems(Update, (style::editing, style::images, style::spin));
         if app.is_plugin_added::<bevy::input_focus::InputDispatchPlugin>() {
+            if !app.is_plugin_added::<crate::popup::cascade::CascadePlugin>() {
+                app.add_plugins(crate::popup::cascade::CascadePlugin);
+            }
             app.add_systems(
                 PostUpdate,
                 crate::popup::constrain.before(bevy::ui::UiSystems::Layout),

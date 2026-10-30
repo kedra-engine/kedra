@@ -4,6 +4,7 @@ use super::*;
 fn source_handles_validate_native_address_forms_without_runtime_loading() {
     let id = Uuid::new_v4();
     let snapshot = SourceSnapshot {
+        environments: Default::default(),
         namespace: "game".into(),
         generation: 1,
         documents: Vec::new(),

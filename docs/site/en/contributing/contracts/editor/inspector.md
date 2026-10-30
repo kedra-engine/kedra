@@ -1,5 +1,12 @@
 # Inspector source interaction contract
 
+Existing environment assets use the same Inspector as source nodes. Asset selection
+resolves their reflected root through the admitted source catalog; the editor binds
+ordinary numeric/color controls to source-owned revisions and exact Save requests.
+See [ADR 0052](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0052-environment-asset-root-editing.md) for
+ownership, source persistence and preview boundaries. The native `environment-editing`
+scenario owns asset selection, field rejection, Save and retained camera refresh.
+
 Inspector presents source values under
 [ADR 0015](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0015-inspector-panel.md),
 [ADR 0011](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0011-universal-reflected-inspector.md)
@@ -66,8 +73,8 @@ Scene View recompiles renderer bindings, validates the unchanged topology/other 
 and updates retained native transforms/passive UI values, owned primitive meshes/materials and
 scene lights with a fresh readback epoch. Spatial asset lookups and derived bounds are
 preflighted before any native replacement; handles, entities and camera stay retained. Camera
-state remains intact. General cross-view settlement and new-document publication are
-not implemented.
+state remains intact. General cross-view settlement remains unimplemented. New scene
+and its publication belong to the shared [document host](source-documents.md).
 
 Exact native integers/floats never pass through a universal f64. Vec3 axis proposals
 replace only the intended axis in the complete native vector. SDR color fields preserve
@@ -311,7 +318,8 @@ exact exports/shared authored assets remain authoritative. Transform/Mesh/Materi
 examples, not fixed schemas. Math/Transform drawers use the rotation projection specified above;
 raw/default inspection retains the native representation.
 
-Do not expose unsupported Add component, Reset, Apply/Revert or asset-location actions.
+Expose Add/Remove only for eligible source targets; do not expose unsupported Reset,
+Apply/Revert or asset-location actions.
 No selection, unavailable/locked targets, empty components, missing capabilities, custom
 failure, limits, no matches and narrow/floating appearances need owner review before shipping;
 the baseline fixture is not acceptance evidence for them. Missing required compositions

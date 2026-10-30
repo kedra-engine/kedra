@@ -51,6 +51,16 @@ fn geometry(world: &mut World, entity: Entity, top: f32, height: f32, content: f
 }
 
 #[test]
+fn import_listing_admission_rejects_stale_browser_data() -> TestResult {
+    let (mut app, mut panel, id, _directory) = fixture()?;
+    assert!(panel.listing_ready());
+    panel.dirty = true;
+    panel.model.error = Some("Listing unavailable".into());
+    panel.tick(app.world_mut(), id)?;
+    assert!(!panel.listing_ready());
+    Ok(())
+}
+#[test]
 fn resource_drag_paths_require_the_current_tracked_entry_root_and_listing_generation() -> TestResult
 {
     let (_app, mut panel, _id, directory) = fixture()?;
@@ -187,7 +197,8 @@ fn compact_list_virtualization_preserves_grid_pitch() -> TestResult {
     assert_eq!((window.first, window.end, window.columns), (9, 14, 1));
     panel.model.mode = model::Mode::Grid;
     let window = panel.window(app.world())?;
-    assert_eq!((window.first, window.end, window.columns), (1, 5, 1));
+    // The compact 80px tile plus 4px gap fits two columns in this viewport.
+    assert_eq!((window.first, window.end, window.columns), (2, 10, 2));
     Ok(())
 }
 
@@ -328,10 +339,10 @@ fn dirty_errors_and_reused_bindings_refresh_hints() -> TestResult {
             .0
             .contains("stale listing")
     );
-    panel.bind(world, root, id, Action::Unavailable("new binding reason"));
+    panel.bind(world, root, id, Action::Grid);
     assert_eq!(
         world.get::<Tooltip>(root).ok_or("reused hint")?.0,
-        "new binding reason"
+        "Grid view"
     );
     panel.model.entries = vec![model::Entry {
         name: "日本語 Straße.txt".into(),
@@ -397,5 +408,36 @@ fn tree_reveal_bounds_small_and_unallocated_native_viewports() -> TestResult {
         16.,
         "zero-sized viewport must not fabricate scroll geometry"
     );
+    Ok(())
+}
+#[test]
+fn folder_changes_rebase_browser_locations_and_history_without_accepting_stale_reads()
+-> Result<(), String> {
+    use super::model::{Listing, Model};
+    use kedra_authoring_fs::entries::Change;
+    let mut model = Model::default();
+    let request = model.request("Models/Characters".into(), None)?;
+    assert!(model.complete(
+        &request,
+        Ok(Listing {
+            entries: Vec::new(),
+            truncated: false
+        })
+    ));
+    let stale = model.request("Models/Characters".into(), None)?;
+    model.folder_changed(&Change::Rename {
+        from: "Models".into(),
+        to: "Meshes".into(),
+    });
+    assert_eq!(model.path, std::path::Path::new("Meshes/Characters"));
+    assert!(!model.complete(
+        &stale,
+        Ok(Listing {
+            entries: Vec::new(),
+            truncated: false
+        })
+    ));
+    model.folder_changed(&Change::Delete("Meshes".into()));
+    assert_eq!(model.path, std::path::Path::new(""));
     Ok(())
 }

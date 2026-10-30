@@ -31,7 +31,6 @@ impl Panel {
             Action::List => "List view".into(),
             Action::Documents => "Filter: scene/prefab documents and folders".into(),
             Action::Clear => "Clear this folder's search".into(),
-            Action::Unavailable(reason) => (*reason).into(),
             _ => String::new(),
         }
     }

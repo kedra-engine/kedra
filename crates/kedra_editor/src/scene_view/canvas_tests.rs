@@ -5,6 +5,7 @@ use kedra_scene::{
     composition::Catalog,
     document::{ComponentData, Node as SourceNode, NodeId, PrefabDocument},
 };
+use std::collections::BTreeMap;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 fn fixture(mixed: bool) -> Result<(App, Arc<CompiledPrefab>), Box<dyn std::error::Error>> {

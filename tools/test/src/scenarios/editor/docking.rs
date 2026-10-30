@@ -87,22 +87,39 @@ pub(super) fn editor(c: &Editor<'_>) -> Result<Value> {
     cancel(c, window)?;
     same(c, &before)?;
     retained()?;
-    let divider = c
-        .nodes()?
-        .into_iter()
-        .find(|n| n.id.ends_with("/divider") && n.rect[2] - n.rect[0] < 8.)
-        .ok_or("Missing vertical splitter")?;
+    // Resize the split just created, whose two children have spare width. An
+    // arbitrary outer divider may already be clamped by a panel's minimum size.
+    let split = object(&before["nodes"])?
+        .iter()
+        .find(|(_, node)| {
+            node["Split"]["first"] == moved && node["Split"]["second"] == assets_group
+        })
+        .map(|(id, _)| id)
+        .ok_or("Missing created split")?;
+    let divider = c.node(&format!("dock/node/NodeId({split})/divider"))?;
     let point = divider.center();
     c.move_to(point)?;
     c.held(true)?;
+    c.until("divider resize acquired", || {
+        Ok(c.state()?["navigation_input"]["gesture"] == true)
+    })?;
     c.move_to([point[0] + 70., point[1]])?;
     same(c, &before)?;
     c.key("escape")?;
     c.held(false)?;
     same(c, &before)?;
+    c.until("cancelled divider geometry restored", || {
+        Ok((c.node(&divider.id)?.center()[0] - point[0]).abs() <= 1.)
+    })?;
     c.move_to(point)?;
     c.held(true)?;
+    c.until("second divider resize acquired", || {
+        Ok(c.state()?["navigation_input"]["gesture"] == true)
+    })?;
     c.move_to([point[0] + 50., point[1]])?;
+    c.until("divider resize projected", || {
+        Ok((c.node(&divider.id)?.center()[0] - point[0]).abs() > 1.)
+    })?;
     c.held(false)?;
     c.until("committed resize", || Ok(c.state()?["layout"] != before))?;
     let before = c.state()?["layout"].clone();
@@ -120,7 +137,7 @@ pub(super) fn editor(c: &Editor<'_>) -> Result<Value> {
     c.menu(&notes, "Restore group")?;
     same(c, &before)?;
     retained()?;
-    c.menu(&notes, "Float group")?;
+    c.menu(&notes, "Float tab")?;
     c.until("second native window", || {
         Ok(array(&c.client.observe()?["windows"])?.len() == 2)
     })?;
@@ -136,7 +153,7 @@ pub(super) fn editor(c: &Editor<'_>) -> Result<Value> {
         Ok(array(&c.client.observe()?["windows"])?.len() == 1)
     })?;
     retained()?;
-    c.menu(&notes, "Float group")?;
+    c.menu(&notes, "Float tab")?;
     c.until("second float", || {
         Ok(array(&c.client.observe()?["windows"])?.len() == 2)
     })?;
@@ -149,14 +166,10 @@ pub(super) fn editor(c: &Editor<'_>) -> Result<Value> {
         "Floating close did not hide source panel",
     )?;
     retained()?;
-    c.click("workspace/panels")?;
-    let show = c.find("Show Document Preview", |n| {
-        n.caption() == "Show Document Preview"
-    })?;
-    c.click(show.id.strip_suffix("/caption").unwrap_or(&show.id))?;
+    c.main_menu("Windows/Document Preview")?;
     c.wait_node(&draft.id)?;
     retained()?;
-    c.menu(&notes, "Float group")?;
+    c.menu(&notes, "Float tab")?;
     c.until("persisted floating host", || {
         Ok(array(&c.client.observe()?["windows"])?.len() == 2)
     })?;
@@ -201,7 +214,7 @@ pub(super) fn states(c: &Editor<'_>) -> Result<Value> {
         c.key("escape")?;
     }
     c.frame(c.window()?, "editor docking menus")?;
-    c.menu(&notes, "Float group")?;
+    c.menu(&notes, "Float tab")?;
     c.until("small floating popup host", || {
         Ok(array(&c.client.observe()?["windows"])?.len() == 2)
     })?;

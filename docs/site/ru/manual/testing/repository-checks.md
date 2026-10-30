@@ -45,7 +45,7 @@ cargo xtask check
 
 | Этап | Что проверяется |
 | --- | --- |
-| File growth policy | Список Git, включая отслеживаемые ignored-файлы; 1000 строк / 64 KiB |
+| File growth policy | Список Git, включая отслеживаемые ignored-файлы; текст: 1000 строк / 64 KiB; бинарные ассеты: загруженные объекты Git LFS |
 | Dependency architecture | Слои workspace-зависимостей, лицензии пакетов и наследование lint |
 | Dependency exception policy | Согласованные advisory, срок пересмотра, ограничения callers и точные исключения дубликатов |
 | Rust formatting | `cargo fmt --all -- --check`; без записи форматирования |

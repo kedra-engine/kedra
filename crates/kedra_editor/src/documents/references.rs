@@ -49,6 +49,25 @@ impl Documents {
             let path = AssetPath::try_parse(text)
                 .map_err(|e| e.to_string())?
                 .into_owned();
+            let source = &self
+                .scope
+                .as_ref()
+                .ok_or("Source workspace unavailable")?
+                .source;
+            if asset_type == std::any::TypeId::of::<kedra_scene::environment::Environment>()
+                && kedra_authoring_assets::environments::accepts(source, &path)
+            {
+                let current = kedra_assets::references::referenced_handle(value, types)?;
+                if current
+                    .as_ref()
+                    .is_some_and(|handle| snapshot.dependency_path(handle).as_deref() == Some(text))
+                {
+                    return Ok(None);
+                }
+                let mut server = resources.server.clone();
+                return kedra_assets::references::proposal(value, Some(path), types, &mut server)
+                    .map(Some);
+            }
             let delivery = resources.delivery.ok_or(
                 "A matching verified project delivery is required for resource assignment",
             )?;
@@ -57,7 +76,7 @@ impl Documents {
                 .as_ref()
                 .ok_or("Source workspace unavailable")?
                 .source;
-            delivery.matches(
+            delivery.matches_resources(
                 resources.root,
                 self.scene_source()
                     .ok_or("Source admission baseline unavailable")?,

@@ -1,4 +1,4 @@
-//! Retained read-only document hierarchy. Shared documents own node selection.
+//! Retained source hierarchy. Shared documents own selection and structural history.
 mod input;
 mod model;
 #[cfg(test)]
@@ -32,6 +32,7 @@ pub(crate) struct Panel {
     view: UiView,
     document: Option<DocumentId>,
     tree: Option<Tree>,
+    graph: Option<std::sync::Arc<kedra_scene::composition::ResolvedGraph>>,
     navigation: BTreeMap<DocumentId, Navigation>,
     rows: BTreeMap<NodeAddress, UiView>,
     visible: Vec<(usize, bool)>,
@@ -110,6 +111,7 @@ impl Panel {
             view,
             document: None,
             tree: None,
+            graph: None,
             navigation: BTreeMap::new(),
             rows: BTreeMap::new(),
             visible: Vec::new(),
@@ -155,16 +157,19 @@ impl Panel {
         documents: &Documents,
     ) -> Result<(), String> {
         let area = self.element("entries")?;
-        if self.document != documents.active {
+        let active = documents.active.filter(|id| documents.contains(*id));
+        let graph = active
+            .and_then(|id| documents.opened.get(&id))
+            .map(|doc| doc.graph.clone());
+        if self.document != active {
             self.range_anchor = None;
             if let Some(previous) = self.document
                 && let Some(navigation) = self.navigation.get_mut(&previous)
             {
                 navigation.scroll = world.get::<ScrollPosition>(area).map_or(0., |p| p.y);
             }
-            self.document = documents.active;
-            self.tree = documents
-                .active
+            self.document = active;
+            self.tree = active
                 .and_then(|doc| documents.opened.get(&doc))
                 .map(|doc| Tree::new(&doc.graph));
             for (_, row) in std::mem::take(&mut self.rows) {
@@ -182,6 +187,29 @@ impl Panel {
                 position.y = scroll;
             }
             self.focus = None;
+            self.dirty = true;
+        }
+        let changed = match (&self.graph, &graph) {
+            (Some(old), Some(new)) => !std::sync::Arc::ptr_eq(old, new),
+            (None, None) => false,
+            _ => true,
+        };
+        if changed {
+            self.tree = graph.as_ref().map(|graph| Tree::new(graph));
+            self.graph = graph;
+            for (_, row) in std::mem::take(&mut self.rows) {
+                world.despawn(row.root);
+            }
+            self.range_anchor = self.range_anchor.take().filter(|address| {
+                self.tree
+                    .as_ref()
+                    .is_some_and(|tree| tree.indices.contains_key(address))
+            });
+            self.focus = self.focus.take().filter(|address| {
+                self.tree
+                    .as_ref()
+                    .is_some_and(|tree| tree.indices.contains_key(address))
+            });
             self.dirty = true;
         }
         let selected_set = documents

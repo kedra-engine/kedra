@@ -48,7 +48,11 @@ function api.field(id: string, value: string)
         return current ~= nil and current.focused
     end, 40000)
     api.input(node.window, {kind = "key", key = "select_all"})
-    api.input(node.window, {kind = "text", text = value})
+    if value == "" then
+        api.input(node.window, {kind = "key", key = "backspace"})
+    else
+        api.input(node.window, {kind = "text", text = value})
+    end
     wait.until_true("text delivery to " .. id, function()
         local current = native.node(id)
         return current ~= nil and current.value == value

@@ -40,6 +40,32 @@ pub(super) fn read_journal(path: &Path) -> io::Result<Vec<u8>> {
     Ok(bytes)
 }
 impl Guarded<'_> {
+    // fs-transaction 0.4.0's removal rollback uses bounded, op-indexed sibling
+    // names. Map only those exact granted names into our private staging area;
+    // temporary removal backups must never enter the authored inventory.
+    fn aside(&self, path: &Path) -> Option<(PathBuf, &kedra_authoring::persistence::CommitFile)> {
+        for file in self
+            .request
+            .files
+            .iter()
+            .filter(|file| file.source.is_none())
+        {
+            let target = self.session.root.join(&file.path);
+            let name = target.file_name()?.to_str()?;
+            for index in 0..self.request.files.len() {
+                if target.with_file_name(format!(".{name}.fstx-aside-{index}")) == path {
+                    let key = format!("{:x}", Sha256::digest(file.path.as_bytes()));
+                    return Some((
+                        self.session
+                            .staging
+                            .join(format!("{}-{key}-{index}.removed", self.request.operation)),
+                        file,
+                    ));
+                }
+            }
+        }
+        None
+    }
     fn staging(&self) -> io::Result<&Path> {
         let path = &self.session.staging;
         let builder = std::fs::DirBuilder::new();
@@ -89,10 +115,8 @@ impl Guarded<'_> {
             .iter()
             .find(|file| path == self.session.root.join(&file.path))
         {
-            let actual = hash(path).map_err(io::Error::other)?;
-            if Some(&actual) != file.expected_hash.as_ref()
-                && Some(actual) != file.source.as_deref().map(content_hash)
-            {
+            let actual = optional_hash(path).map_err(io::Error::other)?;
+            if actual != file.expected_hash && actual != file.source.as_deref().map(content_hash) {
                 return Err(denied());
             }
         }
@@ -101,6 +125,10 @@ impl Guarded<'_> {
 }
 impl ReadStorage for Guarded<'_> {
     async fn read(&self, path: &Path) -> io::Result<Vec<u8>> {
+        if let Some((path, _)) = self.aside(path) {
+            self.staging()?;
+            return read_bounded(&path, 65_536);
+        }
         self.check(path)?;
         if path == self.session.journal.path_in(&self.session.root) {
             return read_journal(path);
@@ -114,6 +142,19 @@ impl ReadStorage for Guarded<'_> {
         Err(denied())
     }
     async fn metadata(&self, path: &Path) -> io::Result<Metadata> {
+        if let Some((path, file)) = self.aside(path) {
+            self.staging()?;
+            if optional_hash(&path).map_err(io::Error::other)?.as_ref()
+                != file.expected_hash.as_ref()
+            {
+                return Err(if !path.exists() {
+                    io::ErrorKind::NotFound.into()
+                } else {
+                    denied()
+                });
+            }
+            return StdFs.metadata(&path).await;
+        }
         if path == self.session.staging {
             let metadata = std::fs::symlink_metadata(path)?;
             if !metadata.is_dir() || metadata.is_symlink() {
@@ -153,8 +194,29 @@ impl Storage for Guarded<'_> {
         directories(path).map_err(io::Error::other)
     }
     async fn remove_file(&self, path: &Path) -> io::Result<()> {
+        if let Some((path, file)) = self.aside(path) {
+            self.staging()?;
+            if optional_hash(&path).map_err(io::Error::other)? != file.expected_hash {
+                return Err(denied());
+            }
+            std::fs::remove_file(&path)?;
+            return sync_directory(&self.session.staging);
+        }
         if path != self.session.journal.path_in(&self.session.root) {
-            return Err(denied());
+            // Forward deletion and creation rollback own only exact admitted bytes.
+            let file = self
+                .request
+                .files
+                .iter()
+                .find(|file| {
+                    (file.expected_hash.is_none() || file.source.is_none())
+                        && path == self.session.root.join(&file.path)
+                })
+                .ok_or_else(denied)?;
+            let actual = optional_hash(path).map_err(io::Error::other)?;
+            if actual != file.source.as_deref().map(content_hash) && actual != file.expected_hash {
+                return Err(denied());
+            }
         }
         self.check(path)?;
         read_bounded(path, 16 * 1024 * 1024)?;
@@ -163,8 +225,31 @@ impl Storage for Guarded<'_> {
     async fn remove_dir_all(&self, _: &Path) -> io::Result<()> {
         Err(denied())
     }
-    async fn rename(&self, _: &Path, _: &Path) -> io::Result<()> {
-        Err(denied())
+    async fn rename(&self, from: &Path, to: &Path) -> io::Result<()> {
+        let (from, to, expected) = if let Some((aside, file)) = self.aside(to) {
+            if from != self.session.root.join(&file.path) {
+                return Err(denied());
+            }
+            (from.to_path_buf(), aside, &file.expected_hash)
+        } else if let Some((aside, file)) = self.aside(from) {
+            if to != self.session.root.join(&file.path) {
+                return Err(denied());
+            }
+            (aside, to.to_path_buf(), &file.expected_hash)
+        } else {
+            return Err(denied());
+        };
+        self.staging()?;
+        directories(from.parent().ok_or_else(denied)?).map_err(io::Error::other)?;
+        directories(to.parent().ok_or_else(denied)?).map_err(io::Error::other)?;
+        if optional_hash(&from).map_err(io::Error::other)?.as_ref() != expected.as_ref()
+            || std::fs::symlink_metadata(&to).is_ok()
+        {
+            return Err(denied());
+        }
+        std::fs::rename(&from, &to)?;
+        sync_directory(from.parent().ok_or_else(denied)?)?;
+        sync_directory(to.parent().ok_or_else(denied)?)
     }
     fn capabilities(&self) -> Capabilities {
         Capabilities {
@@ -173,6 +258,14 @@ impl Storage for Guarded<'_> {
         }
     }
     async fn sync(&self, path: &Path, need: Durability) -> io::Result<()> {
+        if let Some((path, _)) = self.aside(path) {
+            self.staging()?;
+            return if path.exists() {
+                sync_existing_file(&path)
+            } else {
+                Ok(())
+            };
+        }
         if path.is_dir() {
             directories(path).map_err(io::Error::other)?;
             return StdFs.sync(path, need).await;
@@ -197,7 +290,11 @@ impl Storage for Guarded<'_> {
             }
             Err(error)
                 if error.kind() == io::ErrorKind::NotFound
-                    && path == self.session.journal.path_in(&self.session.root) =>
+                    && (path == self.session.journal.path_in(&self.session.root)
+                        || self.request.files.iter().any(|file| {
+                            (file.expected_hash.is_none() || file.source.is_none())
+                                && path == self.session.root.join(&file.path)
+                        })) =>
             {
                 None
             }
@@ -219,13 +316,18 @@ impl Storage for Guarded<'_> {
         // Keep crash-orphaned temporaries out of the authored asset inventory.
         // The private sibling staging directory is on the same local filesystem.
         let mut temp = tempfile::NamedTempFile::new_in(self.staging()?)?;
+        let creating = metadata.is_none();
         if let Some(metadata) = metadata {
             temp.as_file().set_permissions(metadata.permissions())?;
         }
         temp.write_all(contents)?;
         temp.as_file().sync_all()?;
         self.current(path)?;
-        temp.persist(path).map_err(|error| error.error)?;
+        if creating {
+            temp.persist_noclobber(path).map_err(|error| error.error)?;
+        } else {
+            temp.persist(path).map_err(|error| error.error)?;
+        }
         Ok(())
     }
 }

@@ -1,7 +1,7 @@
 # Getting started
 
 Follow this route to build Kedra from public source, open a populated project and inspect
-your first document. The current editor is a desktop, read-only authoring viewer; this
+your first document. The desktop editor supports source editing and explicit Save; this
 walkthrough does not create or run a game.
 
 ## Before you begin

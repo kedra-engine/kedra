@@ -8,7 +8,7 @@ fn projected(c: &Editor<'_>, view: &str, selected: &Value) -> Result<Value> {
         .cloned()
         .ok_or("Projected UI layout unavailable".into())
 }
-pub(super) fn run(c: &Editor<'_>, inspector: &str, prefix: &str) -> Result<()> {
+pub(super) fn run(c: &Editor<'_>, prefix: &str) -> Result<()> {
     let document = c.current_document()?;
     let view = text(&document["view"])?;
     let preview = format!("panel/ViewId({view})/");
@@ -87,13 +87,13 @@ pub(super) fn run(c: &Editor<'_>, inspector: &str, prefix: &str) -> Result<()> {
         "Grouped Layout rebuilt a retained amount field",
     )?;
     for _ in 0..2 {
-        c.menu(inspector, "Undo source edit")?;
+        c.main_menu("Undo")?;
     }
     c.until("native Layout Undo", || {
         Ok(projected(c, view, &selected)?["width"] == original["width"])
     })?;
     for _ in 0..2 {
-        c.menu(inspector, "Redo source edit")?;
+        c.main_menu("Redo")?;
     }
     c.until("native Layout Redo", || {
         Ok(projected(c, view, &selected)? == accepted)
@@ -117,8 +117,10 @@ pub(super) fn run(c: &Editor<'_>, inspector: &str, prefix: &str) -> Result<()> {
             "UI Layout changed the preview camera",
         )?;
     }
-    c.menu(inspector, "Discard all unsaved source changes")?;
-    c.until("native Layout discard", || {
+    for _ in 0..2 {
+        c.main_menu("Undo")?;
+    }
+    c.until("native Layout baseline restored", || {
         Ok(projected(c, view, &selected)?["width"] == original["width"])
     })?;
     Ok(())

@@ -2,7 +2,8 @@
 
 Scene View previews supported scene/prefab sources and raw PNG/static-GLB assets.
 Its camera, lighting choices, grid and selection overlays are inspection tools. They do
-not move source nodes, modify component values or provide Play, Save or transform gizmos.
+not move source nodes. Transform tools separately edit selected spatial source nodes;
+Play remains unavailable and source Save is explicit.
 
 Open a source through [Assets](asset-browser.md). A document tab shares its selection
 with [Hierarchy](hierarchy.md) and [Inspector](inspector.md); raw asset previews do not
@@ -15,8 +16,10 @@ for lighting replacement and canvas ownership, see
 ## Prepare resources
 
 Source admission and rendering are separate. Hierarchy and Inspector can work without a
-rendered frame. Scene View additionally needs a verified project delivery bound to the
-same project's source root, namespace `game`, and matching admitted bytes and identities.
+rendered frame. Resource-free documents, including newly created empty scenes, can be
+previewed without a project delivery. Resource references need a verified project delivery
+bound to the same project's source root, namespace `game`, and matching admitted bytes and
+identities. An explicitly supplied mismatched delivery still refuses; it is not ignored.
 
 Build the project delivery, then launch with the project path, editor `--assets PATH`
 and project `--project-assets PATH`. Follow the complete
@@ -57,21 +60,22 @@ and arbitrary material specializations are outside this profile.
 
 ## Camera controls
 
-Controls apply only to a ready spatial view. Click the viewport to give it focus before
-using the wheel or `F`; hovering alone must not steal keyboard focus from a search field.
+Controls apply only to a ready spatial view. The wheel targets the viewport under the
+pointer without changing keyboard focus. `F` targets the active scene after selecting in
+Hierarchy; text fields and modal controls retain their keyboard input.
 LMB, MMB and RMB below mean the left, middle and right mouse buttons.
 
 | Gesture/key | Action |
 | --- | --- |
 | Alt + LMB drag | Orbit around the retained pivot. |
 | MMB drag | Pan. |
-| Wheel over the focused viewport | Dolly in perspective; zoom in orthographic projection. |
+| Wheel over the viewport | Dolly in perspective; zoom in orthographic projection. |
 | Hold RMB and move the mouse | Look around with a temporarily locked/hidden cursor. |
 | W/A/S/D while holding RMB | Move along the camera's forward/right axes. |
 | Q / E while holding RMB | Move down/up along world Y. |
 | Shift while flying | Increase movement speed. |
 | Wheel while holding RMB | Adjust bounded flight speed. |
-| `F` with viewport focus | Frame selection; unavailable bounds produce a diagnostic. |
+| `F` with an active scene, outside text fields | Frame selection; unavailable bounds produce a diagnostic. |
 | Escape | Cancel navigation/alignment; release the navigation hold. |
 
 Release the initiating button to end a drag or flight. Focus loss, docking changes and
@@ -82,26 +86,38 @@ The orientation control follows the camera in a Y-up coordinate system. Click a 
 axis endpoint to align; repeat the aligned direction to flip to its opposite. Drag the
 disc or an endpoint to orbit instead. Pointer alignment turns smoothly and can be
 interrupted; reduced-motion preference makes it immediate.
-The adjacent strip provides LMB-drag Zoom/Pan, Frame selection and projection toggle.
+The shared tool strip includes Frame selection. Pan uses MMB-drag; zoom uses the wheel.
+The Perspective / Orthographic button directly below the orientation disc toggles projection.
 These controls change the view, not the selected object's transform.
 
 ## Toolbar and menus
 
-**View** offers **Frame selection**, **Frame all**, **Front**, **Back**, **Left**,
-**Right**, **Top**, **Bottom**, **Perspective**, **Orthographic** and **Clear selection**.
-Standard-view commands are available without a numeric keypad. Projection switches
-preserve apparent scale at the pivot. Frame all provides a useful way back after navigation.
+The existing viewport panel groups **Move**, **Rotate**, **Scale** and magnet **Snap**
+icons together with Frame selection and Settings in one row inside the viewport; there is
+no separate upper toolbar. `W` / `E` / `R` activate the tools outside text entry and
+camera flight. Move uses world axes; Rotate rings and Scale handles use local axes.
+The hand button disables the active transform tool and hides its handles, retaining
+selection and camera navigation. Clicking a transform icon or using W/E/R enables editing again.
+Drag a scale-axis cube to change one component, or the central cube horizontally to
+scale uniformly, retaining proportions and existing signs. Scaling through zero is refused.
+Under a nonuniform parent, rotation rings follow the corresponding elliptical planes.
+Release creates one source Undo entry; Escape cancels. Snap uses one unit, 15 degrees
+or a 0.1 scale-factor increment relative to the drag start, independent of grid visibility.
+Save persists accepted edits only. Configurable snapping and world/local switching are
+not implemented; physical-input quality and mixed-monitor DPI acceptance remain incomplete.
 
-**Select** offers **Clear selection**; it is disabled without a document selection.
-Below 640 logical pixels of viewport width, Select hides, but Clear selection remains
-in View. Short/small viewports hide unreachable navigation controls. The left selection
-tool focuses object selection; it is not a transform tool or an additional editing mode.
+**View settings** offers **Frame all**, **Clear selection**, **Toggle selection outlines**, **Toggle grid**
+and lighting choices. Frame all provides a useful way back after navigation.
+Use the orientation control for standard views and its projection button to switch
+projection while preserving apparent scale at the pivot.
+Clear selection is disabled without a document selection. Short/small viewports hide
+unreachable navigation controls.
 
-- **Eye:** hide/restore selection bounds, including UI borders. It does not hide source
+- **Toggle selection outlines:** hide/restore selection bounds, including UI borders. It does not hide source
   objects, clear selection, change grid state or remove framing bounds.
-- **Grid:** toggle the infinite grid and colored X/Z axes. Spacing is one source unit,
+- **Toggle grid in View settings:** toggle the infinite grid and colored X/Z axes. Spacing is one source unit,
   not an automatic conversion to project units.
-- **Sun / lighting menu:** choose **Scene lighting** or **Editor lighting**.
+- **Lighting in View settings:** choose **Scene lighting** or **Editor lighting**.
   Documents start with Scene lighting; raw GLB inspection starts with Editor lighting.
 
 Editor lighting replaces this view's scene background/ambient and suppresses its authored
@@ -139,8 +155,8 @@ For source versus projection, see [Scenes and prefabs](../scenes/index.md).
 With the repository's test project and a matching delivery, open `Composed.scene.ron`:
 
 1. Select **Warm sphere** in Hierarchy; Inspector follows, and the camera stays put.
-2. Choose **View → Frame selection**, then Alt-drag to orbit the sphere.
-3. Choose **Orthographic**, then **Front** to compare the view without changing sources.
+2. Click **Frame selection** beside the orientation control, then Alt-drag to orbit the sphere.
+3. Switch to **Orthographic** below the orientation control and align to +Z for the front view.
 4. Select the **title** node under **Passive UI fixture** in Hierarchy. Its UI border
    follows the fitted HUD; clicking that caption in Scene View is not UI-node selection.
 5. Open `ship.glb` in Assets. A model preview opens without an authored Hierarchy target.

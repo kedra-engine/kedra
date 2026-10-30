@@ -1,0 +1,21 @@
+(
+    version: 1,
+    id: "56c438ed-1b2f-475a-b01a-091eaa521fcd",
+    kind: Prefab,
+    title: "ObjectiveMarker",
+    root: "9afd09cd-72c1-47dd-93dd-e86c2451ed72",
+    base: None,
+    nodes: [
+        (
+            id: "9afd09cd-72c1-47dd-93dd-e86c2451ed72",
+            name: "ObjectiveMarker",
+            parent: None,
+            components: {
+                "scene.model": (version: 1, value: (scene:Path("game://models/pillar_2x2x2.glb#Scene0"))),
+            },
+        ),
+    ],
+    instances: [],
+    overrides: [],
+    ports: {},
+)

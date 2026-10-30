@@ -32,7 +32,7 @@ A single click selects the browser item; it does not activate a document.
 
 Expected result: a document tab titled **Textured cuboid** and a corresponding Hierarchy
 tree. The first Open admits the project's complete document inventory into a shared
-read-only workspace, so it can take longer than selecting an already open tab.
+source workspace, so it can take longer than selecting an already open tab.
 Opening the same document again returns to its existing view and selection.
 
 Without `--project-assets`, Scene View can report missing delivery information. You can
@@ -48,10 +48,10 @@ still inspect accepted source nodes and components without rendering them.
 
 The fixture describes a cuboid with size `(2.0, 2.0, 2.0)`, translation
 `(0.0, 1.0, 0.0)` and a surface texture reference to `game://checker.png`.
-Component/field presentations are read-only. You are reading compiled source values,
-not editing a running object's transform or saving a changed document.
+Inspector presents source values, not running gameplay state. Supported fields are
+editable, so keep this canonical fixture unchanged and use a private copy for edits.
 
-If a tool is hidden, use **Panels** in the workspace header. Its menu lists existing
+If a tool is hidden, use **Windows** in the main menu. It lists existing
 views with **Show …** for hidden views or **Select …** for visible ones.
 If Inspector remains on another object, choose **Unlock Inspector** in its group menu.
 If property search hides the values, clear the search field.
@@ -83,7 +83,7 @@ Wait for dependency and frame readiness rather than treating an open tab as a re
 Source paths, identities and bytes must match the delivery. A successful standalone
 `assets verify` proves delivery integrity, not that it still matches externally edited
 sources. Changing the binding requires relaunch with a newly built matching delivery.
-This is an isolated, read-only preview: it does not run the fixture's game executable,
+This is an editor preview: it does not run the fixture's game executable,
 execute project scripts or implement Play.
 
 ## Recover without changing the fixture
@@ -102,9 +102,9 @@ For preview camera and selection controls, see [Scene View](../editor/scene-view
 - **Source works, preview fails:** confirm the explicit project and both delivery paths,
   then follow [asset troubleshooting][preview-errors].
 
-Native input and rendering still need testing on your machine. General visual editing,
-new-file publication and project Play remain unavailable. Existing-source group Save
-for accepted Inspector source edits is described in the
+Native input and rendering still need testing on your machine. Supported source edits
+and new-document publication are available; project Play remains unavailable. Save
+for accepted source edits is described in the
 [Inspector manual](../editor/inspector.md#save-active-document).
 
 [preview-errors]: ../assets/troubleshooting.md#verify-succeeds-but-the-editor-cannot-preview

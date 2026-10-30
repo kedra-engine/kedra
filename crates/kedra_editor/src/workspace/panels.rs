@@ -13,6 +13,8 @@ pub(super) struct State {
     pub(super) inspectors: BTreeMap<ViewId, crate::inspector::Panel>,
     pub(super) scenes: BTreeMap<ViewId, crate::scene_view::View>,
     pub(super) scene_layer: usize,
+    pub(super) restore_sources: BTreeMap<ViewId, std::path::PathBuf>,
+    pub(super) restoring_source: Option<ViewId>,
 }
 
 /// The 232px Figma specimen must not weaken the minima of a mixed tool group.
@@ -70,15 +72,13 @@ pub(super) fn mount(world: &mut World, state: &mut EditorWorkspace) -> Result<()
             continue;
         }
         if record.kind == "document" || record.kind == "asset-preview" {
-            let scene = super::document_views::mount(
-                world,
-                state.stash,
-                id,
-                "Source document",
-                "Reopen this source from Assets to validate the current source inventory.",
-            )?;
+            let scene =
+                super::document_views::mount(world, state.stash, id, "Source document", "")?;
             state.renderer.register(id, scene.root)?;
             state.panels.scenes.insert(id, scene);
+            if let Some(path) = &record.restore_key {
+                state.panels.restore_sources.insert(id, path.into());
+            }
             state.titles.insert(
                 id,
                 record
@@ -161,6 +161,10 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
         }
     }
     super::document_views::poll(world, state);
+    super::thumbnails::poll(world, state);
+    if let Err(error) = state.documents.refresh_environments(world) {
+        notice(world, state, &error);
+    }
     for (id, scene) in &mut state.panels.scenes {
         if let Some(opened) = state
             .documents
@@ -168,10 +172,13 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
             .values()
             .find(|opened| opened.view == *id)
             && let Some(source) = state.documents.scene_source()
-            && let Err(error) = scene.refresh_source(world, &opened.graph, source)
         {
-            scene.retire(world);
-            scene.message(world, &format!("Source projection failed: {error}"), true);
+            if !state.documents.contains(opened.document) {
+                scene.remove_source(world);
+            } else if let Err(error) = scene.refresh_source(world, &opened.graph, source) {
+                scene.fail_source(world, &opened.graph);
+                scene.message(world, &format!("Source projection failed: {error}"), true);
+            }
         }
         let host = state
             .layout
@@ -193,6 +200,9 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) {
         if let Err(error) = scene.tick(world, host.is_some(), dpr) {
             scene.retire(world);
             scene.message(world, &format!("Scene View failed: {error}"), true);
+        }
+        if let Err(error) = scene.refresh_environment(world) {
+            scene.message(world, &error, true);
         }
         let selected = state
             .documents

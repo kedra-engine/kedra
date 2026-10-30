@@ -47,6 +47,7 @@ pub(super) fn publish(
                 .ok_or("Scene layer exhausted")?;
             scene.prepare_asset(world, key, &source, state.panels.scene_layer)?;
         }
+        state.panels.restore_sources.remove(&id);
         return apply(world, state, Command::Activate(id));
     }
     let id = ViewId::new();

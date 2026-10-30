@@ -113,6 +113,27 @@ pub fn compile_working(
         policies,
     )
 }
+/// Reconcile an explicitly imported source inventory through the existing workspace
+/// mechanism. Failed admission/compilation preserves the workspace and history.
+/// The host must settle drafts and verify external-change policy before calling.
+pub fn reconcile(
+    workspace: &mut Workspace,
+    source: SourceSnapshot,
+    types: &TypeRegistry,
+    policies: &ComponentPolicies,
+) -> Result<CompiledSources, String> {
+    let mut candidate = workspace.clone();
+    let mut loader = SourceHandles::new(&source);
+    candidate
+        .keep_working(source.clone(), types, policies, &mut loader)
+        .map_err(|e| e.to_string())?;
+    if let Some(error) = loader.error {
+        return Err(error);
+    }
+    let compiled = compile_working(&candidate, types, policies)?;
+    *workspace = candidate;
+    Ok(compiled)
+}
 /// Prepare a pinned existing-source Save using the same admitted symbolic loader.
 /// Failure retains the original workspace and pending request; performs no I/O.
 pub fn prepare_existing_save(
@@ -133,6 +154,76 @@ pub fn prepare_existing_save(
     }
     *workspace = candidate;
     Ok(request)
+}
+/// Prepare a document Save group, including creations/removals, using admitted resources.
+/// No I/O occurs; a rejected loader or Save candidate leaves the workspace unchanged.
+pub fn prepare_document_save(
+    workspace: &mut Workspace,
+    selected: DocumentId,
+    types: &TypeRegistry,
+    policies: &ComponentPolicies,
+) -> Result<CommitRequest, String> {
+    let baseline = workspace.source.clone();
+    let mut loader = SourceHandles::new(&baseline);
+    let mut candidate = workspace.clone();
+    let request = candidate
+        .prepare_document_save(selected, types, policies, &mut loader)
+        .map_err(|error| error.to_string())?
+        .clone();
+    if let Some(error) = loader.error {
+        return Err(error);
+    }
+    *workspace = candidate;
+    Ok(request)
+}
+/// Create a source document and reserve its exact path through one named history
+/// transaction. Candidate compilation/path failures preserve sources and Undo/Redo.
+/// No files are written. Undo removes the working document; Redo restores its UUID/path.
+pub fn create_document(
+    workspace: &mut Workspace,
+    document: PrefabDocument,
+    path: String,
+    types: &TypeRegistry,
+    policies: &ComponentPolicies,
+) -> Result<CompiledSources, String> {
+    if workspace.pending().is_some() {
+        return Err("Resolve pending Save before creating a document".into());
+    }
+    if workspace.working.documents().len() >= 128 {
+        return Err("Source scope exceeds 128 documents".into());
+    }
+    let mut candidate = workspace.clone();
+    let id = document.id;
+    let mut compiled = None;
+    candidate
+        .working
+        .transact_named(
+            "Create document",
+            &BTreeMap::new(),
+            |documents| {
+                if documents.contains_key(&id) {
+                    return Err(kedra_scene::Error(
+                        "Document identity already exists".into(),
+                    ));
+                }
+                documents.insert(id, document);
+                Ok(())
+            },
+            |catalog| {
+                compiled = Some(
+                    compile_catalog(&workspace.source, catalog, types, policies)
+                        .map_err(kedra_scene::Error)?,
+                );
+                Ok(())
+            },
+        )
+        .map_err(|error| error.to_string())?;
+    candidate
+        .assign_path(id, path)
+        .map_err(|error| error.to_string())?;
+    let compiled = compiled.ok_or("Document compilation unavailable")?;
+    *workspace = candidate;
+    Ok(compiled)
 }
 /// Compile a complete isolated catalog against its admitted resource inventory.
 /// Unknown/untracked resources refuse; labeled handles retain exact native paths.

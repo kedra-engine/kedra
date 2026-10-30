@@ -6,6 +6,7 @@ mod input;
 mod model;
 #[cfg(test)]
 mod regression_tests;
+pub(crate) mod thumbnails;
 mod tiles;
 mod tree;
 mod view;
@@ -23,6 +24,7 @@ pub(crate) enum Action {
     Forward,
     Up,
     Refresh,
+    Folder(crate::workspace::folders::Mode, Option<PathBuf>),
     Open,
     Select(OsString),
     Enter(OsString),
@@ -37,7 +39,6 @@ pub(crate) enum Action {
     TreeNavigate(PathBuf),
     TreeKey(PathBuf, KeyCode),
     FocusSearch,
-    Unavailable(&'static str),
 }
 #[derive(Component, Clone)]
 struct Binding {
@@ -68,6 +69,67 @@ pub(crate) struct Panel {
     dirty: bool,
 }
 impl Panel {
+    pub(crate) fn selected_path(&self) -> Option<PathBuf> {
+        if self.model.loading || self.model.error.is_some() {
+            return None;
+        }
+        let name = self.model.selected.as_ref()?;
+        self.model
+            .entries
+            .iter()
+            .any(|entry| &entry.name == name && entry.kind != Kind::Unavailable)
+            .then(|| self.model.path.join(name))
+    }
+    pub(crate) fn entry_path(
+        &self,
+        path: &std::path::Path,
+        generation: u64,
+        action: &Action,
+        folder_only: bool,
+    ) -> Option<PathBuf> {
+        if !self.current(path, generation) {
+            return None;
+        }
+        match action {
+            Action::Select(name) => self
+                .model
+                .entries
+                .iter()
+                .find(|e| {
+                    &e.name == name
+                        && e.kind != Kind::Unavailable
+                        && (!folder_only || e.kind == Kind::Folder)
+                })
+                .map(|_| path.join(name)),
+            Action::TreeNavigate(folder) => self
+                .tree
+                .rows()
+                .iter()
+                .any(|(p, _)| p == folder)
+                .then(|| folder.clone()),
+            Action::FocusSearch | Action::Root if folder_only => {
+                Some(if matches!(action, Action::Root) {
+                    PathBuf::new()
+                } else {
+                    path.to_owned()
+                })
+            }
+            _ => None,
+        }
+    }
+    pub(crate) fn folder_changed(
+        &mut self,
+        world: &World,
+        change: &kedra_authoring_fs::entries::Change,
+    ) -> Result<(), String> {
+        self.model.folder_changed(change);
+        self.pending_open = None;
+        self.tree_task = None;
+        self.refresh(world)
+    }
+    pub(crate) fn directory(&self) -> PathBuf {
+        self.model.path.clone()
+    }
     pub(crate) fn drag_path(
         &self,
         root: &std::path::Path,
@@ -113,18 +175,6 @@ impl Panel {
             ("list", Action::List),
             ("filter", Action::Documents),
             ("clear", Action::Clear),
-            (
-                "new",
-                Action::Unavailable(
-                    "New is unavailable: source-writing contracts are not connected.",
-                ),
-            ),
-            (
-                "import",
-                Action::Unavailable(
-                    "Import is unavailable: this browser never starts asset processing.",
-                ),
-            ),
         ] {
             world
                 .entity_mut(view.element(key).map_err(|e| e.to_string())?)
@@ -209,6 +259,20 @@ impl Panel {
     }
     pub fn root(&self) -> Entity {
         self.view.root
+    }
+    pub(crate) fn current(&self, path: &std::path::Path, generation: u64) -> bool {
+        self.model.path == path
+            && self.model.generation() == generation
+            && !self.model.loading
+            && self.model.error.is_none()
+    }
+    pub(crate) fn listing_ready(&self) -> bool {
+        !self.model.loading && self.model.error.is_none()
+    }
+    pub(crate) fn refresh(&mut self, world: &World) -> Result<(), String> {
+        self.tree = tree::Tree::default();
+        self.tree.reveal(&self.model.path);
+        self.request(world, self.model.path.clone(), None)
     }
     pub fn take_open(&mut self) -> Option<PathBuf> {
         self.pending_open.take()
@@ -419,9 +483,7 @@ impl Panel {
                 }
             }
             Action::TreeKey(path, key) => self.tree_key(world, path, key)?,
-            Action::Unavailable(reason) => {
-                self.message(reason.into());
-            }
+            Action::Folder(_, _) => (), // Workspace owns filesystem effects.
         }
         self.tick(world, id)
     }

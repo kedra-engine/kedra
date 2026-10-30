@@ -39,6 +39,22 @@ fn check_at(root: &Path) -> crate::Result<String> {
         ],
     )?;
     let deleted = git_paths(root, &["ls-files", "--deleted", "-z"])?;
+    let input: Vec<u8> = paths
+        .iter()
+        .flat_map(|path| path.bytes().chain([0]))
+        .collect();
+    let attributes = duct::cmd("git", ["check-attr", "-z", "--stdin", "filter"])
+        .dir(root)
+        .stdin_bytes(input)
+        .read()?;
+    let fields: Vec<_> = attributes.split_terminator('\0').collect();
+    let lfs: std::collections::BTreeSet<_> = fields
+        .as_chunks::<3>()
+        .0
+        .iter()
+        .filter(|entry| entry[1] == "filter" && entry[2] == "lfs")
+        .map(|entry| entry[0])
+        .collect();
     let mut failures = Vec::new();
     for path in &paths {
         if EXEMPT.contains(&path.as_str()) {
@@ -62,7 +78,7 @@ fn check_at(root: &Path) -> crate::Result<String> {
             ));
             continue;
         }
-        if info.len() > MAX_BYTES {
+        if info.len() > MAX_BYTES && !lfs.contains(path.as_str()) {
             failures.push(format!("{path}: {} bytes exceeds {MAX_BYTES}", info.len()));
             continue;
         }
@@ -73,6 +89,18 @@ fn check_at(root: &Path) -> crate::Result<String> {
                 continue;
             }
         };
+        if bytes.starts_with(b"version https://git-lfs.github.com/spec/v1\n") {
+            failures.push(format!("{path}: unhydrated LFS pointer; run git lfs pull"));
+            continue;
+        }
+        // Binary LFS objects are size-independent. UTF-8 sources retain the
+        // authored-text limits even when an overly broad attribute matches them.
+        if std::str::from_utf8(&bytes).is_err() {
+            if !lfs.contains(path.as_str()) {
+                failures.push(format!("{path}: binary assets must use Git LFS"));
+            }
+            continue;
+        }
         if let Err(error) = validate(path, &bytes) {
             failures.push(error);
         }
@@ -136,7 +164,8 @@ mod tests {
     }
 
     #[test]
-    fn repository_inventory_applies_the_same_binary_limit_to_images() -> crate::Result<()> {
+    fn repository_inventory_requires_hydrated_lfs_binaries_and_keeps_text_limits()
+    -> crate::Result<()> {
         let root = tempfile::tempdir()?;
         git(root.path(), &["init"])?;
         let relative = "docs/ui/corpus/oversized.png";
@@ -144,8 +173,30 @@ mod tests {
         fs::create_dir_all(target.parent().ok_or("missing parent")?)?;
         fs::write(&target, vec![255; MAX_BYTES as usize + 1])?;
         assert!(check_at(root.path()).is_err());
-        fs::write(&target, vec![255; MAX_BYTES as usize])?;
+        fs::write(
+            root.path().join(".gitattributes"),
+            "*.png filter=lfs diff=lfs merge=lfs -text\n",
+        )?;
         assert!(check_at(root.path()).is_ok());
+        fs::write(&target, vec![b'a'; MAX_BYTES as usize + 1])?;
+        assert!(
+            check_at(root.path()).is_err(),
+            "LFS cannot bypass text limits"
+        );
+        fs::write(
+            &target,
+            "version https://git-lfs.github.com/spec/v1\noid sha256:0123456789\nsize 123\n",
+        )?;
+        assert!(
+            check_at(root.path()).is_err(),
+            "Build inputs must be hydrated"
+        );
+        fs::write(&target, vec![255; 16])?;
+        fs::remove_file(root.path().join(".gitattributes"))?;
+        assert!(
+            check_at(root.path()).is_err(),
+            "Small binaries also need LFS"
+        );
         Ok(())
     }
 

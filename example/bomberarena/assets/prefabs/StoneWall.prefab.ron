@@ -1,0 +1,21 @@
+(
+    version: 1,
+    id: "4cb338b8-601e-427d-b3e7-c9e390dedd48",
+    kind: Prefab,
+    title: "StoneWall",
+    root: "1b10898f-df41-4d3e-89ab-0adcf3c66406",
+    base: None,
+    nodes: [
+        (
+            id: "1b10898f-df41-4d3e-89ab-0adcf3c66406",
+            name: "StoneWall",
+            parent: None,
+            components: {
+                "scene.model": (version: 1, value: (scene:Path("game://models/barrier_4x1x2.glb#Scene0"))),
+            },
+        ),
+    ],
+    instances: [],
+    overrides: [],
+    ports: {},
+)

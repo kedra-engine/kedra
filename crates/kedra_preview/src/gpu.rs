@@ -13,8 +13,13 @@ struct Status {
     error: Option<String>,
 }
 #[derive(Resource, Clone, Default)]
-pub(super) struct Gpu(Arc<Mutex<Status>>);
-pub(super) fn install(app: &mut App) {
+/// Shared native render-pipeline status, installed by `install`.
+pub struct Gpu(Arc<Mutex<Status>>);
+/// Install once after the native render sub-app exists. Consumers share its status.
+pub fn install(app: &mut App) {
+    if app.world().contains_resource::<Gpu>() {
+        return;
+    }
     let status = Gpu::default();
     app.insert_resource(status.clone());
     if let Some(render) = app.get_sub_app_mut(RenderApp) {
@@ -40,7 +45,8 @@ fn record(cache: Res<PipelineCache>, status: Res<Gpu>) {
         });
     }
 }
-pub(super) fn ready(world: &World) -> Result<bool, String> {
+/// Report native pipeline readiness; compilation errors remain explicit failures.
+pub fn ready(world: &World) -> Result<bool, String> {
     let Some(gpu) = world.get_resource::<Gpu>() else {
         return Ok(true);
     };
