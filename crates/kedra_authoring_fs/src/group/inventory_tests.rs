@@ -48,6 +48,9 @@ fn rejected_later_write_rolls_back_removal_and_creation_without_foreign_changes(
     let (directory, request, original) = fixture()?;
     let root = directory.path().join("assets");
     let session = Session::new(&root)?;
+    // The private storage port accepts the Session's canonical locator, not
+    // tempfile's potentially aliased spelling (such as /var on macOS).
+    let root = session.root.clone();
     let backend = storage::Guarded {
         session: &session,
         request: &request,
@@ -79,6 +82,7 @@ fn interrupted_removal_recovers_private_backup_and_completes_coupled_creation() 
     let (directory, request, _) = fixture()?;
     let root = directory.path().join("assets");
     let session = Session::new(&root)?;
+    let root = session.root.clone();
     let backend = storage::Guarded {
         session: &session,
         request: &request,
