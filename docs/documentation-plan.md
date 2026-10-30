@@ -12,9 +12,8 @@ No deployment, domain configuration, repository publishing or deletion is
 authorized by this plan alone.
 
 The goal is a product-oriented manual that readers can use to understand Kedra
-without reading its implementation. Unity Manual is an organizational reference:
-progressive explanations, task-oriented instructions, detailed reference pages
-and connected topics, not a source of text, screenshots or copied branding.
+without reading its implementation: progressive explanations, task-oriented
+instructions, detailed reference pages and connected topics.
 
 ## Current manual coverage
 
@@ -321,7 +320,7 @@ Keep configuration under `docs/.vitepress/`, locale content under `docs/site/en/
 and `docs/site/ru/`, and shared media under `docs/site/public/`. The dedicated source
 root excludes legacy documents from publication. Generate output under `target/`.
 Do not expose the entire legacy `docs/` tree as reviewed manual content.
-Use the maintained default theme, not custom components or a copied Unity skin.
+Use the maintained default theme rather than a custom presentation framework.
 Validate language switching, keyboard navigation, narrow layouts and EN/RU search
 with real queries, including Russian terminology and unchanged API names.
 

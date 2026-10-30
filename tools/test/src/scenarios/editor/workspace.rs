@@ -106,18 +106,14 @@ fn workspace(c: &Editor<'_>) -> Result<Value> {
 
 fn header(n: &Node, window: u64) -> Result<()> {
     check(n.window()? == window, "Header belongs to another window")?;
-    near(n.rect[3] - n.rect[1], 32., 1.)?;
     check(
-        n.rect.iter().all(|v| v.is_finite()) && n.rect[2] > n.rect[0],
+        n.rect.iter().all(|v| v.is_finite()) && n.rect[2] > n.rect[0] && n.rect[3] > n.rect[1],
         "Invalid native header",
     )
 }
 fn drop_at(c: &Editor<'_>, view: &str, p: [f64; 2]) -> Result<()> {
     let w = c.drag(view, p)?;
     c.preview()?;
-    for _ in 0..3 {
-        c.frame(w, "dock drop synchronization")?;
-    }
     c.release(w)
 }
 

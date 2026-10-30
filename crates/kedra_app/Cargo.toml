@@ -12,6 +12,7 @@ description = "Shared Kedra application host, command surface and authenticated 
 layer = "runtime"
 
 [dependencies]
+kedra_wakeup = { workspace = true, features = ["native"] }
 bevy = { workspace = true, features = ["bevy_ui", "bevy_winit", "bevy_render", "bevy_log", "multi_threaded", "png", "x11", "wayland"] }
 bevy_remote.workspace = true
 kedra_assets.workspace = true

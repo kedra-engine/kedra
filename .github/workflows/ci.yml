@@ -75,6 +75,9 @@ jobs:
       - name: Dependency architecture
         if: needs.changes.outputs.rust == 'true'
         run: cargo xtask architecture --non-interactive
+      - name: Dependency exception policy
+        if: needs.changes.outputs.rust == 'true'
+        run: cargo xtask dependency-policy --non-interactive
       - name: Rust formatting
         if: needs.changes.outputs.rust == 'true'
         run: cargo xtask fmt --non-interactive
@@ -123,6 +126,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev libfontconfig1-dev pax-utils
+      - name: Use the MSVC-compatible C++ driver on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: '"CXX=clang-cl" >> $env:GITHUB_ENV'
       - uses: Swatinem/rust-cache@v2
         with:
           key: native-lean-v2-${{ runner.os }}-${{ runner.arch }}

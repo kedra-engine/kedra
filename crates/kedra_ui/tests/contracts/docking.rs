@@ -24,6 +24,118 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 mod headers;
 
 #[test]
+fn unchanged_projection_keeps_hierarchy_change_ticks_and_rejects_invalid_sync_without_mutation()
+-> Result<()> {
+    let mut app = App::new();
+    app.add_plugins((MinimalPlugins, AssetPlugin::default()))
+        .init_asset::<Font>()
+        .init_asset::<Image>()
+        .init_resource::<AppTypeRegistry>()
+        .add_plugins(AuthoredUiPlugin);
+    let skin = Skin {
+        group: compile(&app, &["tabs", "body", "menu"])?,
+        tab: compile(&app, &["label", "title", "close"])?,
+        split: compile(&app, &["divider"])?,
+    };
+    let host_id = HostId::new();
+    let mut model = Workspace::new(host_id);
+    let a = ViewId::new();
+    model.execute(Command::Open {
+        id: a,
+        view: View {
+            kind: "a".into(),
+            restore_key: None,
+        },
+        destination: Destination::EmptyHost(host_id),
+    })?;
+    let group = model.snapshot().location(a).ok_or("Missing group")?.0;
+    let b = ViewId::new();
+    model.execute(Command::Open {
+        id: b,
+        view: View {
+            kind: "b".into(),
+            restore_key: None,
+        },
+        destination: Destination::Edge {
+            target: group,
+            edge: Edge::Right,
+            fraction: 0.5,
+        },
+    })?;
+    let world = app.world_mut();
+    let host = world.spawn(Node::default()).id();
+    let stash = world.spawn(Node::default()).id();
+    let content = world.spawn(Node::default()).id();
+    let foreign = world.spawn((Node::default(), ChildOf(host))).id();
+    let hosts = BTreeMap::from([(host_id, host)]);
+    let mut projection = Projection::default();
+    projection.register(a, content)?;
+    projection.sync(
+        world,
+        model.snapshot(),
+        &hosts,
+        stash,
+        &skin,
+        &BTreeMap::new(),
+        "test",
+        1.,
+    )?;
+    // This is Kedra's retained-publication contract: unchanged relationships must
+    // not tell the CSS/layout consumers that a subtree was detached and rebuilt.
+    let before: BTreeMap<_, _> = world
+        .query::<(Entity, Ref<ChildOf>)>()
+        .iter(world)
+        .map(|(e, parent)| (e, (parent.parent(), parent.last_changed())))
+        .collect();
+    let children: BTreeMap<_, _> = world
+        .query::<(Entity, Ref<Children>)>()
+        .iter(world)
+        .map(|(e, children)| (e, (children.to_vec(), children.last_changed())))
+        .collect();
+    world.increment_change_tick();
+    for density in [1., f32::NAN] {
+        let result = projection.sync(
+            world,
+            model.snapshot(),
+            &hosts,
+            stash,
+            &skin,
+            &BTreeMap::new(),
+            "test",
+            density,
+        );
+        assert_eq!(result.is_ok(), density.is_finite());
+        for (entity, (parent, tick)) in &before {
+            let current = world
+                .entity(*entity)
+                .get_ref::<ChildOf>()
+                .ok_or("Parent disappeared")?;
+            assert_eq!(current.parent(), *parent);
+            assert_eq!(
+                current.last_changed(),
+                *tick,
+                "Unchanged parent invalidated for {entity}"
+            );
+        }
+        for (entity, (order, tick)) in &children {
+            let current = world
+                .entity(*entity)
+                .get_ref::<Children>()
+                .ok_or("Children disappeared")?;
+            assert_eq!(&current[..], order.as_slice());
+            assert_eq!(
+                current.last_changed(),
+                *tick,
+                "Unchanged children invalidated for {entity}"
+            );
+        }
+        assert!(world.entities().contains(foreign));
+        assert_eq!(projection.content(a), Some(content));
+    }
+    Ok(())
+}
+
+#[test]
 fn dynamic_properties_reject_nonfinite_geometry_and_retired_targets_without_mutation() {
     let mut world = World::new();
     let entity = world.spawn(Node::default()).id();

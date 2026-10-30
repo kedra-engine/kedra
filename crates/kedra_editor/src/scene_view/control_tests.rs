@@ -13,6 +13,55 @@ fn fixture() -> (App, View) {
     (app, view)
 }
 
+#[test]
+fn visible_serving_preview_stays_continuous_and_hidden_failed_or_retired_views_release_it()
+-> TestResult {
+    use bevy::winit::{UpdateMode, WinitSettings};
+    use std::time::Duration;
+    let (mut app, mut view) = fixture();
+    app.add_plugins(kedra_wakeup::ReactivePlugin {
+        idle: Duration::from_millis(100),
+        focused_active: Duration::from_millis(16),
+        unfocused_active: Duration::from_millis(100),
+    });
+    spatial(app.world_mut(), &mut view)?;
+    // The fixture is already frame-ready. Readiness must not authorize idle.
+    assert_eq!(view.lifecycle.phase, lifecycle::Phase::Ready);
+    view.tick(app.world_mut(), true, 1.)?;
+    app.world_mut().run_schedule(Last);
+    assert_eq!(
+        app.world().resource::<WinitSettings>().focused_mode,
+        UpdateMode::Continuous
+    );
+    view.tick(app.world_mut(), false, 1.)?;
+    app.world_mut().run_schedule(Last);
+    assert_eq!(
+        app.world().resource::<WinitSettings>().focused_mode,
+        UpdateMode::reactive_low_power(Duration::from_millis(100))
+    );
+    view.tick(app.world_mut(), true, 1.)?;
+    app.world_mut().run_schedule(Last);
+    assert_eq!(
+        app.world().resource::<WinitSettings>().focused_mode,
+        UpdateMode::Continuous
+    );
+    view.message(app.world_mut(), "Preview failed", true);
+    view.tick(app.world_mut(), true, 1.)?;
+    app.world_mut().run_schedule(Last);
+    assert_eq!(
+        app.world().resource::<WinitSettings>().focused_mode,
+        UpdateMode::reactive_low_power(Duration::from_millis(100))
+    );
+    view.retire(app.world_mut());
+    view.tick(app.world_mut(), true, 1.)?;
+    app.world_mut().run_schedule(Last);
+    assert_eq!(
+        app.world().resource::<WinitSettings>().unfocused_mode,
+        UpdateMode::reactive_low_power(Duration::from_millis(100))
+    );
+    Ok(())
+}
+
 fn disabled(world: &World, view: &View) {
     for button in &view.controls.buttons {
         assert!(

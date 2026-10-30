@@ -31,7 +31,7 @@ fn await_job(world: &World) {
 fn completed(world: &mut World, generation: u64, outcome: Outcome) {
     world.insert_resource(PendingJob {
         generation,
-        task: IoTaskPool::get().spawn(async move { outcome }),
+        task: Wakeup::for_world(world).spawn(IoTaskPool::get(), async move { outcome }),
     });
     await_job(world);
     poll(world);
@@ -43,7 +43,10 @@ fn pending_and_stale_tasks_never_publish_or_erase_a_newer_request() {
     let mut world = world();
     world.insert_resource(PendingJob {
         generation: 0,
-        task: IoTaskPool::get().spawn(bevy::tasks::futures_lite::future::pending()),
+        task: Wakeup::for_world(&world).spawn(
+            IoTaskPool::get(),
+            bevy::tasks::futures_lite::future::pending(),
+        ),
     });
     poll(&mut world);
     assert!(world.contains_resource::<PendingJob>());
@@ -76,16 +79,31 @@ fn pending_and_stale_tasks_never_publish_or_erase_a_newer_request() {
 
 #[test]
 fn actual_history_loading_preserves_corruption_and_disables_writes() {
+    struct Notify(std::sync::mpsc::Sender<()>);
+    impl std::task::Wake for Notify {
+        fn wake(self: std::sync::Arc<Self>) {
+            let _ = self.0.send(());
+        }
+    }
     let directory = tempfile::tempdir().unwrap();
     let history = directory.path().join("recent.toml");
     std::fs::write(&history, b"invalid original history").unwrap();
     let mut world = world();
+    let (notified, notification) = std::sync::mpsc::channel();
+    world.insert_resource(kedra_wakeup::Wakeup::from_waker(std::task::Waker::from(
+        std::sync::Arc::new(Notify(notified)),
+    )));
     {
         let mut manager = world.resource_mut::<ProjectManager>();
         manager.history_path = Some(history.clone());
         manager.history_writable = true;
     }
     load_history(&mut world);
+    // Completion wakes without invoking the owner's poller even once. Result
+    // admission and failure handling still belong to that poller, not the task.
+    notification.recv_timeout(Duration::from_secs(5)).unwrap();
+    assert!(world.contains_resource::<PendingJob>());
+    assert!(world.resource::<ProjectManager>().history_writable);
     await_job(&world);
     poll(&mut world);
     assert!(!world.resource::<ProjectManager>().history_writable);
@@ -339,7 +357,10 @@ fn pending_job_disables_real_manager_controls_and_completion_reenables_them() {
     let new = crate::test_support::element(app.world_mut(), "projects.new");
     app.insert_resource(PendingJob {
         generation: 0,
-        task: IoTaskPool::get().spawn(bevy::tasks::futures_lite::future::pending()),
+        task: Wakeup::for_world(app.world()).spawn(
+            IoTaskPool::get(),
+            bevy::tasks::futures_lite::future::pending(),
+        ),
     });
     app.update();
     assert!(

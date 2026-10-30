@@ -1,6 +1,8 @@
 //! BMS context initialization and bounded dispatch of explicit entrypoint kinds.
 mod behavior;
 mod sequence;
+#[cfg(test)]
+mod wait_tests;
 
 use super::*;
 use bevy_mod_scripting::{
@@ -116,6 +118,7 @@ pub(super) fn initialize(
             asset: attachment.script(),
         };
         parameters::install(context, &ctx, &program.params)?;
+        profiling::install(context, scope.clone(), &ctx)?;
         diagnostics::install(
             context,
             &ctx,

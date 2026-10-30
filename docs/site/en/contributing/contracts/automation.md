@@ -128,15 +128,28 @@ preserve exact values and re-observe after replacement or layout/lifecycle chang
 
 Pointer events, held-left `button`, chords, text and close requests traverse Bevy's normal
 input path. Pair holds with release or cancellation; receipts do not release them.
+Pointer injection emits `CursorMoved` on both Bevy message surfaces without setting
+the hardware cursor position on `Window`. It does not warp the OS pointer or create
+backend cursor echoes; real desktop input can still interfere with an injected run.
 `close_window` emits standard `WindowCloseRequested` on both native event surfaces. Hosts
 can refuse it; retirement may fail its final receipt. Observe retirement and successful
 process exit instead of blindly retrying. `app.resize` supports logical dimensions
 320..3840 and finite test DPR 1..4, not physical monitor changes. `editor.project` is a
 semantic startup adapter, not evidence of keyboard entry.
 
+The explicit `focus_window` input requests backend activation once, then waits at most
+eight seconds for backend and Bevy focus acknowledgment. It refuses injected holds,
+does not assign the observed focus flag, and fails if the window retires or the backend
+does not acknowledge activation. It must not be used to revive an interrupted gesture.
+Script-backed resize confirms delivery. Callers await usable feature state separately;
+exact backend/Bevy/camera dimensions are not a generic readiness gate. Native rounding is
+accepted as observed state, not a claim of exact requested dimensions or layout.
+
 Capture admits only after input delivery. It settles for at least six application frames
-and fails after more than 180 frames or target retirement; these are not wall-clock
-deadlines. Completion requires renderer readback, PNG encoding and non-clobber publication
+and fails after eight real-time seconds or target retirement. The frame minimum is a
+scheduling fence, not a timeout; high FPS cannot exhaust a frame-count deadline. A late
+completion callback checks the same deadline before publication, even before the next sweep.
+Completion requires renderer readback, PNG encoding and non-clobber publication
 as `<operation-UUID>.png` under `--remote-artifacts`, never a client-selected filename.
 The receipt records physical dimensions, frame and uniform-image diagnostics. Uniform
 frames can be legitimate application output but are not startup visual evidence.
@@ -171,6 +184,9 @@ Built-ins `app.input`, `app.resize`, `app.capture`, `app.click` and `app.field` 
 native registered systems in-process, without HTTP self-calls. Sequences declare
 `run(ctx, args)` and use scoped `ctx.app`, not host API globals. Field sequences await
 focus, selection, text delivery and observed value. No editor/World authority is implied.
+Element-click helpers wait for the target window's observed native focus before submitting
+input, without forcing activation or retrying a click. Retirement or a bounded focus timeout
+fails the sequence; raw input remains explicitly caller-ordered.
 Only explicitly admitted program source/config snapshots provide standard modules;
 there is no filesystem resolver, generic eval or extra test DSL. Current type names are
 `AppContext`, `RuntimeContext` and `BehaviorContext`, without compatibility prefixes.

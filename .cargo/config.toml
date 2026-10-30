@@ -1,3 +1,11 @@
 [alias]
 xtask = "run --locked --package xtask --target-dir target/xtask-bootstrap --"
 kedra = "run --locked --package kedra-build-tool --target-dir target/kedra-build-bootstrap --"
+
+[env]
+# Perfetto's amalgamated C++ SDK includes windows.h before winsock2.h and uses
+# std::numeric_limits::{min,max}. Exclude legacy Winsock and min/max macros.
+# cc consumes these defines only for the MSVC target; warnings stay enabled.
+# Preserve an explicitly supplied target-specific CXXFLAGS value.
+# Luau's parser uses C++ exceptions; clang-cl requires an explicit unwind model.
+CXXFLAGS_x86_64_pc_windows_msvc = { value = "-DNOMINMAX -DWIN32_LEAN_AND_MEAN /EHsc", force = false }

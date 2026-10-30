@@ -15,6 +15,15 @@ pub(crate) fn install(app: &mut App) {
             editor_api,
         ),
     );
+    kedra_app::scripting::register(
+        app,
+        Program::sequence(
+            "editor.profile.menus",
+            "crates/kedra_editor/src/scripting/profile_menus.luau",
+            include_str!("scripting/profile_menus.luau"),
+            editor_api,
+        ),
+    );
 }
 
 fn editor_api(lua: &Lua, scope: Scope, ctx: &lua::Table) -> lua::Result<()> {

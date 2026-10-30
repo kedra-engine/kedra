@@ -29,6 +29,11 @@ the exact source resolved by Cargo; see the external documentation section of th
 - Use ordinary Rust crates and Bevy plugins. No parallel ECS, reflection system,
   DI container, proprietary UI language or compatibility forwarding crates.
 - Runtime cannot depend on editor, importer or filesystem authoring writer.
+- Shared runtime/UI performance improvements belong in their owning libraries, not
+  editor-only copies. Exercise the same implementation in the editor and an
+  independent game consumer before claiming shared acceptance. Native consumers
+  must enable the applicable library features; keep headless consumers minimal
+  and editor-specific pacing, orchestration and authorization out of games.
 - Assign each package a `package.metadata.kedra.layer`; obey the checked DAG.
 - Public API must document invariants, errors, ownership and lifecycle semantics.
 - Native code must reference prefab and scene assets by their full, source-qualified
@@ -76,14 +81,24 @@ the exact source resolved by Cargo; see the external documentation section of th
 
 - Follow [the testing guide](docs/site/en/contributing/contracts/testing.md) and
   [ADR 0031](docs/decisions/0031-contract-owned-testing.md).
-  Before adding a test, identify the Kedra contract, production owner, observable
-  failure and least expensive sufficient environment. Do not add tests for counts
-  or coverage percentages, or merely to re-prove upstream library/tool behavior.
+  Before adding or changing a test, identify the Kedra contract, production owner,
+  observable failure, existing coverage and least expensive sufficient environment.
+  Follow the guide's [test change decision rules][test-decisions].
+  Briefly explain substantive test decisions in the change summary; no per-test report
+  or registry is required. Do not add tests for counts or coverage percentages,
+  or merely to re-prove upstream library/tool behavior.
 - Keep private invariant tests under their owning module; public API contracts use
   `tests/contracts.rs` and behavioral modules in `tests/contracts/`. Keep fixtures
   in the narrowest `test_support`/`tests/support`, never inside another test suite.
   Tests must not import helpers from `*_tests` or `tests` modules. Do not widen
   production visibility or introduce a fixture framework to bypass this boundary.
+- Do not add tests without an observable Kedra failure. Do not remove or weaken a
+  check without explaining where its guarantee remains covered or why it is no
+  longer required. Similar assertions at different failure boundaries are not duplicates.
+- Investigate newly exposed failures before narrowing a scenario. Preserve reproducible
+  evidence and disclose unresolved failures outside the authorized scope; restoring an
+  earlier passing scenario does not resolve the newly observed failure. Never present
+  cheaper verification as evidence of a stronger integration or native boundary.
 - Name suites and tests by behavior, not fix history or generic regression buckets.
   Editor asset/design assertions belong to the editor; importer assertions own
   generic processing/publication. Reuse existing mechanisms and fixtures without
@@ -97,6 +112,8 @@ the exact source resolved by Cargo; see the external documentation section of th
 - Refactoring removes superseded paths and updates callers directly, without legacy
   forwarding modules or duplicate suites. Preserve safety guarantees and required
   execution routes, and update the guide's ownership map and affected commands.
+
+[test-decisions]: docs/site/en/contributing/contracts/testing.md#test-change-decision-rules
 
 ## Product UI content
 

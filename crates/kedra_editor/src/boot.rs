@@ -1,9 +1,7 @@
 //! Windowless startup: delivery verification and authored catalog loading overlap.
-use bevy::{
-    prelude::*,
-    tasks::{IoTaskPool, Task, block_on, poll_once},
-};
+use bevy::{prelude::*, tasks::IoTaskPool};
 use kedra_scene::assets::PrefabSources;
+use kedra_wakeup::{Task, Wakeup};
 use std::{path::PathBuf, time::Duration};
 
 #[derive(Resource, Default)]
@@ -28,8 +26,9 @@ pub(crate) fn poll(world: &mut World) {
             return;
         };
         info!("Editor startup: verifying delivery and loading editor sources concurrently");
-        let verification =
-            IoTaskPool::get().spawn(async move { verify_delivery(&delivery, &manifest) });
+        let verification = Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
+            verify_delivery(&delivery, &manifest)
+        });
         let mut boot = world.resource_mut::<Boot>();
         boot.started = Some(elapsed);
         boot.verification = Some(verification);
@@ -38,7 +37,7 @@ pub(crate) fn poll(world: &mut World) {
         .resource_mut::<Boot>()
         .verification
         .as_mut()
-        .and_then(|task| block_on(poll_once(task)));
+        .and_then(Task::poll);
     if let Some(result) = result {
         world.resource_mut::<Boot>().verification = None;
         match result {

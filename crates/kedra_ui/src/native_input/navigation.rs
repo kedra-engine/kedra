@@ -7,7 +7,7 @@ use bevy::{
     },
 };
 
-#[derive(Component)]
+#[derive(Component, PartialEq, Eq)]
 struct Gated {
     desired: TabIndex,
     written: TabIndex,
@@ -33,9 +33,13 @@ pub(super) fn gate(world: &mut World) {
         if world.get::<TabIndex>(entity) != Some(&written) {
             world.entity_mut(entity).insert(written);
         }
-        world.entity_mut(entity).insert(Gated { desired, written });
+        let next = Gated { desired, written };
+        if world.get::<Gated>(entity) != Some(&next) {
+            world.entity_mut(entity).insert(next);
+        }
     }
 }
+
 pub(super) fn under(world: &World, mut entity: Entity, root: Entity) -> bool {
     loop {
         if entity == root {
@@ -127,5 +131,43 @@ fn navigate(world: &mut World, window: Entity) {
             .resource_mut::<InputFocus>()
             .set(next, FocusCause::Navigated);
         world.resource_mut::<InputFocusVisible>().0 = true;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unchanged_gates_are_retained_and_external_indices_survive_visibility_changes()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let mut world = World::new();
+        let window = world.spawn(Window::default()).id();
+        let field = world
+            .spawn((TabIndex(0), Visibility::Hidden, ChildOf(window)))
+            .id();
+        gate(&mut world);
+        assert_eq!(world.get::<TabIndex>(field), Some(&TabIndex(-1)));
+        world.clear_trackers();
+        gate(&mut world);
+        assert!(
+            !world
+                .entity(field)
+                .get_ref::<Gated>()
+                .ok_or("gate")?
+                .is_changed()
+        );
+        world.entity_mut(field).insert(TabIndex(2));
+        gate(&mut world);
+        assert_eq!(
+            world.get::<Gated>(field).ok_or("gate")?.desired,
+            TabIndex(2)
+        );
+        world
+            .entity_mut(field)
+            .insert((Visibility::Inherited, InheritedVisibility::VISIBLE));
+        gate(&mut world);
+        assert_eq!(world.get::<TabIndex>(field), Some(&TabIndex(2)));
+        Ok(())
     }
 }

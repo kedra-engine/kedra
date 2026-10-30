@@ -23,8 +23,14 @@ pub(super) fn wheel(mut events: MessageReader<MouseWheel>, mut commands: Command
                     continue;
                 };
                 let Some(point) = world
-                    .get::<Window>(event.window)
-                    .and_then(Window::cursor_position)
+                    .get_resource::<input::CursorSample>()
+                    .filter(|sample| sample.window == Some(event.window))
+                    .map(|sample| sample.position)
+                    .or_else(|| {
+                        world
+                            .get::<Window>(event.window)
+                            .and_then(Window::cursor_position)
+                    })
                 else {
                     continue;
                 };
@@ -170,14 +176,17 @@ mod tests {
     ) -> TestResult {
         let mut app = App::new();
         app.add_message::<MouseWheel>()
+            .add_message::<bevy::window::CursorMoved>()
+            .init_resource::<input::CursorSample>()
             .init_resource::<ButtonInput<KeyCode>>()
-            .add_systems(Update, wheel);
+            .add_systems(Update, (input::cursor, wheel).chain());
         let world = app.world_mut();
         let window = world.spawn(Window::default()).id();
         let root = world.spawn(Node::default()).id();
         super::super::bind_root(world, window, root)?;
         let mut floating_window = Window::default();
-        floating_window.set_cursor_position(Some(Vec2::splat(50.)));
+        // Backend cursor state may lag the ordered Bevy pointer events.
+        floating_window.set_cursor_position(Some(Vec2::splat(500.)));
         let floating_window = world.spawn(floating_window).id();
         let floating_root = world.spawn(Node::default()).id();
         let float = HostId::new();
@@ -272,6 +281,11 @@ mod tests {
             }
             Ok(())
         })?;
+        world.write_message(bevy::window::CursorMoved {
+            window: floating_window,
+            position: Vec2::splat(50.),
+            delta: None,
+        });
         world.write_message(MouseWheel {
             unit: MouseScrollUnit::Line,
             x: 0.,
@@ -312,6 +326,22 @@ mod tests {
                 0.
             );
         }
+        // A pointer sample in the floating host cannot authorize scrolling main.
+        app.world_mut().write_message(MouseWheel {
+            unit: MouseScrollUnit::Line,
+            x: 0.,
+            y: -1.,
+            window,
+            phase: bevy::input::touch::TouchPhase::Moved,
+        });
+        app.update();
+        assert_eq!(
+            app.world()
+                .get::<ScrollPosition>(main_content)
+                .map(|scroll| scroll.0.y)
+                .unwrap_or_default(),
+            0.
+        );
         Ok(())
     }
 

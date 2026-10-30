@@ -26,6 +26,7 @@ pub(crate) enum Task {
     Check,
     Files,
     Architecture,
+    DependencyPolicy,
     Fmt,
     Lint,
     Test,
@@ -37,6 +38,7 @@ pub(crate) enum Task {
 pub(crate) enum Stage {
     Files,
     Architecture,
+    DependencyPolicy,
     Cargo {
         label: &'static str,
         args: &'static [&'static str],
@@ -49,6 +51,7 @@ impl Stage {
         match self {
             Self::Files => "File growth policy",
             Self::Architecture => "Dependency architecture",
+            Self::DependencyPolicy => "Dependency exception policy",
             Self::Cargo { label, .. } => label,
         }
     }
@@ -60,6 +63,7 @@ impl Task {
             Self::Check => "check",
             Self::Files => "files",
             Self::Architecture => "architecture",
+            Self::DependencyPolicy => "dependency-policy",
             Self::Fmt => "fmt",
             Self::Lint => "lint",
             Self::Test => "test",
@@ -126,6 +130,17 @@ impl Task {
                     rustdoc: false,
                 },
                 Stage::Cargo {
+                    label: "Profiling-disabled application contract",
+                    args: &[
+                        "test",
+                        "-p",
+                        "kedra_profiling",
+                        "--no-default-features",
+                        "--locked",
+                    ],
+                    rustdoc: false,
+                },
+                Stage::Cargo {
                     label: "Independent asset data",
                     args: &[
                         "check",
@@ -143,6 +158,18 @@ impl Task {
                         "check",
                         "-p",
                         "kedra_ui",
+                        "--lib",
+                        "--no-default-features",
+                        "--locked",
+                    ],
+                    rustdoc: false,
+                },
+                Stage::Cargo {
+                    label: "Headless readiness adapter",
+                    args: &[
+                        "check",
+                        "-p",
+                        "kedra_wakeup",
                         "--lib",
                         "--no-default-features",
                         "--locked",
@@ -168,6 +195,7 @@ impl Task {
             Self::Check => [
                 Self::Files,
                 Self::Architecture,
+                Self::DependencyPolicy,
                 Self::Fmt,
                 Self::Lint,
                 Self::Test,
@@ -178,6 +206,7 @@ impl Task {
             .collect(),
             Self::Files => vec![Stage::Files],
             Self::Architecture => vec![Stage::Architecture],
+            Self::DependencyPolicy => vec![Stage::DependencyPolicy],
             Self::Fmt => vec![Stage::Cargo {
                 label: "Rust formatting",
                 args: &["fmt", "--all", "--", "--check"],
@@ -283,19 +312,38 @@ mod tests {
     }
 
     #[test]
-    fn check_plan_keeps_all_gates_in_order() {
-        let labels: Vec<_> = Task::Check.stages().iter().map(Stage::label).collect();
-        assert_eq!(
-            labels,
-            [
-                "File growth policy",
-                "Dependency architecture",
-                "Rust formatting",
-                "Clippy",
-                "Unit and integration tests",
-                "Documentation tests",
-                "API documentation"
-            ]
+    fn check_admits_repository_policy_before_running_cargo_gates() {
+        let stages = Task::Check.stages();
+        let Some(first_cargo) = stages
+            .iter()
+            .position(|stage| matches!(stage, Stage::Cargo { .. }))
+        else {
+            panic!("check must execute Cargo gates");
+        };
+        assert!(
+            stages[..first_cargo]
+                .iter()
+                .any(|s| matches!(s, Stage::Files))
+        );
+        assert!(
+            stages[..first_cargo]
+                .iter()
+                .any(|s| matches!(s, Stage::Architecture))
+        );
+        assert!(
+            stages[..first_cargo]
+                .iter()
+                .any(|s| matches!(s, Stage::DependencyPolicy))
+        );
+        for command in ["fmt", "clippy", "test", "doc"] {
+            assert!(stages.iter().any(
+                |stage| matches!(stage, Stage::Cargo { args, .. } if args.first() == Some(&command))
+            ));
+        }
+        assert!(
+            stages
+                .iter()
+                .any(|stage| matches!(stage, Stage::Cargo { args, .. } if args.contains(&"--doc")))
         );
     }
 
@@ -312,70 +360,49 @@ mod tests {
                 _ => panic!("feature checks must run Cargo"),
             })
             .collect();
-        assert_eq!(
-            commands,
-            vec![
-                vec!["check", "--workspace", "--all-targets", "--locked"],
-                vec![
-                    "check",
-                    "--workspace",
-                    "--all-targets",
-                    "--no-default-features",
-                    "--locked"
-                ],
-                vec![
-                    "check",
-                    "-p",
-                    "kedra_app",
-                    "--lib",
-                    "--no-default-features",
-                    "--locked"
-                ],
-                vec![
-                    "check",
-                    "-p",
-                    "kedra_script",
-                    "--lib",
-                    "--no-default-features",
-                    "--locked"
-                ],
-                vec![
-                    "check",
-                    "-p",
-                    "kedra_scene",
-                    "--lib",
-                    "--no-default-features",
-                    "--locked"
-                ],
-                vec![
-                    "check",
-                    "-p",
-                    "kedra_assets",
-                    "--lib",
-                    "--no-default-features",
-                    "--locked"
-                ],
-                vec![
-                    "check",
-                    "-p",
-                    "kedra_ui",
-                    "--lib",
-                    "--no-default-features",
-                    "--locked"
-                ],
-                vec![
-                    "test",
-                    "-p",
-                    "kedra_app",
-                    "--lib",
-                    "--profile",
-                    "release-boundary",
-                    "--no-default-features",
-                    "--locked",
-                    "launch::tests"
-                ],
-            ]
+        assert!(
+            commands
+                .iter()
+                .all(|args| args.contains(&"--locked") && !args.contains(&"--all-features"))
         );
+        for minimal in [false, true] {
+            assert!(commands.iter().any(|args| args.first() == Some(&"check")
+                && args.contains(&"--workspace")
+                && args.contains(&"--all-targets")
+                && args.contains(&"--no-default-features") == minimal));
+        }
+        for package in [
+            "kedra_app",
+            "kedra_script",
+            "kedra_scene",
+            "kedra_assets",
+            "kedra_ui",
+            "kedra_wakeup",
+        ] {
+            assert!(
+                commands.iter().any(|args| args.first() == Some(&"check")
+                    && args.windows(2).any(|pair| pair == ["-p", package])
+                    && args.contains(&"--lib")
+                    && args.contains(&"--no-default-features")
+                    && !args.contains(&"--workspace")),
+                "missing isolated {package}"
+            );
+        }
+        assert!(commands.iter().any(|args| {
+            args.first() == Some(&"test")
+                && args
+                    .windows(2)
+                    .any(|pair| pair == ["-p", "kedra_profiling"])
+                && args.contains(&"--no-default-features")
+        }));
+        assert!(commands.iter().any(|args| {
+            args.first() == Some(&"test")
+                && args.windows(2).any(|pair| pair == ["-p", "kedra_app"])
+                && args
+                    .windows(2)
+                    .any(|pair| pair == ["--profile", "release-boundary"])
+                && args.contains(&"launch::tests")
+        }));
     }
 
     #[test]

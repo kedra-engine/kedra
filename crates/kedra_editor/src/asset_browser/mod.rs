@@ -9,12 +9,10 @@ mod regression_tests;
 mod tiles;
 mod tree;
 mod view;
-use bevy::{
-    prelude::*,
-    tasks::{IoTaskPool, Task, block_on, poll_once},
-};
+use bevy::{prelude::*, tasks::IoTaskPool};
 use kedra_docking::model::ViewId;
 use kedra_ui::authored::view::UiView;
+use kedra_wakeup::{Task, Wakeup};
 use model::{Kind, Listing, Model, Request};
 use std::{ffi::OsString, path::PathBuf};
 type TreeRead = (u64, PathBuf, Result<Listing, String>);
@@ -204,7 +202,7 @@ impl Panel {
             focus_selection: false,
             dirty: true,
         };
-        panel.request(PathBuf::new(), None)?;
+        panel.request(world, PathBuf::new(), None)?;
         panel.tree.reveal(std::path::Path::new(""));
         panel.tick(world, id)?;
         Ok(panel)
@@ -249,13 +247,20 @@ impl Panel {
             })
             .flatten())
     }
-    fn request(&mut self, path: PathBuf, history: Option<usize>) -> Result<(), String> {
+    fn request(
+        &mut self,
+        world: &World,
+        path: PathBuf,
+        history: Option<usize>,
+    ) -> Result<(), String> {
         let request = self.model.request(path, history)?;
         let root = self.root.clone();
-        self.task = Some(IoTaskPool::get().spawn(async move {
-            let result = model::list(&root, &request.path);
-            (request, result)
-        }));
+        self.task = Some(
+            Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
+                let result = model::list(&root, &request.path);
+                (request, result)
+            }),
+        );
         self.dirty = true;
         Ok(())
     }
@@ -273,7 +278,7 @@ impl Panel {
                 }
             }
         }
-        if let Some((request, result)) = self.task.as_mut().and_then(|t| block_on(poll_once(t))) {
+        if let Some((request, result)) = self.task.as_mut().and_then(Task::poll) {
             self.task = None;
             let changed = self.model.path != request.path && result.is_ok();
             if self.model.complete(&request, result) {
@@ -284,9 +289,7 @@ impl Panel {
                 }
             }
         }
-        if let Some((clock, path, result)) =
-            self.tree_task.as_mut().and_then(|t| block_on(poll_once(t)))
-        {
+        if let Some((clock, path, result)) = self.tree_task.as_mut().and_then(Task::poll) {
             self.tree_task = None;
             self.tree.complete(clock, path, result);
             self.dirty = true;
@@ -295,10 +298,12 @@ impl Panel {
             && let Some((clock, path)) = self.tree.next()
         {
             let root = self.root.clone();
-            self.tree_task = Some(IoTaskPool::get().spawn(async move {
-                let result = model::list(&root, &path);
-                (clock, path, result)
-            }));
+            self.tree_task = Some(
+                Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
+                    let result = model::list(&root, &path);
+                    (clock, path, result)
+                }),
+            );
         }
         if world.contains_resource::<bevy::render::renderer::RenderDevice>()
             && self.viewport.columns > 0
@@ -337,25 +342,25 @@ impl Panel {
             Action::Refresh => {
                 self.tree.refresh();
                 self.tree_task = None;
-                self.request(self.model.path.clone(), None)?;
+                self.request(world, self.model.path.clone(), None)?;
             }
             Action::Back | Action::Forward => {
                 if !self.model.loading
                     && let Some((path, pos)) = self.model.history(matches!(action, Action::Forward))
                 {
-                    self.request(path, Some(pos))?;
+                    self.request(world, path, Some(pos))?;
                 }
             }
             Action::Up => {
                 if !self.model.loading
                     && let Some(parent) = self.model.path.parent()
                 {
-                    self.request(parent.to_path_buf(), None)?;
+                    self.request(world, parent.to_path_buf(), None)?;
                 }
             }
             Action::Root => {
                 if !self.model.loading {
-                    self.request(PathBuf::new(), None)?;
+                    self.request(world, PathBuf::new(), None)?;
                 }
             }
             Action::Select(name) => {
@@ -364,13 +369,13 @@ impl Panel {
             }
             Action::Enter(name) => {
                 if self.model.select(&name) {
-                    self.open()?;
+                    self.open(world)?;
                 }
             }
-            Action::Open => self.open()?,
+            Action::Open => self.open(world)?,
             Action::Navigate(path) | Action::TreeNavigate(path) => {
                 if !self.model.loading {
-                    self.request(path, None)?;
+                    self.request(world, path, None)?;
                 }
             }
             Action::Toggle(path) => {
@@ -420,13 +425,13 @@ impl Panel {
         }
         self.tick(world, id)
     }
-    fn open(&mut self) -> Result<(), String> {
+    fn open(&mut self, world: &World) -> Result<(), String> {
         if self.model.loading || self.model.error.is_some() {
             return Ok(());
         }
         if let Some(entry) = self.model.selected_entry().cloned() {
             if entry.kind == Kind::Folder {
-                return self.request(self.model.path.join(&entry.name), None);
+                return self.request(world, self.model.path.join(&entry.name), None);
             }
             self.model.notice = Some(
                 match entry.kind {

@@ -33,16 +33,6 @@ fn architecture_checks_real_workspace_metadata() {
 }
 
 #[test]
-fn formatting_command_checks_real_sources() {
-    let output = cli(&["fmt"]);
-    assert!(
-        output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-}
-
-#[test]
 fn unavailable_tools_fail_instead_of_reporting_success() {
     for task in ["fmt", "lint", "doc", "architecture", "files"] {
         let output = match command()
@@ -60,17 +50,6 @@ fn unavailable_tools_fail_instead_of_reporting_success() {
 }
 
 #[test]
-fn file_size_command_checks_real_repository() {
-    let output = cli(&["files"]);
-    assert!(
-        output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    assert!(String::from_utf8_lossy(&output.stdout).contains("File size policy passed"));
-}
-
-#[test]
 fn help_and_non_interactive_output_are_automation_friendly()
 -> Result<(), Box<dyn std::error::Error>> {
     let help = cli(&["--help"]);
@@ -81,6 +60,7 @@ fn help_and_non_interactive_output_are_automation_friendly()
     let stdout = String::from_utf8(output.stdout)?;
     assert!(stdout.contains("[1/1] File growth policy"));
     assert!(stdout.contains("1 passed, 0 failed, 0 skipped"));
+    assert!(stdout.contains("File size policy passed"));
     assert!(!stdout.contains('\u{1b}'));
     let path = stdout
         .lines()
@@ -109,8 +89,8 @@ fn failed_stage_has_summary_and_stops_remaining_work() {
     assert!(!output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("FAIL File growth policy"));
-    assert!(stdout.contains("0 passed, 1 failed, 6 skipped"));
-    assert!(!stdout.contains("[2/7]"));
+    assert!(stdout.contains("0 passed, 1 failed, 7 skipped"));
+    assert!(!stdout.contains("[2/"));
 }
 
 #[test]
@@ -121,10 +101,11 @@ fn legacy_host_summary_environment_has_no_side_effects() -> Result<(), Box<dyn s
         std::fs::write(&report, "untouched\n")?;
         let mut invocation = command();
         invocation
-            .args(["files", "--non-interactive"])
+            .args(["dependency-policy", "--non-interactive"])
+            .env_remove("KEDRA_LUAU_LOCKFILE")
             .env("GITHUB_STEP_SUMMARY", &report);
         if fail {
-            invocation.env("PATH", "").env_remove("CARGO");
+            invocation.env("KEDRA_LUAU_LOCKFILE", root.path().join("missing.lock"));
         }
         let output = invocation.output()?;
         assert_eq!(output.status.success(), !fail);
@@ -132,7 +113,8 @@ fn legacy_host_summary_environment_has_no_side_effects() -> Result<(), Box<dyn s
         assert!(String::from_utf8_lossy(&output.stdout).contains("Summary"));
     }
     let output = command()
-        .args(["files", "--non-interactive"])
+        .args(["dependency-policy", "--non-interactive"])
+        .env_remove("KEDRA_LUAU_LOCKFILE")
         .env("GITHUB_STEP_SUMMARY", root.path())
         .output()?;
     assert!(output.status.success());
@@ -151,8 +133,8 @@ fn feature_checks_fail_closed_when_cargo_is_unavailable() -> Result<(), Box<dyn 
     assert!(!output.status.success());
     let stdout = String::from_utf8(output.stdout)?;
     assert!(stdout.contains("FAIL Default features"));
-    assert!(stdout.contains("0 passed, 1 failed, 7 skipped"));
-    assert!(!stdout.contains("[2/4]"));
+    assert!(stdout.contains("0 passed, 1 failed, 9 skipped"));
+    assert!(!stdout.contains("[2/"));
     let path = stdout
         .lines()
         .find_map(|line| line.strip_prefix("Log: "))

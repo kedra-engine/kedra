@@ -1,12 +1,10 @@
 //! Read-only availability checks and retained selection for the recent-project view.
 use crate::model::*;
-use bevy::{
-    prelude::*,
-    tasks::{IoTaskPool, Task, block_on, poll_once},
-};
+use bevy::{prelude::*, tasks::IoTaskPool};
 use bevy_flair::style::components::ClassList;
 use kedra_ui::ElementId;
 use kedra_ui::authored::view::UiView;
+use kedra_wakeup::Task;
 use std::{
     collections::{BTreeMap, BTreeSet},
     path::PathBuf,
@@ -29,10 +27,15 @@ pub(crate) fn invalidate(world: &mut World) {
     view.rows.clear();
 }
 
-pub(crate) fn poll(mut view: ResMut<RecentView>, mut manager: ResMut<ProjectManager>) {
+pub(crate) fn poll(
+    mut view: ResMut<RecentView>,
+    mut manager: ResMut<ProjectManager>,
+    wakeup: Option<Res<kedra_wakeup::Wakeup>>,
+) {
     if manager.phase() != Phase::Projects {
         return;
     }
+    let wakeup = wakeup.as_deref().cloned().unwrap_or_default();
     let roots: Vec<_> = manager
         .history
         .entries()
@@ -41,7 +44,7 @@ pub(crate) fn poll(mut view: ResMut<RecentView>, mut manager: ResMut<ProjectMana
         .collect();
     if view.roots.as_ref() != Some(&roots) {
         view.roots = Some(roots.clone());
-        view.task = Some(IoTaskPool::get().spawn(async move {
+        view.task = Some(wakeup.spawn(IoTaskPool::get(), async move {
             let missing = roots
                 .iter()
                 .filter(|root| !root.join(kedra_project::MANIFEST_FILE).is_file())
@@ -50,10 +53,7 @@ pub(crate) fn poll(mut view: ResMut<RecentView>, mut manager: ResMut<ProjectMana
             (roots, missing)
         }));
     }
-    let result = view
-        .task
-        .as_mut()
-        .and_then(|task| block_on(poll_once(task)));
+    let result = view.task.as_mut().and_then(Task::poll);
     if let Some((checked, missing)) = result {
         view.task = None;
         if view.roots.as_ref() == Some(&checked) {

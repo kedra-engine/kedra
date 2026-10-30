@@ -192,7 +192,15 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) -> Result<(),
             .surface
             .owned
             .ok_or("Staged native ownership was lost")?;
-        if auxiliary::ready(world, native) {
+        if world
+            .resource::<Time<Real>>()
+            .elapsed()
+            .saturating_sub(pending.started)
+            >= CREATION_TIMEOUT
+        {
+            auxiliary::retire(world, native);
+            return Err("Floating window creation timed out; source content was kept".into());
+        } else if auxiliary::ready(world, native) {
             if let Err(error) = state.layout.commit(pending.candidate) {
                 auxiliary::retire(world, native);
                 return Err(error.to_string());
@@ -208,14 +216,6 @@ pub(super) fn poll(world: &mut World, state: &mut EditorWorkspace) -> Result<(),
             redraw(world, state)?;
             auxiliary::show(world, native)?;
             state.preferences.dirty = true;
-        } else if world
-            .resource::<Time<Real>>()
-            .elapsed()
-            .saturating_sub(pending.started)
-            > CREATION_TIMEOUT
-        {
-            auxiliary::retire(world, native);
-            return Err("Floating window creation timed out; source content was kept".into());
         } else {
             state.pending = Some(pending);
         }
@@ -352,7 +352,7 @@ fn poll_restored(world: &mut World, state: &mut EditorWorkspace) -> Result<(), S
             .resource::<Time<Real>>()
             .elapsed()
             .saturating_sub(started)
-            > CREATION_TIMEOUT;
+            >= CREATION_TIMEOUT;
         let ready = world.entities().contains(surface.root)
             && surface
                 .owned

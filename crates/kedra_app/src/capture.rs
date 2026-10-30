@@ -10,6 +10,7 @@ use std::{
     collections::BTreeMap,
     io::Write,
     path::{Path, PathBuf},
+    time::Duration,
 };
 use uuid::Uuid;
 
@@ -64,9 +65,12 @@ pub fn save_frame(root: &Path, image: Image, id: Uuid) -> Result<FrameArtifact, 
 /// that readback and are never retired by this service. Capturing does not activate
 /// the target window or change input focus. This is not OS automation.
 pub struct CapturePlugin;
+const READBACK_TIMEOUT: Duration = Duration::from_secs(8);
 impl Plugin for CapturePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<PendingCaptures>()
+            .init_resource::<Time<Real>>()
+            .add_message::<bevy::window::RequestRedraw>()
             // Feature-owned Update/PostUpdate screenshots are visible before we
             // choose a readback. Adopt them instead of spawning a duplicate.
             .add_systems(Last, advance)
@@ -77,6 +81,7 @@ impl Plugin for CapturePlugin {
 struct Pending {
     window: Entity,
     requested: u32,
+    started: Duration,
     readback: Option<Readback>,
 }
 #[derive(Clone, Copy)]
@@ -128,11 +133,13 @@ pub(crate) fn request(In(value): In<Option<Value>>, world: &mut World) -> BrpRes
         .map_err(crate::invalid)?;
     if admitted {
         let frame = world.resource::<bevy::diagnostic::FrameCount>().0;
+        let started = world.resource::<Time<Real>>().elapsed();
         world.resource_mut::<PendingCaptures>().0.insert(
             request.id,
             Pending {
                 window,
                 requested: frame,
+                started,
                 readback: None,
             },
         );
@@ -146,20 +153,37 @@ pub(crate) fn request(In(value): In<Option<Value>>, world: &mut World) -> BrpRes
 }
 fn advance(world: &mut World) {
     let frame = world.resource::<bevy::diagnostic::FrameCount>().0;
+    let now = world.resource::<Time<Real>>().elapsed();
     let mut captures = world
         .remove_resource::<PendingCaptures>()
         .unwrap_or_default();
     let mut failed = Vec::new();
     for (&id, pending) in &mut captures.0 {
         if world.get::<Window>(pending.window).is_none()
-            || frame.wrapping_sub(pending.requested) > 180
+            || now.saturating_sub(pending.started) >= READBACK_TIMEOUT
         {
+            let phase = match pending.readback {
+                None => "waiting for scheduling fence",
+                Some(readback) if world.get::<Captured>(readback.entity).is_some() => {
+                    "callback pending"
+                }
+                Some(readback) if world.get::<Capturing>(readback.entity).is_some() => {
+                    "renderer in flight"
+                }
+                Some(_) => "waiting for extraction",
+            };
             world
                 .resource_mut::<crate::operations::Operations>()
                 .finish(
-                    id,
-                    Err("Capture target retired or renderer readback timed out".into()),
-                );
+                id,
+                Err(
+                    format!(
+                        "Capture target retired or renderer readback exceeded its 8-second deadline: {phase}, {} application frames, {:.3} real seconds",
+                        frame.wrapping_sub(pending.requested),
+                        now.saturating_sub(pending.started).as_secs_f64(),
+                    ),
+                ),
+            );
             failed.push(id);
             continue;
         }
@@ -236,6 +260,9 @@ fn advance(world: &mut World) {
             }
         }
     }
+    if !captures.0.is_empty() {
+        world.write_message(bevy::window::RequestRedraw);
+    }
     world.insert_resource(captures);
 }
 
@@ -293,6 +320,11 @@ fn captured(event: On<ScreenshotCaptured>, pending: Res<PendingCaptures>, mut co
             let result = (|| -> Result<Value, String> {
                 if world.get::<Window>(pending.window).is_none() {
                     return Err("Capture window retired before readback completed".into());
+                }
+                if world.resource::<Time<Real>>().elapsed().saturating_sub(pending.started)
+                    >= READBACK_TIMEOUT
+                {
+                    return Err("Renderer readback completed after its 8-second deadline".into());
                 }
                 let artifact = save_frame(&world.resource::<ArtifactRoot>().0, image.clone(), id)?;
                 Ok(json!({"path":artifact.path,"width":artifact.size[0],"height":artifact.size[1],"uniform":artifact.uniform,"window":pending.window.to_bits(),"frame":world.resource::<bevy::diagnostic::FrameCount>().0}))
@@ -465,8 +497,8 @@ mod tests {
             .next()
             .unwrap_or_else(|| panic!("No screenshot"));
         app.world_mut()
-            .resource_mut::<bevy::diagnostic::FrameCount>()
-            .0 = 181;
+            .resource_mut::<Time<Real>>()
+            .advance_by(READBACK_TIMEOUT);
         advance(app.world_mut());
         assert!(!app.world().entities().contains(entity));
         app.world_mut().trigger(ScreenshotCaptured {

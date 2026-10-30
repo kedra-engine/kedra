@@ -10,7 +10,9 @@ fn update_flush_propagates_save_failure_without_authorizing_exit() -> TestResult
     app.world_mut()
         .resource_mut::<EditorWorkspace>()
         .preferences
-        .task = Some(IoTaskPool::get().spawn(async { Err("cancelled or failed save".into()) }));
+        .task = Some(Wakeup::default().spawn(IoTaskPool::get(), async {
+        Err("cancelled or failed save".into())
+    }));
     assert!(crate::workspace::save_for_update(app.world_mut()).is_err());
     assert!(app.world().resource::<Messages<AppExit>>().is_empty());
     assert_eq!(
@@ -30,6 +32,7 @@ fn dirty_async_write_then_exit_flush_keeps_latest_published_state() -> TestResul
     let path = dir.path().join("workspace.json");
     let (mut app, a, _) = setup()?;
     let world = app.world_mut();
+    world.init_resource::<kedra_wakeup::WakeDemand>();
     world.resource_scope(
         |world, mut state: Mut<EditorWorkspace>| -> Result<(), String> {
             state.preferences.path = Some(path.clone());
@@ -39,6 +42,12 @@ fn dirty_async_write_then_exit_flush_keeps_latest_published_state() -> TestResul
                 state.preferences.task.is_none(),
                 "Throttle must not launch early"
             );
+            let mut expected = kedra_wakeup::WakeDemand::default();
+            expected.at_real(
+                world.resource::<Time<Real>>(),
+                state.preferences.last + Duration::from_secs(2),
+            );
+            assert_eq!(world.resource::<kedra_wakeup::WakeDemand>(), &expected);
             world
                 .resource_mut::<Time<Real>>()
                 .advance_by(Duration::from_secs(2));
@@ -104,8 +113,9 @@ fn write_conflict_blocks_flush_until_explicit_reset_preserves_external_bytes() -
         |world, mut state: Mut<EditorWorkspace>| -> Result<(), String> {
             state.preferences.path = Some(path.clone());
             // Exercise the task-failure branch of flush, not just the low-level writer.
-            state.preferences.task =
-                Some(IoTaskPool::get().spawn(async { Err("conflicting writer".into()) }));
+            state.preferences.task = Some(Wakeup::default().spawn(IoTaskPool::get(), async {
+                Err("conflicting writer".into())
+            }));
             fs::write(&path, b"external original").map_err(|e| e.to_string())?;
             save(world, &mut state);
             assert!(state.preferences.error.is_some());
@@ -220,8 +230,9 @@ fn poll_collects_completed_writes_and_reports_worker_failure() -> TestResult {
             poll(world, &mut state);
             assert!(state.preferences.task.is_none());
             assert_eq!(state.preferences.baseline, read(&path)?);
-            state.preferences.task =
-                Some(IoTaskPool::get().spawn(async { Err("worker failure".into()) }));
+            state.preferences.task = Some(
+                Wakeup::default().spawn(IoTaskPool::get(), async { Err("worker failure".into()) }),
+            );
             wait(state.preferences.task.as_ref().ok_or("error task")?);
             poll(world, &mut state);
             assert_eq!(state.preferences.error.as_deref(), Some("worker failure"));

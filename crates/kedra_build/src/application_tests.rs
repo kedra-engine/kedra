@@ -1,11 +1,15 @@
 //! Native verification must be consumer-neutral and reject corrupt delivery.
-use crate::{application, test_support::fixture as make_fixture, verify};
+use crate::{
+    application,
+    test_support::{configuration, delivery},
+    verify,
+};
 use std::fs;
 
 #[test]
 fn configured_notices_do_not_require_sources_for_unneeded_mpl_dependencies()
 -> Result<(), Box<dyn std::error::Error>> {
-    let mut fixture = make_fixture()?;
+    let mut fixture = delivery()?;
     fixture.app.distribution.license_config = Some(fixture.root.path().join("about.toml"));
     fs::write(
         fixture.stage.join("licenses/dependency-notices.html"),
@@ -22,7 +26,7 @@ fn configured_notices_do_not_require_sources_for_unneeded_mpl_dependencies()
 #[test]
 fn runnable_result_binds_identity_and_relative_locations() -> Result<(), Box<dyn std::error::Error>>
 {
-    let fixture = make_fixture()?;
+    let fixture = configuration()?;
     let result = application::layout(&fixture.app);
     assert_eq!(result.schema_version, 1);
     assert_eq!(result.application, "independent-probe");
@@ -35,10 +39,8 @@ fn runnable_result_binds_identity_and_relative_locations() -> Result<(), Box<dyn
 #[test]
 fn native_binary_architecture_is_checked_without_executing_consumer()
 -> Result<(), Box<dyn std::error::Error>> {
-    let fixture = make_fixture()?;
-    let binary = fixture
-        .stage
-        .join(format!("independent-probe{}", std::env::consts::EXE_SUFFIX));
+    let fixture = configuration()?;
+    let binary = fixture.compile_executable()?;
     verify::executable(&binary, fixture.app.target)?;
     let wrong = if fixture.app.target == crate::config::NativeTarget::MacArm {
         crate::config::NativeTarget::MacIntel
@@ -54,7 +56,7 @@ fn native_binary_architecture_is_checked_without_executing_consumer()
 #[test]
 fn matching_architecture_shared_library_is_not_a_runnable_application()
 -> Result<(), Box<dyn std::error::Error>> {
-    let fixture = make_fixture()?;
+    let fixture = configuration()?;
     let source = fixture.root.path().join("library.rs");
     fs::write(&source, "pub fn value() -> u32 { 42 }\n")?;
     let library = fixture
@@ -80,7 +82,7 @@ fn matching_architecture_shared_library_is_not_a_runnable_application()
 #[test]
 fn verified_resources_reject_tampering_and_missing_notices()
 -> Result<(), Box<dyn std::error::Error>> {
-    let fixture = make_fixture()?;
+    let fixture = delivery()?;
     verify::resources(
         &fixture.app,
         &fixture.stage.join("assets"),
@@ -95,7 +97,7 @@ fn verified_resources_reject_tampering_and_missing_notices()
         )
         .is_err()
     );
-    let another = make_fixture()?;
+    let another = delivery()?;
     fs::remove_file(another.stage.join("licenses/NOTICE.txt"))?;
     assert!(
         verify::resources(
@@ -110,7 +112,7 @@ fn verified_resources_reject_tampering_and_missing_notices()
 
 #[test]
 fn result_paths_cannot_escape_the_reserved_output() -> Result<(), Box<dyn std::error::Error>> {
-    let fixture = make_fixture()?;
+    let fixture = configuration()?;
     let mut result = application::layout(&fixture.app);
     result.executable = "../elsewhere".into();
     assert!(verify::application(&fixture.app, fixture.root.path(), &result).is_err());

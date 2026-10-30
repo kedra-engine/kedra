@@ -204,11 +204,18 @@ pub(crate) fn run(root: &Path, output: &Path, only: Option<&str>) -> Result<()> 
                     _ => return Err("Unsupported feature".into()),
                 })
             })();
+            if let Ok(trace) = client.rpc("dock.trace", Value::Null) {
+                fs::write(
+                    private.join("input-trace.json"),
+                    serde_json::to_vec_pretty(&trace)?,
+                )?;
+            }
             if let Err(error) = &execution {
                 fs::write(
                     private.join("failure.json"),
                     serde_json::to_vec_pretty(&json!({"error":error.to_string(),
-                    "editor":client.rpc("editor.state",Value::Null).ok(),"workspace":c.state().ok(),"observation":client.observe().ok()}))?,
+                    "editor":client.rpc("editor.state",Value::Null).ok(),"workspace":c.state().ok(),"observation":client.observe().ok(),
+                    "input_trace":client.rpc("dock.trace",Value::Null).ok()}))?,
                 )?;
             }
             captures = c.captures.borrow().clone();

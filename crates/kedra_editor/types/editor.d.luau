@@ -32,6 +32,7 @@ export type SceneView = {ready: false}
     }
 export type NavigationInput = {
     gesture: boolean, pending_host: boolean, menu_nodes: number, measuring: boolean,
+    preview_ready: boolean,
     rendered: Nullable<number>, revision: number,
     capture: Nullable<{view: string, window: WindowId}>,
     viewports: {{

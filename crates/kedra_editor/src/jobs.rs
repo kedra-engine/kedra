@@ -1,9 +1,7 @@
 use crate::{actions, model::*, screens};
-use bevy::{
-    prelude::*,
-    tasks::{IoTaskPool, Task, block_on, poll_once},
-};
+use bevy::{prelude::*, tasks::IoTaskPool};
 use kedra_project::{Project, recent::RecentProjects};
+use kedra_wakeup::{Task, Wakeup};
 use std::path::PathBuf;
 
 #[derive(Resource)]
@@ -30,7 +28,7 @@ pub(crate) fn load_history(world: &mut World) {
     let path = world.resource::<ProjectManager>().history_path.clone();
     world.insert_resource(PendingJob {
         generation: 0,
-        task: IoTaskPool::get().spawn(async move {
+        task: Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
             Outcome::History(path.map_or_else(
                 || Err("Recent-project storage is unavailable on this account.".into()),
                 |path| RecentProjects::load(&path).map_err(|e| e.to_string()),
@@ -53,7 +51,7 @@ pub(crate) fn browse(world: &mut World) {
     }
     world.insert_resource(PendingJob {
         generation: world.resource::<ProjectManager>().generation,
-        task: IoTaskPool::get().spawn(async move {
+        task: Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
             let selected = dialog.pick_folder().await;
             Outcome::Directory(selected.map(|handle| handle.path().to_path_buf()))
         }),
@@ -63,7 +61,7 @@ pub(crate) fn browse(world: &mut World) {
 pub(crate) fn preflight(world: &mut World, intent: Intent) {
     world.insert_resource(PendingJob {
         generation: world.resource::<ProjectManager>().generation,
-        task: IoTaskPool::get().spawn(async move {
+        task: Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
             let result = match &intent {
                 Intent::Open(root) => kedra_project::open(root).map(|_| ()),
                 Intent::Create { parent, name } => {
@@ -89,7 +87,7 @@ pub(crate) fn prepare(world: &mut World) {
         .flatten();
     world.insert_resource(PendingJob {
         generation,
-        task: IoTaskPool::get().spawn(async move {
+        task: Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
             let result = match intent {
                 Intent::Open(root) => kedra_project::open(&root),
                 Intent::Create { parent, name } => kedra_project::create(&parent, &name),
@@ -115,7 +113,7 @@ pub(crate) fn poll(world: &mut World) {
     let Some(mut job) = world.remove_resource::<PendingJob>() else {
         return;
     };
-    let Some(outcome) = block_on(poll_once(&mut job.task)) else {
+    let Some(outcome) = job.task.poll() else {
         world.insert_resource(job);
         return;
     };

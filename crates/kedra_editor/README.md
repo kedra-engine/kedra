@@ -7,7 +7,24 @@ own semantic input, effects and retained views respectively.
 
 The desktop host opens only validated projects and does not run project code.
 Asynchronous completions carry generations. Creation cannot be cancelled with a
-false rollback promise. The workspace has a read-only Assets browser with a lazy
+false rollback promise. `kedra_wakeup` registers native readiness automatically
+when a Task handle is created; owners only poll or await their results. Update
+progress uses an automatically notifying bounded producer. Neither path needs
+per-operation wake calls; results and authorization stay with these owners.
+The native host opts into `ReactivePlugin`: 100 ms bounded idle safety polling,
+1/60 s focused active cadence and subsystem-owned timed/active hints.
+Tooltip/preference deadlines shorten idle waits; caret, scripts, render preparation
+and editor lifecycle work retain active demand. Indefinite sleep is not supported;
+third-party asset/animation paths retain the safety sweep. Visible serving Scene
+Views request continuous updates even after their first frame is ready; the
+current shared App cannot independently sleep its UI while servicing that preview.
+This is not a project runtime or Play implementation. See
+[ADR 0044](../../docs/decisions/0044-native-readiness-wakeups.md) and
+[ADR 0045](../../docs/decisions/0045-bounded-reactive-editor.md).
+The proposed Scene/Game workflow and unselected execution/render
+backend are in [ADR 0046](../../docs/decisions/0046-scene-game-runtime-boundaries.md).
+
+The workspace has a read-only Assets browser with a lazy
 folder tree, Unicode search, virtualized grid/list and source document Open through
 one project-owned authoring workspace. Hierarchy displays composed source nodes,
 including nested prefabs, with search, expansion and shared document selection.

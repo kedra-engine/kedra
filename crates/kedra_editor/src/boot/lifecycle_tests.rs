@@ -31,7 +31,7 @@ fn assert_verification_started(world: &World) {
 #[test]
 fn completed_verification_is_consumed_while_catalog_still_blocks_startup() {
     let mut app = app();
-    let task = IoTaskPool::get().spawn(async { Ok(()) });
+    let task = Wakeup::default().spawn(IoTaskPool::get(), async { Ok(()) });
     let deadline = Instant::now() + Duration::from_secs(5);
     while !task.is_finished() {
         assert!(Instant::now() < deadline);
@@ -95,7 +95,9 @@ fn missing_delivery_integrity_failure_and_deadline_remain_terminal_without_fallb
     assert_failure(app.world(), "delivery is not configured");
 
     let mut app = crate::test_support::app();
-    let task = IoTaskPool::get().spawn(async { Err("integrity mismatch".into()) });
+    let task = Wakeup::default().spawn(IoTaskPool::get(), async {
+        Err("integrity mismatch".into())
+    });
     let deadline = Instant::now() + Duration::from_secs(5);
     while !task.is_finished() {
         assert!(Instant::now() < deadline);

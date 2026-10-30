@@ -91,10 +91,11 @@ nested instances. It generates no source scene/prefab data. Native controls and 
 completion fences exercise distinct scoped selection, virtualized tail navigation, search/
 reveal, tab changes and retained docking.
 
-Behavior and appearance run sequentially once in one native session, with separate phase
-statuses and renderer-frame receipts. A behavior failure leaves appearance explicitly not
-run. Appearance checks default chrome, 22px row/flat-action geometry, 4px insets, 12px
-indentation, selection color, optional search/details and 232/320px hosts. Reports retain
+Behavior and usability run sequentially once in one native session, with separate phase
+statuses and renderer-frame receipts. A behavior failure leaves usability explicitly not
+run. Usability checks row containment and hierarchy ordering, keyboard focus, optional
+search/details and interaction in compact floating and resized docked panels, not exact
+spacing or palette values. Reports retain
 physical dimensions and frame receipts, not viewable images; validated temporary PNGs are
 discarded after synchronization. These checks inject Bevy input; physical OS input, IME and
 mixed-monitor behavior need separate tests. They do not compare pixels against Figma or verify

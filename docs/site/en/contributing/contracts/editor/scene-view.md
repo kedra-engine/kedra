@@ -62,6 +62,16 @@ and no resources. Bevy 0.20 resource entities are excluded. Native hierarchy rem
 before complete model roots attach to their owner. Imported parts remain presentation children
 of the source model node, not new source nodes; failed mapping reclaims staged allocations.
 
+Visible serving previews require continuous Bevy updates, including after a frame
+is ready; unchanged entities are not evidence that a viewport may be throttled.
+Hidden, failed and retired owners release that demand. This conservatively keeps
+the entire shared App active, not an independently ticking project App. The
+Scene/Game execution boundary and proposed workflow are defined by
+[ADR 0046][runtime-boundaries]; they do
+not authorize project code execution or implement Play here.
+
+[runtime-boundaries]: https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0046-scene-game-runtime-boundaries.md
+
 The shared editor World runs only audited presentation hydration for these instances:
 
 - Each view has its own render layer for meshes and directional lights. Shadows are disabled.

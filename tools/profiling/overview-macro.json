@@ -1,0 +1,32 @@
+[
+  {
+    "id": "dev.kedra.Overview",
+    "name": "Kedra overview",
+    "run": [
+      {
+        "id": "dev.perfetto.RunQueryAndShowTab",
+        "args": ["SELECT key, display_value FROM args WHERE arg_set_id IN (SELECT arg_set_id FROM slice WHERE name = 'kedra.recording') LIMIT 50", "Recording context"]
+      },
+      {
+        "id": "dev.perfetto.RunQueryAndShowTab",
+        "args": ["SELECT name, severity, value FROM stats WHERE value != 0 AND (severity IN ('error', 'data_loss') OR name GLOB '*overwrit*' OR name GLOB '*discard*') ORDER BY name LIMIT 200", "Capture health signals"]
+      },
+      {
+        "id": "dev.perfetto.AddDebugSliceTrack",
+        "args": ["WITH updates AS (SELECT ts, LEAD(ts) OVER (PARTITION BY track_id ORDER BY ts) - ts AS dur, 'Update ' || EXTRACT_ARG(arg_set_id, 'debug.update') AS name FROM slice WHERE name = 'kedra.update') SELECT ts, dur, name FROM updates WHERE dur > 0 LIMIT 10000", "Update intervals (not GPU/presentation)"]
+      },
+      {
+        "id": "dev.perfetto.AddDebugSliceTrack",
+        "args": ["SELECT ts, dur, 'Update ' || EXTRACT_ARG(arg_set_id, 'debug.update') AS name FROM slice WHERE name = 'kedra.render_cpu' LIMIT 10000", "Extracted update / CPU render entry"]
+      },
+      {
+        "id": "dev.perfetto.AddDebugSliceTrackWithPivot",
+        "args": ["SELECT ts, dur, name, category FROM slice WHERE dur >= 100000 AND category IN ('UI', 'Rendering CPU', 'Assets', 'Scripts', 'Editor', 'Application') ORDER BY ts LIMIT 20000", "category", "Semantic scopes (>=0.1ms, overlapping)"]
+      },
+      {
+        "id": "dev.perfetto.PinTracksByRegex",
+        "args": [".*(Update intervals|Extracted update|Operation:).*|.*editor\\.ui.*"]
+      }
+    ]
+  }
+]

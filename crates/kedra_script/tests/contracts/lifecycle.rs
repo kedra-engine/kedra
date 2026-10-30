@@ -14,15 +14,24 @@ fn update_waits_count_future_updates_and_return_owned_unicode_data() {
     let run = start(&mut app, "function run(ctx) ctx.game.increment(); wait.updates(3); ctx.game.increment(); return {name = 'Кедра'} end").unwrap();
     app.update();
     assert_eq!(app.world().resource::<Counter>().0, 1);
+    assert_ne!(
+        app.world().resource::<kedra_wakeup::WakeDemand>(),
+        &kedra_wakeup::WakeDemand::default()
+    );
     for _ in 0..2 {
         app.update();
         assert_eq!(app.world().resource::<Counter>().0, 1);
     }
+    app.insert_resource(kedra_wakeup::WakeDemand::default());
     app.update();
     assert_eq!(app.world().resource::<Counter>().0, 2);
     assert_eq!(
         kedra_script::status(app.world(), run),
         Some(&Status::Completed(json!({"name":"Кедра"})))
+    );
+    assert_eq!(
+        app.world().resource::<kedra_wakeup::WakeDemand>(),
+        &kedra_wakeup::WakeDemand::default()
     );
 }
 
@@ -36,10 +45,15 @@ fn cancel_is_terminal_releases_context_and_preserves_applied_effects() {
     .unwrap();
     app.update();
     kedra_script::cancel(app.world_mut(), run).unwrap();
+    app.insert_resource(kedra_wakeup::WakeDemand::default());
     for _ in 0..5 {
         app.update();
     }
     assert_eq!(app.world().resource::<Counter>().0, 1);
+    assert_eq!(
+        app.world().resource::<kedra_wakeup::WakeDemand>(),
+        &kedra_wakeup::WakeDemand::default()
+    );
     assert_eq!(
         kedra_script::status(app.world(), run),
         Some(&Status::Cancelled)

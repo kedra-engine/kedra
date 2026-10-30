@@ -93,6 +93,56 @@ fn integrated_header_retains_tab_and_content_entities() -> Result<()> {
     );
     assert_eq!(projection.label(a), Some(label));
     assert_eq!(projection.content(a), Some(content));
+    let rail_tick = world
+        .entity(rail)
+        .get_ref::<ChildOf>()
+        .ok_or("missing rail")?
+        .last_changed();
+    let menu_tick = world
+        .entity(menu)
+        .get_ref::<ChildOf>()
+        .ok_or("missing menu")?
+        .last_changed();
+    let row_tick = world
+        .entity(row)
+        .get_ref::<Children>()
+        .ok_or("missing row")?
+        .last_changed();
+    world.increment_change_tick();
+    projection.sync(
+        world,
+        model.snapshot(),
+        &hosts,
+        stash,
+        &skin,
+        &BTreeMap::new(),
+        "test",
+        1.,
+    )?;
+    assert_eq!(
+        world
+            .entity(rail)
+            .get_ref::<ChildOf>()
+            .ok_or("missing rail")?
+            .last_changed(),
+        rail_tick
+    );
+    assert_eq!(
+        world
+            .entity(menu)
+            .get_ref::<ChildOf>()
+            .ok_or("missing menu")?
+            .last_changed(),
+        menu_tick
+    );
+    assert_eq!(
+        world
+            .entity(row)
+            .get_ref::<Children>()
+            .ok_or("missing row")?
+            .last_changed(),
+        row_tick
+    );
     // A failed destination change must not detach or steal the live rail.
     assert!(
         projection

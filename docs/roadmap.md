@@ -132,13 +132,17 @@ loop from editing a scene to checking it in a running game.
 - Start project execution from the selected scene through the environment.
 - Interact with the running game and see execution errors and diagnostics.
 - Stop execution and return to the authoring workspace.
-- Define which document revision Play consumes, including how unsaved changes
-  are handled, before starting execution.
+- Launch from a revision-pinned snapshot of accepted working state, including
+  unsaved edits but excluding unresolved drafts, as proposed by
+  [ADR 0046](decisions/0046-scene-game-runtime-boundaries.md).
 
 Select and document the project-code execution and isolation boundary before
 implementation. In-application Play describes the user workflow, not a promise
 that editor and game share one mutable world or one process. Opening a project
 must not implicitly become permission to execute its code.
+The proposed Scene/Game/Pause/Prefab workflow and implementation gates are in
+the [Scene/Game runtime plan](plans/scene-game-runtime.md); the execution/render
+backend is not selected by that product proposal.
 
 ### Completion criteria
 

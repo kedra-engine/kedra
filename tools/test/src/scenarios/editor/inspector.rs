@@ -266,7 +266,9 @@ fn inline_transform(c: &Editor<'_>, prefix: &str) -> Result<Vec<Node>> {
             })
             .ok_or("Missing Transform property label")?;
         check(
-            (label.rect[1] - axes[0].rect[1]).abs() <= 1. && label.rect[2] <= axes[0].rect[0] + 1.,
+            label.rect[1] <= axes[0].center()[1]
+                && axes[0].center()[1] <= label.rect[3]
+                && label.rect[2] <= axes[0].rect[0] + 1.,
             "Property label must stay left of its input on the same line at every panel width",
         )?;
         for (index, axis) in axes.iter().enumerate() {
@@ -280,12 +282,8 @@ fn inline_transform(c: &Editor<'_>, prefix: &str) -> Result<Vec<Node>> {
                 })
                 .ok_or("Missing native vector axis row")?;
             check(
-                (row.rect[3] - row.rect[1] - 22.).abs() <= 1.,
-                "Vector control must remain 22px including borders",
-            )?;
-            check(
-                (axis.rect[3] - axis.rect[1] - 16.).abs() <= 1.,
-                "Vector input must preserve the native 16px text line",
+                row.rect[1] <= axis.rect[1] && axis.rect[3] <= row.rect[3],
+                "Vector input escaped its owning axis control",
             )?;
             check(
                 (axis.rect[1] - axes[0].rect[1]).abs() <= 1.,

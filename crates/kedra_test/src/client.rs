@@ -237,7 +237,8 @@ impl Client {
 
     /// Resize through the registered in-application sequence. Dimensions are logical
     /// pixels; an optional DPR override must be accepted by the native window host.
-    /// Returns confirmed delivery, not geometry/rendering or physical monitor acceptance.
+    /// Returns delivery, not exact dimensions, feature layout, rendered-frame or
+    /// physical monitor acceptance. Callers await their feature's usable state.
     pub fn resize(&self, window: u64, width: u32, height: u32, dpr: Option<f64>) -> Result<Value> {
         self.scenario(
             "app.resize",

@@ -30,6 +30,9 @@ struct Cli {
     /// Shared debug-only application diagnostics; absent from release CLI schemas.
     #[command(flatten)]
     launch: kedra_app::launch::LaunchOptions,
+    /// Explicit application CPU recording, independent of debug automation.
+    #[command(flatten)]
+    profiling: kedra_profiling::CaptureOptions,
     /// Override local preference storage, e.g. to isolate a native test session.
     #[arg(long)]
     state_directory: Option<PathBuf>,
@@ -216,6 +219,9 @@ fn asset_root(
 }
 
 fn run(cli: Cli) -> Result<(), String> {
+    if cli.command.is_some() && cli.profiling.requested() {
+        return Err("CPU profiling options require a native application launch, not an asset/recovery command".into());
+    }
     if cli.command.is_some() && cli.editor_script.is_some() {
         return Err("Editor scripts cannot run with an asset or recovery command".into());
     }
@@ -287,6 +293,7 @@ fn run(cli: Cli) -> Result<(), String> {
                 cli.project,
                 root,
                 cli.launch,
+                cli.profiling,
                 cli.state_directory,
                 cli.project_assets,
                 cli.editor_script

@@ -10,10 +10,7 @@ use kedra_authoring_fs::source as source_files;
 #[cfg(test)]
 #[path = "transactions/tests.rs"]
 mod transaction_tests;
-use bevy::{
-    prelude::*,
-    tasks::{IoTaskPool, Task, block_on, poll_once},
-};
+use bevy::{prelude::*, tasks::IoTaskPool};
 use kedra_authoring::editing::SourceEdit;
 use kedra_authoring::persistence::Workspace;
 use kedra_docking::model::ViewId;
@@ -21,6 +18,7 @@ use kedra_scene::{
     document::{DocumentId, NodeAddress},
     reflection::ComponentPolicies,
 };
+use kedra_wakeup::{Task, Wakeup};
 pub(crate) use references::{ReferenceRequest, ResourceContext};
 use std::{collections::BTreeMap, path::PathBuf};
 type SourceResult = (u64, Result<Option<source::Admission>, String>);
@@ -159,12 +157,14 @@ impl Documents {
             let clock = self.clock;
             let registry = world.resource::<AppTypeRegistry>().clone();
             let policies = world.resource::<ComponentPolicies>().clone();
-            self.task = Some(IoTaskPool::get().spawn(async move {
-                let result = source_files::read(&root, "game")
-                    .and_then(|snapshot| source::admit(snapshot, &registry.read(), &policies))
-                    .map(Some);
-                (clock, result)
-            }));
+            self.task = Some(
+                Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
+                    let result = source_files::read(&root, "game")
+                        .and_then(|snapshot| source::admit(snapshot, &registry.read(), &policies))
+                        .map(Some);
+                    (clock, result)
+                }),
+            );
         } else if let Some(scope) = &self.scope {
             if self
                 .paths
@@ -195,24 +195,22 @@ impl Documents {
                     .iter()
                     .find(|asset| std::path::Path::new(&asset.path) == path)
                     .and_then(|asset| asset.id);
-                self.task = Some(IoTaskPool::get().spawn(async move {
-                    let result = if identity.is_some() {
-                        source_files::check_inventory(&root, &path, &hash, identity)
-                    } else {
-                        source_files::check(&root, &path, &hash)
-                    };
-                    (clock, result.map(|_| None))
-                }));
+                self.task = Some(
+                    Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
+                        let result = if identity.is_some() {
+                            source_files::check_inventory(&root, &path, &hash, identity)
+                        } else {
+                            source_files::check(&root, &path, &hash)
+                        };
+                        (clock, result.map(|_| None))
+                    }),
+                );
             }
         }
         Ok(())
     }
     pub fn poll(&mut self) -> Option<Ready> {
-        if let Some((clock, result)) = self
-            .task
-            .as_mut()
-            .and_then(|task| block_on(poll_once(task)))
-        {
+        if let Some((clock, result)) = self.task.as_mut().and_then(Task::poll) {
             self.task = None;
             // The inventory belongs to this coordinator/project, not the requested
             // tab. Only the most recent locator can activate after it is admitted.

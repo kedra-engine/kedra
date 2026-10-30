@@ -39,6 +39,12 @@ screenshots.
 
 ## Host and scenario authority
 
+The shared `dock-fixture` owns the native direction/order/refusal/cancellation matrix.
+`docking` checks real editor panel retention, source-host integration and preference restoration;
+`docking-states` checks the real workspace/panel menus, including a compact floating host.
+It does not replay the fixture's compass matrix. Preview waits use the same candidate-readiness
+predicate as production drop admission, not an independent screenshot-stability algorithm.
+
 The ordinary debug `kedra` selects `editor://fixtures/docking.scene.ron` via `--scene`.
 Production workspace input, targeting, projection, popovers and native hosts consume authored
 A/B/C/D topology through the existing Snapshot validator. Normal/explicit-scene startup install

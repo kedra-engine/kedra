@@ -8,7 +8,7 @@ Kedra extends an ordinary Bevy application. Rust components hold data, systems i
 gameplay, and plugins install the services an application chooses to use. Luau is an
 optional interpreted layer with explicit, host-owned permissions, not a replacement ECS.
 
-If you come from Unity, separate these familiar concerns before looking for equivalents:
+Choose the integration mechanism for the responsibility you need:
 
 | Concern | Current Kedra mechanism |
 | --- | --- |

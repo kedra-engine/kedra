@@ -194,6 +194,7 @@ mod tests {
                     scene: Some("editor://fixtures/catalog.scene.ron".into()),
                     ..Default::default()
                 },
+                Default::default(),
                 None,
                 delivery,
                 None,

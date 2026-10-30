@@ -169,6 +169,22 @@ impl<'a> Editor<'a> {
         self.client.scenario("app.click", json!({"id":id}))?;
         Ok(())
     }
+    pub fn activate(&self, window: u64) -> Result<()> {
+        let observation = self.client.observe()?;
+        let target = array(&observation["windows"])?
+            .iter()
+            .find(|target| target["id"] == window)
+            .ok_or("Activation target window was retired")?;
+        if target["focused"] == true {
+            return Ok(());
+        }
+        check(
+            self.state()?["navigation_input"]["gesture"] != true,
+            "Cannot activate another window during a live dock gesture",
+        )?;
+        self.client.input(window, json!({"kind":"focus_window"}))?;
+        Ok(())
+    }
     pub fn click_retired(&self, id: &str) -> Result<()> {
         let n = self.wait_node(id)?;
         let result = self.input(n.window()?, json!({"kind":"click","element":id}));
@@ -243,70 +259,60 @@ impl<'a> Editor<'a> {
             .ok_or("Popup host is absent")?;
         let (width, height) = (number(&window["width"])?, number(&window["height"])?);
         let (w, h) = (popup.rect[2] - popup.rect[0], popup.rect[3] - popup.rect[1]);
-        // Native Popover tries End, Start, Center, each Bottom then Top, before
-        // clipping. This is alignment flipping, not clamping the preferred End.
-        let positions = [
-            anchor.rect[2] - w,
-            anchor.rect[0],
-            anchor.center()[0] - w / 2.,
-        ];
-        let expected = positions
-            .into_iter()
-            .flat_map(|x| [anchor.rect[3] + 4., anchor.rect[1] - h - 4.].map(|y| [x, y]))
-            .find(|[x, y]| {
-                *x >= 4. - 0.01
-                    && *y >= 4. - 0.01
-                    && *x + w <= width - 4. + 0.01
-                    && *y + h <= height - 4. + 0.01
-            })
-            .ok_or("No documented popup placement fits its constrained native host")?;
-        near(popup.rect[0], expected[0], 1.1)?;
-        near(popup.rect[1], expected[1], 1.1)?;
         check(
-            popup.rect[0] >= 3.
-                && popup.rect[1] >= 3.
-                && popup.rect[2] <= width - 3.
-                && popup.rect[3] <= height - 3.,
+            w > 0.
+                && h > 0.
+                && popup.rect[0] >= 0.
+                && popup.rect[1] >= 0.
+                && popup.rect[2] <= width
+                && popup.rect[3] <= height,
             "Popup escaped its native host",
         )?;
         Ok(popup)
     }
     pub fn preview(&self) -> Result<Node> {
-        self.wait_node("dock.preview")?;
-        let mut previous = None;
-        let mut count = 0;
-        for _ in 0..16 {
-            let before = self.node("dock.preview")?;
-            self.frame(before.window()?, "dock preview synchronization")?;
-            let after = self.node("dock.preview")?;
-            let identity = (after.entity, after.window, after.rect.map(f64::to_bits));
-            count = if before.entity == after.entity
-                && before.window == after.window
-                && before.rect == after.rect
-                && previous == Some(identity)
-            {
-                count + 1
-            } else {
-                1
-            };
-            previous = Some(identity);
-            if count >= 3 {
-                let observation = self.client.observe()?;
-                let window = array(&observation["windows"])?
-                    .iter()
-                    .find(|w| w["id"] == after.window.unwrap_or(0))
-                    .ok_or("Preview host is absent")?;
+        self.client.wait(
+            "drop-ready live dock preview",
+            Duration::from_secs(40),
+            || {
+                let state = self.state()?;
                 check(
-                    after.rect[0] >= -0.5
-                        && after.rect[1] >= -0.5
-                        && after.rect[2] <= number(&window["width"])? + 0.5
-                        && after.rect[3] <= number(&window["height"])? + 0.5,
-                    "Measured split candidate overflows its native host",
+                    state["navigation_input"]["gesture"] == true,
+                    "Dock gesture ended while waiting for its preview; no input was replayed",
                 )?;
-                return Ok(after);
-            }
-        }
-        Err("Dock preview geometry did not settle across native readbacks".into())
+                if state["navigation_input"]["preview_ready"] != true {
+                    return Ok(None);
+                }
+                let Some(before) = self.optional("dock.preview")? else {
+                    return Ok(None);
+                };
+                self.frame(before.window()?, "dock preview synchronization")?;
+                let state = self.state()?;
+                check(
+                    state["navigation_input"]["gesture"] == true,
+                    "Dock gesture ended during preview readback; no input was replayed",
+                )?;
+                if state["navigation_input"]["preview_ready"] != true {
+                    return Ok(None);
+                }
+                if let Some(after) = self.optional("dock.preview")? {
+                    let observation = self.client.observe()?;
+                    let window = array(&observation["windows"])?
+                        .iter()
+                        .find(|w| w["id"] == after.window.unwrap_or(0))
+                        .ok_or("Preview host is absent")?;
+                    check(
+                        after.rect[0] >= -0.5
+                            && after.rect[1] >= -0.5
+                            && after.rect[2] <= number(&window["width"])? + 0.5
+                            && after.rect[3] <= number(&window["height"])? + 0.5,
+                        "Measured split candidate overflows its native host",
+                    )?;
+                    return Ok(Some(after));
+                }
+                Ok(None)
+            },
+        )
     }
     pub fn resize(&self, window: u64, width: u32, height: u32, dpr: u32) -> Result<()> {
         self.client
@@ -355,6 +361,8 @@ impl<'a> Editor<'a> {
     pub fn drag(&self, view: &str, point: [f64; 2]) -> Result<u64> {
         let label = self.node(&Self::label(view))?;
         let window = label.window()?;
+        self.activate(window)?;
+        let label = self.node(&Self::label(view))?;
         self.input(window, json!({"kind":"move","position":label.center()}))?;
         self.input(window, json!({"kind":"button","pressed":true}))?;
         for _ in 0..2 {

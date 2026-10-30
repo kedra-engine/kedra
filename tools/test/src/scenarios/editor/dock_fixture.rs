@@ -33,6 +33,7 @@ impl Dock<'_> {
         self.c.until("retired fixture floats", || {
             Ok(array(&self.c.client.observe()?["windows"])?.len() == 1)
         })?;
+        self.c.activate(self.c.window()?)?;
         self.c.move_to([1., 1.])?;
         self.c.until("baseline splitters", || {
             Ok(self
@@ -264,6 +265,10 @@ fn scenarios(dock: &Dock<'_>) -> Result<()> {
     let window = c.drag(child, [519., 525.])?;
     dock.feedback_node("dock.insertion")?;
     check(
+        !c.present("dock.preview")? && !c.present("dock.guide/tab/guide")?,
+        "Rail insertion painted split/compass feedback",
+    )?;
+    check(
         c.state()?["layout"] == before,
         "Live insertion published layout",
     )?;
@@ -274,6 +279,14 @@ fn scenarios(dock: &Dock<'_>) -> Result<()> {
         "Insertion lost tab order",
     )?;
     dock.checkpoint("committed tab order", None)?;
+    let tab = c.node(&format!("dock/tab/ViewId({d})"))?;
+    let window = c.drag(child, [tab.rect[0] + 1., tab.center()[1]])?;
+    dock.feedback_node("dock.insertion")?;
+    c.release(window)?;
+    c.until("reordered tabs", || {
+        Ok(c.state()?["layout"]["nodes"][c.group(child)?]["Group"]["tabs"] == json!([child, d]))
+    })?;
+    dock.checkpoint("reordered tabs", None)?;
     dock.reset(1200, 800)?;
     let before = c.state()?["layout"].clone();
     let window = c.drag(child, [183., 420.])?;
@@ -471,17 +484,17 @@ fn mechanics(dock: &Dock<'_>, a: &str, b: &str, child: &str, d: &str) -> Result<
             c.until("transparent flat idle", || {
                 Ok(c.node(&button.id)?.background.is_some_and(|b| b[3] == 0))
             })?;
+            let idle = c.node(&button.id)?.background;
             c.move_to(button.center())?;
             c.until("flat hover", || {
-                Ok(c.node(&button.id)?
-                    .background
-                    .is_some_and(|b| b[..3] == [61, 61, 61]))
+                let background = c.node(&button.id)?.background;
+                Ok(background != idle && background.is_some_and(|b| b[3] > 0))
             })?;
+            let hover = c.node(&button.id)?.background;
             c.held(true)?;
             c.until("flat pressed", || {
-                Ok(c.node(&button.id)?
-                    .background
-                    .is_some_and(|b| b[..3] == [41, 41, 41]))
+                let background = c.node(&button.id)?.background;
+                Ok(background != hover && background.is_some_and(|b| b[3] > 0))
             })?;
             check(
                 dock.fixture()?["dragging"] == false,

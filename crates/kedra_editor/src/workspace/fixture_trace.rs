@@ -36,7 +36,10 @@ fn record(world: &mut World) {
             WindowEvent::CursorMoved(e) => Some(json!({"kind":"cursor","window":e.window.to_bits(),"position":e.position.to_array(),"delta":e.delta.map(|v|v.to_array())})),
             WindowEvent::MouseButtonInput(e) => Some(json!({"kind":"button","window":e.window.to_bits(),"button":format!("{:?}",e.button),"state":format!("{:?}",e.state)})),
             WindowEvent::KeyboardInput(e) => Some(json!({"kind":"key","window":e.window.to_bits(),"code":format!("{:?}",e.key_code),"state":format!("{:?}",e.state)})),
-            WindowEvent::WindowFocused(e) => Some(json!({"kind":"focus","window":e.window.to_bits(),"focused":e.focused})),
+             WindowEvent::WindowFocused(e) => Some(json!({"kind":"focus","window":e.window.to_bits(),"focused":e.focused})),
+             WindowEvent::WindowResized(e) => Some(json!({"kind":"resize","window":e.window.to_bits(),"size":[e.width,e.height]})),
+             WindowEvent::WindowScaleFactorChanged(e) => Some(json!({"kind":"scale","window":e.window.to_bits(),"dpr":e.scale_factor})),
+             WindowEvent::WindowBackendScaleFactorChanged(e) => Some(json!({"kind":"backend-scale","window":e.window.to_bits(),"dpr":e.scale_factor})),
             _ => None,
         }).fold((0usize, Vec::new()), |(count, mut events), event| {
             if count < EVENT_CAPACITY {
@@ -72,8 +75,11 @@ fn record(world: &mut World) {
             "mouse_released":mouse.just_released(MouseButton::Left),
             "shift":keys.any_pressed([KeyCode::ShiftLeft,KeyCode::ShiftRight]),
             "windows":state.map(|s|s.surfaces.values().filter_map(|surface|world.get::<Window>(surface.window).map(|w|json!({
-                "id":surface.window.to_bits(),"focused":w.focused,
-                "backend_focused":bevy::winit::WINIT_WINDOWS.with_borrow(|native|native.get_window(surface.window).map(|window|window.has_focus())),
+                 "id":surface.window.to_bits(),"focused":w.focused,
+                 "logical_size":w.size().to_array(),
+                 "physical_size":w.physical_size().to_array(),
+                 "dpr":w.scale_factor(),
+                 "backend_focused":bevy::winit::WINIT_WINDOWS.with_borrow(|native|native.get_window(surface.window).map(|window|window.has_focus())),
             }))).collect::<Vec<_>>()),
         });
         if trace.frames.len() == CAPACITY {

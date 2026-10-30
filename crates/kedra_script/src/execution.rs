@@ -148,6 +148,7 @@ pub(super) fn start(
             jobs: Vec::new(),
             events: Arc::new(Mutex::new(events::Mailbox::default())),
             error_kind: Arc::new(Mutex::new(None)),
+            profiling: profiling::State::default(),
         })
         .id();
     if let Some(parent) = parent {
@@ -226,6 +227,7 @@ pub(super) fn finish(
             _ => None,
         };
         instance.status = status;
+        instance.profiling.cancel_operations();
         if let Some(error) = failure {
             report(world, run, &error);
         }
@@ -359,6 +361,16 @@ pub(super) fn step(world: &mut World) {
     jobs::admit(world);
     step_kind(world, Kind::Sequence, "sequence", 0.0);
     jobs::collect(world);
+    // Script clocks and behavior callbacks need ordinary updates. Until native
+    // deadline seams cover every wait kind, preserve their existing cadence in
+    // one runtime-owned integration, not in individual scripts or editor code.
+    if world
+        .query::<&Instance>()
+        .iter(world)
+        .any(|instance| instance.status == Status::Running)
+    {
+        world.resource_mut::<kedra_wakeup::WakeDemand>().active();
+    }
 }
 
 fn step_kind(world: &mut World, kind: Kind, phase: &str, dt: f64) {

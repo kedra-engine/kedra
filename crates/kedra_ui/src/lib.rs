@@ -6,6 +6,8 @@ pub mod docking;
 pub mod fields;
 pub mod native_input;
 pub mod popup;
+#[cfg(feature = "render")]
+mod render_clipping;
 /// Ordered opt-in native text editing and local history, independent of authoring.
 pub use kedra_text_input as text_input;
 pub mod styles;
@@ -13,6 +15,9 @@ pub mod styles;
 pub mod text_capture;
 mod text_fit;
 pub mod tooltip;
+mod wake;
+#[cfg(feature = "render")]
+mod wake_render;
 pub mod window_chrome;
 
 /// Stable feature-owned identifier, unique within a native window.

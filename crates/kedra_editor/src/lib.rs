@@ -24,6 +24,7 @@ mod inspector;
 mod jobs;
 mod loading;
 mod model;
+mod profiling;
 mod recent;
 #[cfg(debug_assertions)]
 mod remote;
@@ -50,8 +51,17 @@ fn project_lifecycle(scene: Res<ExplicitScene>) -> bool {
     !scene.0
 }
 
+fn wake_startup(phase: Res<State<AppPhase>>, mut demand: ResMut<kedra_wakeup::WakeDemand>) {
+    if matches!(phase.get(), AppPhase::Boot | AppPhase::Loading) {
+        demand.active();
+    }
+}
+
 impl Plugin for EditorPlugin {
     fn build(&self, app: &mut App) {
+        let wakeup = kedra_wakeup::Wakeup::for_world(app.world());
+        app.insert_resource(wakeup);
+        app.init_resource::<kedra_wakeup::WakeDemand>();
         if let Err(error) = kedra_ui::docking::scene::register(app) {
             app.world_mut()
                 .resource_mut::<kedra_ui::authored::components::UiFailure>()
@@ -110,6 +120,7 @@ impl Plugin for EditorPlugin {
                     screens::sync_status,
                     loading::trace,
                     model::project_phase,
+                    wake_startup,
                 )
                     .chain()
                     .run_if(project_lifecycle),
@@ -127,6 +138,7 @@ pub fn run(
     project: Option<PathBuf>,
     assets: PathBuf,
     launch: kedra_app::launch::LaunchOptions,
+    profiling: kedra_profiling::CaptureOptions,
     state_directory: Option<PathBuf>,
     project_assets: Option<PathBuf>,
     editor_script: Option<edit_scripts::Launch>,
@@ -165,13 +177,19 @@ pub fn run(
             .into(),
         manifest.clone(),
     );
-    app.add_plugins(DefaultPlugins.set(kedra_desktop::window_plugin()).set(
-        bevy::asset::AssetPlugin {
-            use_asset_processor_override: Some(false),
-            watch_for_changes_override: Some(false),
-            ..default()
-        },
-    ))
+    app.add_plugins(
+        DefaultPlugins
+            .set(bevy::log::LogPlugin {
+                custom_layer: kedra_profiling::log_layer,
+                ..default()
+            })
+            .set(kedra_desktop::window_plugin())
+            .set(bevy::asset::AssetPlugin {
+                use_asset_processor_override: Some(false),
+                watch_for_changes_override: Some(false),
+                ..default()
+            }),
+    )
     .add_plugins((
         kedra_app::KedraAppPlugin,
         kedra_desktop::DesktopPlugin,
@@ -180,6 +198,15 @@ pub fn run(
         kedra_ui::tooltip::TooltipPlugin,
         EditorPlugin,
     ));
+    profiling::configure(&mut app, profiling)?;
+    // The bounded safety sweep services third-party assets/deadlines without a
+    // public wake seam. Known active work retains the former focused cadence;
+    // timed UI and preferences can shorten the idle wait. Games opt in separately.
+    app.add_plugins(kedra_wakeup::ReactivePlugin {
+        idle: std::time::Duration::from_millis(100),
+        focused_active: std::time::Duration::from_secs_f64(1. / 60.),
+        unfocused_active: std::time::Duration::from_millis(100),
+    });
     if let Some(script) = editor_script {
         edit_scripts::configure(
             &mut app,

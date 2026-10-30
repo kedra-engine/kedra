@@ -38,12 +38,14 @@ impl Documents {
             let clock = self.clock;
             let registry = world.resource::<AppTypeRegistry>().clone();
             let policies = world.resource::<ComponentPolicies>().clone();
-            self.task = Some(IoTaskPool::get().spawn(async move {
-                let result = source_files::read(&root, "game")
-                    .and_then(|snapshot| source::admit(snapshot, &registry.read(), &policies))
-                    .map(Some);
-                (clock, result)
-            }));
+            self.task = Some(
+                Wakeup::for_world(world).spawn(IoTaskPool::get(), async move {
+                    let result = source_files::read(&root, "game")
+                        .and_then(|snapshot| source::admit(snapshot, &registry.read(), &policies))
+                        .map(Some);
+                    (clock, result)
+                }),
+            );
         }
     }
     pub(crate) fn set_node_selection(

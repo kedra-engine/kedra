@@ -1,7 +1,7 @@
 -- Host binding factory keeps the private native adapter out of the public context.
 -- This code executes in the application, not in the external QA process.
 return function(native: NativeApp)
-local api = {window = native.window, node = native.node}
+local api = {window = native.window, node = native.node, performance = native.performance}
 
 local function await_receipt(receipt: Receipt)
     local current = receipt
@@ -34,12 +34,15 @@ end
 function api.click(id: string)
     local node = api.wait_node(id)
     assert(node.enabled, "Target is disabled: " .. id)
+    wait.until_true("native window focus for " .. id, function()
+        return native.window_focused(node.window)
+    end, 40000)
     return api.input(node.window, {kind = "click", element = id})
 end
 function api.field(id: string, value: string)
     local node = api.wait_node(id)
     assert(node.enabled, "Target is disabled: " .. id)
-    api.input(node.window, {kind = "click", element = id})
+    api.click(id)
     wait.until_true("pointer-acquired focus for " .. id, function()
         local current = native.node(id)
         return current ~= nil and current.focused

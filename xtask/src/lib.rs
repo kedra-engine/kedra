@@ -1,6 +1,7 @@
 //! Repository checks shared by contributors, automation and CI.
 mod architecture;
 mod cli;
+mod dependency_policy;
 mod files;
 mod output;
 mod visual;
@@ -55,6 +56,7 @@ pub fn run() -> Result<()> {
             |output| match stage {
                 cli::Stage::Files => output.message(&files::check()?),
                 cli::Stage::Architecture => output.message(&architecture::check()?),
+                cli::Stage::DependencyPolicy => output.message(&dependency_policy::check(root)?),
                 cli::Stage::Cargo { args, rustdoc, .. } => output.cargo(args, *rustdoc),
             },
         );

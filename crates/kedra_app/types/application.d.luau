@@ -28,9 +28,10 @@ export type Node = {
 }
 export type Key = "enter" | "escape" | "tab" | "shift_tab" | "space"
     | "backspace" | "delete" | "left" | "right" | "up" | "down" | "home" | "end"
-    | "f1" | "f2" | "f3" | "f4" | "f5" | "f6" | "f7" | "f8" | "f12"
+    | "f1" | "f2" | "f3" | "f4" | "f5" | "f6" | "f7" | "f8" | "f9" | "f12"
     | "select_all" | "copy" | "paste" | "cut"
 export type Input = {kind: "close_window"}
+    | {kind: "focus_window"}
     | {kind: "modifier", modifier: "shift" | "control" | "alt" | "super", pressed: boolean}
     | {kind: "button", pressed: boolean}
     | {kind: "click", element: string}
@@ -53,17 +54,35 @@ export type Receipt = {id: OperationId, state: "pending"}
 export type InputRequest = {window: WindowId, input: Input}
 export type ResizeRequest = {window: WindowId, width: number, height: number, dpr: number?}
 export type CaptureRequest = {window: WindowId}
+-- Rolling main-world measurements. These are not GPU or input-to-photon timings.
+export type Performance = {
+    enabled: boolean,
+    focus_events: number,
+    frame: Nullable<number>,
+    update_intervals: {
+        samples: number, capacity: number,
+        mean_ms: Nullable<number>, min_ms: Nullable<number>, max_ms: Nullable<number>,
+        p50_ms: Nullable<number>, p95_ms: Nullable<number>, p99_ms: Nullable<number>,
+    },
+    ui_changes: {[string]: {latest: Nullable<number>, mean_per_update: Nullable<number>}},
+    inventory: {ui_nodes: number, text_nodes: number, editable_nodes: number, windows: number},
+    changed_ui_nodes: Nullable<{{entity: EntityId, id: Nullable<string>, parent: Nullable<EntityId>,
+        parent_id: Nullable<string>, node: Nullable<string>}}>,
+}
 
 -- Bootstrap-only functions captured by native.luau, not public after installation.
 export type NativeApp = {
+    performance: (options: {include_changed_nodes: boolean}?) -> Performance,
     receipt: (params: {id: OperationId}) -> Receipt,
     submit: ((method: "app.input", params: InputRequest) -> Receipt)
         & ((method: "app.resize", params: ResizeRequest) -> Receipt)
         & ((method: "app.capture", params: CaptureRequest) -> Receipt),
     window: () -> WindowId,
+    window_focused: (window: WindowId) -> boolean,
     node: (id: string) -> Node?,
 }
 export type AppApi = {
+    performance: (options: {include_changed_nodes: boolean}?) -> Performance,
     window: () -> WindowId,
     -- Missing visible targets return nil; serialized null properties use json.null.
     node: (id: string) -> Node?,

@@ -23,6 +23,11 @@ struct Options {
 }
 #[derive(Subcommand)]
 enum Action {
+    /// Independent native Task readiness, without RPC or sequence-driven frames (Linux).
+    NativeWakeup {
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
     /// Concrete shared-project switch contract (not an arbitrary application runner).
     NativeSwitch {
         /// Manifest of a complete materialized test_project game workspace.
@@ -387,6 +392,10 @@ fn main() -> Result<()> {
         .join("../..")
         .canonicalize()?;
     match Options::parse().command {
+        Action::NativeWakeup { output } => {
+            let output = new_output(&root, output)?;
+            scenarios::wakeup::run(&root, &output)
+        }
         Action::NativeSwitch {
             manifest_path,
             assets,

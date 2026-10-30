@@ -6,6 +6,7 @@ type TestResult = Result<(), Box<dyn std::error::Error>>;
 #[test]
 fn restored_unready_host_recovers_without_losing_views() -> TestResult {
     let (mut app, _, b) = setup()?;
+    app.insert_resource(Time::<Real>::default());
     app.world_mut().resource_scope(
         |world, mut state: Mut<EditorWorkspace>| -> Result<(), String> {
             let host = HostId::new();
@@ -29,7 +30,7 @@ fn restored_unready_host_recovers_without_losing_views() -> TestResult {
             let records = state.layout.snapshot().views.clone();
             world
                 .resource_mut::<Time<Real>>()
-                .advance_by(Duration::from_secs(11));
+                .advance_by(CREATION_TIMEOUT);
             poll(world, &mut state)?;
             assert!(
                 !state.layout.snapshot().hosts.contains_key(&host),
@@ -76,6 +77,7 @@ fn staged(
 #[test]
 fn restored_deadline_keeps_content_safe_and_valid_sibling_unchanged() -> TestResult {
     let (mut app, a, b) = setup()?;
+    app.insert_resource(Time::<Real>::default());
     let world = app.world_mut();
     world.resource_scope(
         |world, mut state: Mut<EditorWorkspace>| -> Result<(), String> {
@@ -96,7 +98,7 @@ fn restored_deadline_keeps_content_safe_and_valid_sibling_unchanged() -> TestRes
             assert!(state.layout.snapshot().hosts.contains_key(&failed));
             world
                 .resource_mut::<Time<Real>>()
-                .advance_by(Duration::from_secs(11));
+                .advance_by(CREATION_TIMEOUT);
             let (sibling, sibling_native) = staged(world, &mut state, Selection::View(a))?;
             let sibling_before = state.layout.snapshot().hosts[&sibling].clone();
             let records = state.layout.snapshot().views.clone();
@@ -186,6 +188,7 @@ fn restored_creation_failure_recovers_every_record_and_cleans_staged_entities() 
 #[test]
 fn fresh_float_errors_and_timeout_leave_source_and_retire_only_owned_entities() -> TestResult {
     let (mut app, a, b) = setup()?;
+    app.insert_resource(Time::<Real>::default());
     let world = app.world_mut();
     let mut missing = kedra_scene::assets::PrefabSources::default();
     missing.dependencies_ready = true;
@@ -229,7 +232,7 @@ fn fresh_float_errors_and_timeout_leave_source_and_retire_only_owned_entities() 
             let current = state.layout.snapshot().clone();
             world
                 .resource_mut::<Time<Real>>()
-                .advance_by(Duration::from_secs(11));
+                .advance_by(CREATION_TIMEOUT);
             assert!(poll(world, &mut state).is_err());
             assert!(state.pending.is_none());
             assert_eq!(state.layout.snapshot(), &current);

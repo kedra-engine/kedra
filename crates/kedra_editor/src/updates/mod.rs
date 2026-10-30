@@ -7,11 +7,9 @@ mod restart;
 mod tests;
 mod view;
 
-use bevy::{
-    prelude::*,
-    tasks::{IoTaskPool, Task, block_on, poll_once},
-};
+use bevy::{prelude::*, tasks::IoTaskPool};
 use kedra_update::{self as backend, Kind, Release, VerifiedPackage};
+use kedra_wakeup::{Task, Wakeup};
 use model::{Effect, Model, Phase};
 use restart::Restart;
 use std::{
@@ -59,6 +57,7 @@ pub(crate) fn install(app: &mut App) {
 }
 
 pub(crate) fn configure(world: &mut World, state: Option<&Path>) -> Result<(), String> {
+    let wakeup = Wakeup::for_world(world);
     let config = host::config()?;
     let mut installation = match host::detect(&config) {
         Ok(Some(installation)) => installation,
@@ -100,10 +99,9 @@ pub(crate) fn configure(world: &mut World, state: Option<&Path>) -> Result<(), S
         .map(std::path::absolute)
         .transpose()
         .map_err(|e| e.to_string())?;
-    updates.task = Some(
-        IoTaskPool::get()
-            .spawn(async move { Outcome::Discovered(backend::discover(&config, kind)) }),
-    );
+    updates.task = Some(wakeup.spawn(IoTaskPool::get(), async move {
+        Outcome::Discovered(backend::discover(&config, kind))
+    }));
     Ok(())
 }
 
@@ -118,6 +116,7 @@ fn activate(
 }
 
 fn activated(world: &mut World) {
+    let wakeup = Wakeup::for_world(world);
     let Some(mut updates) = world.remove_resource::<Updates>() else {
         return;
     };
@@ -128,10 +127,11 @@ fn activated(world: &mut World) {
                     (updates.release.clone(), updates.cache.clone())
                 {
                     let (sender, receiver) = mpsc::sync_channel(32);
+                    let sender = wakeup.sender(sender);
                     updates.events = Some(Mutex::new(receiver));
                     updates.received = 0;
                     updates.package = None;
-                    updates.task = Some(IoTaskPool::get().spawn(async move {
+                    updates.task = Some(wakeup.spawn(IoTaskPool::get(), async move {
                         let result = backend::download(
                             &release,
                             &cache,
@@ -160,7 +160,7 @@ fn activated(world: &mut World) {
                             updates.project_generation = world
                                 .get_resource::<crate::model::ProjectManager>()
                                 .map(|m| m.generation);
-                            updates.task = Some(IoTaskPool::get().spawn(async move {
+                            updates.task = Some(wakeup.spawn(IoTaskPool::get(), async move {
                                 let result =
                                     backend::prepare_macos(macos, package.path(), &release);
                                 if result.is_err()
@@ -174,7 +174,7 @@ fn activated(world: &mut World) {
                         world.insert_resource(updates);
                         return;
                     }
-                    updates.task = Some(IoTaskPool::get().spawn(async move {
+                    updates.task = Some(wakeup.spawn(IoTaskPool::get(), async move {
                         if let Err(error) = package.reverify(&release) {
                             return Outcome::InvalidPackage(generation, error);
                         }
@@ -204,10 +204,7 @@ fn poll(world: &mut World) {
     let Some(mut updates) = world.remove_resource::<Updates>() else {
         return;
     };
-    let outcome = updates
-        .task
-        .as_mut()
-        .and_then(|task| block_on(poll_once(task)));
+    let outcome = updates.task.as_mut().and_then(Task::poll);
     if let Some(receiver) = &updates.events {
         let events = receiver
             .lock()

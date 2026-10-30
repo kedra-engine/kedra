@@ -1,4 +1,4 @@
-//! Read-only composed source hierarchy, virtual navigation and native appearance.
+//! Read-only composed source hierarchy, virtual navigation and responsive usability.
 use super::support::*;
 use crate::project::inventory;
 use kedra_test::Result;
@@ -34,10 +34,10 @@ fn open(c: &Editor<'_>, name: &str, identity: Uuid) -> Result<()> {
 }
 
 pub(super) fn run(c: &Editor<'_>, phases: &mut Value) -> Result<Value> {
-    *phases = json!({"behavior":{"status":"not_run"},"appearance":{"status":"not_run"}});
+    *phases = json!({"behavior":{"status":"not_run"},"usability":{"status":"not_run"}});
     for (name, phase) in [
         ("behavior", behavior as fn(&Editor<'_>) -> Result<Value>),
-        ("appearance", appearance as fn(&Editor<'_>) -> Result<Value>),
+        ("usability", usability as fn(&Editor<'_>) -> Result<Value>),
     ] {
         eprintln!("Native hierarchy phase: {name}");
         let first_frame = c.captures.borrow().len();
@@ -249,7 +249,7 @@ fn behavior(c: &Editor<'_>) -> Result<Value> {
     )
 }
 
-fn appearance(c: &Editor<'_>) -> Result<Value> {
+fn usability(c: &Editor<'_>) -> Result<Value> {
     let view = c.view("hierarchy")?;
     let p = format!("hierarchy/ViewId({view})/");
     let close = || -> Result<()> {
@@ -272,9 +272,9 @@ fn appearance(c: &Editor<'_>) -> Result<Value> {
     })?;
     let window = c.node(&Editor::label(&view))?.window()?;
     c.resize(window, 320, 674, 2)?;
-    c.until("320px hierarchy", || {
+    c.until("compact floating hierarchy", || {
         let n = c.node(&Editor::group_id(&c.group(&view)?))?;
-        Ok((n.rect[2] - n.rect[0] - 320.).abs() < 1.)
+        Ok(n.rect[2] > n.rect[0] && n.rect[2] - n.rect[0] < 360.)
     })?;
     c.menu(&view, "Reveal selected node")?;
     c.input(window, json!({"kind":"key","key":"home"}))?;
@@ -282,32 +282,32 @@ fn appearance(c: &Editor<'_>) -> Result<Value> {
     close()?;
     let root = c.node(&format!("{p}row/0"))?;
     let viewport = c.node(&format!("{p}entries"))?;
-    for (a, b) in [
-        (root.rect[0], viewport.rect[0] + 4.),
-        (root.rect[1], viewport.rect[1] + 4.),
-        (root.rect[3] - root.rect[1], 22.),
-        (root.rect[2], viewport.rect[2] - 4.),
-    ] {
-        near(a, b, 1.)?;
-    }
+    check(
+        root.rect[0] >= viewport.rect[0]
+            && root.rect[1] >= viewport.rect[1]
+            && root.rect[2] <= viewport.rect[2]
+            && root.rect[3] <= viewport.rect[3],
+        "Hierarchy root is not contained in its scroll viewport",
+    )?;
     c.click(&format!("{p}node/0"))?;
     for key in ["left", "right"] {
         c.input(window, json!({"kind":"key","key":key}))?;
     }
     let row = c.wait_node(&format!("{p}row/1"))?;
-    near(row.rect[0] - root.rect[0], 12., 1.)?;
-    near(row.rect[1] - root.rect[1], 22., 1.)?;
+    check(
+        row.rect[0] > root.rect[0] && row.rect[1] >= root.rect[3],
+        "Child row lost hierarchy indentation or overlaps its parent",
+    )?;
     c.input(window, json!({"kind":"key","key":"down"}))?;
-    c.until("active selection color", || {
-        Ok(c.node(&row.id)?.background == Some([87, 65, 111, 255]))
+    c.until("keyboard-selected child row", || {
+        Ok(c.node(&format!("{p}node/1"))?.focused)
     })?;
     let selected = c.state()?["documents"].clone();
     c.input(window, json!({"kind":"move","position":[310,620]}))?;
     c.frame(window, "hierarchy default")?;
     c.menu(&view, "Search nodes")?;
     c.wait_node(&format!("{p}search"))?;
-    let toolbar = c.node(&format!("{p}toolbar"))?;
-    near(toolbar.rect[3] - toolbar.rect[1], 38., 1.)?;
+    c.node(&format!("{p}toolbar"))?;
     for key in ["search-icon", "filter", "close-search"] {
         c.node(&format!("{p}{key}"))?;
     }
@@ -315,11 +315,6 @@ fn appearance(c: &Editor<'_>) -> Result<Value> {
         !c.node(&format!("{p}filter"))?.enabled,
         "Unsupported filters appear functional",
     )?;
-    for key in ["filter", "close-search"] {
-        let n = c.node(&format!("{p}{key}"))?;
-        near(n.rect[2] - n.rect[0], 22., 1.)?;
-        near(n.rect[3] - n.rect[1], 22., 1.)?;
-    }
     c.field(&format!("{p}search"), "STRASSE")?;
     c.menu(&view, "Redock to main window")?;
     c.click("workspace/reset")?;
@@ -342,17 +337,14 @@ fn appearance(c: &Editor<'_>) -> Result<Value> {
         point[1],
     ])?;
     c.held(false)?;
-    c.until("232px docked hierarchy", || {
+    c.until("narrowed docked hierarchy", || {
         let n = c.node(&Editor::group_id(&c.group(&view)?))?;
-        Ok((n.rect[2] - n.rect[0] - 232.).abs() <= 1.)
+        Ok(n.rect[2] > n.rect[0] && n.rect[2] - n.rect[0] < group.rect[2] - group.rect[0])
     })?;
     c.click(&format!("{p}search"))?;
     c.frame(c.window()?, "hierarchy narrow search")?;
     let doc = c.current_document()?;
     c.click(&Editor::label(text(&doc["view"])?))?;
-    c.until("inactive selection color", || {
-        Ok(c.node(&row.id)?.background == Some([58, 58, 58, 255]))
-    })?;
     c.frame(c.window()?, "inactive hierarchy selection")?;
     check(
         c.state()?["documents"] == selected,

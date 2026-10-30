@@ -2,6 +2,7 @@
 $ErrorActionPreference = 'Stop'
 $directory = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString())
 New-Item -ItemType Directory $directory | Out-Null
+$previousSampleLog = $env:KEDRA_SAMPLE_LOG
 try {
     foreach ($code in @(0, 7)) {
         $fake = Join-Path $directory "cargo-$code.ps1"
@@ -9,10 +10,20 @@ try {
 $expected = @('test', '--workspace', '--all-targets', '--all-features', '--locked', '--no-run', '--timings')
 if (($args -join '|') -ne ($expected -join '|')) { exit 99 }
 Write-Host 'Mock Cargo diagnostic output'
-'@ + "`nif ($code -eq 0) { Start-Sleep -Seconds 18 }`nexit $code`n" | Set-Content $fake
+if (__CODE__ -eq 0) {
+    # Wait for the observable sample, not a guessed scheduler/startup delay.
+    $deadline = [DateTime]::UtcNow.AddSeconds(10)
+    while (@(Get-Content $env:KEDRA_SAMPLE_LOG).Count -lt 2) {
+        if ([DateTime]::UtcNow -ge $deadline) { exit 98 }
+        Start-Sleep -Milliseconds 50
+    }
+}
+exit __CODE__
+'@.Replace('__CODE__', "$code") | Set-Content $fake
         $output = Join-Path $directory "output-$code"
+        $env:KEDRA_SAMPLE_LOG = Join-Path $output 'resources.jsonl'
         $messages = & (Join-Path $PSHOME 'pwsh') -NoProfile -File "$PSScriptRoot/windows-build.ps1" `
-            -Cargo $fake -OutputDirectory $output 2>&1
+            -Cargo $fake -OutputDirectory $output -SampleIntervalSeconds 1 2>&1
         if ($LASTEXITCODE -ne $code) {
             throw "Cargo exit code $code was not preserved: $messages"
         }
@@ -32,6 +43,7 @@ Write-Host 'Mock Cargo diagnostic output'
     }
     Write-Host 'PASS: build diagnostics preserve success, failure, output and resource evidence'
 } finally {
+    $env:KEDRA_SAMPLE_LOG = $previousSampleLog
     # Only this test's uniquely allocated directory is owned by this cleanup.
     Remove-Item -Recurse -Force $directory
 }

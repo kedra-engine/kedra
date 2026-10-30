@@ -1,6 +1,6 @@
 //! Source-model contract, independent of screenshot coverage.
 #[test]
-fn checked_glb_has_two_opaque_unlit_materials_and_native_geometry()
+fn selection_fixture_has_distinct_opaque_parts_and_drawable_native_geometry()
 -> Result<(), Box<dyn std::error::Error>> {
     let bytes = include_bytes!("../../../../tests/fixtures/test_project/assets/ship.glb");
     kedra_assets::model::validate_glb(bytes)?;
@@ -25,19 +25,20 @@ fn checked_glb_has_two_opaque_unlit_materials_and_native_geometry()
     for mesh in gltf.meshes() {
         for primitive in mesh.primitives() {
             let reader = primitive.reader(|_| Some(blob));
+            let positions = reader.read_positions().ok_or("Missing positions")?.count();
+            assert!(positions >= 3);
             assert_eq!(
-                reader.read_positions().ok_or("Missing positions")?.count(),
-                24
+                reader.read_normals().ok_or("Missing normals")?.count(),
+                positions
             );
-            assert_eq!(reader.read_normals().ok_or("Missing normals")?.count(), 24);
-            assert_eq!(
-                reader
-                    .read_indices()
-                    .ok_or("Missing indices")?
-                    .into_u32()
-                    .count(),
-                36
-            );
+            let indices: Vec<_> = reader
+                .read_indices()
+                .ok_or("Missing indices")?
+                .into_u32()
+                .collect();
+            assert_eq!(primitive.mode(), bevy::gltf::gltf::mesh::Mode::Triangles);
+            assert!(!indices.is_empty() && indices.len().is_multiple_of(3));
+            assert!(indices.iter().all(|index| (*index as usize) < positions));
         }
     }
     Ok(())

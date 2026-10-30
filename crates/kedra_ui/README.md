@@ -5,6 +5,15 @@ observation IDs and renderer-derived geometry. The editor and independent game-s
 hosts share it; it has no dependency on editor, importer or authoring writer.
 Bevy owns layout, widgets,
 text editing and rendering; pinned Bevy Flair owns CSS parsing and cascade.
+The repository and canonical native game use the same pinned Bevy Flair 0.9.0
+Git fork for mandatory subject class/ID rejection before relational
+matching and isolation of inline-only changes from relational selector invalidation.
+Candidates retain stock matching/cascade and selector dependency flags;
+see [the patch contract](../../docs/decisions/0043-css-subject-prefilter.md). This is a
+Cargo-root override: other applications must explicitly select the same patch
+to consume it; a dependency's own `[patch]` table is not inherited by consumers.
+Keep the path-linked Flair crate family on that one source to preserve property
+registry/type identity. The local development clone is not a build dependency.
 
 Install `styles::StyleAssetsPlugin` after AssetPlugin for headless CSS assets and
 property registration. `styles::StylesPlugin` adds live styling and animations.
@@ -12,6 +21,29 @@ property registration. `styles::StylesPlugin` adds live styling and animations.
 component policies. Native hosts must also install Bevy UI/text/input-focus,
 widget, picking and tab-navigation plugins as appropriate; this crate does not
 create a window or install a renderer. No default font or editor theme is supplied.
+
+Native hosts can opt into the `render` feature. At plugin finish, AuthoredUiPlugin
+adds a contained-clip elision pass to an existing RenderApp, after extraction and
+before Bevy UI preparation. It visits only Bevy's changed extracted nodes. When
+every transformed Node/glyph corner passes Bevy's inherited-clip containment test,
+only the retained render copy loses its ineffective clip. Partially clipped,
+non-finite and fully hidden items keep Bevy's normal path. Changed extraction
+rebuilds the copy before the next decision; source components and hit-testing
+remain untouched. No renderer is installed for headless consumers.
+
+This narrow optimization uses the pinned Bevy 0.20 public extraction resources and
+containment primitive because its retained preparation still clips unchanged
+geometry every frame. It adds no clipping algorithm, independent invalidation
+registry or renderer fork. Gradient, shadow, sliced-image and custom-material
+resources outside ExtractedUiNodes remain on their stock paths. Transform, glyph
+overhang and re-extraction contracts belong to `src/render_clipping/tests.rs`;
+pixel/frame equivalence and performance require separate native verification.
+The editor and canonical independent native game both enable this feature and
+consume this implementation. Other native games opt into `kedra_ui/render` with
+AuthoredUiPlugin; the feature is not a default for headless consumers. Shared
+acceptance requires editor and game integration checks, not extrapolating one
+host's performance numbers to the other. Host-specific update pacing stays outside
+this library.
 
 `UiView::mount_scene` is the native UI adapter for an explicitly selected
 `kedra_scene::startup::StartupScenePlugin`. Scene-owned `ui.id` and `ui.screen`
@@ -42,6 +74,11 @@ The enclosing stylesheet supplies `.tooltip`, including its
 font; native text layout measures and wraps hints up to 320 logical pixels.
 Bubbles never capture pointer input or focus. This public component exists so
 features supply text without implementing their own hover timer, overlay or theme.
+The subsystem automatically publishes its dwell deadline through `WakeDemand`;
+controls do not register wakeups. Live focused native carets retain active demand
+because Bevy owns their private blink phase. Source readiness and, with `render`,
+pending pipelines/native readbacks also retain active demand. These hints do not
+install pacing in games; hosts explicitly opt into `ReactivePlugin` when suitable.
 
 Fully native authored hosts also install `native_input::NativeInputPlugin`
 automatically when Bevy's input-dispatch and text-input plugins are already present.
@@ -109,6 +146,14 @@ changing published attachments or focus. Failed preparation retires only staged
 mounts; successful sync retains existing content/chrome identities. Consumers own
 the host/stash/content lifetimes and must not retire or reparent projection-owned
 entities from external ECS observers while synchronization is running.
+Publication leaves unchanged parent edges, child order and integrated header
+attachments intact, preserving Bevy's hierarchy change ticks for CSS/layout.
+Only transferring or retiring roots are parked before attachment/retirement;
+surviving descendants remain protected from stale chrome ownership. Validation
+still precedes publication, and a staging owner is allocated only for new chrome.
+This optimization is shared by editor and game projections without a render
+feature or host-specific pacing policy. It does not narrow Flair's selector
+invalidation rules or suppress real hierarchy/style changes.
 Live and candidate split projections use Bevy's unrounded flex layout so nested
 odd-width allocations fit their host instead of accumulating physical-pixel
 rounding overflow. Drop-admission bounds and minimum-size checks are unchanged.

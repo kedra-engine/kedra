@@ -47,11 +47,16 @@ fn align(world: &mut World, camera: Entity, window: Entity, axis: Axis) -> Resul
 fn alignment_moves_through_intermediate_poses_on_a_constant_radius_then_stops()
 -> Result<(), Box<dyn std::error::Error>> {
     let (mut world, camera, window) = fixture();
+    world.init_resource::<kedra_wakeup::WakeDemand>();
     let before = pose(&world, camera)?;
     let radius = before.translation.length();
     align(&mut world, camera, window, Axis::Z)?;
     assert_eq!(pose(&world, camera)?, before, "Request must not teleport");
     step(&mut world, 0.05)?;
+    assert_ne!(
+        world.resource::<kedra_wakeup::WakeDemand>(),
+        &kedra_wakeup::WakeDemand::default()
+    );
     let during = pose(&world, camera)?;
     assert_ne!(during.rotation, before.rotation);
     assert!(
@@ -59,7 +64,12 @@ fn alignment_moves_through_intermediate_poses_on_a_constant_radius_then_stops()
         "The first frame must not already be the final view"
     );
     assert!((during.translation.length() - radius).abs() < 0.001);
+    world.insert_resource(kedra_wakeup::WakeDemand::default());
     step(&mut world, 0.2)?;
+    assert_eq!(
+        world.resource::<kedra_wakeup::WakeDemand>(),
+        &kedra_wakeup::WakeDemand::default()
+    );
     let after = pose(&world, camera)?;
     assert!(after.translation.distance(Vec3::Z * radius) < 0.001);
     step(&mut world, 1.)?;

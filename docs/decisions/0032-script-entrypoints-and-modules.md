@@ -73,8 +73,8 @@ VS Code is a supported optional editing client, never a required build dependenc
 
 ## Alternatives and limits
 
-- Copying Godot/Unity/Roblox object hierarchies would introduce a second gameplay
-  model rather than extend Bevy. Borrow lifecycle concepts, not compatibility promises.
+- A separate script-owned object hierarchy would introduce a second gameplay
+  model rather than extend Bevy's components, systems and entity ownership.
 - Returning a large callback table obscures the simple script surface; named
   functions are sufficient when kind is explicitly host-selected.
 - Custom `game://` import syntax requires special editor resolution. Standard

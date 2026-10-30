@@ -142,8 +142,13 @@ fn covered_identity(package: &Value) -> Result<(&str, &str), String> {
 }
 
 pub(crate) fn publish_source(bytes: &[u8], path: &Path, expected: &str) -> Result<(), String> {
-    if format!("{:x}", Sha256::digest(bytes)) != expected {
-        return Err("Covered source archive differs from its Cargo.lock checksum".into());
+    let actual = format!("{:x}", Sha256::digest(bytes));
+    if actual != expected {
+        return Err(format!(
+            "Source archive {} differs from its approved SHA-256: expected {expected}, received {actual} ({} bytes)",
+            path.file_name().unwrap_or_default().to_string_lossy(),
+            bytes.len()
+        ));
     }
     fs::File::create_new(path)
         .and_then(|mut file| file.write_all(bytes))
@@ -173,7 +178,12 @@ mod tests {
     -> Result<(), Box<dyn std::error::Error>> {
         let directory = tempfile::tempdir()?;
         let path = directory.path().join("fixture-1.2.3.crate");
-        assert!(publish_source(b"source archive", &path, &"0".repeat(64)).is_err());
+        let error = publish_source(b"source archive", &path, &"0".repeat(64))
+            .err()
+            .ok_or("Mismatched source archive was accepted")?;
+        assert!(error.contains("fixture-1.2.3.crate"));
+        assert!(error.contains(&format!("received {:x}", Sha256::digest(b"source archive"))));
+        assert!(!error.contains(&directory.path().to_string_lossy().to_string()));
         assert!(!path.exists());
         let hash = format!("{:x}", sha2::Sha256::digest(b"source archive"));
         publish_source(b"source archive", &path, &hash)?;

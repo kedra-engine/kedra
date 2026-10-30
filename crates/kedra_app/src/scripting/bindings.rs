@@ -102,6 +102,10 @@ fn observation(scope: &Scope, element: Option<&str>) -> lua::Result<Value> {
 pub fn install_app_api(lua: &Lua, scope: Scope, ctx: &lua::Table) -> lua::Result<()> {
     let app = lua.create_table()?;
     app.set("receipt", bind(lua, scope.clone(), "app.operation", false)?)?;
+    app.set(
+        "performance",
+        bind(lua, scope.clone(), "app.performance", false)?,
+    )?;
     let submit_scope = scope.clone();
     app.set(
         "submit",
@@ -121,20 +125,31 @@ pub fn install_app_api(lua: &Lua, scope: Scope, ctx: &lua::Table) -> lua::Result
     app.set(
         "window",
         lua.create_function(move |_, ()| {
-            let value = observation(&window_scope, None)?;
-            let windows: Vec<_> = value["windows"]
-                .as_array()
-                .ok_or_else(|| lua::Error::runtime("Missing windows"))?
-                .iter()
-                .filter(|window| window["primary"] == true)
-                .collect();
-            if windows.len() != 1 {
-                return Err(lua::Error::runtime("Expected one primary window"));
-            }
-            windows[0]["id"]
-                .as_u64()
-                .map(|id| id.to_string())
-                .ok_or_else(|| lua::Error::runtime("Invalid native window identity"))
+            window_scope.with_world(|world| {
+                let mut query = world
+                    .query_filtered::<Entity, (With<Window>, With<bevy::window::PrimaryWindow>)>();
+                let mut windows = query.iter(world);
+                let window = windows
+                    .next()
+                    .ok_or_else(|| lua::Error::runtime("Expected one primary window"))?;
+                if windows.next().is_some() {
+                    return Err(lua::Error::runtime("Expected one primary window"));
+                }
+                Ok(window.to_bits().to_string())
+            })
+        })?,
+    )?;
+    let focus_scope = scope.clone();
+    app.set(
+        "window_focused",
+        lua.create_function(move |_, id: String| {
+            let id = id.parse::<u64>().map_err(lua::Error::external)?;
+            focus_scope.with_world(|world| {
+                Entity::try_from_bits(id)
+                    .and_then(|window| world.get::<Window>(window))
+                    .map(|window| window.focused)
+                    .ok_or_else(|| lua::Error::runtime("Input target window was retired"))
+            })
         })?,
     )?;
     app.set(

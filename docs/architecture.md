@@ -14,6 +14,46 @@ See [ADR 0002](decisions/0002-native-startup.md), the
 
 Shared application automation lives in runtime-layer `kedra_app`, not the
 editor. `kedra_ui` owns stable retained-UI identities and renderer-derived geometry.
+Shared runtime/UI optimizations stay in their owning libraries and require both
+editor and independent-game verification before shared acceptance is claimed.
+The editor and canonical native game enable `kedra_ui/render`, using the same
+contained-clip elision pass through AuthoredUiPlugin; standalone headless consumers
+can omit this feature and need not install a renderer. Editor pacing and lifecycle
+authorization remain host-specific, not runtime game defaults.
+Runtime-layer `kedra_wakeup` connects existing Task/Future readiness and published
+producer messages to the native Bevy event-loop proxy. Its owned Task handle
+registers readiness at creation, without an initial owner poll or manual wake;
+bounded std producers notify automatically on successful publication. Existing
+owners retain results, cancellation decisions and authorization. Its optional
+native adapter installs no executor; headless notifications are inert. Explicit
+`ReactivePlugin` maps subsystem-owned deadlines/active demand to Winit waits, but
+is not installed by runtime libraries on games. The editor opts into bounded
+100 ms idle safety polling and retains its focused active cadence; it does not
+support indefinite sleep. See [ADR 0044](decisions/0044-native-readiness-wakeups.md)
+and [ADR 0045](decisions/0045-bounded-reactive-editor.md).
+Visible serving Scene Views require continuous updates even after frame readiness;
+the shared-App preview is not an isolated project runtime. The proposed Scene/Game
+workflow and pending execution/render backend gate are defined by
+[ADR 0046](decisions/0046-scene-game-runtime-boundaries.md) and the
+[runtime integration plan](plans/scene-game-runtime.md). Play remains unimplemented.
+Both Cargo roots also select the same narrowly patched Flair 0.9.0 Git revision
+for mandatory subject-key rejection before stock CSS matching and isolation of
+inline-only changes from relational selector invalidation. Its path-linked
+crate family uses one source to preserve property registry/type identity. External
+applications must select that source override in their own Cargo root; overrides
+do not propagate through library dependencies. See
+[ADR 0043](decisions/0043-css-subject-prefilter.md) for provenance and limits.
+Explicit debug automation also owns bounded update-interval/UI-change diagnostics,
+available through the same read-only RPC and scoped Luau path. Runtime-layer
+`kedra_profiling` independently owns explicit finite CPU recordings and a backend-neutral
+marker/counter/logical-operation API. Bevy tracing and the Perfetto SDK are backend
+details; application code uses Kedra's instrumentation types. The script runtime owns
+its thin standard `ctx.profiler` binding and revokes outstanding operations with the VM
+owner. No new scheduler, trace format, editor dependency or recording listener is added.
+Recordings are reviewed in the ready-made Perfetto UI, not a native profiler panel. See
+[ADR 0042](decisions/0042-runtime-profiling-and-editor-analysis.md),
+[performance diagnostics](site/en/manual/testing/performance.md) and the
+[GUI responsiveness plan](plans/gui-responsiveness.md).
 The editor is one consumer; an independent native fixture and mailbox tests avoid
 runtime-to-editor edges. These services do not provide a running game SDK.
 See [ADR 0003](decisions/0003-application-automation.md) and
@@ -292,7 +332,7 @@ budgets, exclusions and
 evidence policy. See [ADR 0004](decisions/0004-visual-regression.md).
 Manifest lint-inheritance and portable bootstrap/runtime contracts use the standard
 `toml` parser. Provider-specific workflow adapters are not part of the local gate.
-Dependency-exception tests use RustSec's MIT/Apache `cargo-lock` 11.1.0 to read
+The `xtask dependency-policy` command uses RustSec's MIT/Apache `cargo-lock` 11.1.0 to read
 exact package/caller identities without a package cache or Cargo invocation.
 It supports the current lockfile format and pinned Rust toolchain; its optional
 CLI/graph features are disabled. The parser reuses serde/TOML/semver and adds the

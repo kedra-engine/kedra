@@ -37,14 +37,9 @@ fn platform_dispatch_preserves_argument_boundaries_and_unicode() {
 #[test]
 fn missing_application_cannot_be_dispatched_and_does_not_discard_result()
 -> Result<(), Box<dyn std::error::Error>> {
-    let fixture = crate::test_support::fixture()?;
+    let fixture = crate::test_support::configuration()?;
     let result = crate::application::layout(&fixture.app);
     crate::application::publish(fixture.root.path(), &result)?;
-    fs::remove_file(
-        fixture
-            .stage
-            .join(format!("independent-probe{}", std::env::consts::EXE_SUFFIX)),
-    )?;
     let built = BuiltApplication {
         output: fixture.root.path().into(),
         result,

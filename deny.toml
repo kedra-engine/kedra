@@ -4,14 +4,15 @@ all-features = true
 [advisories]
 version = 2
 # Upstream Wayland caption fonts, not our delivered UI font pipeline. No patched
-# version exists. The policy regression pins its existing direct wrapper and
+# version exists. The dependency-policy command pins its existing direct wrapper and
 # enforces review by 2026-12-26; future vulnerability IDs still fail. See
 # docs/decisions/0007-dependency-policy.md for reachability and review/removal.
 # The second reviewed ID is BMS's build-time macro diagnostic dependency; its
-# exact chain and the same review deadline are checked by the policy regression.
+# exact chain and the same review deadline are checked by that command.
 ignore = [
-    { id = "RUSTSEC-2026-0192", reason = "Unmaintained-only advisory in Winit's Linux CSD stack; no patched release. Exact reachability and review deadline enforced by xtask policy tests; see ADR 0007." },
-    { id = "RUSTSEC-2026-0173", reason = "Owner-approved unmaintained-only build-time macro dependency in BMS 0.23.0. Only proc-macro-error2 2.0.1 through mlua_derive 0.11.0 and mlua 0.11.6 is admitted until 2026-12-26 UTC; exact registry identities/callers enforced by xtask policy tests. See ADR 0007." },
+    { id = "RUSTSEC-2026-0192", reason = "Unmaintained-only advisory in Winit's Linux CSD stack; no patched release. Exact reachability and review deadline enforced by xtask dependency-policy; see ADR 0007." },
+    { id = "RUSTSEC-2026-0173", reason = "Owner-approved unmaintained-only build-time macro dependency in BMS 0.23.0. Only proc-macro-error2 2.0.1 through mlua_derive 0.11.0 and mlua 0.11.6 is admitted until 2026-12-26 UTC; exact registry identities/callers enforced by xtask dependency-policy. See ADR 0007." },
+    { id = "RUSTSEC-2024-0436", reason = "Owner-approved unmaintained-only build-time macro dependency, reviewed for paste 1.0.15 through registry perfetto-sdk 1.2.1 and kedra_profiling 0.1.3. Review by 2026-12-26 UTC; xtask enforces the review deadline, not package settings. Cargo/cargo-deny own graph admission; caller changes require owner review. See ADR 0007." },
 ]
 
 [licenses]
@@ -139,6 +140,6 @@ skip = [
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-# Reviewed exact-revision window input fix and native packaging tool; ADRs 0020/0023.
-allow-git = ["https://github.com/kedra-engine/winit.git", "https://github.com/crabnebula-dev/cargo-packager.git"]
+# Exact-revision window/CSS fixes and native packaging tool; ADRs 0020/0023/0043.
+allow-git = ["https://github.com/kedra-engine/winit.git", "https://github.com/crabnebula-dev/cargo-packager.git", "https://github.com/kedra-engine/bevy_flair.git"]
 required-git-spec = "rev"

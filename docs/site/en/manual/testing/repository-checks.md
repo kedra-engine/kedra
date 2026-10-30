@@ -40,12 +40,13 @@ A green command that selected nothing does not verify the intended contract.
 cargo xtask check
 ```
 
-The task runs seven ordered stages and stops after the first failure:
+The task runs eight ordered stages and stops after the first failure:
 
 | Stage | What is checked |
 | --- | --- |
 | File growth policy | Git inventory, including tracked ignored files; 1000 lines / 64 KiB |
 | Dependency architecture | Workspace layer edges, package licenses and lint inheritance |
+| Dependency exception policy | Reviewed advisory identities, expiry, restricted callers and exact duplicate waivers |
 | Rust formatting | `cargo fmt --all -- --check`; no formatting writes |
 | Clippy | Workspace, all targets/features, locked; unsafe code forbidden and warnings denied |
 | Unit and integration tests | Workspace, all targets/features, locked |
@@ -56,7 +57,8 @@ All-target tests do not execute ordinary native scenario binaries as application
 `check` does not include the feature matrix, image comparison, external scanners or site build.
 It is neither an optimized editor release nor build/package/install acceptance.
 
-For a focused repeat, use `cargo xtask files`, `architecture`, `fmt`, `lint`, `test` or `doc`.
+For a focused repeat, use `cargo xtask files`, `architecture`, `dependency-policy`, `fmt`,
+`lint`, `test` or `doc`.
 Without trailing arguments, `cargo xtask test` runs Rust tests and then doctests.
 Arguments after `--` instead dispatch the native-test tool; they are not Rust test filters.
 
@@ -67,7 +69,9 @@ cargo xtask features --non-interactive
 ```
 
 This runs default and no-default-feature workspace checks, followed by separate minimal library
-checks for `kedra_app`, `kedra_script`, `kedra_scene`, `kedra_assets` and `kedra_ui`.
+checks for `kedra_app`, `kedra_script`, `kedra_scene`, `kedra_assets`, `kedra_ui`
+and `kedra_wakeup`,
+plus the profiling-disabled `kedra_profiling` tests.
 Separate invocations prevent editor feature unification from supplying optional capabilities.
 An all-features build alone cannot establish a minimal consumer boundary.
 

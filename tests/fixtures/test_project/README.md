@@ -76,7 +76,14 @@ still requires an unlocked desktop; headless checks cannot establish it.
 
 This is also an ordinary runnable Cargo game project: package/bin
 `kedra-test-project` in `Cargo.toml` and `src/` depends only on runtime crates, with
-no editor/importer/test-tool dependency. There is no separate native consumer
+no editor/importer/test-tool dependency.
+The native game enables `kedra_ui/render` and uses AuthoredUiPlugin, so it consumes
+the same contained-clip render optimization as the editor without importing editor
+code or its Winit pacing policy. Headless schema/asset consumers do not need this
+feature. Shared implementation does not imply identical performance gains for
+different scenes; native game verification remains separate from editor results.
+
+There is no separate native consumer
 workspace or per-scenario Cargo target. `assets/Native/` contains its remote/switch
 scenes with preserved identities; `scripts/Native/` owns its finite Luau programs.
 The game-owned switch Behavior receives validated parameters, subscribes to real

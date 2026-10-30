@@ -77,10 +77,13 @@ impl Projection {
         }
         Ok(())
     }
-    pub(super) fn restore_headers(&self, world: &mut World) {
+    pub(super) fn restore_headers(&self, world: &mut World, state: &Snapshot) {
         // First restore borrowed chrome to its own group. It can now be retired
         // safely even when an obsolete external native host is about to disappear.
-        for chrome in self.nodes.values() {
+        for (id, chrome) in &self.nodes {
+            if state.nodes.contains_key(id) && self.header_destinations.contains_key(id) {
+                continue;
+            }
             if let Chrome::Group {
                 tabs,
                 menu,
@@ -89,8 +92,14 @@ impl Projection {
                 ..
             } = chrome
             {
-                world.entity_mut(*tabs_parent).insert_children(0, &[*tabs]);
-                world.entity_mut(*menu).insert(ChildOf(*menu_parent));
+                if world
+                    .get::<Children>(*tabs_parent)
+                    .and_then(|children| children.first())
+                    != Some(tabs)
+                {
+                    world.entity_mut(*tabs_parent).insert_children(0, &[*tabs]);
+                }
+                reparent(world, *menu, *menu_parent);
             }
         }
     }

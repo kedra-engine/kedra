@@ -13,13 +13,17 @@ use bevy_remote::BrpResult;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::VecDeque;
+use std::time::Duration;
 use uuid::Uuid;
 mod held;
 use held::HeldInputs;
+const ACTIVATION_TIMEOUT: Duration = Duration::from_secs(8);
 
 #[cfg(test)]
 #[path = "input_tests.rs"]
 mod lifecycle_tests;
+#[cfg(test)]
+mod test_support;
 
 /// Shared input adapter, installed by the engine application host.
 /// Injected holds belong to one window until released or retired, independently
@@ -34,17 +38,27 @@ mod lifecycle_tests;
 /// hardware state instead of emitting an aggregate release for it. Hosts must
 /// deliver hardware input through Bevy's standard messages, not mutate aggregate
 /// `ButtonInput` resources to express overlapping ownership.
+/// Pointer injection emits native Bevy messages without changing `Window`'s
+/// hardware cursor position: that setter requests an OS warp and can feed delayed,
+/// clamped cursor echoes back into the event stream between injected steps.
+/// Explicit `focus_window` requests backend activation once and waits up to eight
+/// real-time seconds for both backend and Bevy focus acknowledgment. It rejects
+/// active injected holds and never assigns `Window::focused` to fake acceptance.
 pub struct InputPlugin;
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<InputQueue>()
             .init_resource::<HeldInputs>()
+            .init_resource::<Time<Real>>()
+            .add_message::<bevy::window::RequestRedraw>()
             .add_systems(PreUpdate, inject.before(InputSystems))
             .add_systems(PreUpdate, held::release_unshared.after(InputSystems));
     }
 }
 #[derive(Clone)]
 enum Step {
+    FocusWindow,
+    AwaitFocus(Duration),
     Move(Vec2),
     Button(bool),
     Wheel(Vec2),
@@ -72,6 +86,7 @@ impl InputQueue {
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 enum Input {
+    FocusWindow,
     CloseWindow,
     Modifier {
         modifier: Modifier,
@@ -156,6 +171,14 @@ pub(crate) fn request(In(value): In<Option<Value>>, world: &mut World) -> BrpRes
     }
     let mut steps = VecDeque::new();
     match request.input {
+        Input::FocusWindow => {
+            if held.has_injected_holds() {
+                return Err(crate::invalid(
+                    "Release injected holds before activating a window",
+                ));
+            }
+            steps.push_back(Step::FocusWindow);
+        }
         Input::CloseWindow => steps.push_back(Step::CloseWindow),
         Input::Modifier { modifier, pressed } => {
             let (key_code, logical_key) = match modifier {
@@ -289,6 +312,7 @@ fn keys(key: &str, window: Entity) -> Result<Vec<KeyboardInput>, String> {
         "f6" => (KeyCode::F6, Key::F6),
         "f7" => (KeyCode::F7, Key::F7),
         "f8" => (KeyCode::F8, Key::F8),
+        "f9" => (KeyCode::F9, Key::F9),
         "f12" => (KeyCode::F12, Key::F12),
         "select_all" | "copy" | "paste" | "cut" | "undo" | "redo" | "save" => {
             modifiers.push(if cfg!(target_os = "macos") {
@@ -426,10 +450,54 @@ fn inject(world: &mut World) {
             .filter(|entity| world.get::<Window>(*entity).is_some());
         if let Some(window) = target {
             match step {
-                Step::Move(position) => {
-                    if let Some(mut target) = world.get_mut::<Window>(window) {
-                        target.set_cursor_position(Some(position));
+                Step::FocusWindow => {
+                    let requested = bevy::winit::WINIT_WINDOWS.with_borrow(|windows| {
+                        windows
+                            .get_window(window)
+                            .map(|native| native.focus_window())
+                    });
+                    if requested.is_some() {
+                        queue
+                            .steps
+                            .push_front(Step::AwaitFocus(world.resource::<Time<Real>>().elapsed()));
+                    } else {
+                        fail(
+                            world,
+                            &mut queue,
+                            "Native activation target is unavailable".into(),
+                        );
                     }
+                }
+                Step::AwaitFocus(started) => {
+                    let backend_focused = bevy::winit::WINIT_WINDOWS.with_borrow(|windows| {
+                        windows.get_window(window).map(|native| native.has_focus())
+                    });
+                    if backend_focused.is_none() {
+                        fail(
+                            world,
+                            &mut queue,
+                            "Native activation target was retired".into(),
+                        );
+                    } else if world
+                        .resource::<Time<Real>>()
+                        .elapsed()
+                        .saturating_sub(started)
+                        >= ACTIVATION_TIMEOUT
+                    {
+                        fail(
+                            world,
+                            &mut queue,
+                            "Native window activation was not acknowledged within 8 seconds".into(),
+                        );
+                    } else if backend_focused != Some(true)
+                        || !world
+                            .get::<Window>(window)
+                            .is_some_and(|window| window.focused)
+                    {
+                        queue.steps.push_front(Step::AwaitFocus(started));
+                    }
+                }
+                Step::Move(position) => {
                     let event = CursorMoved {
                         window,
                         position,
@@ -507,6 +575,9 @@ fn inject(world: &mut World) {
             );
         }
     }
+    if queue.busy() {
+        world.write_message(bevy::window::RequestRedraw);
+    }
     held.skip_injected(world);
     world.insert_resource(held);
     world.insert_resource(queue);
@@ -525,9 +596,59 @@ fn fail(world: &mut World, queue: &mut InputQueue, error: String) {
 mod tests {
     use super::*;
     #[test]
+    fn pending_delivery_requests_frames_and_terminal_delivery_stops_requesting() {
+        let (mut app, window, _) = super::test_support::host();
+        let id = Uuid::new_v4();
+        let session = app.world().resource::<crate::AppSession>().id.clone();
+        request(
+            In(Some(
+                json!({"session":session,"id":id,"window":window.to_bits(),
+            "input":{"kind":"click","position":[10.,10.]}}),
+            )),
+            app.world_mut(),
+        )
+        .unwrap_or_else(|error| panic!("{error:?}"));
+        let mut redraws = app
+            .world()
+            .resource::<Messages<bevy::window::RequestRedraw>>()
+            .get_cursor_current();
+        app.update();
+        assert!(
+            redraws
+                .read(
+                    app.world()
+                        .resource::<Messages<bevy::window::RequestRedraw>>()
+                )
+                .next()
+                .is_some()
+        );
+        for _ in 0..8 {
+            app.update();
+            if !app.world().resource::<InputQueue>().busy() {
+                break;
+            }
+        }
+        assert!(!app.world().resource::<InputQueue>().busy());
+        redraws.clear(
+            app.world()
+                .resource::<Messages<bevy::window::RequestRedraw>>(),
+        );
+        app.update();
+        assert!(
+            redraws
+                .read(
+                    app.world()
+                        .resource::<Messages<bevy::window::RequestRedraw>>()
+                )
+                .next()
+                .is_none()
+        );
+    }
+    #[test]
     fn wheel_resize_and_close_reach_both_native_bevy_message_surfaces() {
         let mut app = App::new();
         app.add_message::<WindowEvent>()
+            .add_message::<bevy::window::RequestRedraw>()
             .add_message::<MouseWheel>()
             .add_message::<bevy::window::WindowResized>()
             .add_message::<bevy::window::WindowCloseRequested>()

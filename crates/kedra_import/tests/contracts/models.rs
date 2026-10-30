@@ -67,12 +67,21 @@ fn independent_model_selectors_and_ignored_raw_glb_fail_before_processing()
 #[test]
 fn native_loader_receives_reader_failure_for_integrity_matching_cycle()
 -> Result<(), Box<dyn std::error::Error>> {
+    let Some(directory) = std::env::var_os("KEDRA_IMPORT_MODEL_PROBE") else {
+        let temp = tempfile::tempdir()?;
+        return crate::support::bounded_probe(
+            "models::native_loader_receives_reader_failure_for_integrity_matching_cycle",
+            &[("KEDRA_IMPORT_MODEL_PROBE", temp.path().as_os_str())],
+            std::time::Duration::from_secs(30),
+        );
+    };
     use bevy::{
         asset::{AssetApp, AssetLoadError, AssetPlugin, LoadState},
         prelude::*,
     };
     use kedra_assets::delivery::{AssetRecord, FileDigest, Manifest, digest};
-    let temp = tempfile::tempdir()?;
+    let directory = std::path::PathBuf::from(directory);
+    let temp = directory.as_path();
     Glb {
         header: Header {
             magic: *b"glTF",
@@ -84,8 +93,8 @@ fn native_loader_receives_reader_failure_for_integrity_matching_cycle()
         }))?),
         bin: None,
     }
-    .to_writer(std::fs::File::create(temp.path().join("bad.glb"))?)?;
-    kedra_import::initialize(temp.path(), |_| {})?;
+    .to_writer(std::fs::File::create(temp.join("bad.glb"))?)?;
+    kedra_import::initialize(temp, |_| {})?;
     let mut manifest = Manifest {
         format: 1,
         profile: "test".into(),
@@ -97,7 +106,7 @@ fn native_loader_receives_reader_failure_for_integrity_matching_cycle()
         files: Default::default(),
     };
     for member in ["bad.glb", "bad.glb.meta"] {
-        let bytes = std::fs::read(temp.path().join(member))?;
+        let bytes = std::fs::read(temp.join(member))?;
         manifest.files.insert(
             member.into(),
             FileDigest {
@@ -107,13 +116,13 @@ fn native_loader_receives_reader_failure_for_integrity_matching_cycle()
         );
     }
     manifest.verify("test", |path| {
-        std::fs::read(temp.path().join(path)).map_err(|e| e.to_string())
+        std::fs::read(temp.join(path)).map_err(|e| e.to_string())
     })?;
     let mut app = App::new();
     kedra_assets::register_source(
         &mut app,
         "game",
-        temp.path().to_str().ok_or("fixture path")?.into(),
+        temp.to_str().ok_or("fixture path")?.into(),
         manifest,
     );
     app.add_plugins((
@@ -165,60 +174,44 @@ fn native_loader_receives_reader_failure_for_integrity_matching_cycle()
 }
 
 #[test]
-fn invalid_topology_fails_before_processing_and_never_publishes()
+fn expansion_limit_fails_before_processing_without_publication_or_source_changes()
 -> Result<(), Box<dyn std::error::Error>> {
     use serde_json::json;
-    let deep: Vec<_> = (0..129)
-        .map(|index| {
-            if index == 128 {
-                json!({})
-            } else {
-                json!({"children":[index+1]})
-            }
-        })
-        .collect();
-    for model in [
-        json!({"asset":{"version":"2.0"},"nodes":[{"children":[0]}],"scenes":[]}),
-        json!({"asset":{"version":"2.0"},"nodes":[{"children":[2]},{"children":[2]},{}],"scenes":[]}),
-        json!({"asset":{"version":"2.0"},"nodes":deep,"scenes":[{"nodes":[0]}]}),
-        json!({"asset":{"version":"2.0"},"nodes":[{}],"scenes":vec![json!({"nodes":[0]});2049]}),
-        json!({"asset":{"version":"2.0"},"nodes":[{"mesh":0}],"scenes":vec![json!({"nodes":[0]});2048],
-            "meshes":[{"primitives":[{"attributes":{"POSITION":0}}]}],
-            "accessors":[{"bufferView":0,"componentType":5126,"count":3,"type":"VEC3","min":[0,0,0],"max":[1,1,1]}],
-            "bufferViews":[{"buffer":0,"byteLength":36}],"buffers":[{"byteLength":36}]}),
-    ] {
-        let temp = tempfile::tempdir()?;
-        let source = temp.path().join("source");
-        std::fs::create_dir(&source)?;
-        Glb {
-            header: Header {
-                magic: *b"glTF",
-                version: 2,
-                length: 0,
-            },
-            json: Cow::Owned(serde_json::to_vec(&model)?),
-            bin: None,
-        }
-        .to_writer(std::fs::File::create(source.join("bad.glb"))?)?;
-        kedra_import::initialize(&source, |_| {})?;
-        let before = std::fs::read(source.join("bad.glb"))?;
-        let meta_before = std::fs::read(source.join("bad.glb.meta"))?;
-        let output = temp.path().join("delivery");
-        let mut processing_started = false;
-        let error = kedra_import::build(&source, &output, "test", "game", |message| {
-            processing_started |= message.starts_with("Processing ");
-        })
-        .err()
-        .ok_or("invalid topology was published")?;
-        assert!(error.contains("GLB"), "{error}");
-        assert!(
-            !processing_started,
-            "native AssetProcessor started before admission"
-        );
-        assert!(!output.exists());
-        assert_eq!(std::fs::read(source.join("bad.glb"))?, before);
-        assert_eq!(std::fs::read(source.join("bad.glb.meta"))?, meta_before);
+    // The complete topology/error matrix belongs to kedra_assets::model.
+    // Here one bounded-expansion failure verifies importer wiring and publication.
+    let model =
+        json!({"asset":{"version":"2.0"},"nodes":[{}],"scenes":vec![json!({"nodes":[0]});2049]});
+    let temp = tempfile::tempdir()?;
+    let source = temp.path().join("source");
+    std::fs::create_dir(&source)?;
+    Glb {
+        header: Header {
+            magic: *b"glTF",
+            version: 2,
+            length: 0,
+        },
+        json: Cow::Owned(serde_json::to_vec(&model)?),
+        bin: None,
     }
+    .to_writer(std::fs::File::create(source.join("bad.glb"))?)?;
+    kedra_import::initialize(&source, |_| {})?;
+    let before = std::fs::read(source.join("bad.glb"))?;
+    let meta_before = std::fs::read(source.join("bad.glb.meta"))?;
+    let output = temp.path().join("delivery");
+    let mut processing_started = false;
+    let error = kedra_import::build(&source, &output, "test", "game", |message| {
+        processing_started |= message.starts_with("Processing ");
+    })
+    .err()
+    .ok_or("invalid topology was published")?;
+    assert!(error.contains("GLB"), "{error}");
+    assert!(
+        !processing_started,
+        "native AssetProcessor started before admission"
+    );
+    assert!(!output.exists());
+    assert_eq!(std::fs::read(source.join("bad.glb"))?, before);
+    assert_eq!(std::fs::read(source.join("bad.glb.meta"))?, meta_before);
     Ok(())
 }
 #[test]

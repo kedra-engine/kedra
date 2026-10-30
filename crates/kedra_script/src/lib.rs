@@ -9,6 +9,7 @@ mod execution;
 mod jobs;
 mod modules;
 mod parameters;
+mod profiling;
 pub mod values;
 mod vm;
 pub use diagnostics::{Diagnostics, ErrorKind, Level, Record, ScriptError};
@@ -284,6 +285,7 @@ struct Instance {
     jobs: Vec<Arc<Mutex<jobs::Job>>>,
     events: Arc<Mutex<events::Mailbox>>,
     error_kind: Arc<Mutex<Option<ErrorKind>>>,
+    profiling: profiling::State,
 }
 
 /// Host ordering points in ordinary Bevy schedules; no order between instances is promised.
@@ -326,6 +328,7 @@ impl Plugin for LuauPlugin {
             .init_resource::<Retiring>()
             .init_resource::<Capacity>()
             .init_resource::<Diagnostics>()
+            .init_resource::<kedra_wakeup::WakeDemand>()
             .add_systems(First, |mut clock: ResMut<Clock>| {
                 clock.updates = clock.updates.saturating_add(1)
             })
@@ -341,6 +344,7 @@ impl Plugin for LuauPlugin {
                 Last,
                 execution::step
                     .in_set(ScriptSystems::Run)
+                    .before(kedra_wakeup::WakeSystems::Apply)
                     .after(ScriptingSystemSet::RunQueuedCallbacks),
             );
     }
