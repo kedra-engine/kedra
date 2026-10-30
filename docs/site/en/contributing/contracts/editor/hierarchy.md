@@ -2,8 +2,8 @@
 
 Hierarchy implements source navigation, selection and structural commands under
 [ADR 0014](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0014-hierarchy-panel.md),
-with shared source transactions/history. See [Hierarchy in the Manual](../../../manual/editor/hierarchy.md)
-for navigation, search and Reveal.
+with shared source transactions/history. See
+[Hierarchy in the Manual](../../../manual/editor/hierarchy.md) for navigation, search and Reveal.
 
 ## Graph authority and scoped selection
 

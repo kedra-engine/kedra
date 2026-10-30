@@ -28,10 +28,10 @@ unchanged, with an inactive selection appearance. Collapsing a branch does not d
 a selected descendant. The panel displays visible rows on demand rather than omitting
 the tail of a large admitted graph.
 
-Instance roots have blue names and a link icon. Active selection uses the selection
-text color; inactive selection retains the prefab color. Equal names inside repeated prefabs are not the same
-target: each selection includes its full nested instance scope. Ordinary branch icons
-and generic node icons do not identify a node as a mesh or imply component types.
+Instance roots have blue names and a link icon. Active selection uses the selection text color;
+inactive selection retains the prefab color. Equal names inside repeated prefabs are not the same
+target: each selection includes its full nested instance scope. Ordinary branch icons and generic
+node icons do not identify a node as a mesh or imply component types.
 
 ## Create and manage nodes
 

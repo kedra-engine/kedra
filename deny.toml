@@ -73,6 +73,13 @@ name = "webpki-root-certs"
 version = "=1.0.10"
 allow = ["CDLA-Permissive-2.0"]
 
+# Owner-reviewed cache integrity dependency; Boost is permissive, not Business
+# Source License. Keep this exact identity only; see ADR 0007 and third-party.md.
+[[licenses.exceptions]]
+name = "xxhash-rust"
+version = "=0.8.19"
+allow = ["BSL-1.0"]
+
 [bans]
 multiple-versions = "deny"
 wildcards = "deny"
@@ -81,6 +88,11 @@ highlight = "all"
 # lower line is exact-pinned here; a new duplicate version still fails. Reasons
 # and immediate upstream consumers: docs/decisions/0007-dependency-policy.md.
 skip = [
+    # cacache/ssri require these incompatible lines; no optional feature removes
+    # them. Exact identities only, reviewed in ADR 0007.
+    { name = "base64", version = "=0.21.7" },
+    { name = "sha1", version = "=0.10.7" },
+    { name = "unicode-width", version = "=0.1.14" },
     # BMS 0.23 uses the 1.x procedural macro helper while Bevy 0.20 requires 2.x.
     # Exact lower identity only; this does not suppress advisories. See ADR 0029.
     { name = "variadics_please", version = "=1.1.0" },

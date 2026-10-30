@@ -72,9 +72,10 @@ SVGs (16px output, Kedra neutral stroke), with 1x–4x packages and the retained
 <https://github.com/lucide-icons/lucide/blob/main/icons/move.svg> and
 <https://github.com/lucide-icons/lucide/blob/main/icons/magnet.svg>.
 Rotation and scale sources: <https://github.com/lucide-icons/lucide/blob/main/icons/rotate-3d.svg>
-and <https://github.com/lucide-icons/lucide/blob/main/icons/scaling.svg>.
-Unity's [Tools Overlay](https://docs.unity3d.com/6000.0/Documentation/Manual/PositioningGameObjects.html)
-and Blender's [object tools](https://docs.blender.org/manual/en/latest/scene_layout/object/tools/toolbar.html)
+and <https://github.com/lucide-icons/lucide/blob/main/icons/scaling.svg>. Unity's
+[Tools Overlay](https://docs.unity3d.com/6000.0/Documentation/Manual/PositioningGameObjects.html)
+and Blender's
+[object tools](https://docs.blender.org/manual/en/latest/scene_layout/object/tools/toolbar.html)
 inform the compact tool-mode organization; their artwork is not bundled.
 
 The [shared header](window-chrome.md) uses the unified family. `toolbar-play.svg`,

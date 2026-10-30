@@ -4,13 +4,13 @@ Editor-layer owned model materialization, finite native mesh bounds and real GLT
 subasset enumeration. Scene View and Inspector are consumers, not mechanism owners.
 No editor shell, source writes, authoring transactions or gameplay callbacks are installed.
 
-`thumbnails::Thumbnails` consumes host-authorized visible demand and an exclusive
-render layer. It serializes static generation and native readback, keeps bounded
-resident snapshots, and uses `kedra_cache` for project-local PNG persistence.
-Hosts tick cancelled work until retirement and relinquish consumer image handles
-when demand disappears. `gpu` supplies native pipeline readiness to both Scene
-View and thumbnails. See [ADR 0050](../../docs/decisions/0050-project-cache-and-static-thumbnails.md)
-for allocation, provider and verification limits.
+`thumbnails::Thumbnails` consumes host-authorized visible demand and an exclusive render layer. It
+serializes static generation and native readback, keeps bounded resident snapshots, and uses
+`kedra_cache` for project-local PNG persistence. Hosts tick cancelled work until retirement and
+relinquish consumer image handles when demand disappears. `gpu` supplies native pipeline readiness
+to both Scene View and thumbnails. See
+[ADR 0050](../../docs/decisions/0050-project-cache-and-static-thumbnails.md) for allocation,
+provider and verification limits.
 
 `models::mount` uses Bevy DynamicWorld/WorldAsset cloning and entity remapping, with
 an audited visual-component profile and caller-owned node budget. Retire the returned

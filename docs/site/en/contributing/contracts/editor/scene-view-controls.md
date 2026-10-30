@@ -28,11 +28,11 @@ No second header or permanent World/units labels are added. Projection
 and lighting are scoped commands. Existing Inter typography, semantic colors, focus,
 control radii, Flat/Quiet widgets and popup placement remain authoritative.
 
-The viewport fills the document content without a separate toolbar. Its control panel
-anchors right 12px/top 8px. It contains the 96px orientation control, the 96×22 projection
-button, and one 166px strip of seven 22px Hand/Move/Rotate/Scale/Snap/Frame selection/Settings
-icon buttons with 2px gaps and one shared background.
-The vertical groups have 4px gaps. Grid visibility and lighting are selected through Settings. See the
+The viewport fills the document content without a separate toolbar. Its control panel anchors right
+12px/top 8px. It contains the 96px orientation control, the 96×22 projection button, and one 166px
+strip of seven 22px Hand/Move/Rotate/Scale/Snap/Frame selection/Settings icon buttons with 2px gaps
+and one shared background. The vertical groups have 4px gaps. Grid visibility and lighting are
+selected through Settings. See the
 [Scene View CSS](https://github.com/kedra-engine/kedra/blob/main/assets/editor/styles/scene-view.css),
 [tokens](https://github.com/kedra-engine/kedra/blob/main/assets/editor/styles/tokens.css) and
 [source prefab](https://github.com/kedra-engine/kedra/blob/main/assets/editor/prefabs/source-document.prefab.ron).

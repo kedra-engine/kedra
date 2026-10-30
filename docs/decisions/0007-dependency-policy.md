@@ -22,6 +22,14 @@ of the five CSS packages plus `colored` 2.2.0 (CLI diagnostics) and `option-ext`
 records source availability and binary-distribution responsibilities. A green
 license check is not proof that an installer contains all required notices.
 
+The owner approves BSL-1.0 only for registry `xxhash-rust 0.8.19`, reached through `kedra_cache` →
+`cacache 13.0.0` → `ssri 9.2.0`. This is the permissive **Boost Software License 1.0**, not Business
+Source License. Its text permits use, modification and distribution; retain its copyright and
+license in source copies and derivative works unless solely machine-executable object code. Preserve
+the notice in generated binary notices as well. No global BSL allowance is granted; upgrades require
+renewed review. The hash is for disposable cache integrity, not an authentication or
+source-admission authority. See [ADR 0050](0050-project-cache-and-static-thumbnails.md).
+
 ## Incompatible duplicate versions
 
 Cargo metadata and inverse trees show different upstream semver lines, not
@@ -34,6 +42,9 @@ remove it when its consumer moves. No broad `skip-tree` or default warning level
 
 | Lower release admitted | Immediate upstream constraint / parallel line |
 | --- | --- |
+| base64 0.21.7 | ssri 9.2.0 requires 0.21 versus Bevy glTF's 0.23 |
+| sha1 0.10.7 | cacache 13.0.0 requires 0.10 versus cargo-packager's 0.11 |
+| unicode-width 0.1.14 | miette 5.10 through cacache/ssri requires 0.1 versus Bevy tooling's 0.2 |
 | bitflags 1.3.2 | core-graphics/defmt/Redox versus Bevy's 2.x |
 | block2 0.5.1; objc2 0.5.3; objc2-app-kit/foundation 0.2.2 | Winit 0.30 / AccessKit versus rfd/arboard/wgpu's newer ObjC stack |
 | cpufeatures 0.2.17 | sha2 0.10 versus blake3's 0.3 |
@@ -54,6 +65,13 @@ remove it when its consumer moves. No broad `skip-tree` or default warning level
 | tiny-skia / tiny-skia-path 0.11.4 | sctk-adwaita versus resvg/usvg's 0.12 |
 | windows-sys 0.45.0 / 0.52.0 / 0.59.0 | JNI / Winit / rustix/colored versus current Windows adapters |
 | windows-targets and seven architecture libraries 0.42.2 | windows-sys 0.45 versus 0.52.6 target support |
+
+The owner approves the three cache-related lower identities above. These are
+unconditional dependencies of the pinned synchronous-only `cacache`/`ssri`
+configuration, not optional features. Their semver constraints cannot unify with
+the parallel lines. Retain the maintained storage library rather than introduce
+a custom index/integrity format or patch unrelated upstream APIs solely to dedupe.
+See [ADR 0050](0050-project-cache-and-static-thumbnails.md) for the cache boundary.
 
 ## Unmaintained Linux caption parser
 

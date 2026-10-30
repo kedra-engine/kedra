@@ -119,11 +119,11 @@ refreshes after completion. Cancelling the picker changes nothing. Import writes
 files immediately and is separate from document Undo/Redo and Save. A publication I/O
 failure can leave a reported partial import; inspect the destination before retrying.
 
-Import does not build or replace the immutable runtime delivery. PNG/GLB preview and
-placement still require a matching delivery; see [the asset pipeline](../assets/pipeline.md).
-The pinned Winit backend lacks Wayland DnD; the compatibility fork changes described in
-[ADR 0048](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0048-native-source-import.md) are required for native
-Wayland drops. OS dialogs and physical drops require manual acceptance.
+Import does not build or replace the immutable runtime delivery. PNG/GLB preview and placement still
+require a matching delivery; see [the asset pipeline](../assets/pipeline.md). The pinned Winit
+backend lacks Wayland DnD; the compatibility fork changes described in
+[ADR 0048](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0048-native-source-import.md)
+are required for native Wayland drops. OS dialogs and physical drops require manual acceptance.
 
 ## Create a scene
 
@@ -143,11 +143,11 @@ a source with an existing `.meta` sidecar requires a managed asset lifecycle and
 Discard restores acknowledged sources and releases unsaved path reservations. New scenes
 start empty; object creation is available through the source editing controls.
 
-Drag a static GLB from Assets onto the new scene's viewport to place it under the
-document root at the cursor's placement preview, using a mesh hit or ground plane.
-Wait for a valid preview before releasing. Dropping onto a Hierarchy node uses that
-node as the parent with the default local transform instead. Placement uses source Undo/Redo; Save publishes the
-model's source-qualified logical reference. A matching project delivery is required.
+Drag a static GLB from Assets onto the new scene's viewport to place it under the document root at
+the cursor's placement preview, using a mesh hit or ground plane. Wait for a valid preview before
+releasing. Dropping onto a Hierarchy node uses that node as the parent with the default local
+transform instead. Placement uses source Undo/Redo; Save publishes the model's source-qualified
+logical reference. A matching project delivery is required.
 
 ## Example: open the checked scene
 

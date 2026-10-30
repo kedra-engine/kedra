@@ -43,6 +43,13 @@ the applicable upstream copyright, attribution and license notices when shipping
 See [ADR 0007](decisions/0007-dependency-policy.md) for policy rationale, exact
 duplicate-version exceptions and time-bounded unmaintained-dependency exceptions.
 
+Registry `xxhash-rust 0.8.19`, used by `ssri 9.2.0` through `cacache 13.0.0`,
+has an exact BSL-1.0 exception. This is the permissive Boost Software License,
+not Business Source License. Retain its upstream copyright and full license in
+distributed source and generated notices. It imposes no project-wide copyleft.
+Source archive: <https://crates.io/api/v1/crates/xxhash-rust/0.8.19/download>.
+The exception does not approve other versions or BSL-licensed dependencies.
+
 ## Source provenance and publication
 
 ### Bevy Flair style

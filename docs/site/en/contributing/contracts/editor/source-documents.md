@@ -99,14 +99,14 @@ paths and labels remain intact. These handles authorize neither rendering nor Sa
 
 ## Asynchronous Open and replacement
 
-New scene/prefab collects a filename in an editor-owned modal scoped to the current Assets folder, then
-uses `source::create_document` on an isolated candidate of the current workspace. It
-publishes one named history entry and opens through the ordinary document-view path.
-Existing document history is retained. Cancellation and invalid paths publish nothing.
-Save is separate. Creation completion belongs to its owning Documents/project lifetime;
-pending creation blocks Open, history/discard and project close. Undo/Redo retains UUIDs
-and paths; removed sources stop participating in Hierarchy and preview. Discard restores
-the acknowledged workspace and its path reservations. See [ADR 0047][creation].
+New scene/prefab collects a filename in an editor-owned modal scoped to the current Assets folder,
+then uses `source::create_document` on an isolated candidate of the current workspace. It publishes
+one named history entry and opens through the ordinary document-view path. Existing document history
+is retained. Cancellation and invalid paths publish nothing. Save is separate. Creation completion
+belongs to its owning Documents/project lifetime; pending creation blocks Open, history/discard and
+project close. Undo/Redo retains UUIDs and paths; removed sources stop participating in Hierarchy
+and preview. Discard restores the acknowledged workspace and its path reservations. See
+[ADR 0047][creation].
 
 Hierarchy's content context menu offers empty nodes, primitives, directional lights
 and authored perspective-camera settings for an active source.
@@ -116,12 +116,12 @@ Undo/Redo preserves child identity, and only explicit Save publishes bytes. Stru
 preview changes restart the ordinary preparation/readiness lifecycle; supported property
 changes retain the existing in-place refresh path.
 
-Inspector's header Add control and per-component Remove menus discover commands from the source schema
-registrations and the retained Inspector target, including locked targets. Commands pin
-the scope and revision inventory; stale commands refuse without source changes. Addition
-uses Bevy `ReflectDefault` and the schema validator, not an editor-maintained type list.
-A type without a registered default requires an explicit initial value and currently
-reports that requirement instead of inventing resource handles or component data.
+Inspector's header Add control and per-component Remove menus discover commands from the source
+schema registrations and the retained Inspector target, including locked targets. Commands pin the
+scope and revision inventory; stale commands refuse without source changes. Addition uses Bevy
+`ReflectDefault` and the schema validator, not an editor-maintained type list. A type without a
+registered default requires an explicit initial value and currently reports that requirement instead
+of inventing resource handles or component data.
 
 Dropping one admitted GLB from Assets on a Hierarchy node stages a model child with a
 Transform in one source transaction. Native GLTF metadata supplies its default scene

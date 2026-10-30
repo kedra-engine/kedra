@@ -5,13 +5,13 @@ Scene View projects admitted sources into owned preview views under
 and
 [ADR 0018](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0018-scene-environment-and-preview-stages.md).
 See the [Manual](../../../manual/editor/scene-view.md) for preview setup and camera/selection
-instructions, and [controls](scene-view-controls.md) for control geometry and gesture leases.
-Native verification remains incomplete. The host-owned transform adapter previews a single
-spatial selection, then publishes through the ordinary source property/history path;
-see [ADR 0053](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0053-scene-transform-manipulators.md).
-Inspector edits and explicit source Save share that authoring authority. Move uses world
-axes; Rotate and Scale use local axes, with a central uniform Scale handle. Animation
-playback, Play and project/plugin execution are not provided.
+instructions, and [controls](scene-view-controls.md) for control geometry and gesture leases. Native
+verification remains incomplete. The host-owned transform adapter previews a single spatial
+selection, then publishes through the ordinary source property/history path; see
+[ADR 0053](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0053-scene-transform-manipulators.md).
+Inspector edits and explicit source Save share that authoring authority. Move uses world axes;
+Rotate and Scale use local axes, with a central uniform Scale handle. Animation playback, Play and
+project/plugin execution are not provided.
 
 ## Admission and supported targets
 

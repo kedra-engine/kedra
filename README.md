@@ -43,8 +43,8 @@ APIs and source formats are not stable.
 The repository currently provides:
 
 - Project creation/opening and a native editor shell with dockable panels and
-   floating windows. New scene/prefab publishes a source before opening its clean tab;
-   subsequent edits use common Undo/Redo and explicit Save. Resource-free scenes can be viewed
+  floating windows. New scene/prefab publishes a source before opening its clean tab;
+  subsequent edits use common Undo/Redo and explicit Save. Resource-free scenes can be viewed
   without a project asset delivery. The Asset Browser supports source-folder navigation
   and selection, folder search, grid/list and read-only scene/prefab document Open.
   Explicit Import copies external files through a native picker with fresh metadata;
@@ -53,9 +53,9 @@ The repository currently provides:
   Assets also supports folder creation and file/folder rename, move and deletion
   with dependency validation
   and retained deletion recovery copies, separate from document Save/Undo.
-   Hierarchy displays composed source nodes with navigation and selection. Its content
-   context menu creates empty nodes, primitives, directional lights and authored camera
-   settings; Rename, Delete and drag/reparent use the common source history.
+  Hierarchy displays composed source nodes with navigation and selection. Its content
+  context menu creates empty nodes, primitives, directional lights and authored camera
+  settings; Rename, Delete and drag/reparent use the common source history.
   Read-only Scene View renders supported spatial/UI documents and previews
   PNG/static-GLB assets with an explicit matching delivery. Spatial navigation and
   scoped opaque-mesh selection are implemented. Inspector follows source selection,

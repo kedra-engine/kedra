@@ -23,9 +23,9 @@ The clicked node becomes the parent; blank space targets the document root.
 Each action is one source Undo/Redo step; use Save to publish it. Spatial objects cannot
 be placed beneath UI nodes. Structural changes rebuild the document preview.
 
-Inspector's header **+** opens **Add component** for its current target; each component
-section's **…** offers **Remove component**. The list comes from registered source schemas. Adding requires a valid
-registered reflected default; components needing explicit initial data report that
+Inspector's header **+** opens **Add component** for its current target; each component section's
+**…** offers **Remove component**. The list comes from registered source schemas. Adding requires a
+valid registered reflected default; components needing explicit initial data report that
 requirement. Each successful operation shares source Undo/Redo and explicit Save.
 
 To place a model, drag a GLB from Assets onto its parent node in Hierarchy. A matching

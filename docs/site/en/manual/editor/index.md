@@ -69,11 +69,11 @@ Floating a view preserves its panel state; it is not a second source session.
 
 ## Hide, reopen and reset
 
-A tab's close button hides the view rather than deleting its source session. Closing a
-floating window hides its views; closing the main window requests exit. Unsaved changes
-offer **Save and exit**, **Exit without saving** and **Cancel**. The main menu's
-**Windows** submenu lists views by name, reopening hidden views or selecting visible ones. Opening the same
-source from Assets also returns to its retained tab.
+A tab's close button hides the view rather than deleting its source session. Closing a floating
+window hides its views; closing the main window requests exit. Unsaved changes offer
+**Save and exit**, **Exit without saving** and **Cancel**. The main menu's **Windows** submenu lists
+views by name, reopening hidden views or selecting visible ones. Opening the same source from Assets
+also returns to its retained tab.
 
 **Reset layout** restores the default arrangement without recreating live panel content.
 For example, open `Composed.scene.ron`, select **Warm sphere** in Hierarchy, then float
@@ -117,11 +117,11 @@ Already open documents reuse accepted contents and selection rather than rereadi
 Before first opening another admitted source, the editor checks its bytes and identity
 again. A failed Open preserves the previous active document and selection.
 
-**Refresh sources** refreshes browser listings, not accepted documents. Newly added
-externally added documents outside the admitted inventory require reopening the project. For external
-source changes, reopen the project; for previews, also rebuild a matching delivery and
-relaunch with that delivery. There is no automatic external-change reload or merge workflow.
-See [Scene View prerequisites](scene-view.md#prepare-resources).
+**Refresh sources** refreshes browser listings, not accepted documents. Newly added externally added
+documents outside the admitted inventory require reopening the project. For external source changes,
+reopen the project; for previews, also rebuild a matching delivery and relaunch with that delivery.
+There is no automatic external-change reload or merge workflow. See
+[Scene View prerequisites](scene-view.md#prepare-resources).
 
 Physical input, OS clipboard, IME, screen readers and mixed-DPI behavior still need
 platform-specific testing; certification across desktop platforms is incomplete.

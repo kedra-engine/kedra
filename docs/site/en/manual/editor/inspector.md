@@ -163,12 +163,12 @@ broader native acceptance.
 
 ## Save active document
 
-Use **Save** in the main menu or header, or **Cmd/Ctrl+S**, including
-while a settled property input owns focus. **Save All** / **Cmd/Ctrl+Shift+S** saves dirty
-documents and environment assets, stopping on the first refusal. Save writes accepted working changes, never
-a pending draft or live preview state. Accept with Enter or cancel with Escape first.
-The active document receives the write, not a different target retained by a locked Inspector.
-An asterisk marks unsaved source revisions; progress and errors appear in workspace feedback.
+Use **Save** in the main menu or header, or **Cmd/Ctrl+S**, including while a settled property input
+owns focus. **Save All** / **Cmd/Ctrl+Shift+S** saves dirty documents and environment assets,
+stopping on the first refusal. Save writes accepted working changes, never a pending draft or live
+preview state. Accept with Enter or cancel with Escape first. The active document receives the
+write, not a different target retained by a locked Inspector. An asterisk marks unsaved source
+revisions; progress and errors appear in workspace feedback.
 
 Save writes the active document's complete coupled existing-source group after checking
 hashes and inventory. Each file replacement is atomic; a durable journal makes the group

@@ -1,11 +1,11 @@
 # Inspector source interaction contract
 
-Existing environment assets use the same Inspector as source nodes. Asset selection
-resolves their reflected root through the admitted source catalog; the editor binds
-ordinary numeric/color controls to source-owned revisions and exact Save requests.
-See [ADR 0052](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0052-environment-asset-root-editing.md) for
-ownership, source persistence and preview boundaries. The native `environment-editing`
-scenario owns asset selection, field rejection, Save and retained camera refresh.
+Existing environment assets use the same Inspector as source nodes. Asset selection resolves their
+reflected root through the admitted source catalog; the editor binds ordinary numeric/color controls
+to source-owned revisions and exact Save requests. See
+[ADR 0052](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0052-environment-asset-root-editing.md)
+for ownership, source persistence and preview boundaries. The native `environment-editing` scenario
+owns asset selection, field rejection, Save and retained camera refresh.
 
 Inspector presents source values under
 [ADR 0015](https://github.com/kedra-engine/kedra/blob/main/docs/decisions/0015-inspector-panel.md),

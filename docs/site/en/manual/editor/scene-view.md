@@ -106,17 +106,16 @@ or a 0.1 scale-factor increment relative to the drag start, independent of grid 
 Save persists accepted edits only. Configurable snapping and world/local switching are
 not implemented; physical-input quality and mixed-monitor DPI acceptance remain incomplete.
 
-**View settings** offers **Frame all**, **Clear selection**, **Toggle selection outlines**, **Toggle grid**
-and lighting choices. Frame all provides a useful way back after navigation.
-Use the orientation control for standard views and its projection button to switch
-projection while preserving apparent scale at the pivot.
-Clear selection is disabled without a document selection. Short/small viewports hide
-unreachable navigation controls.
+**View settings** offers **Frame all**, **Clear selection**, **Toggle selection outlines**,
+**Toggle grid** and lighting choices. Frame all provides a useful way back after navigation. Use the
+orientation control for standard views and its projection button to switch projection while
+preserving apparent scale at the pivot. Clear selection is disabled without a document selection.
+Short/small viewports hide unreachable navigation controls.
 
-- **Toggle selection outlines:** hide/restore selection bounds, including UI borders. It does not hide source
-  objects, clear selection, change grid state or remove framing bounds.
-- **Toggle grid in View settings:** toggle the infinite grid and colored X/Z axes. Spacing is one source unit,
-  not an automatic conversion to project units.
+- **Toggle selection outlines:** hide/restore selection bounds, including UI borders. It does not
+  hide source objects, clear selection, change grid state or remove framing bounds.
+- **Toggle grid in View settings:** toggle the infinite grid and colored X/Z axes. Spacing is one
+  source unit, not an automatic conversion to project units.
 - **Lighting in View settings:** choose **Scene lighting** or **Editor lighting**.
   Documents start with Scene lighting; raw GLB inspection starts with Editor lighting.
 
