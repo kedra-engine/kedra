@@ -4,7 +4,7 @@ import json
 import os
 
 
-JOBS = frozenset(("changes", "policy", "native", "coverage", "supply-chain", "repository", "secrets", "python-test"))
+JOBS = frozenset(("changes", "policy", "native", "coverage", "supply-chain", "repository", "secrets", "python-test", "sites-build"))
 
 
 def require_success(results: object) -> None:

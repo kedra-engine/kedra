@@ -170,7 +170,7 @@ and rustdoc range-highlighting JavaScript are preserved. Multiple ranges sharing
 a start line have nested aliases around the same real line anchor, not empty
 placeholders or fabricated source lines.
 
-Six exact inherited href forms are mapped to versioned upstream documentation.
+Seven exact inherited href forms are mapped to versioned upstream documentation.
 The adapter checks their enclosing trait implementation, member and link text,
 and requires the exact reviewed registry package versions in locked Cargo metadata.
 
@@ -182,6 +182,7 @@ and requires the exact reviewed registry package versions in locked Cargo metada
 | `Reflect` | bevy_reflect 0.20.0, `src/reflect.rs`, `PartialReflect::try_*reflect*` | [Reflect](https://docs.rs/bevy_reflect/0.20.0/bevy_reflect/trait.Reflect.html) |
 | `TypeInfo` | bevy_reflect 0.20.0, `src/info/typed.rs`, `Typed::type_info` | [TypeInfo](https://docs.rs/bevy_reflect/0.20.0/bevy_reflect/enum.TypeInfo.html) |
 | `%60States::DEPENDENCY_DEPTH%60` | bevy_state 0.20.0, `src/state/state_set.rs`, `StateSet::SET_DEPENDENCY_DEPTH` | [State dependency depth](https://docs.rs/bevy_state/0.20.0/bevy_state/state/trait.States.html#associatedconstant.DEPENDENCY_DEPTH) |
+| `futures_core::future::TryFuture` | futures-util 0.3.34, `src/future/future/mod.rs`, `FutureExt::unit_error` / `never_error` | [TryFuture](https://docs.rs/futures-core/0.3.34/futures_core/future/trait.TryFuture.html) |
 
 The original forms and ownership were checked against exact Cargo-resolved source;
 the upstream pages and fragment IDs were checked at those versions. Offline

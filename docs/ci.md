@@ -23,7 +23,7 @@ every group. Detection uses the action's Git mode, not the file-count-limited PR
 REST endpoint. PRs compare the checked-out merge commit with the event's base SHA;
 main pushes compare against their before SHA, and merge groups against their base SHA.
 
-| Change | Selected work, in addition to file policy and history secret scan |
+| Change | Selected work, in addition to file policy, history secret scan and complete public-site validation |
 | --- | --- |
 | Root/docs Markdown and known documentation-site inputs | Site build/audit, Markdown and links; no Rust matrix, coverage or native cache transfer |
 | Python tools only | Python suites; no Rust matrix, coverage or native cache transfer |
@@ -48,7 +48,8 @@ run once in the required coverage job,
 not again in native Linux; doctests remain in native Linux because coverage does
 not run them. Coverage has no minimum percentage; tests and report generation
 must still succeed. Native behavior and screenshot acceptance require separate
-real-input/frame runs. API documentation runs once on Linux.
+real-input/frame runs. Native API documentation checks are Linux-only; the complete
+public-site validation independently assembles Cargo's Rust API output.
 Rust formatting/architecture run once in policy, and portable-contract tests are
 included in workspace tests.
 No compilation-only prebuild replaces or precedes the Windows test execution.
@@ -63,9 +64,9 @@ Native and coverage jobs wait for the lightweight policy/workflow checks, avoidi
 expensive compilation for a known policy failure. The matrix platforms remain
 independent of each other's failures.
 
-`CI required` invokes `python3 -I tools/ci/required.py` and evaluates eight dependency
-results: `changes` plus seven validation groups (`policy`, `native`, `coverage`,
-`supply-chain`, `repository`, `secrets` and `python-test`). The `python-test` job is
+`CI required` invokes `python3 -I tools/ci/required.py` and evaluates the dependency
+results: `changes` plus validation groups (`policy`, `native`, `coverage`,
+`supply-chain`, `repository`, `secrets`, `python-test` and `sites-build`). The `python-test` job is
 named `Workflow and distribution tooling contracts`. Selected
 jobs must succeed; unselected jobs must be `skipped`. Failed change detection,
 missing/extra results, malformed selection, failures, cancellations and unexpected
@@ -193,10 +194,15 @@ the job identities and skip policy described above. See
 [documentation infrastructure](documentation-infrastructure.md).
 
 The same repository job validates the separate landing, its frozen dependency graph,
-build contracts and generated links. After `CI required` succeeds, official main CI
-runs the [site publication jobs](../.github/workflows/ci.yml). The build job has
-no cloud credentials; only the environment-scoped upload step receives the two Object
-Storage secrets. Fork/PR checks and the required gate do not depend on those secrets.
+build contracts and generated links. The unconditional `sites-build` job also builds
+the complete manual and Rust API reference with the same offline asset/fragment
+checks used for publication. It runs for PR, merge-group and main CI, and its failure,
+cancellation or skip blocks `CI required`; Rust-only changes cannot skip API HTML validation.
+Only successful official main push/dispatch runs upload publication artifacts.
+After both `CI required` and `sites-build` succeed, the main-only `sites-deploy` job
+rechecks source freshness and publishes those artifacts. The build job has no cloud
+credentials; only the environment-scoped deployment receives the two Object Storage
+secrets. Fork/PR checks and the required gate do not depend on those secrets.
 See [hosting](../tools/hosting/README.md) for source freshness, domain and permission rules.
 
 `features` runs separate Cargo invocations with streamed diagnostics, logs and

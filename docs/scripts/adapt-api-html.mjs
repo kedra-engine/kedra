@@ -8,9 +8,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const root = resolve(fileURLToPath(new URL('../../target/documentation/site/api/',
   import.meta.url)))
 const versions = { tracing: '0.1.44', yansi: '1.0.1', bevy_reflect: '0.20.0',
-  bevy_state: '0.20.0' }
+  bevy_state: '0.20.0', 'futures-util': '0.3.34', 'futures-core': '0.3.34' }
 // Provenance: pinned crates' instrument.rs, macros.rs, type_path.rs, reflect.rs,
-// info/typed.rs and state/state_set.rs. See documentation-infrastructure.md.
+// info/typed.rs, state/state_set.rs and future/future/mod.rs (futures-util).
+// See documentation-infrastructure.md.
 const links = new Map([
   ['dispatcher#setting-the-default-subscriber', {
     crate: 'tracing', path: 'dispatcher/index.html#setting-the-default-subscriber',
@@ -37,6 +38,14 @@ const links = new Map([
     crate: 'bevy_state', path: 'state/trait.States.html#associatedconstant.DEPENDENCY_DEPTH',
     trait: 'StateSet', members: ['associatedconstant.SET_DEPENDENCY_DEPTH'],
     text: 'DEPENDENCY_DEPTH',
+  }],
+  ['futures_core::future::TryFuture', {
+    crate: 'futures-core', module: 'futures_core', path: 'future/trait.TryFuture.html',
+    trait: 'FutureExt', members: ['method.unit_error', 'method.never_error'],
+    memberText: {
+      'method.unit_error': 'TryFuture<Ok = T, Error = ()>',
+      'method.never_error': 'TryFuture<Ok = T, Error = Never>',
+    },
   }],
 ])
 
@@ -119,11 +128,12 @@ export async function adaptApiHtml(metadata) {
             && item.children[0].type === NodeTypes.TEXT ? item.children[0].content : '').join('')
         if (!rule.members.includes(sectionId(member))
           || !sectionId(implementation)?.startsWith(`impl-${rule.trait}-for-`)
-          || text !== rule.text) {
+          || text !== (rule.memberText?.[sectionId(member)] ?? rule.text)) {
           throw new Error(`API adapter rejects unrecognized inherited ${href} shape in ${path}`)
         }
         const prop = attribute(node, 'href')
-        const url = `https://docs.rs/${rule.crate}/${versions[rule.crate]}/${rule.crate}/${rule.path}`
+        const module = rule.module ?? rule.crate
+        const url = `https://docs.rs/${rule.crate}/${versions[rule.crate]}/${module}/${rule.path}`
         edits.push({ start: prop.loc.start.offset, end: prop.loc.end.offset,
           text: `href="${url}"` })
         repaired++
