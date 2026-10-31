@@ -22,11 +22,14 @@ runs cannot publish. Keep protected-main rules and review requirements enabled. 
 `workflow_run` trigger or independent manual entry point. Retry a failed upload by
 rerunning failed jobs of the eligible CI run, or dispatch CI on current `main`.
 
-The read-only build job installs frozen dependencies without lifecycle scripts, audits
+The read-only build job runs for PR, merge-group and main CI, and is a mandatory
+input to `CI required`. It installs frozen dependencies without lifecycle scripts, audits
 both graphs, runs landing contracts, builds both sites and checks generated links.
 Documentation uses `docs/`'s complete `build:api`, including license texts, rustdoc
-resources and bounded HTML adaptation. The required PR job's faster manual build remains
-Rust-free. Landing builds set `KEDRA_DOCS_URL=https://docs.kedra.tech/`.
+resources and bounded HTML adaptation. The path-selected repository job's faster
+manual build remains Rust-free, but does not substitute for the complete API build.
+Only main push/dispatch runs upload deployment artifacts. Landing builds set
+`KEDRA_DOCS_URL=https://docs.kedra.tech/`.
 
 The deployment job does not check out source or execute its build scripts. It downloads
 only the current run's two artifacts, checks their entry pages/notices, rechecks source

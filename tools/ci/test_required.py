@@ -11,7 +11,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "tools/ci/required.py"
-JOBS = ("changes", "policy", "native", "coverage", "supply-chain", "repository", "secrets", "python-test")
+JOBS = ("changes", "policy", "native", "coverage", "supply-chain", "repository", "secrets", "python-test", "sites-build")
 FILTERS = ("rust", "python", "markdown", "workflows", "distribution")
 
 
